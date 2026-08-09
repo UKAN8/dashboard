@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MATHIS 수업 콘솔</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{ --key:#EA9090; --key-d:#d97777; --bg:#faf7f5; --card:#fff; --ink:#2b2b2b; --sub:#8a8078; --line:#eee3dd; --ok:#5cb85c; --warn:#e0a800; --bad:#d9534f; }
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:'Paperlogy','Pretendard',system-ui,-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);padding-bottom:90px;}
+header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;}
+header h1{font-size:17px;margin:0;flex:1;} header h1 b{color:var(--key);}
+.pill{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:99px;padding:4px 10px;background:#fff;}
+main{max-width:640px;margin:0 auto;padding:14px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--sub);font-weight:600;letter-spacing:.02em;}
+button{font-family:inherit;font-size:15px;border:none;border-radius:10px;padding:12px 14px;background:#f1e9e4;color:var(--ink);cursor:pointer;}
+button:active{transform:scale(.97);}
+@media (hover:hover) and (pointer:fine){ button:hover{filter:brightness(.96);} }
+button.key{background:var(--key);color:#fff;font-weight:700;}
+button.ghost{background:transparent;border:1px solid var(--line);}
+input,textarea,select{font-family:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:11px;width:100%;background:#fff;color:var(--ink);}
+input:focus,textarea:focus{outline:2px solid var(--key);border-color:var(--key);}
+.row{display:flex;gap:8px;align-items:center;}
+.grow{flex:1;}
+.classbtns{display:flex;flex-wrap:wrap;gap:8px;}
+.classbtns button{flex:1 1 28%;padding:16px 8px;font-weight:700;font-size:16px;}
+.classbtns button.on{background:var(--key);color:#fff;}
+.stu{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff;}
+.stu .name{font-weight:700;font-size:16px;}
+.stu .school{font-size:12px;color:var(--sub);margin-left:6px;}
+.seg{display:flex;gap:6px;margin:8px 0;}
+.seg button{flex:1;padding:10px 4px;font-size:14px;background:#f6f0ec;}
+.seg button.a1{background:var(--ok);color:#fff;} .seg button.a2{background:var(--warn);color:#fff;} .seg button.a3{background:var(--bad);color:#fff;}
+.minirow{display:flex;gap:6px;margin-top:8px;}
+.minirow input{padding:9px;font-size:14px;}
+.lbl{font-size:11px;color:var(--sub);margin-bottom:3px;display:block;}
+.savemark{font-size:11px;color:var(--ok);float:right;opacity:0;transition:opacity .3s;}
+.savemark.show{opacity:1;}
+.signal{border-left:4px solid var(--key);padding-left:10px;margin-bottom:10px;}
+.signal .why{font-size:13px;color:var(--sub);}
+.todayclass{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#fff;}
+.todayclass:active{background:#f9f1ed;}
+.time{color:var(--sub);font-size:13px;}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 10px calc(6px + env(safe-area-inset-bottom));z-index:10;}
+nav button{flex:1;background:transparent;font-size:13px;color:var(--sub);padding:10px 0;}
+nav button.on{color:var(--key);font-weight:700;}
+.hidden{display:none!important;}
+#login{max-width:380px;margin:12vh auto;padding:0 20px;}
+#login .logo{font-size:26px;font-weight:800;text-align:center;margin-bottom:24px;}
+#login .logo b{color:var(--key);}
+.msg{font-size:13px;color:var(--sub);margin-top:10px;text-align:center;min-height:18px;}
+.footbar{position:sticky;bottom:78px;display:flex;gap:8px;margin-top:14px;}
+.footbar button{flex:1;padding:15px;font-size:16px;}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;}
+.toast.show{opacity:.94;}
+textarea{min-height:44px;resize:vertical;}
+.badge{font-size:11px;border-radius:99px;padding:3px 8px;background:#f6e7e7;color:var(--key-d);font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="logo">MATHIS <b>수업 콘솔</b></div>
+  <div class="card">
+    <div id="step1">
+      <label class="lbl">이메일</label>
+      <input id="email" type="email" autocomplete="email" placeholder="hay0680@gmail.com">
+      <button class="key" style="width:100%;margin-top:10px" onclick="sendOtp()">인증 코드 받기</button>
+    </div>
+    <div id="step2" class="hidden">
+      <label class="lbl">메일로 온 6자리 코드</label>
+      <input id="otp" inputmode="numeric" placeholder="000000">
+      <button class="key" style="width:100%;margin-top:10px" onclick="verifyOtp()">로그인</button>
+    </div>
+    <div class="msg" id="loginmsg"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1>MATHIS <b id="viewtitle">오늘</b></h1>
+  <span class="pill" id="who"></span>
+  <button class="ghost" style="padding:6px 10px;font-size:12px" onclick="logout()">로그아웃</button>
+</header>
+<main>
+
+  <section id="view-today">
+    <div class="card">
+      <h2 id="todaylabel">오늘 수업</h2>
+      <div id="todayclasses"></div>
+    </div>
+    <div class="card">
+      <h2>시그널 — 최근 2주 (탭하면 추가학습 지정)</h2>
+      <div id="signals">불러오는 중…</div>
+    </div>
+  </section>
+
+  <section id="view-console" class="hidden">
+    <div class="card">
+      <h2>반 선택</h2>
+      <div class="classbtns" id="classbtns"></div>
+    </div>
+    <div id="consolebody" class="hidden">
+      <div class="card">
+        <h2>수업 정보 <span class="badge" id="sessionstate"></span></h2>
+        <label class="lbl">진도</label>
+        <input id="c_progress" placeholder="예: OPT:02 함수의 극한 THEME 3">
+        <div class="minirow">
+          <div class="grow"><label class="lbl">이번 과제</label><input id="c_hw"></div>
+        </div>
+        <div class="minirow">
+          <div class="grow"><label class="lbl">테스트 유형</label><input id="c_test" placeholder="예: 리뷰테스트 5문항"></div>
+        </div>
+      </div>
+      <div id="students"></div>
+      <div class="footbar">
+        <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+<nav>
+  <button id="nav-today" class="on" onclick="showView('today')">오늘</button>
+  <button id="nav-console" onclick="showView('console')">수업 콘솔</button>
+</nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb=supabase.createClient(SB_URL,SB_ANON);
+const $=id=>document.getElementById(id);
+const DAYS=['일','월','화','수','목','금','토'];
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
+
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
+
+/* ── 로그인 ── */
+async function sendOtp(){
+  const email=$('email').value.trim();
+  if(!email)return;
+  $('loginmsg').textContent='코드 발송 중…';
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+  if(error){$('loginmsg').textContent='실패: '+error.message;return;}
+  $('step1').classList.add('hidden');$('step2').classList.remove('hidden');
+  $('loginmsg').textContent='메일함에서 6자리 코드를 확인하세요.';
+}
+async function verifyOtp(){
+  const email=$('email').value.trim(), token=$('otp').value.trim();
+  $('loginmsg').textContent='확인 중…';
+  const {error}=await sb.auth.verifyOtp({email,token,type:'email'});
+  if(error){$('loginmsg').textContent='실패: '+error.message;return;}
+}
+async function logout(){await sb.auth.signOut();location.reload();}
+
+sb.auth.onAuthStateChange(async (ev,session)=>{
+  if(session){ await boot(session); }
+});
+
+async function boot(session){
+  const {data:prof}=await sb.from('profiles').select('*').eq('user_id',session.user.id).single();
+  if(!prof){ $('loginmsg').textContent='계정에 역할이 없습니다. 관리자에게 문의.'; await sb.auth.signOut(); return; }
+  ROLE=prof.role;
+  $('who').textContent=(prof['이름']||'')+' · '+(ROLE==='admin'?'관리자':'조교');
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');
+  loadToday();
+}
+
+/* ── 오늘 ── */
+async function loadToday(){
+  const dow=DAYS[new Date().getDay()];
+  $('todaylabel').textContent='오늘 수업 — '+todayStr()+' ('+dow+')';
+  const {data:tt}=await sb.from('timetable').select('*').eq('요일',dow);
+  const box=$('todayclasses');
+  box.innerHTML='';
+  if(!tt||!tt.length){box.innerHTML='<div class="time">오늘 등록된 수업이 없습니다.</div>';}
+  (tt||[]).sort((a,b)=>(+a['시작'])-(+b['시작'])).forEach(r=>{
+    const d=document.createElement('div');d.className='todayclass';
+    d.innerHTML=`<div><b>${r['반']}</b> <span class="time">${r['시작']}시~${r['끝']}시 · ${r['담당']||''}</span></div><button class="key" style="padding:8px 14px">콘솔 열기</button>`;
+    d.querySelector('button').onclick=()=>{showView('console');selectClass(r['반']);};
+    box.appendChild(d);
+  });
+  loadSignals();
+}
+async function loadSignals(){
+  const since=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
+  const {data:logs}=await sb.from('daily_log').select('학생ID,이름,반,날짜,점수,이행률').gte('날짜',since);
+  const flags={};
+  (logs||[]).forEach(r=>{
+    const sc=parseFloat(r['점수']), ih=parseFloat(r['이행률']);
+    const why=[];
+    if(!isNaN(sc)&&sc<60)why.push(`리뷰 ${sc}점 (${r['날짜'].slice(5)})`);
+    if(!isNaN(ih)&&ih<50)why.push(`이행률 ${ih}% (${r['날짜'].slice(5)})`);
+    if(why.length){ (flags[r['학생ID']]=flags[r['학생ID']]||{name:r['이름'],cls:r['반'],why:[]}).why.push(...why); }
+  });
+  const box=$('signals');box.innerHTML='';
+  const ids=Object.keys(flags);
+  if(!ids.length){box.innerHTML='<div class="time">시그널 없음 — 깨끗합니다.</div>';return;}
+  ids.forEach(id=>{
+    const f=flags[id];
+    const d=document.createElement('div');d.className='signal';
+    d.innerHTML=`<div class="row"><div class="grow"><b>${f.name}</b> <span class="school">${f.cls}</span><div class="why">${f.why.slice(0,3).join(' · ')}</div></div><button>추가학습 부르기</button></div>`;
+    d.querySelector('button').onclick=async ev=>{
+      ev.target.disabled=true;
+      const {error}=await sb.from('clinic_roster').insert({'학생ID':id,'이름':f.name,'반':f.cls,'사유':f.why.slice(0,3).join(' · '),'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
+      if(error){toast('실패: '+error.message);ev.target.disabled=false;}
+      else{ev.target.textContent='지정됨 ✓';toast(f.name+' 추가학습 지정');}
+    };
+    box.appendChild(d);
+  });
+}
+
+/* ── 수업 콘솔 ── */
+async function initClassButtons(){
+  const {data:stu}=await sb.from('students').select('학년,반').eq('상태','재원');
+  const set=[...new Set((stu||[]).map(r=>(r['학년']||'')+(r['반']||'')))].sort();
+  const box=$('classbtns');box.innerHTML='';
+  set.forEach(c=>{
+    const b=document.createElement('button');b.textContent=c;b.dataset.cls=c;
+    b.onclick=()=>selectClass(c);
+    box.appendChild(b);
+  });
+}
+async function selectClass(cls){
+  CLS=cls;
+  document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
+  $('consolebody').classList.remove('hidden');
+  const today=todayStr();
+  const [{data:stu},{data:logs},{data:sess},{data:cl}]=await Promise.all([
+    sb.from('students').select('*').eq('상태','재원'),
+    sb.from('daily_log').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
+  ]);
+  STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+  LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
+  $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
+  if(cl&&cl[0]){$('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';$('c_test').value=cl[0]['테스트유형']||'';}
+  renderStudents();
+}
+function renderStudents(){
+  const box=$('students');box.innerHTML='';
+  STUDENTS.forEach(s=>{
+    const id=s['학생ID'], log=LOGMAP[id]||{};
+    const d=document.createElement('div');d.className='stu';d.dataset.id=id;
+    d.innerHTML=`
+      <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="savemark">저장됨 ✓</span></div>
+      <div class="seg" data-f="출결">
+        <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
+      </div>
+      <input class="absent hidden" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
+      <div class="minirow">
+        <div class="grow"><label class="lbl">리뷰 점수</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
+        <div class="grow"><label class="lbl">이행률 %</label><input data-f="이행률" inputmode="numeric" value="${log['이행률']||''}"></div>
+      </div>
+      <div class="minirow"><div class="grow"><label class="lbl">코멘트</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
+      <div class="minirow"><div class="grow"><label class="lbl">추가학습 사유 (입력 시 자동 지정)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div></div>`;
+    const seg=d.querySelector('.seg');
+    const cur=log['출결'];
+    seg.querySelectorAll('button').forEach((b,i)=>{
+      if(b.dataset.v===cur)b.classList.add('a'+(i+1));
+      b.onclick=()=>{
+        seg.querySelectorAll('button').forEach(x=>x.className='');
+        b.classList.add('a'+([...seg.children].indexOf(b)+1));
+        d.querySelector('.absent').classList.toggle('hidden',b.dataset.v!=='결석');
+        save(id,d);
+      };
+    });
+    if(cur==='결석')d.querySelector('.absent').classList.remove('hidden');
+    d.querySelectorAll('input,textarea').forEach(el=>{
+      el.addEventListener('change',()=>save(id,d));
+      el.addEventListener('blur',()=>save(id,d));
+    });
+    box.appendChild(d);
+  });
+}
+const debounce={};
+async function save(id,card){
+  clearTimeout(debounce[id]);
+  debounce[id]=setTimeout(async()=>{
+    const s=STUDENTS.find(x=>x['학생ID']===id);
+    const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
+    const att=card.querySelector('.seg button[class*=a]');
+    const score=get('점수');
+    const row={
+      '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
+      '출결':att?att.dataset.v:null,'결석사유':get('결석사유')||null,
+      '진도':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+      '테스트유형':score?($('c_test').value.trim()||null):null,
+      '테스트상태':score?'응시':null,'점수':score||null,'이행률':get('이행률')||null,
+      '코멘트':get('코멘트')||null,'추가학습사유':get('추가학습사유')||null,'소스':'수업콘솔',
+    };
+    const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
+    if(error){toast('저장 실패: '+error.message);return;}
+    const mark=card.querySelector('.savemark');mark.classList.add('show');setTimeout(()=>mark.classList.remove('show'),1200);
+    const reason=get('추가학습사유');
+    if(reason && !card.dataset.clinicDone){
+      card.dataset.clinicDone='1';
+      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
+      toast(s['이름']+' 추가학습 지정');
+    }
+  },400);
+}
+async function closeSession(){
+  if(!CLS)return;
+  const today=todayStr();
+  const present=[...document.querySelectorAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
+  const {error:e1}=await sb.from('class_log').upsert({
+    '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
+    '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+    '테스트유형':$('c_test').value.trim()||null,'인원':String(present),
+  },{onConflict:'반,날짜'});
+  const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
+  if(e1||e2){toast('마감 실패: '+(e1||e2).message);return;}
+  $('sessionstate').textContent='마감됨';
+  toast(CLS+' 마감 완료 — 수업로그·일지 적재됨');
+}
+
+/* ── 뷰 전환 ── */
+function showView(v){
+  $('view-today').classList.toggle('hidden',v!=='today');
+  $('view-console').classList.toggle('hidden',v!=='console');
+  $('nav-today').classList.toggle('on',v==='today');
+  $('nav-console').classList.toggle('on',v==='console');
+  $('viewtitle').textContent=v==='today'?'오늘':'수업 콘솔';
+  if(v==='console'&&!$('classbtns').children.length)initClassButtons();
+}
+</script>
+</body>
+</html>
