@@ -503,6 +503,29 @@ async function genComments(){
 async function closeSession(){
   if(!CLS)return;
   const today=todayStr();
+  // 테스트 반평균 이하 → 추가학습 자동 지정 (만점자 제외, 이미 지정된 학생 제외)
+  {
+    const cards=[...document.querySelectorAll('.stu')];
+    const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
+    if(scored.length>=2){
+      const avg=scored.reduce((a,x)=>a+x.v,0)/scored.length;
+      const full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
+      const tname=$('c_test').value||'테스트';
+      let m=0;
+      for(const {c,v} of scored){
+        if(v<=avg&&(!full||v<full)){
+          const rs=c.querySelector('[data-f="추가학습사유"]');
+          if(!rs.value.trim()){
+            rs.value=tname+' 반평균 이하 ('+v+'점/평균 '+avg.toFixed(1)+')';
+            rs.dispatchEvent(new Event('input'));
+            rs.dispatchEvent(new Event('change'));
+            m++;
+          }
+        }
+      }
+      if(m)toast('반평균 이하 '+m+'명 추가학습 자동 지정');
+    }
+  }
   const present=[...document.querySelectorAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
   const {error:e1}=await sb.from('class_log').upsert({
     '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
