@@ -119,7 +119,7 @@ textarea{min-height:44px;resize:vertical;}
           <div class="grow"><label class="lbl">이번 과제</label><input id="c_hw"></div>
         </div>
         <div class="minirow">
-          <div class="grow"><label class="lbl">테스트 유형</label><input id="c_test" placeholder="예: 리뷰테스트 5문항"></div>
+          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
           <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents()"></div>
         </div>
         <div class="minirow">
@@ -274,7 +274,7 @@ async function selectClass(cls){
     sb.from('daily_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
-    sb.from('class_log').select('날짜,이번과제').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
+    sb.from('class_log').select('날짜,진도원문,이번과제,테스트유형').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
     sb.from('daily_log').select('학생ID,날짜,점수,특이사항').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
@@ -287,7 +287,21 @@ async function selectClass(cls){
   NEXT=await nextClinic(cls);
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
-  if(cl&&cl[0]){$('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';$('c_test').value=cl[0]['테스트유형']||'';}
+  const setTest=v=>{
+    const sel=$('c_test');
+    if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o);}
+    sel.value=v||'';
+  };
+  if(cl&&cl[0]){
+    $('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';setTest(cl[0]['테스트유형']);
+  }else if(prev&&prev[0]){
+    // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
+    $('c_progress').value=prev[0]['진도원문']||'';
+    $('c_hw').value=prev[0]['이번과제']||'';
+    setTest(prev[0]['테스트유형']);
+  }else{
+    $('c_progress').value='';$('c_hw').value='';setTest('');
+  }
   renderStudents();
 }
 function allPresent(){
