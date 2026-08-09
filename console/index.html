@@ -237,7 +237,7 @@ async function initClassButtons(){
     box.appendChild(b);
   });
 }
-let PREVHW='', RECENT={};
+let PREVHW='', RECENT={}, NOTES={};
 async function selectClass(cls){
   CLS=cls;
   document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
@@ -250,11 +250,14 @@ async function selectClass(cls){
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('날짜,이번과제').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
-    sb.from('daily_log').select('학생ID,날짜,점수').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
+    sb.from('daily_log').select('학생ID,날짜,점수,특이사항').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
-  RECENT={};(hist||[]).forEach(r=>{if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);});
+  RECENT={};NOTES={};(hist||[]).forEach(r=>{
+    if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);
+    if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
+  });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
@@ -283,8 +286,10 @@ function renderStudents(){
           return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
         }).join('')+'<div class="sum" data-f="합계">'+(log['점수']||'—')+'</div></div>';
     }
+    const notes=(NOTES[id]||[]).slice(0,2);
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
+      ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
       <div class="seg" data-f="출결">
         <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
       </div>
@@ -359,6 +364,21 @@ async function save(id,card){
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){toast('저장 실패: '+error.message);return;}
     const mark=card.querySelector('.savemark');mark.classList.add('show');setTimeout(()=>mark.classList.remove('show'),1200);
+    // 틀린 문항 → 오답 이벤트 적재 (0점=오답, 1점=부분)
+    if(itemStr){
+      const ref='리뷰:'+CLS+':'+todayStr();
+      await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
+      const ev=itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1').map(b=>({
+        '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
+        '유형':$('c_test').value.trim()||null,'결과':b.dataset.s==='0'?'오답':'부분','참조':ref}));
+      if(ev.length)await sb.from('events').insert(ev);
+    }
+    // 결석 → 보강 대기 자동 등록
+    if(att&&att.dataset.v==='결석'&&!card.dataset.absentDone){
+      card.dataset.absentDone='1';
+      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+todayStr()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
+      toast(s['이름']+' 보강 대기 등록');
+    }
     const reason=get('추가학습사유');
     if(reason && !card.dataset.clinicDone){
       card.dataset.clinicDone='1';
