@@ -67,6 +67,21 @@ textarea{min-height:44px;resize:vertical;}
 .clinicrow>div{min-width:0;}
 .clinicrow input{min-width:0;max-width:100%;}
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;height:44px;background:#fff;}
+/* ── 데스크탑: 시트형 표 ── */
+@media(min-width:900px){ main{max-width:1560px;} body{padding-bottom:60px;} }
+table.grid{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
+.grid th{font-size:12px;color:var(--sub);font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;background:#faf7f5;}
+.grid td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top;}
+tr.stu{border:none;padding:0;margin:0;}
+.grid input,.grid textarea{padding:8px;font-size:13px;}
+.grid .seg{gap:4px;}
+.grid .seg button{flex:none;padding:8px 9px;font-size:12px;}
+.grid .items{gap:4px;margin-top:0;}
+.grid .items button{flex:none;width:30px;padding:8px 0;font-size:12px;}
+.grid textarea{min-height:36px;min-width:200px;}
+.grid input[type=date]{height:36px;}
+.namecell{white-space:nowrap;}
+.grid .savemark{float:none;margin-left:6px;}
 </style>
 </head>
 <body>
@@ -320,30 +335,96 @@ function allPresent(){
     if(!d.querySelector('.seg button[class*=a]')) b.click();
   });
 }
+function itemBtnsHtml(log,nq){
+  const itemVals=(log['문항점수']||'').split(',').map(v=>v.trim());
+  return Array.from({length:nq},(_,i)=>{
+    const v=itemVals[i]!==undefined&&itemVals[i]!==''?itemVals[i]:'';
+    return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
+  }).join('');
+}
+function wireRow(d,id){
+  const seg=d.querySelector('.seg');
+  seg.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{
+      seg.querySelectorAll('button').forEach(x=>x.className='');
+      b.classList.add('a'+([...seg.children].indexOf(b)+1));
+      const ab=d.querySelector('.absent.togglable');
+      if(ab)ab.classList.toggle('hidden',b.dataset.v!=='결석');
+      save(id,d);
+    };
+  });
+  d.querySelectorAll('.items button').forEach(b=>{
+    b.onclick=()=>{
+      const cur=b.dataset.s;
+      const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
+      b.dataset.s=next;b.className='s'+next;
+      const vals=[...d.querySelectorAll('.items button')].map(x=>x.dataset.s);
+      const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
+      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent=sum;
+      d.querySelector('[data-f="점수"]').value=sum;
+      save(id,d);
+    };
+  });
+  const rs=d.querySelector('[data-f="추가학습사유"]');
+  rs.addEventListener('input',()=>{
+    if(rs.value.trim()&&NEXT){
+      const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
+      if(!dd.value)dd.value=NEXT.date;
+      if(!tm.value&&NEXT.time)tm.value=NEXT.time;
+    }
+  });
+  d.querySelectorAll('input,textarea').forEach(el=>{
+    el.addEventListener('change',()=>save(id,d));
+    el.addEventListener('blur',()=>save(id,d));
+  });
+}
 function renderStudents(){
   const box=$('students');box.innerHTML='';
   const nq=Math.max(0,Math.min(10,parseInt($('c_nq').value)||0));
+  if(window.matchMedia('(min-width:900px)').matches)renderTable(box,nq);
+  else renderCards(box,nq);
+}
+function renderTable(box,nq){
+  const wrap=document.createElement('div');
+  wrap.className='card';wrap.style.overflowX='auto';wrap.style.padding='0';
+  const t=document.createElement('table');t.className='grid';
+  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  STUDENTS.forEach(s=>{
+    const id=s['학생ID'],log=LOGMAP[id]||{};
+    const cur=log['출결'];
+    const recent=(RECENT[id]||[]).slice(0,3).join('·');
+    const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
+    const tr=document.createElement('tr');tr.className='stu';tr.dataset.id=id;
+    tr.innerHTML=`
+      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}</td>
+      <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
+      <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
+      ${nq?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
+      <td><input data-f="점수" style="width:56px" value="${log['점수']||''}"></td>
+      <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
+      <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
+      <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
+      <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
+      <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
+      <td><input data-f="추가학습시간" style="width:60px" placeholder="14-16" value="${log['추가학습시간']||''}"></td>`;
+    tb.appendChild(tr);wireRow(tr,id);
+  });
+  t.appendChild(tb);wrap.appendChild(t);box.appendChild(wrap);
+}
+function renderCards(box,nq){
   STUDENTS.forEach(s=>{
     const id=s['학생ID'], log=LOGMAP[id]||{};
     const d=document.createElement('div');d.className='stu';d.dataset.id=id;
+    const cur=log['출결'];
     const recent=(RECENT[id]||[]).slice(0,3).join(' · ');
-    const itemVals=(log['문항점수']||'').split(',').map(v=>v.trim());
-    let itemsHtml='';
-    if(nq>0){
-      itemsHtml='<div class="items" data-f="문항채점">'+
-        Array.from({length:nq},(_,i)=>{
-          const v=itemVals[i]!==undefined&&itemVals[i]!==''?itemVals[i]:'';
-          return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
-        }).join('')+'<div class="sum" data-f="합계">'+(log['점수']||'—')+'</div></div>';
-    }
     const notes=(NOTES[id]||[]).slice(0,2);
+    const itemsHtml=nq>0?'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(log['점수']||'—')+'</div></div>':'';
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
-      <div class="seg" data-f="출결">
-        <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
-      </div>
-      <input class="absent hidden" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
+      <div class="seg" data-f="출결">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div>
+      <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
       <div class="minirow">
         <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
@@ -356,45 +437,11 @@ function renderStudents(){
         <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
         <div style="flex:1 1 30%;min-width:0"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
       </div>`;
-    const rs=d.querySelector('[data-f="추가학습사유"]');
-    rs.addEventListener('input',()=>{
-      if(rs.value.trim()&&NEXT){
-        const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
-        if(!dd.value)dd.value=NEXT.date;
-        if(!tm.value&&NEXT.time)tm.value=NEXT.time;
-      }
-    });
-    d.querySelectorAll('.items button').forEach(b=>{
-      b.onclick=()=>{
-        const cur=b.dataset.s;
-        const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
-        b.dataset.s=next;b.className='s'+next;
-        const vals=[...d.querySelectorAll('.items button')].map(x=>x.dataset.s);
-        const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
-        d.querySelector('.items .sum').textContent=sum;
-        d.querySelector('[data-f="점수"]').value=sum;
-        save(id,d);
-      };
-    });
-    const seg=d.querySelector('.seg');
-    const cur=log['출결'];
-    seg.querySelectorAll('button').forEach((b,i)=>{
-      if(b.dataset.v===cur)b.classList.add('a'+(i+1));
-      b.onclick=()=>{
-        seg.querySelectorAll('button').forEach(x=>x.className='');
-        b.classList.add('a'+([...seg.children].indexOf(b)+1));
-        d.querySelector('.absent').classList.toggle('hidden',b.dataset.v!=='결석');
-        save(id,d);
-      };
-    });
-    if(cur==='결석')d.querySelector('.absent').classList.remove('hidden');
-    d.querySelectorAll('input,textarea').forEach(el=>{
-      el.addEventListener('change',()=>save(id,d));
-      el.addEventListener('blur',()=>save(id,d));
-    });
+    wireRow(d,id);
     box.appendChild(d);
   });
 }
+
 const debounce={};
 async function save(id,card){
   clearTimeout(debounce[id]);
@@ -570,6 +617,13 @@ async function resetToday(){
   toast(CLS+' 오늘 입력 리셋 완료');
   selectClass(CLS);
 }
+
+/* 화면 폭이 카드↔표 경계를 넘으면 다시 그림 */
+let lastWide=window.matchMedia('(min-width:900px)').matches;
+window.addEventListener('resize',()=>{
+  const w=window.matchMedia('(min-width:900px)').matches;
+  if(w!==lastWide){lastWide=w;if(CLS)renderStudents();}
+});
 
 /* ── 뷰 전환 ── */
 function showView(v){
