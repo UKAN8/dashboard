@@ -136,6 +136,9 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
       <div class="footbar">
         <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
       </div>
+      <div class="footbar" style="bottom:auto;position:static;margin-top:8px">
+        <button class="ghost" style="color:var(--bad);border-color:var(--bad)" onclick="resetToday()">오늘 입력 전체 리셋</button>
+      </div>
     </div>
   </section>
 
@@ -536,6 +539,22 @@ async function closeSession(){
   if(e1||e2){toast('마감 실패: '+(e1||e2).message);return;}
   $('sessionstate').textContent='마감됨';
   toast(CLS+' 마감 완료 — 수업로그·일지 적재됨');
+}
+
+/* 오늘 이 반의 입력 전체 삭제 (오입력·테스트 정리용) */
+async function resetToday(){
+  if(!CLS)return;
+  const today=todayStr();
+  if(!confirm(CLS+' 오늘('+today+') 입력을 전부 지웁니다.\n일지·추가학습 지정·오답 이벤트·마감 기록 포함. 계속?'))return;
+  if(!confirm('정말 삭제할까요? 되돌릴 수 없습니다.'))return;
+  const ids=STUDENTS.map(s=>s['학생ID']);
+  await sb.from('events').delete().eq('참조','리뷰:'+CLS+':'+today);
+  await sb.from('clinic_roster').delete().eq('지정일',today).in('학생ID',ids);
+  await sb.from('daily_log').delete().eq('반',CLS).eq('날짜',today);
+  await sb.from('class_log').delete().eq('반',CLS).eq('날짜',today);
+  await sb.from('class_sessions').delete().eq('반',CLS).eq('날짜',today);
+  toast(CLS+' 오늘 입력 리셋 완료');
+  selectClass(CLS);
 }
 
 /* ── 뷰 전환 ── */
