@@ -335,7 +335,7 @@ function renderStudents(){
       <div class="seg" data-f="출결">
         <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
       </div>
-      <div class="minirow"><div class="grow"><label class="lbl">결석·지각 사유</label><input class="absent" data-f="결석사유" placeholder="예: 학교 행사" value="${log['결석사유']||''}"></div></div>
+      <input class="absent hidden" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
       <div class="minirow">
         <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
@@ -375,6 +375,7 @@ function renderStudents(){
       b.onclick=()=>{
         seg.querySelectorAll('button').forEach(x=>x.className='');
         b.classList.add('a'+([...seg.children].indexOf(b)+1));
+        d.querySelector('.absent').classList.toggle('hidden',b.dataset.v!=='결석');
         save(id,d);
       };
     });
