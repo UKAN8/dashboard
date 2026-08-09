@@ -64,7 +64,9 @@ textarea{min-height:44px;resize:vertical;}
 .items .sum{flex:0 0 62px;text-align:center;font-weight:800;font-size:16px;color:var(--key-d);}
 .recent{font-size:11px;color:var(--sub);margin-left:8px;}
 .clinicrow{flex-wrap:wrap;}
-.clinicrow input{min-width:0;}
+.clinicrow>div{min-width:0;}
+.clinicrow input{min-width:0;max-width:100%;}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;height:44px;background:#fff;}
 </style>
 </head>
 <body>
@@ -333,7 +335,7 @@ function renderStudents(){
       <div class="seg" data-f="출결">
         <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
       </div>
-      <input class="absent hidden" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
+      <div class="minirow"><div class="grow"><label class="lbl">결석·지각 사유</label><input class="absent" data-f="결석사유" placeholder="예: 학교 행사" value="${log['결석사유']||''}"></div></div>
       ${itemsHtml}
       <div class="minirow">
         <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
@@ -343,8 +345,8 @@ function renderStudents(){
       <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
       <div class="minirow clinicrow">
         <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
-        <div style="flex:1 1 140px"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
-        <div style="flex:1 1 90px"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
+        <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
+        <div style="flex:1 1 30%;min-width:0"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
       </div>`;
     const rs=d.querySelector('[data-f="추가학습사유"]');
     rs.addEventListener('input',()=>{
@@ -373,11 +375,9 @@ function renderStudents(){
       b.onclick=()=>{
         seg.querySelectorAll('button').forEach(x=>x.className='');
         b.classList.add('a'+([...seg.children].indexOf(b)+1));
-        d.querySelector('.absent').classList.toggle('hidden',b.dataset.v!=='결석');
         save(id,d);
       };
     });
-    if(cur==='결석')d.querySelector('.absent').classList.remove('hidden');
     d.querySelectorAll('input,textarea').forEach(el=>{
       el.addEventListener('change',()=>save(id,d));
       el.addEventListener('blur',()=>save(id,d));
