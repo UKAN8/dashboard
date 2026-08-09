@@ -115,10 +115,10 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
     <div id="consolebody" class="hidden">
       <div class="card">
         <h2>수업 정보 <span class="badge" id="sessionstate"></span></h2>
-        <label class="lbl">진도</label>
-        <input id="c_progress" placeholder="예: OPT:02 함수의 극한 THEME 3">
+        <label class="lbl">진도 (엔터로 여러 줄)</label>
+        <textarea id="c_progress" rows="2" placeholder="예: OPT:04 도형의 이동 파트2&#10;OPT:05 집합의 뜻 파트1" oninput="autoGrow(this)"></textarea>
         <div class="minirow">
-          <div class="grow"><label class="lbl">이번 과제</label><input id="c_hw"></div>
+          <div class="grow"><label class="lbl">이번 과제 (엔터로 여러 줄)</label><textarea id="c_hw" rows="2" oninput="autoGrow(this)"></textarea></div>
         </div>
         <div class="minirow">
           <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
@@ -153,6 +153,7 @@ const DAYS=['일','월','화','수','목','금','토'];
 const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
 
+function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
 
 /* ── 로그인 ── */
@@ -304,6 +305,7 @@ async function selectClass(cls){
   }else{
     $('c_progress').value='';$('c_hw').value='';setTest('');
   }
+  autoGrow($('c_progress'));autoGrow($('c_hw'));
   renderStudents();
 }
 function allPresent(){
