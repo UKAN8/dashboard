@@ -63,6 +63,8 @@ textarea{min-height:44px;resize:vertical;}
 .items button.s2{background:var(--ok);color:#fff;} .items button.s1{background:var(--warn);color:#fff;} .items button.s0{background:var(--bad);color:#fff;}
 .items .sum{flex:0 0 62px;text-align:center;font-weight:800;font-size:16px;color:var(--key-d);}
 .recent{font-size:11px;color:var(--sub);margin-left:8px;}
+.clinicrow{flex-wrap:wrap;}
+.clinicrow input{min-width:0;}
 </style>
 </head>
 <body>
@@ -218,7 +220,8 @@ async function loadSignals(){
     d.innerHTML=`<div class="row"><div class="grow"><b>${f.name}</b> <span class="school">${f.cls}</span><div class="why">${f.why.slice(0,3).join(' · ')}</div></div><button>추가학습 부르기</button></div>`;
     d.querySelector('button').onclick=async ev=>{
       ev.target.disabled=true;
-      const {error}=await sb.from('clinic_roster').insert({'학생ID':id,'이름':f.name,'반':f.cls,'사유':f.why.slice(0,3).join(' · '),'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
+      const nx=await nextClinic(f.cls);
+      const {error}=await sb.from('clinic_roster').insert({'학생ID':id,'이름':f.name,'반':f.cls,'사유':f.why.slice(0,3).join(' · '),'날짜':nx?nx.date:null,'시간':nx?nx.time:null,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
       if(error){toast('실패: '+error.message);ev.target.disabled=false;}
       else{ev.target.textContent='지정됨 ✓';toast(f.name+' 추가학습 지정');}
     };
@@ -237,7 +240,29 @@ async function initClassButtons(){
     box.appendChild(b);
   });
 }
-let PREVHW='', RECENT={}, NOTES={};
+let PREVHW='', RECENT={}, NOTES={}, NEXT=null;
+const TTCACHE={};
+/* 다음 수업일 + 반별 추가학습 기본 시간 규칙 */
+async function nextClinic(cls){
+  if(!(cls in TTCACHE)){
+    const {data}=await sb.from('timetable').select('요일').eq('반',cls);
+    TTCACHE[cls]=new Set((data||[]).map(r=>r['요일']));
+  }
+  const dows=TTCACHE[cls];
+  if(!dows.size)return null;
+  for(let i=1;i<=14;i++){
+    const d=new Date(Date.now()+i*864e5), dw=DAYS[d.getDay()];
+    if(dows.has(dw)){
+      const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      let time='';
+      if(cls==='고1A'||cls==='고1S')time='16-18';
+      else if(cls==='고2A')time=dw==='토'?'14-16':'16-18';
+      else if(cls==='고1T')time=dw==='토'?'12-15':dw==='일'?'15-18':'';
+      return {date,dow:dw,time};
+    }
+  }
+  return null;
+}
 async function selectClass(cls){
   CLS=cls;
   document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
@@ -259,6 +284,7 @@ async function selectClass(cls){
     if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
+  NEXT=await nextClinic(cls);
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
   if(cl&&cl[0]){$('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';$('c_test').value=cl[0]['테스트유형']||'';}
@@ -301,11 +327,19 @@ function renderStudents(){
       </div>
       <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
       <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">추가학습 사유 (입력 시 자동 지정)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
-        <div style="flex:0 0 110px"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
-        <div style="flex:0 0 76px"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
+      <div class="minirow clinicrow">
+        <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
+        <div style="flex:1 1 140px"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
+        <div style="flex:1 1 90px"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
       </div>`;
+    const rs=d.querySelector('[data-f="추가학습사유"]');
+    rs.addEventListener('input',()=>{
+      if(rs.value.trim()&&NEXT){
+        const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
+        if(!dd.value)dd.value=NEXT.date;
+        if(!tm.value&&NEXT.time)tm.value=NEXT.time;
+      }
+    });
     d.querySelectorAll('.items button').forEach(b=>{
       b.onclick=()=>{
         const cur=b.dataset.s;
