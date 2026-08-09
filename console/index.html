@@ -379,6 +379,7 @@ function renderStudents(){
         save(id,d);
       };
     });
+    if(cur==='결석')d.querySelector('.absent').classList.remove('hidden');
     d.querySelectorAll('input,textarea').forEach(el=>{
       el.addEventListener('change',()=>save(id,d));
       el.addEventListener('blur',()=>save(id,d));
