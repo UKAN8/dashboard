@@ -264,7 +264,7 @@ async function initClassButtons(){
     box.appendChild(b);
   });
 }
-let PREVHW='', RECENT={}, NOTES={}, NEXT=null;
+let PREVHW='', PREVHW_MAP={}, RECENT={}, NOTES={}, NEXT=null;
 const TTCACHE={};
 /* 다음 수업일 + 반별 추가학습 기본 시간 규칙 */
 async function nextClinic(cls){
@@ -299,13 +299,14 @@ async function selectClass(cls){
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('날짜,진도원문,이번과제,테스트유형').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
-    sb.from('daily_log').select('학생ID,날짜,점수,특이사항').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
+    sb.from('daily_log').select('학생ID,날짜,점수,특이사항,이번과제').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
-  RECENT={};NOTES={};(hist||[]).forEach(r=>{
+  RECENT={};NOTES={};PREVHW_MAP={};(hist||[]).forEach(r=>{
     if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);
     if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
+    if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP))PREVHW_MAP[r['학생ID']]=r['이번과제'];
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   NEXT=await nextClinic(cls);
@@ -336,7 +337,12 @@ function allPresent(){
   });
 }
 function itemBtnsHtml(log,nq){
-  const itemVals=(log['문항점수']||'').split(',').map(v=>v.trim());
+  // "2,1,0" 또는 구형 "1:2;2:1;3:0" 둘 다 지원
+  const raw=log['문항점수']||'';
+  let itemVals=[];
+  if(raw.includes(':')){
+    raw.split(';').forEach(p=>{const[a,b]=p.split(':');if(a&&b!==undefined)itemVals[parseInt(a)-1]=b.trim();});
+  }else itemVals=raw.split(',').map(v=>v.trim());
   return Array.from({length:nq},(_,i)=>{
     const v=itemVals[i]!==undefined&&itemVals[i]!==''?itemVals[i]:'';
     return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
@@ -388,7 +394,7 @@ function renderTable(box,nq){
   const wrap=document.createElement('div');
   wrap.className='card';wrap.style.overflowX='auto';wrap.style.padding='0';
   const t=document.createElement('table');t.className='grid';
-  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -405,6 +411,7 @@ function renderTable(box,nq){
       <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
       <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
+      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제']!==$('c_hw').value.trim())?log['이번과제']:''}</textarea></td>
       <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
       <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
       <td><input data-f="추가학습시간" style="width:60px" placeholder="14-16" value="${log['추가학습시간']||''}"></td>`;
@@ -432,6 +439,7 @@ function renderCards(box,nq){
       </div>
       <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
       <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
+      <div class="minirow"><div class="grow"><label class="lbl">개별 과제 (비우면 반 공통 과제)</label><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)">${(log['이번과제']&&log['이번과제']!==$('c_hw').value.trim())?log['이번과제']:''}</textarea></div></div>
       <div class="minirow clinicrow">
         <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
         <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
@@ -455,8 +463,9 @@ async function save(id,card){
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
       '출결':att?att.dataset.v:null,'결석사유':get('결석사유')||null,
-      '진도':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
-      '지난과제':PREVHW||null,
+      '진도':$('c_progress').value.trim()||null,
+      '이번과제':(get('개별과제')||$('c_hw').value.trim())||null,
+      '지난과제':(PREVHW_MAP[id]||PREVHW)||null,
       '테스트유형':score?($('c_test').value.trim()||null):null,
       '테스트상태':score?'응시':null,'점수':score||null,
       '문항점수':itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null,
