@@ -470,18 +470,32 @@ async function genComments(){
     if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
     const score=parseFloat(card.querySelector('[data-f="점수"]').value);
     if(!isNaN(score)){
-      const wrong=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').map(b=>+b.dataset.i+1);
+      const wrongCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
+      const partCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='1').length;
       const rec=(RECENT[id]||[]).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+      // 반평균 (오늘 입력된 점수 기준)
+      const allScores=[...document.querySelectorAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+      const avg=allScores.length>=2?allScores.reduce((a,b)=>a+b,0)/allScores.length:null;
       let t;
-      if(full&&score>=full)t=tname+' 만점으로 잘 마무리했습니다.';
-      else{
-        t=tname+' '+score+(full?'/'+full:'')+'점'+(wrong.length?' ('+wrong.join('·')+'번 오답)':'')+'입니다.';
-        if(wrong.length)t+=' 틀린 유형은 복습 자료로 보완하겠습니다.';
+      if(full&&score>=full){
+        t='오늘 '+tname+'는 만점입니다. 현재 진도의 개념이 탄탄하게 잡혀 있습니다.';
+      }else{
+        const miss=[];
+        if(wrongCnt)miss.push(wrongCnt+'문항 오답');
+        if(partCnt)miss.push(partCnt+'문항 부분감점');
+        t='오늘 '+tname+'는 '+(nq?nq+'문항 중 '+(miss.join('·')||'감점')
+          :score+'점');
+        if(avg!==null){
+          if(score>avg+0.5)t+='으로, 반평균보다 좋은 결과입니다.';
+          else if(score<avg-0.5)t+='으로, 반평균에 조금 못 미쳤습니다.';
+          else t+='으로, 반평균 수준입니다.';
+        }else t+='입니다.';
+        if(wrongCnt)t+=' 틀린 유형은 복습 자료로 잡아 다음 테스트에서 다시 확인하겠습니다.';
       }
       if(rec.length>=2){
-        const avg=rec.slice(0,3).reduce((a,b)=>a+b,0)/Math.min(rec.length,3);
-        if(score>avg+0.5)t+=' 최근 흐름보다 좋아진 결과입니다.';
-        else if(score<avg-1.5)t+=' 최근 평균 대비 아쉬운 결과라 원인을 점검하겠습니다.';
+        const ravg=rec.slice(0,3).reduce((a,b)=>a+b,0)/Math.min(rec.length,3);
+        if(score>ravg+0.5)t+=' 최근 흐름보다 좋아지고 있습니다.';
+        else if(score<ravg-1.5)t+=' 최근 흐름 대비 아쉬워 원인을 점검하겠습니다.';
       }
       parts.push(t);
     }
