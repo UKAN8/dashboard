@@ -57,6 +57,12 @@ nav button.on{color:var(--key);font-weight:700;}
 .toast.show{opacity:.94;}
 textarea{min-height:44px;resize:vertical;}
 .badge{font-size:11px;border-radius:99px;padding:3px 8px;background:#f6e7e7;color:var(--key-d);font-weight:700;}
+.prevhw{font-size:14px;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--ink);white-space:pre-wrap;}
+.items{display:flex;gap:5px;margin-top:8px;align-items:center;}
+.items button{flex:1;padding:10px 0;font-size:14px;font-weight:700;background:#f6f0ec;color:var(--sub);}
+.items button.s2{background:var(--ok);color:#fff;} .items button.s1{background:var(--warn);color:#fff;} .items button.s0{background:var(--bad);color:#fff;}
+.items .sum{flex:0 0 62px;text-align:center;font-weight:800;font-size:16px;color:var(--key-d);}
+.recent{font-size:11px;color:var(--sub);margin-left:8px;}
 </style>
 </head>
 <body>
@@ -112,7 +118,12 @@ textarea{min-height:44px;resize:vertical;}
         </div>
         <div class="minirow">
           <div class="grow"><label class="lbl">테스트 유형</label><input id="c_test" placeholder="예: 리뷰테스트 5문항"></div>
+          <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents()"></div>
         </div>
+        <div class="minirow">
+          <div class="grow"><label class="lbl">지난 과제 (직전 수업에서 자동 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div>
+        </div>
+        <div class="minirow"><button class="ghost" style="flex:1" onclick="allPresent()">전원 출석</button></div>
       </div>
       <div id="students"></div>
       <div class="footbar">
@@ -226,40 +237,82 @@ async function initClassButtons(){
     box.appendChild(b);
   });
 }
+let PREVHW='', RECENT={};
 async function selectClass(cls){
   CLS=cls;
   document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
   $('consolebody').classList.remove('hidden');
   const today=todayStr();
-  const [{data:stu},{data:logs},{data:sess},{data:cl}]=await Promise.all([
+  const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+  const [{data:stu},{data:logs},{data:sess},{data:cl},{data:prev},{data:hist}]=await Promise.all([
     sb.from('students').select('*').eq('상태','재원'),
     sb.from('daily_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_log').select('날짜,이번과제').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
+    sb.from('daily_log').select('학생ID,날짜,점수').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
+  RECENT={};(hist||[]).forEach(r=>{if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);});
+  PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
+  $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
   if(cl&&cl[0]){$('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';$('c_test').value=cl[0]['테스트유형']||'';}
   renderStudents();
 }
+function allPresent(){
+  document.querySelectorAll('.stu').forEach(d=>{
+    const b=d.querySelector('.seg button[data-v="출석"]');
+    if(!d.querySelector('.seg button[class*=a]')) b.click();
+  });
+}
 function renderStudents(){
   const box=$('students');box.innerHTML='';
+  const nq=Math.max(0,Math.min(10,parseInt($('c_nq').value)||0));
   STUDENTS.forEach(s=>{
     const id=s['학생ID'], log=LOGMAP[id]||{};
     const d=document.createElement('div');d.className='stu';d.dataset.id=id;
+    const recent=(RECENT[id]||[]).slice(0,3).join(' · ');
+    const itemVals=(log['문항점수']||'').split(',').map(v=>v.trim());
+    let itemsHtml='';
+    if(nq>0){
+      itemsHtml='<div class="items" data-f="문항채점">'+
+        Array.from({length:nq},(_,i)=>{
+          const v=itemVals[i]!==undefined&&itemVals[i]!==''?itemVals[i]:'';
+          return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
+        }).join('')+'<div class="sum" data-f="합계">'+(log['점수']||'—')+'</div></div>';
+    }
     d.innerHTML=`
-      <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="savemark">저장됨 ✓</span></div>
+      <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       <div class="seg" data-f="출결">
         <button data-v="출석">출석</button><button data-v="지각">지각</button><button data-v="결석">결석</button>
       </div>
       <input class="absent hidden" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
+      ${itemsHtml}
       <div class="minirow">
-        <div class="grow"><label class="lbl">리뷰 점수</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
+        <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
         <div class="grow"><label class="lbl">이행률 %</label><input data-f="이행률" inputmode="numeric" value="${log['이행률']||''}"></div>
       </div>
-      <div class="minirow"><div class="grow"><label class="lbl">코멘트</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
-      <div class="minirow"><div class="grow"><label class="lbl">추가학습 사유 (입력 시 자동 지정)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div></div>`;
+      <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
+      <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
+      <div class="minirow">
+        <div class="grow"><label class="lbl">추가학습 사유 (입력 시 자동 지정)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
+        <div style="flex:0 0 110px"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
+        <div style="flex:0 0 76px"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
+      </div>`;
+    d.querySelectorAll('.items button').forEach(b=>{
+      b.onclick=()=>{
+        const cur=b.dataset.s;
+        const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
+        b.dataset.s=next;b.className='s'+next;
+        const vals=[...d.querySelectorAll('.items button')].map(x=>x.dataset.s);
+        const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
+        d.querySelector('.items .sum').textContent=sum;
+        d.querySelector('[data-f="점수"]').value=sum;
+        save(id,d);
+      };
+    });
     const seg=d.querySelector('.seg');
     const cur=log['출결'];
     seg.querySelectorAll('button').forEach((b,i)=>{
@@ -287,13 +340,21 @@ async function save(id,card){
     const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
     const att=card.querySelector('.seg button[class*=a]');
     const score=get('점수');
+    const itemBtns=[...card.querySelectorAll('.items button')];
+    const itemStr=itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null;
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
       '출결':att?att.dataset.v:null,'결석사유':get('결석사유')||null,
       '진도':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+      '지난과제':PREVHW||null,
       '테스트유형':score?($('c_test').value.trim()||null):null,
-      '테스트상태':score?'응시':null,'점수':score||null,'이행률':get('이행률')||null,
-      '코멘트':get('코멘트')||null,'추가학습사유':get('추가학습사유')||null,'소스':'수업콘솔',
+      '테스트상태':score?'응시':null,'점수':score||null,
+      '문항점수':itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null,
+      '이행률':get('이행률')||null,
+      '코멘트':get('코멘트')||null,'특이사항':get('특이사항')||null,
+      '추가학습사유':get('추가학습사유')||null,
+      '추가학습날짜':get('추가학습날짜')||null,'추가학습시간':get('추가학습시간')||null,
+      '소스':'수업콘솔',
     };
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){toast('저장 실패: '+error.message);return;}
@@ -301,7 +362,7 @@ async function save(id,card){
     const reason=get('추가학습사유');
     if(reason && !card.dataset.clinicDone){
       card.dataset.clinicDone='1';
-      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
+      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':get('추가학습날짜')||null,'시간':get('추가학습시간')||null,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
       toast(s['이름']+' 추가학습 지정');
     }
   },400);
@@ -313,7 +374,7 @@ async function closeSession(){
   const {error:e1}=await sb.from('class_log').upsert({
     '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
     '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
-    '테스트유형':$('c_test').value.trim()||null,'인원':String(present),
+    '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,'인원':String(present),
   },{onConflict:'반,날짜'});
   const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
   if(e1||e2){toast('마감 실패: '+(e1||e2).message);return;}
