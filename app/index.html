@@ -119,12 +119,11 @@ details.rp-imgs summary{cursor:pointer;list-style:none;color:var(--acc);font-siz
 details.rp-imgs summary::-webkit-details-marker{display:none}
 details.rp-imgs summary:before{content:'▸ ';}
 details.rp-imgs[open] summary:before{content:'▾ ';}
-.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;color:var(--dim);font-size:12px}
-.thumb{display:block;width:88px;text-align:center;color:var(--tx2);font-size:11px}
-.thumb img{width:88px;height:120px;object-fit:cover;object-position:top;border-radius:7px;
- border:1px solid var(--bd);display:block;margin-bottom:4px;background:#15151c}
-.thumb.none{opacity:.5} .thumb.none small{display:block}
-@media (hover:hover) and (pointer:fine){.thumb:hover img{border-color:var(--acc)}}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;color:var(--dim);font-size:12px}
+.rp-lnk{display:inline-block;padding:4px 10px;border-radius:9px;font-size:12px;
+ border:1px solid var(--bd);background:rgba(245,160,160,.08);color:#ffd9d9}
+.rp-lnk.none{opacity:.4;background:none}
+@media (hover:hover) and (pointer:fine){.rp-lnk:hover{border-color:var(--acc);background:rgba(245,160,160,.18)}}
 </style></head><body>
 
 <div id="login">
@@ -836,10 +835,12 @@ async function loadReportImages(el) {
       + ' — Storage 읽기 정책이 없으면 이렇게 나온다(README 참고)</span>';
     return;
   }
+  // 썸네일은 쓰지 않는다. 리포트는 2430×4800 세로 이미지에 배경이 검정이라
+  // 88px 로 줄이면 새까만 사각형이 된다(0811 실측). 이름을 눌러 원본을 여는 게 목적에 맞다
+  // — 카톡으로 보낼 장을 고르는 화면이다.
   const items = data.map((d, i) => d.signedUrl
-    ? `<a class="thumb" href="${d.signedUrl}" target="_blank" rel="noopener">`
-      + `<img loading="lazy" src="${d.signedUrl}" alt="${E(names[i])}"><span>${E(names[i])}</span></a>`
-    : `<span class="thumb none">${E(names[i])}<small>없음</small></span>`);
+    ? `<a class="rp-lnk" href="${d.signedUrl}" target="_blank" rel="noopener">${E(names[i])}</a>`
+    : `<span class="rp-lnk none">${E(names[i])}</span>`);
   box.innerHTML = items.join('') || '<span class="dim">렌더된 이미지 없음</span>';
 }
 
