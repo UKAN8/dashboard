@@ -113,6 +113,18 @@ nav a.on{background:rgba(245,160,160,.14);color:#ffd9d9;font-weight:700}
 @media (hover:hover) and (pointer:fine){#state button:hover{color:var(--acc);border-color:var(--acc)}}
 #boot{color:var(--dim);padding:30px 2px}
 .warn{color:var(--bad);font-size:12px}
+/* 리포트 이미지 갤러리 (DB 직결판에만 있는 기능) */
+details.rp-imgs{margin-top:10px}
+details.rp-imgs summary{cursor:pointer;list-style:none;color:var(--acc);font-size:12px}
+details.rp-imgs summary::-webkit-details-marker{display:none}
+details.rp-imgs summary:before{content:'▸ ';}
+details.rp-imgs[open] summary:before{content:'▾ ';}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;color:var(--dim);font-size:12px}
+.thumb{display:block;width:88px;text-align:center;color:var(--tx2);font-size:11px}
+.thumb img{width:88px;height:120px;object-fit:cover;object-position:top;border-radius:7px;
+ border:1px solid var(--bd);display:block;margin-bottom:4px;background:#15151c}
+.thumb.none{opacity:.5} .thumb.none small{display:block}
+@media (hover:hover) and (pointer:fine){.thumb:hover img{border-color:var(--acc)}}
 </style></head><body>
 
 <div id="login">
@@ -722,6 +734,7 @@ function viewReport(st) {
     const miss = rows.filter(r => (r['테스트상태'] || '') === '미응시' && (r['출결'] || '') !== '결석').map(r => r['이름']);
     const scAvg = sc.length ? sc.reduce((a, c) => a + c, 0) / sc.length : null;
     const rtAvg = rt.length ? rt.reduce((a, c) => a + c, 0) / rt.length : null;
+    const names = rows.map(r => r['이름']).filter(Boolean);
     return `<div class="card"><div class="bc-top"><b>${E(ban)}</b>`
       + `<span class="dim">${dfmt(d)} · ${rows.length}명</span></div>`
       + '<div class="bc-row" style="gap:22px;margin-top:8px">'
@@ -730,6 +743,9 @@ function viewReport(st) {
       + '</div>'
       + (absent.length ? `<div class="chips">${chip('bad', '결석 ' + absent.join(' '))}</div>` : '')
       + (miss.length ? `<div class="chips">${chip('mid', '미응시 ' + miss.join(' '))}</div>` : '')
+      // 서버 렌더된 리포트 이미지 (정적판에 없는 기능 → class="dbonly" 로 표시해 패리티 게이트에서 뺀다)
+      + (names.length ? `<details class="dbonly rp-imgs" data-date="${d}" data-names="${E(names.join('|'))}">`
+        + `<summary>리포트 이미지 ${names.length}장</summary><div class="thumbs">불러오는 중…</div></details>` : '')
       + '</div>';
   };
   const allDays = [...new Set(Object.keys(dayRows).map(k => k.split('|')[0]))].sort().reverse().slice(0, 20);
@@ -798,8 +814,42 @@ function viewWeak(st) {
     + '</section>';
 }
 
+/* ───────── 리포트 이미지 (서버 렌더 → Storage) ─────────
+ * 경로 규칙은 render_daily.py 와 한 몸이다: `<날짜>/<sha1(이름.jpg) 앞 16자>.jpg`.
+ * (Storage 키에 한글을 못 써서 해시를 쓴다.) 그래서 매니페스트를 따로 읽지 않고
+ * 화면에 있는 학생 이름으로 경로를 계산한다. 규칙을 바꾸면 두 쪽을 같이 고쳐야 한다.
+ */
+async function sha16(text) {
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+async function loadReportImages(el) {
+  const box = el.querySelector('.thumbs');
+  if (el.dataset.loaded) return;
+  el.dataset.loaded = '1';
+  const date = el.dataset.date, names = el.dataset.names.split('|').filter(Boolean);
+  const paths = [];
+  for (const n of names) paths.push(`${date}/${await sha16(n + '.jpg')}.jpg`);
+  const { data, error } = await sb.storage.from('reports').createSignedUrls(paths, 3600);
+  if (error) {
+    box.innerHTML = `<span class="warn">이미지를 못 읽었다: ${E(error.message)}`
+      + ' — Storage 읽기 정책이 없으면 이렇게 나온다(README 참고)</span>';
+    return;
+  }
+  const items = data.map((d, i) => d.signedUrl
+    ? `<a class="thumb" href="${d.signedUrl}" target="_blank" rel="noopener">`
+      + `<img loading="lazy" src="${d.signedUrl}" alt="${E(names[i])}"><span>${E(names[i])}</span></a>`
+    : `<span class="thumb none">${E(names[i])}<small>없음</small></span>`);
+  box.innerHTML = items.join('') || '<span class="dim">렌더된 이미지 없음</span>';
+}
+
 /* ───────── 상호작용 (정적판 JS와 동일) ───────── */
 function wire() {
+  document.addEventListener('toggle', e => {
+    const el = e.target;
+    if (el.tagName === 'DETAILS' && el.classList.contains('rp-imgs') && el.open) loadReportImages(el);
+  }, true);
+
   const tip = $('tip');
   document.addEventListener('mouseover', e => {
     const t = e.target.closest && e.target.closest('.sp'); if (!t) return;
