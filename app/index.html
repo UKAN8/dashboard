@@ -827,20 +827,41 @@ async function loadReportImages(el) {
   if (el.dataset.loaded) return;
   el.dataset.loaded = '1';
   const date = el.dataset.date, names = el.dataset.names.split('|').filter(Boolean);
-  const paths = [];
-  for (const n of names) paths.push(`${date}/${await sha16(n + '.jpg')}.jpg`);
-  const { data, error } = await sb.storage.from('reports').createSignedUrls(paths, 3600);
-  if (error) {
-    box.innerHTML = `<span class="warn">이미지를 못 읽었다: ${E(error.message)}`
+  const sum = el.querySelector('summary');
+  // 먼저 그 날짜 폴더에 **실제로 있는 파일**을 본다. 이름 수만 믿고 "N장"이라 적으면
+  // 아직 렌더 안 한 날도 있는 것처럼 보인다(0811 실측).
+  const ls = await sb.storage.from('reports').list(date, { limit: 300 });
+  if (ls.error) {
+    box.innerHTML = `<span class="warn">이미지를 못 읽었다: ${E(ls.error.message)}`
       + ' — Storage 읽기 정책이 없으면 이렇게 나온다(README 참고)</span>';
     return;
   }
+  const have = new Set((ls.data || []).map(f => f.name));
+  const hashes = [];
+  for (const n of names) hashes.push(await sha16(n + '.jpg'));
+  const idx = names.map((n, i) => i).filter(i => have.has(hashes[i] + '.jpg'));
+  const missing = names.filter((n, i) => !have.has(hashes[i] + '.jpg'));
+  if (sum) sum.textContent = idx.length ? `리포트 이미지 ${idx.length}장` : '리포트 이미지 없음 (아직 렌더 안 됨)';
+  if (!idx.length) {
+    box.innerHTML = '<span class="dim">이 날짜는 아직 서버에서 렌더되지 않았다</span>';
+    return;
+  }
+  const paths = idx.map(i => `${date}/${hashes[i]}.jpg`);
+  const { data, error } = await sb.storage.from('reports').createSignedUrls(paths, 3600);
+  if (error) {
+    box.innerHTML = `<span class="warn">서명 URL 실패: ${E(error.message)}</span>`;
+    return;
+  }
+  names.length = 0;
+  idx.forEach(i => names.push(el.dataset.names.split('|')[i]));
+  if (missing.length) box.dataset.missing = missing.join(', ');
   // 썸네일은 쓰지 않는다. 리포트는 2430×4800 세로 이미지에 배경이 검정이라
   // 88px 로 줄이면 새까만 사각형이 된다(0811 실측). 이름을 눌러 원본을 여는 게 목적에 맞다
   // — 카톡으로 보낼 장을 고르는 화면이다.
   const items = data.map((d, i) => d.signedUrl
     ? `<a class="rp-lnk" href="${d.signedUrl}" target="_blank" rel="noopener">${E(names[i])}</a>`
     : `<span class="rp-lnk none">${E(names[i])}</span>`);
+  if (box.dataset.missing) items.push(`<span class="dim">· 없는 학생: ${E(box.dataset.missing)}</span>`);
   box.innerHTML = items.join('') || '<span class="dim">렌더된 이미지 없음</span>';
 }
 
