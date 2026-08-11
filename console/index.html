@@ -98,6 +98,11 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
      첫 줄을 덮는다**(0811 유강 스크린샷). 데스크탑에선 표가 화면에 다 들어오므로
      감싼 카드의 overflow 를 풀어 sticky 가 화면 기준으로 동작하게 한다. */
   #students .card{overflow:visible!important;}
+  /* 출결 3버튼이 잘렸다(0811) — 표가 화면 폭에 맞춰지면서 이 칸부터 줄였다.
+     width:1% + nowrap 이면 auto 레이아웃이 '내용만큼'으로 잡고 남는 폭은 글칸이 가져간다. */
+  .grid td:nth-child(2),.grid th:nth-child(2){width:1%;white-space:nowrap;}
+  .grid .seg{flex-wrap:nowrap;}
+  .grid .seg button{white-space:nowrap;}
   .grid thead th{position:sticky;top:52px;z-index:5;box-shadow:0 1px 0 var(--line);}
   tr.stu:hover td{background:#fdfaf8;}
   .toast{bottom:28px;}
