@@ -130,6 +130,13 @@ tr.stu{border:none;padding:0;margin:0;}
 .loadout .warn{color:#8a4b1f;}
 input[type=file]{padding:8px;background:#fff;}
 button:disabled{opacity:.45;cursor:default;}
+/* 추가학습 명단 — 한 사람 한 줄. 출결 칸은 잘리면 못 누르므로 폭을 내용에 맞춘다(0811 함정 ③) */
+.ctab{width:100%;border-collapse:collapse;font-size:13px;}
+.ctab th{font-size:11px;color:var(--sub);font-weight:600;text-align:left;padding:4px;border-bottom:1px solid var(--line);}
+.ctab td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:middle;}
+.ctab .seg{margin:0;gap:4px;}
+.ctab .seg button{flex:none;padding:7px 8px;font-size:12px;}
+.ctab a{color:var(--key-d);}
 </style>
 </head>
 <body>
@@ -261,10 +268,55 @@ button:disabled{opacity:.45;cursor:default;}
     </div>
   </section>
 
+  <!-- ── 추가학습 (클리닉) ────────────────────────────────────────────
+   * 루프는 반 전체, 추가학습은 **지목한 학생만**이다. 여기까지가 0811에 남아 있던
+   * 마지막 손잡이 — 지정은 콘솔에서 하는데 출제는 학원 PC 의 루프.bat 이어야 했다.
+   * 판단(누구를·왜·무슨 유형)은 이 화면에 남고, 만들기·주소 올리기는 서버가 한다.
+   -->
+  <section id="view-clinic" class="hidden">
+    <div class="card">
+      <h2>오늘 부를 학생 <span class="badge" id="cl_fresh"></span></h2>
+      <div class="minirow">
+        <div style="flex:0 0 150px"><label class="lbl">날짜</label><input id="cl_date" type="date" onchange="clinicLoad()"></div>
+        <div style="flex:0 0 84px"><label class="lbl">문항수</label><input id="cl_nq" inputmode="numeric" value="5"></div>
+        <div class="grow" style="align-self:flex-end;display:flex;gap:8px;justify-content:flex-end">
+          <button class="ghost" onclick="clinicLoad()">새로고침</button>
+          <button class="key" id="cl_make" onclick="clinicJob()">문항 만들어 올리기</button>
+        </div>
+      </div>
+      <div id="cl_out" class="loadout">지정해 두면 서버가 학생별로 <b>연습장에 풀고 답만 넣는</b> 세트를 만들어 주소까지 올린다. 짚은 유형이 파트1, 남는 자리는 루프함이 인증 밀린 것부터 채운다.</div>
+    </div>
+
+    <div class="card">
+      <h2>지정</h2>
+      <div class="minirow">
+        <div style="flex:0 0 110px"><label class="lbl">반</label><select id="cl_cls" onchange="clinicStudents()"></select></div>
+        <div class="grow"><label class="lbl">학생</label><select id="cl_stu"></select></div>
+        <div style="flex:0 0 84px"><label class="lbl">시간</label><input id="cl_time" placeholder="16-18"></div>
+      </div>
+      <div class="minirow">
+        <div class="grow"><label class="lbl">사유 (리포트·클리닉 기록에 그대로 남는다)</label><input id="cl_why" placeholder="예: 리뷰 40점 · 과제 미흡"></div>
+      </div>
+      <div class="minirow">
+        <div class="grow"><label class="lbl">짚을 유형 — 비우면 루프함이 채운다 (여러 개는 · 로)</label>
+          <input id="cl_type" list="cl_types" placeholder="목록에서 고를 것 — 글자가 한 자만 달라도 자동 출제가 안 붙는다">
+          <datalist id="cl_types"></datalist>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="key" style="flex:1" onclick="clinicAssign()">지정</button></div>
+    </div>
+
+    <div class="card">
+      <h2>명단 <span class="badge" id="cl_count"></span></h2>
+      <div id="cl_list">불러오는 중…</div>
+    </div>
+  </section>
+
 </main>
 <nav>
   <button id="nav-today" class="on" onclick="showView('today')">오늘</button>
   <button id="nav-console" onclick="showView('console')">수업 콘솔</button>
+  <button id="nav-clinic" onclick="showView('clinic')">추가학습</button>
   <button id="nav-load" onclick="showView('load')">성적 적재</button>
   <a class="xlink" href="/dashboard/" title="반·학생 조회 (같은 로그인)">학습현황 ↗</a>
 </nav>
@@ -1232,8 +1284,154 @@ async function scCommit(){
   }catch(e){out('sc_out','<span class="warn">적재 실패: '+e.message+'</span>');$('sc_go').disabled=false;}
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * 추가학습 — 지정은 사람이, 출제는 서버가
+ *
+ * 루프 손잡이와 같은 구조다(job_queue 에 한 줄 → 크론이 실행 → 화면이 폴링).
+ * 다른 것은 **대상**이다. 루프는 반 전체라 반 화면에 있고, 추가학습은 지목한 학생이라
+ * 날짜 화면에 있다. 출석은 여기서 찍고, 인증도·클리닉 원장은 회수 크론이 맞춘다.
+ * ════════════════════════════════════════════════════════════════════ */
+let CLROWS=[], CLSTU=[], CLJOB=null, CLTIMER=null, CLIDX=null;
+const clDay=()=>$('cl_date').value||todayStr();
+function clSay(html){$('cl_out').innerHTML=html;}
+
+async function clinicInit(){
+  if(!$('cl_date').value)$('cl_date').value=todayStr();
+  if(!CLSTU.length){
+    const {data}=await sb.from('students').select('*').eq('상태','재원');
+    CLSTU=(data||[]).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+    const sel=$('cl_cls');sel.innerHTML='';
+    [...new Set(CLSTU.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{
+      const o=document.createElement('option');o.textContent=c;sel.appendChild(o);
+    });
+    clinicStudents();
+  }
+  clinicTypes();
+  clinicLoad();
+}
+function clinicStudents(){
+  const cls=$('cl_cls').value, sel=$('cl_stu');
+  sel.innerHTML='';
+  CLSTU.filter(r=>((r['학년']||'')+(r['반']||''))===cls).forEach(r=>{
+    const o=document.createElement('option');o.value=r['학생ID'];o.textContent=r['이름'];sel.appendChild(o);
+  });
+  clinicTypes();
+  nextClinic(cls).then(nx=>{ if(nx&&!$('cl_time').value)$('cl_time').value=nx.time||''; });
+}
+/* 낼 수 있는 유형만 보여 준다 — 풀에 없는 유형을 짚으면 그 자리는 그냥 빈다.
+   목록은 워커가 매 실행 끝에 job_queue(loop_index) 에 남긴다(콘솔은 저장소를 못 읽는다). */
+async function clinicTypes(){
+  if(CLIDX===null){
+    const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
+      .order('완료시각',{ascending:false}).limit(1);
+    CLIDX=(data&&data[0]&&data[0]['결과'])||{};
+  }
+  const g=($('cl_cls').value||'').slice(0,2);
+  const list=((CLIDX||{})['클리닉유형']||{})[g]||[];
+  const dl=$('cl_types');dl.innerHTML='';
+  list.forEach(t=>{const o=document.createElement('option');o.value=t;dl.appendChild(o);});
+  $('cl_fresh').textContent=list.length?(g+' 풀 '+list.length+'유형'):'풀 목록 없음';
+}
+
+async function clinicLoad(){
+  const day=clDay();
+  const {data,error}=await sb.from('clinic_roster').select('*').eq('날짜',day);
+  if(error){$('cl_list').innerHTML='<span class="warn">명단을 못 읽었다: '+esc(error.message)+'</span>';return;}
+  CLROWS=(data||[]).sort((a,b)=>((a['반']||'')+(a['이름']||'')).localeCompare((b['반']||'')+(b['이름']||''),'ko'));
+  $('cl_count').textContent=CLROWS.length+'명';
+  if(!CLROWS.length){$('cl_list').innerHTML='<div class="time">'+day+' 에 지정된 학생이 없습니다.</div>';return;}
+  const att=(r,v)=>`<button data-v="${v}" class="${r['출석']===v?('a'+({'출석':1,'지각':2,'결석':3}[v])):''}">${v}</button>`;
+  const t=document.createElement('table');t.className='ctab';
+  t.innerHTML='<thead><tr><th>이름</th><th>시간</th><th>사유 · 짚은 유형</th><th>상태</th><th style="width:1%;white-space:nowrap">출석</th><th>결과</th><th></th></tr></thead>';
+  const tb=document.createElement('tbody');
+  CLROWS.forEach(r=>{
+    const tr=document.createElement('tr');
+    const link=r['링크']?`<a href="${r['링크']}" target="_blank" rel="noopener">${r['문항수']||''}문항 열기</a>`:'<span class="time">—</span>';
+    tr.innerHTML=`<td class="namecell"><b>${esc(r['이름']||'')}</b> <span class="school">${esc(r['반']||'')}</span></td>
+      <td class="time">${esc(r['시간']||'')}</td>
+      <td>${esc(r['사유']||'')}${r['지정유형']?'<div class="time">'+esc(r['지정유형'])+'</div>':''}</td>
+      <td>${esc(r['상태']||'')} ${link}</td>
+      <td><div class="seg">${att(r,'출석')}${att(r,'지각')}${att(r,'결석')}</div></td>
+      <td>${esc(r['결과']||'')}</td>
+      <td><button class="ghost" style="padding:6px 8px;font-size:12px">취소</button></td>`;
+    tr.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>clinicAttend(r,b.dataset.v));
+    tr.querySelector('.ghost').onclick=()=>clinicDrop(r);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  $('cl_list').innerHTML='';$('cl_list').appendChild(t);
+}
+
+async function clinicAssign(){
+  const id=$('cl_stu').value, day=clDay();
+  const st=CLSTU.find(r=>r['학생ID']===id);
+  if(!st)return toast('학생을 고를 것');
+  const body={'날짜':day,'시간':$('cl_time').value.trim()||null,'학생ID':id,'이름':st['이름'],
+    '반':($('cl_cls').value),'사유':$('cl_why').value.trim()||null,
+    '지정유형':$('cl_type').value.trim()||null,'상태':'지정','기록일':todayStr()};
+  const old=CLROWS.find(r=>r['학생ID']===id);
+  const {error}=old
+    ? await sb.from('clinic_roster').update(body).eq('날짜',day).eq('학생ID',id)
+    : await sb.from('clinic_roster').insert({...body,'지정일':todayStr()});
+  if(error)return clSay('<span class="warn">지정 실패: '+esc(error.message)+'</span>');
+  toast(st['이름']+(old?' 갱신':' 지정'));
+  $('cl_why').value='';$('cl_type').value='';
+  clinicLoad();
+}
+async function clinicAttend(r,v){
+  const {error}=await sb.from('clinic_roster')
+    .update({'출석':r['출석']===v?null:v,'기록일':todayStr()})
+    .eq('날짜',r['날짜']).eq('학생ID',r['학생ID']);
+  if(error)return toast('실패: '+error.message);
+  clinicLoad();   // 원장(clinic_log)은 회수 크론이 출석을 보고 맞춘다 — 여기서 두 번 쓰지 않는다
+}
+async function clinicDrop(r){
+  if(!confirm(r['이름']+' 지정을 취소합니다. 계속?'))return;
+  const {error}=await sb.from('clinic_roster').delete().eq('날짜',r['날짜']).eq('학생ID',r['학생ID']);
+  if(error)return toast('실패: '+error.message);
+  clinicLoad();
+}
+
+async function clinicJob(){
+  const day=clDay();
+  if(!CLROWS.length)return clSay('<span class="warn">'+day+' 에 지정된 학생이 없다. 먼저 [지정] 할 것.</span>');
+  $('cl_make').disabled=true;
+  const nq=parseInt($('cl_nq').value)||5;
+  const {data,error}=await sb.from('job_queue')
+    .insert({'종류':'clinic_build','파라미터':{'날짜':day,'문항수':nq},'상태':'요청','요청자':'콘솔'})
+    .select().single();
+  if(error){$('cl_make').disabled=false;return clSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
+  CLJOB=data;
+  clSay('요청했다 — <b>'+day+' '+CLROWS.length+'명</b>\n서버가 10분마다 큐를 본다. 이 화면이 진행을 계속 보여 준다.');
+  clinicPoll();
+}
+function clinicPoll(){
+  clearInterval(CLTIMER);
+  let n=0;
+  const tick=async()=>{
+    if(!CLJOB)return;
+    const {data}=await sb.from('job_queue').select('*').eq('id',CLJOB.id).single();
+    if(!data)return;
+    const st=data['상태'];
+    if(st==='요청'||st==='처리중'){
+      clSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+'.'.repeat(1+(n++%3))+
+        '\n<span style="opacity:.7">'+esc(data['메시지']||'')+'</span>');
+      return;
+    }
+    clearInterval(CLTIMER);CLJOB=null;$('cl_make').disabled=false;
+    if(st==='실패')return clSay('<span class="warn">실패 — '+esc(data['메시지']||'')+'</span>');
+    const r=data['결과']||{};
+    const links=(r['링크']||[]).map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+esc(x['이름'])+'</a> ('+(x['문항수']||'')+'문항)'+(x['사유']?' <span class="time">'+esc(x['사유'])+'</span>':'')).join('\n');
+    const 빈=(r['빈유형']||[]);
+    clSay('<b>'+(r['인원']||0)+'명분 완성</b>\n'+links+
+      (빈.length?'\n<span class="warn">풀에 문항이 없어 못 낸 유형 — 제작 세션이 채워야 나간다:\n  '+빈.map(esc).join('\n  ')+'</span>':''));
+    clinicLoad();
+  };
+  tick();CLTIMER=setInterval(tick,6000);
+}
+
 /* ── 뷰 전환 ── */
-const VIEWS={today:'오늘',console:'수업 콘솔',load:'성적 적재'};
+const VIEWS={today:'오늘',console:'수업 콘솔',clinic:'추가학습',load:'성적 적재'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
@@ -1241,6 +1439,7 @@ function showView(v){
   });
   $('viewtitle').textContent=VIEWS[v]||v;
   if(v==='console'&&!$('classbtns').children.length)initClassButtons();
+  if(v==='clinic')clinicInit();
   if(v==='load')loadXlsx().catch(()=>{});
 }
 </script>
