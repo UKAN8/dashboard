@@ -46,6 +46,10 @@ input:focus,textarea:focus{outline:2px solid var(--key);border-color:var(--key);
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 10px calc(6px + env(safe-area-inset-bottom));z-index:10;}
 nav button{flex:1;background:transparent;font-size:13px;color:var(--sub);padding:10px 0;}
 nav button.on{color:var(--key);font-weight:700;}
+/* 학습현황으로 건너가는 링크 — 뷰가 아니라 다른 화면이라 .on 이 붙지 않는다 */
+nav a.xlink{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;
+ color:var(--sub);text-decoration:none;padding:10px 0;}
+@media (hover:hover) and (pointer:fine){nav a.xlink:hover{color:var(--key);}}
 .hidden{display:none!important;}
 #login{max-width:380px;margin:12vh auto;padding:0 20px;}
 #login .logo{font-size:26px;font-weight:800;text-align:center;margin-bottom:24px;}
@@ -161,6 +165,7 @@ tr.stu{border:none;padding:0;margin:0;}
 <nav>
   <button id="nav-today" class="on" onclick="showView('today')">오늘</button>
   <button id="nav-console" onclick="showView('console')">수업 콘솔</button>
+  <a class="xlink" href="../app/" title="반·학생 조회 (같은 로그인)">학습현황 ↗</a>
 </nav>
 </div>
 <div class="toast" id="toast"></div>
