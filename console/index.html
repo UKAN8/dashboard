@@ -191,6 +191,23 @@ button:disabled{opacity:.45;cursor:default;}
         </div>
         <div class="minirow"><button class="ghost" style="flex:1" onclick="allPresent()">전원 출석</button></div>
       </div>
+      <!-- ── 복습 루프 ──────────────────────────────────────────────
+       * 지금까지 세트는 학원 PC 에서 루프.bat 을 켜야 나왔고, 발송은 세션에 부탁해야 했다.
+       * 버튼은 job_queue 에 요청 한 줄만 쓴다(정적 페이지라 Actions 를 직접 못 깨운다).
+       * 그래서 **즉답이 아니다** — 요청됨 → 만드는 중 → 완료를 화면이 대신 보여 준다.
+       -->
+      <div class="card">
+        <h2>복습 루프 <span class="badge" id="loopfresh"></span></h2>
+        <div class="minirow">
+          <div class="grow"><label class="lbl">문항 풀 (단원)</label><select id="lp_unit"></select></div>
+          <div style="flex:0 0 auto;align-self:flex-end;display:flex;gap:8px">
+            <button class="ghost" id="lp_make" onclick="loopJob('build_sets')">루프 만들기</button>
+            <button class="key" id="lp_send" disabled onclick="loopSend()">보내기</button>
+          </div>
+        </div>
+        <div id="lp_out" class="loadout">오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.</div>
+      </div>
+
       <div id="students"></div>
       <div class="footbar" style="bottom:auto;position:static;margin-top:14px">
         <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
@@ -441,6 +458,16 @@ async function selectClass(cls){
     $('c_progress').value='';$('c_hw').value='';setTest('');
   }
   autoGrow($('c_progress'));autoGrow($('c_hw'));
+  // 루프 카드는 반이 바뀌면 처음부터 — 앞 반의 완성 상태로 [보내기]가 켜져 있으면 사고다
+  clearInterval(LOOPTIMER);LOOPJOB=null;LOOPBUILT=null;
+  $('lp_send').disabled=true;$('lp_make').disabled=false;
+  loopSay('오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.');
+  loopIndex().then(idx=>{
+    const tpl=idx&&idx['반']&&idx['반'][CLS];
+    if(tpl)loopSay('<b>'+CLS+'</b> 오늘 문항 '+tpl['문항수']+'개 · 수업일 '+tpl['수업일']+' · 마감 '+tpl['마감']+
+      '\n[루프 만들기] 를 누르면 서버가 학생별로 쪼개 만든다.');
+    else loopSay('<span class="warn">'+CLS+' 의 오늘 물을 것(_반_'+CLS+'.json)이 아직 없다 — 제작 세션에서 쓴 뒤에 만들 수 있다.</span>');
+  }).catch(e=>loopSay('<span class="warn">목록을 못 읽었다: '+e.message+'</span>'));
   renderStudents();
 }
 function allPresent(){
@@ -773,6 +800,86 @@ window.addEventListener('resize',()=>{
   const w=window.matchMedia('(min-width:900px)').matches;
   if(w!==lastWide){lastWide=w;if(CLS)renderStudents();}
 });
+
+/* ══════════════════════════════════════════════════════════════════════
+ * 복습 루프 손잡이 — 버튼은 요청만 쓰고, 크론이 주워 실행한다
+ *
+ * 콘솔은 정적 페이지라 PAT 를 들고 있을 수 없어 Actions 를 직접 못 깨운다.
+ * 그래서 job_queue 에 한 줄 쓰고 이 화면이 그 줄을 폴링한다(데일리 렌더와 같은 패턴).
+ * 버튼을 누르면 끝나는 게 아니라 **화면이 진행을 보여 준다** — 그게 이 코드의 절반이다.
+ * ════════════════════════════════════════════════════════════════════ */
+let LOOPIDX=null, LOOPJOB=null, LOOPTIMER=null, LOOPBUILT=null;
+
+async function loopIndex(){
+  const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
+    .order('완료시각',{ascending:false}).limit(1);
+  LOOPIDX=(data&&data[0]&&data[0]['결과'])||null;
+  const sel=$('lp_unit');sel.innerHTML='';
+  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[];
+  // 이 반 학년의 풀을 위로 — 풀 이름이 '20260810_고1' 꼴이라 학년으로 갈린다
+  const g=(CLS||'').slice(0,2);
+  const mine=풀.filter(u=>u.endsWith('_'+g));
+  [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
+    const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
+  });
+  const t=(LOOPIDX&&LOOPIDX['생성'])||'';
+  $('loopfresh').textContent=풀.length?('목록 '+(t?t.slice(5,16).replace('T',' '):'?')+' 기준'):'목록 없음';
+  return LOOPIDX;
+}
+function loopSay(html){$('lp_out').innerHTML=html;}
+async function loopJob(kind){
+  if(!CLS)return toast('반을 먼저 고를 것');
+  const unit=$('lp_unit').value;
+  if(!unit)return loopSay('<span class="warn">문항 풀이 없다. 제작 세션이 <b>_풀_*.json</b> 을 올려야 만들 수 있다.</span>');
+  const tpl=(LOOPIDX&&LOOPIDX['반']&&LOOPIDX['반'][CLS])||null;
+  if(kind==='build_sets'&&!tpl)
+    return loopSay('<span class="warn">'+CLS+' 의 오늘 물을 것(_반_'+CLS+'.json)이 아직 없다.\n문항은 사람이 쓴다 — 제작 세션에서 만든 뒤에 누를 것.</span>');
+  $('lp_make').disabled=true;$('lp_send').disabled=true;
+  const {data,error}=await sb.from('job_queue')
+    .insert({'종류':kind,'파라미터':{'반':CLS,'단원':unit},'상태':'요청','요청자':'콘솔'})
+    .select().single();
+  if(error){$('lp_make').disabled=false;return loopSay('<span class="warn">요청 실패: '+error.message+'</span>');}
+  LOOPJOB=data;
+  loopSay('요청했다 — <b>'+CLS+' · '+unit+'</b>\n서버가 10분마다 큐를 본다. 이 화면이 진행을 계속 보여 준다.');
+  loopPoll();
+}
+function loopPoll(){
+  clearInterval(LOOPTIMER);
+  let n=0;
+  const tick=async()=>{
+    if(!LOOPJOB)return;
+    const {data}=await sb.from('job_queue').select('*').eq('id',LOOPJOB.id).single();
+    if(!data)return;
+    const st=data['상태'];
+    if(st==='요청'||st==='처리중'){
+      const dots='.'.repeat(1+(n++%3));
+      loopSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+dots+
+        '\n<span style="opacity:.7">'+(data['메시지']||'')+'</span>');
+      return;
+    }
+    clearInterval(LOOPTIMER);
+    $('lp_make').disabled=false;
+    const r=data['결과']||{};
+    if(st==='실패'){LOOPBUILT=null;return loopSay('<span class="warn">실패 — '+(data['메시지']||'')+'</span>');}
+    if(data['종류']==='send_loop'){
+      LOOPBUILT=null;
+      return loopSay('<b>발송 완료</b> — '+(r['인원']||0)+'명 · 마감 '+(r['마감']||'')+
+        '\n미제출은 마감 두 시간 전에 서버가 알아서 재촉한다.');
+    }
+    LOOPBUILT={반:r['반'],단원:r['단원']};
+    $('lp_send').disabled=false;
+    const links=(r['링크']||[]).slice(0,40)
+      .map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+x['이름']+'</a> ('+x['문항수']+'문항)').join('\n');
+    loopSay('<b>'+r['반']+' '+(r['인원']||0)+'명분 완성</b> · 수업일 '+(r['수업일']||'')+' · 마감 '+(r['마감']||'')+
+      '\n하나 열어 보고 [보내기] — 발송 시각이 곧 마감 안내 시각이다.\n'+links);
+  };
+  tick();LOOPTIMER=setInterval(tick,6000);
+}
+function loopSend(){
+  if(!LOOPBUILT)return;
+  if(!confirm(LOOPBUILT.반+' 학생들에게 루프를 발송합니다. 계속?'))return;
+  loopJob('send_loop');
+}
 
 /* ══════════════════════════════════════════════════════════════════════
  * 성적 적재 — xlsx 를 브라우저가 읽어 DB 로
