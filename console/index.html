@@ -123,6 +123,12 @@ tr.stu{border:none;padding:0;margin:0;}
 .grid input[type=date]{height:36px;}
 .namecell{white-space:nowrap;}
 .grid .savemark{float:none;margin-left:6px;}
+/* 적재 화면 — 미리보기는 '무엇이 들어가는지'를 글로 보여준다(표로 안 만든다: 확인용이지 편집용이 아니다) */
+.loadout{font-size:13px;line-height:1.55;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--ink);margin-top:10px;max-height:340px;overflow:auto;}
+.loadout b{color:var(--key-d);}
+.loadout .warn{color:#8a4b1f;}
+input[type=file]{padding:8px;background:#fff;}
+button:disabled{opacity:.45;cursor:default;}
 </style>
 </head>
 <body>
@@ -198,10 +204,50 @@ tr.stu{border:none;padding:0;margin:0;}
     </div>
   </section>
 
+  <!-- ── 성적 적재 ───────────────────────────────────────────────────
+   * 여기 오기 전까지 주간고사·내신 성적은 학원 PC 에서 wkappend.py·내신적재.py 를
+   * 돌려야 DB 에 들어갔다. 규칙 작업인데 사람이 붙어 있었다.
+   * 브라우저가 xlsx 를 직접 읽고 학생마스터로 조인해 DB 에 바로 쓴다 — Actions 를 안 깨운다.
+   * ⚠ 학생ID 는 절대 조합하지 않는다. 마스터에 없으면 미매칭으로 남기고 적재하지 않는다.
+   -->
+  <section id="view-load" class="hidden">
+    <div class="card">
+      <h2>주간고사 성적 <span class="badge">성적 xlsx + 분석시트</span></h2>
+      <div class="minirow">
+        <div style="flex:0 0 88px"><label class="lbl">회차</label><input id="wk_rd" inputmode="numeric" placeholder="4"></div>
+        <div style="flex:0 0 110px"><label class="lbl">학년</label><select id="wk_grade"><option>고1</option><option>고2</option></select></div>
+        <div class="grow"><label class="lbl">성적 xlsx <span style="opacity:.7">(성적_N주차_고N.xlsx)</span></label><input id="wk_score" type="file" accept=".xlsx,.xlsm"></div>
+      </div>
+      <div class="minirow">
+        <div class="grow"><label class="lbl">분석시트 xlsx <span style="opacity:.7">(주간고사_N회_분석시트.xlsx — 없으면 점수만 적재)</span></label><input id="wk_ana" type="file" accept=".xlsx,.xlsm"></div>
+      </div>
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="ghost" onclick="wkPreview()">미리보기</button>
+        <button class="key" id="wk_go" disabled onclick="wkCommit()">적재</button>
+      </div>
+      <div id="wk_out" class="loadout">성적 xlsx 를 고르면 회차·학년을 파일 이름에서 읽고, 무엇이 들어갈지 먼저 보여준다.</div>
+    </div>
+
+    <div class="card">
+      <h2>내신 성적표 <span class="badge">학교 중간·기말</span></h2>
+      <div class="minirow">
+        <div class="grow"><label class="lbl">성적표 xlsx <span style="opacity:.7">(강사별 시트)</span></label><input id="sc_file" type="file" accept=".xlsx,.xlsm"></div>
+        <div style="flex:0 0 150px"><label class="lbl">시트</label><select id="sc_sheet"></select></div>
+        <div style="flex:0 0 100px"><label class="lbl">기준년</label><input id="sc_base" inputmode="numeric" value="2026"></div>
+      </div>
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="ghost" onclick="scPreview()">미리보기</button>
+        <button class="key" id="sc_go" disabled onclick="scCommit()">적재</button>
+      </div>
+      <div id="sc_out" class="loadout">시행년 = 기준년 − (현재학년 − 시험학년). 등급·석차·과목평균·수강자수는 손으로 채운 값을 덮지 않는다.</div>
+    </div>
+  </section>
+
 </main>
 <nav>
   <button id="nav-today" class="on" onclick="showView('today')">오늘</button>
   <button id="nav-console" onclick="showView('console')">수업 콘솔</button>
+  <button id="nav-load" onclick="showView('load')">성적 적재</button>
   <a class="xlink" href="/dashboard/" title="반·학생 조회 (같은 로그인)">학습현황 ↗</a>
 </nav>
 </div>
@@ -261,6 +307,8 @@ async function boot(session){
   if(!prof){ $('loginmsg').textContent='계정에 역할이 없습니다. 관리자에게 문의.'; await sb.auth.signOut(); return; }
   ROLE=prof.role;
   $('who').textContent=(prof['이름']||'')+' · '+(ROLE==='admin'?'관리자':'조교');
+  // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
+  $('nav-load').classList.toggle('hidden',ROLE!=='admin');
   $('login').classList.add('hidden');$('app').classList.remove('hidden');
   loadToday();
 }
@@ -726,14 +774,352 @@ window.addEventListener('resize',()=>{
   if(w!==lastWide){lastWide=w;if(CLS)renderStudents();}
 });
 
+/* ══════════════════════════════════════════════════════════════════════
+ * 성적 적재 — xlsx 를 브라우저가 읽어 DB 로
+ * ════════════════════════════════════════════════════════════════════ */
+
+/* xlsx 파서는 900KB 다. 적재 화면을 처음 열 때만 받는다. */
+let XLSXP=null;
+function loadXlsx(){
+  if(XLSXP)return XLSXP;
+  XLSXP=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>res(window.XLSX); s.onerror=()=>rej(new Error('xlsx 로더를 못 받았다'));
+    document.head.appendChild(s);
+  });
+  return XLSXP;
+}
+async function readWb(input){
+  const f=input.files&&input.files[0];
+  if(!f)return null;
+  const XLSX=await loadXlsx();
+  return {wb:XLSX.read(await f.arrayBuffer(),{type:'array'}),name:f.name};
+}
+
+/*<<PARSE ─ 이 구간은 _검증/parse_test.mjs 가 그대로 떼어다 node 에서 돌린다.
+ * 파이썬 적재기(wkappend.py·내신적재.py)와 같은 답이 나오는지 대조하는 게 목적이라
+ * 여기에는 DOM·DB 를 부르는 코드를 두지 않는다. 순수 함수만.                        */
+const WK_SUBJ={'고1':'공통수학2','고2':'미적분1'};   // 26여름 학년별 과목 시트
+const WK_SRC='주간고사26여름';
+const SC_SLOTS=(()=>{const a=[];for(const g of[1,2,3])for(const s of[1,2])for(const e of['중간','기말'])a.push([g,s,e]);return a;})();
+const SC_FIRST=5;      // 성적표 점수 첫 칸(F열)
+
+function sheetRows(XLSX,wb,name){
+  const ws=wb.Sheets[name];
+  if(!ws)throw new Error('시트 없음: '+name+' (있는 시트: '+wb.SheetNames.join(', ')+')');
+  return XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,blankrows:true});
+}
+/* 파이썬 f'{x:g}' 와 같은 문자열을 만든다. 100.0→'100', 87.5→'87.5' */
+function gfmt(x){return String(Number(Number(x).toPrecision(6)));}
+
+/* 분석시트 → {문항번호: [유형, 중단원]}. 유형이 비면 소단원을 쓴다(wkappend 와 동일). */
+function parseAnalysis(rows){
+  const qt={};
+  (rows||[]).slice(1).forEach(r=>{
+    if(!r)return;
+    const no=r[0];
+    if(no===null||no===undefined||!/^\d+$/.test(String(no).trim()))return;
+    qt[parseInt(no,10)]=[String(r[7]||r[6]||'').trim(),String(r[5]||'').trim()];
+  });
+  return qt;
+}
+/* 성적 시트 → {점수행, 오답행}. 학생ID 조인은 여기서 안 한다(마스터는 DB 에 있다). */
+function parseWeekly(rows,qt,rd){
+  const hdr=(rows&&rows[0])||[];
+  const iSc=hdr.findIndex(h=>String(h===null||h===undefined?'':h).trim()==='최종점수');
+  if(iSc<0)throw new Error("'최종점수' 열이 없다 — '성적 현황' 시트가 맞는지 확인");
+  const qcols=[];
+  hdr.forEach((h,i)=>{const m=/^(\d+)번$/.exec(String(h===null||h===undefined?'':h).trim());if(m)qcols.push([parseInt(m[1],10),i]);});
+  const scores=[],wrongs=[],notTaken=[];
+  rows.slice(1).forEach(r=>{
+    if(!r)return;
+    const name=String(r[0]===null||r[0]===undefined?'':r[0]).trim();
+    if(!name)return;
+    const ban=String(r[1]===null||r[1]===undefined?'':r[1]).trim();
+    const typ=String(r[2]===null||r[2]===undefined?'':r[2]);
+    // '시험 유형'에 회차 숫자가 들어간 행만 응시 (1회 / 2주차 / 주간고사_3회_분석시트 …)
+    if(!typ.replace(/\D/g,'').includes(String(rd))){notTaken.push(name+(ban?'('+ban+')':''));return;}
+    const raw=String(r[iSc]===null||r[iSc]===undefined?'':r[iSc]).replace('점','').trim();
+    const sc=parseFloat(raw);
+    if(isNaN(sc)){notTaken.push(name+(ban?'('+ban+')':'')+' 점수없음');return;}
+    scores.push({이름:name,반:ban,점수:gfmt(sc)});
+    qcols.forEach(([qno,ci])=>{
+      const v=String(r[ci]===null||r[ci]===undefined?'':r[ci]).trim().toUpperCase();
+      if(v==='O')return;                       // 응시자의 빈칸 = X (wkappend 와 같은 규칙)
+      const t=qt[qno]||['',''];
+      if(!t[0])return;                         // 분석시트에 유형이 없는 문항은 오답으로 안 쌓는다
+      wrongs.push({이름:name,반:ban,문항:qno+'번',태그:t[0],단원:t[1]});
+    });
+  });
+  return {scores,wrongs,notTaken};
+}
+
+/* 내신 성적표 셀 → [점수|null, 상태|null]. '-'·빈칸은 아예 행을 만들지 않는다. */
+function scNum(v){
+  if(v===null||v===undefined)return [null,null];
+  const s=String(v).trim();
+  if(!s||s==='-'||s==='—'||s==='–')return [null,null];
+  if(s==='?'||s==='??')return [null,'미확보'];
+  const n=parseFloat(s);
+  if(isNaN(n)||!/^[-+]?[\d.]+$/.test(s))return [null,null];
+  return [Math.round(n*10)/10,'확보'];
+}
+function schoolKey(s){const t=String(s||'').trim();return t.replace(/(고등학교|고)$/,'')||t;}
+/* 성적표 시트 → [{반,이름,학교,학년,학기,시험구분,점수,상태}] */
+function parseSchool(rows){
+  let cls='';const out=[];
+  (rows||[]).forEach(r0=>{
+    const cells=(r0||[]).map(c=>c===null||c===undefined?'':String(c).trim());
+    if(cells.length<SC_FIRST+1)return;
+    if(cells[0]==='no'){cls=cells[1];return;}          // 컬럼 머리 — B열이 반 이름
+    const name=cells[3],school=cells[4];
+    if(!name||!/^\d/.test(cells[0]||''))return;        // 학년 머리·빈 줄
+    SC_SLOTS.forEach(([g,se,ex],i)=>{
+      const col=SC_FIRST+i;
+      if(col>=cells.length)return;
+      const [score,state]=scNum(cells[col]);
+      if(!state)return;
+      out.push({반:cls,이름:name,학교:school,학년:g,학기:se,시험구분:ex,점수:score,상태:state});
+    });
+  });
+  return out;
+}
+/* 파일 이름에서 회차·학년을 읽는다 — 폴더(2026_N회)를 브라우저는 못 본다 */
+function guessWeekly(fname){
+  const rd=/(\d+)\s*(?:회|주차)/.exec(fname||''), gr=/고\s*([123])/.exec(fname||'');
+  return {rd:rd?rd[1]:'',grade:gr?'고'+gr[1]:''};
+}
+/*PARSE>>*/
+
+/* ── 학생마스터 조인 ── 학생ID 는 조합하지 않는다. 마스터에 있는 것만 적재한다. */
+/*<<JOIN ─ 여기도 _검증/join_test.mjs 가 그대로 떼어다 쓴다. 순수 함수만.  */
+function buildMaster(data){
+  const byCls={},byName={},byGrade={},bans={};
+  (data||[]).forEach(r=>{
+    const rank=r['상태']==='재원'?0:r['상태']==='휴원'?1:2;
+    const k=r['이름']+'|'+(r['학년']||'')+(r['반']||'');
+    if(!byCls[k]||rank<byCls[k]._r)byCls[k]=Object.assign({_r:rank},r);
+    const n=r['이름']+'|'+schoolKey(r['학교']);
+    if(!byName[n]||rank<byName[n]._r)byName[n]=Object.assign({_r:rank},r);
+    const g=r['이름']+'|'+(r['학년']||'');
+    if(!byGrade[g])byGrade[g]=[];
+    byGrade[g].push(Object.assign({_r:rank},r));
+    (bans[r['학년']]=bans[r['학년']]||new Set()).add(r['반']);
+  });
+  return {byCls,byName,byGrade,bans,all:data||[]};
+}
+/* 반이 어긋난 학생을 마스터의 현재 반으로 끌어온다.
+   같은 학년에 같은 이름이 둘이면 손대지 않는다(누구인지 모르는 채로 적재하면 그게 사고다). */
+function joinByName(M,name,grade){
+  const c=(M.byGrade[name+'|'+grade]||[]).slice().sort((a,b)=>a._r-b._r);
+  if(!c.length)return null;
+  if(c.length>1&&c[0]._r===c[1]._r)return null;
+  return c[0];
+}
+function gradeNum(g){const m=/고\s*(\d)/.exec(String(g||''));return m?parseInt(m[1],10):null;}
+/* 성적 시트 한 장 → 적재 대상 + 제외 사유. 화면도 적재도 이 결과 하나만 본다. */
+function joinWeekly(M,scores,wrongs,grade){
+  const mine=M.bans[grade]||new Set();      // 담당 반 = 마스터에 그 학년으로 있는 반
+  const hit=[],miss=[],drift=[],other={};
+  scores.forEach(s=>{
+    let m=M.byCls[s.이름+'|'+grade+s.반];
+    if(!m){
+      const alt=joinByName(M,s.이름,grade);  // 반 표류(이지환 T↔A) — 마스터 반이 정본
+      if(alt){m=alt;drift.push(s.이름+' '+s.반+'→'+alt['반']);}
+    }
+    if(m){hit.push({s:Object.assign({},s,{반:m['반']||s.반}),m,원반:s.반});return;}
+    if(mine.has(s.반))miss.push(s.이름+'('+grade+s.반+')');
+    else other[s.반]=(other[s.반]||0)+1;     // 남의 반 — 원래 우리 DB 대상이 아니다
+  });
+  // 오답은 시트에 적힌 (이름·반) 그대로 붙인다 — 이름만으로 묶으면 동명이인이 섞인다
+  const nameId={};hit.forEach(h=>nameId[h.s.이름+'|'+h.원반]=h);
+  const wr=(wrongs||[]).filter(w=>nameId[w.이름+'|'+w.반])
+    .map(w=>Object.assign({},w,{반:nameId[w.이름+'|'+w.반].s.반,_k:w.이름+'|'+w.반}));
+  return {hit,wrongs:wr,miss,drift,other,nameId};
+}
+/*JOIN>>*/
+let MASTER=null;
+async function master(){
+  if(MASTER)return MASTER;
+  const {data,error}=await sb.from('students').select('학생ID,이름,학년,반,학교,상태');
+  if(error)throw new Error('학생마스터 조회 실패: '+error.message);
+  MASTER=buildMaster(data);
+  return MASTER;
+}
+function gradeNum(g){const m=/고\s*(\d)/.exec(String(g||''));return m?parseInt(m[1],10):null;}
+function chunkInsert(table,rows){
+  const jobs=[];
+  for(let i=0;i<rows.length;i+=400)jobs.push(rows.slice(i,i+400));
+  return jobs.reduce((p,part)=>p.then(async()=>{
+    const {error}=await sb.from(table).insert(part);
+    if(error)throw new Error(table+' 적재 실패: '+error.message);
+  }),Promise.resolve());
+}
+function out(id,html){$(id).innerHTML=html;}
+
+/* ── 주간고사 ── */
+let WK=null;
+$('wk_score').addEventListener('change',async e=>{
+  const g=guessWeekly((e.target.files[0]||{}).name||'');
+  if(g.rd&&!$('wk_rd').value)$('wk_rd').value=g.rd;
+  if(g.grade)$('wk_grade').value=g.grade;
+});
+async function wkPreview(){
+  $('wk_go').disabled=true;WK=null;
+  try{
+    const rd=String(parseInt($('wk_rd').value,10)||'');
+    if(!rd)return out('wk_out','<span class="warn">회차를 넣어야 한다.</span>');
+    const grade=$('wk_grade').value;
+    out('wk_out','읽는 중…');
+    const XLSX=await loadXlsx();
+    const sc=await readWb($('wk_score'));
+    if(!sc)return out('wk_out','<span class="warn">성적 xlsx 를 고를 것.</span>');
+    const shName=sc.wb.SheetNames.includes('성적 현황')?'성적 현황':sc.wb.SheetNames[0];
+    let qt={},anaMsg='분석시트 없음 — <b>점수만</b> 적재하고 오답은 건너뛴다.';
+    const ana=await readWb($('wk_ana'));
+    if(ana){
+      const want=WK_SUBJ[grade];
+      const nm=ana.wb.SheetNames.includes(want)?want:ana.wb.SheetNames[0];
+      qt=parseAnalysis(sheetRows(XLSX,ana.wb,nm));
+      anaMsg='분석시트 <b>'+nm+'</b> · 유형 '+Object.keys(qt).length+'문항';
+    }
+    const p=parseWeekly(sheetRows(XLSX,sc.wb,shName),qt,rd);
+    const M=await master();
+    const {hit,wrongs,miss,drift,other,nameId}=joinWeekly(M,p.scores,p.wrongs,grade);
+    WK={rd,grade,hit,wrongs,nameId};
+    const others=Object.keys(other).sort().map(b=>b+' '+other[b]).join(' · ');
+    out('wk_out',
+      '<b>'+grade+' '+rd+'회</b> · 시트 '+shName+' · '+anaMsg+'\n'+
+      '응시 '+p.scores.length+'명 중 <b>마스터 조인 '+hit.length+'명</b> · 오답 '+wrongs.length+'행\n'+
+      '점수 '+(hit.length?Math.min(...hit.map(h=>+h.s.점수))+'~'+Math.max(...hit.map(h=>+h.s.점수)):'—')+
+      ' · 반 '+[...new Set(hit.map(h=>h.s.반))].sort().join('/')+'\n'+
+      (drift.length?'· 반 표류 정정(마스터 기준): '+drift.join(', ')+'\n':'')+
+      (others?'· 다른 강사 반 '+others+' — 제외\n':'')+
+      (miss.length?'<span class="warn">⚠ 담당반인데 마스터에 없다 ('+miss.length+'명) — 적재 제외: '+miss.join(', ')+
+        '\n   → 학생마스터에 먼저 넣고 다시 미리보기 (학생ID 는 조합하지 않는다)</span>\n':'')+
+      '적재하면 같은 회차·소스('+WK_SRC+')의 <b>그 학생 기존 행을 지우고</b> 새로 넣는다.');
+    $('wk_go').disabled=!hit.length;
+  }catch(e){out('wk_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+}
+async function wkCommit(){
+  if(!WK)return;
+  $('wk_go').disabled=true;
+  try{
+    const {rd,grade,hit,wrongs,nameId}=WK;
+    const 회차=rd+'회';
+    const rows=hit.map(({s,m})=>({'학생ID':m['학생ID'],'이름':s.이름,'학년':grade,'반':s.반,'회차':회차,'점수':s.점수,'소스':WK_SRC}));
+    const ids=rows.map(r=>r['학생ID']);
+    out('wk_out','적재 중… 점수 '+rows.length+'행');
+    // 같은 회차·소스의 그 학생 행을 지우고 다시 넣는다(멱등). 남의 회차는 안 건드린다.
+    const {error:d1}=await sb.from('weekly_exam').delete().eq('회차',회차).eq('소스',WK_SRC).in('학생ID',ids);
+    if(d1)throw new Error('기존 행 정리 실패: '+d1.message);
+    await chunkInsert('weekly_exam',rows);
+    let wmsg='';
+    if(wrongs.length){
+      const wr=wrongs.map(w=>{const m=nameId[w._k].m;return {
+        '학생ID':m['학생ID'],'이름':w.이름,'반':w.반,'시험종류':'주간테스트','단원':w.단원,
+        '시험명':회차,'날짜':'','문항':w.문항,'틀린유형(태그)':w.태그,'실점구분':'오답','소스':WK_SRC};});
+      // ⚠ 키 단위가 아니라 (학생×시험) 단위로 지운다 — O 로 고쳐진 문항의 옛 오답이 남으면 안 된다
+      const {error:d2}=await sb.from('wrong_answers').delete()
+        .eq('시험종류','주간테스트').eq('시험명',회차).eq('소스',WK_SRC).in('학생ID',ids);
+      if(d2)throw new Error('기존 오답 정리 실패: '+d2.message);
+      await chunkInsert('wrong_answers',wr);
+      wmsg=' · 오답 '+wr.length+'행';
+    }
+    out('wk_out','<b>적재 완료</b> — '+grade+' '+회차+' 점수 '+rows.length+'행'+wmsg+
+      '\n학습현황·주간고사 리포트에 바로 반영된다. 로컬 CSV 는 pull_export.py 로 받는다.');
+    toast(grade+' '+회차+' 적재 완료');
+    WK=null;
+  }catch(e){out('wk_out','<span class="warn">적재 실패: '+e.message+'</span>');$('wk_go').disabled=false;}
+}
+
+/* ── 내신 ── */
+let SC=null,SC_WB=null;
+$('sc_file').addEventListener('change',async()=>{
+  $('sc_go').disabled=true;
+  try{
+    const f=await readWb($('sc_file'));
+    const sel=$('sc_sheet');sel.innerHTML='';
+    if(!f)return;
+    f.wb.SheetNames.forEach(n=>{const o=document.createElement('option');o.textContent=n;sel.appendChild(o);});
+    const pref=f.wb.SheetNames.find(n=>/유강/.test(n));
+    if(pref)sel.value=pref;
+    SC_WB=f.wb;
+  }catch(e){out('sc_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+});
+async function scPreview(){
+  $('sc_go').disabled=true;SC=null;
+  try{
+    if(!SC_WB)return out('sc_out','<span class="warn">성적표 xlsx 를 고를 것.</span>');
+    const XLSX=await loadXlsx();
+    const sheet=$('sc_sheet').value;
+    const base=parseInt($('sc_base').value,10)||2026;
+    const raw=parseSchool(sheetRows(XLSX,SC_WB,sheet));
+    const M=await master();
+    const hit=[],miss=new Set();
+    raw.forEach(r=>{
+      const m=M.byName[r.이름+'|'+schoolKey(r.학교)]||M.byCls[r.이름+'|'+(r.반?String(r.반):'')];
+      if(!m){miss.add(r.이름+'('+r.학교+'·'+r.반+')');return;}
+      const cur=gradeNum(m['학년']);
+      hit.push(Object.assign({},r,{m,시행년:cur===null?'':String(base-(cur-r.학년))}));
+    });
+    const 확보=hit.filter(r=>r.상태==='확보').length;
+    const by={};hit.forEach(r=>{const k=r.시행년+'-'+r.학기+'학기 '+r.시험구분;by[k]=(by[k]||0)+1;});
+    SC={hit,sheet};
+    out('sc_out',
+      '시트 <b>'+sheet+'</b> · 기준년 '+base+'\n'+
+      '파싱 '+raw.length+'행 → <b>조인 '+hit.length+'행</b> (확보 '+확보+' / 미확보 '+(hit.length-확보)+')\n'+
+      Object.keys(by).sort().map(k=>'  · '+k+' — '+by[k]+'명').join('\n')+'\n'+
+      (miss.size?'<span class="warn">⚠ 마스터 미등록 '+miss.size+'명 — 적재 제외: '+[...miss].join(', ')+'</span>\n':'')+
+      '등급·석차등급·과목평균·수강자수는 <b>기존 값을 유지</b>한다(성적표에 없는 칸).');
+    $('sc_go').disabled=!hit.length;
+  }catch(e){out('sc_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+}
+async function scCommit(){
+  if(!SC)return;
+  $('sc_go').disabled=true;
+  try{
+    const today=todayStr(),소스='성적표:'+SC.sheet;
+    out('sc_out','적재 중…');
+    const {data:ex,error:e0}=await sb.from('school_exam')
+      .select('id,학생ID,학년,학기,시험구분,등급,석차등급,과목평균,수강자수');
+    if(e0)throw new Error('기존 조회 실패: '+e0.message);
+    const key=r=>[r['학생ID'],String(r['학년']),String(r['학기']),r['시험구분']].join('|');
+    const old={};(ex||[]).forEach(r=>old[key(r)]=r);
+    const rows=SC.hit.map(r=>{
+      const o=old[[r.m['학생ID'],String(r.학년),String(r.학기),r.시험구분].join('|')]||{};
+      return {'학생ID':r.m['학생ID'],'이름':r.이름,'학교':schoolKey(r.학교),
+        '반':r.m['반']||r.반,'학년':String(r.학년),'시행년':r.시행년,'학기':String(r.학기),
+        '시험구분':r.시험구분,'점수':r.점수===null?'':String(r.점수),
+        '등급':o['등급']||'','석차등급':o['석차등급']||'','과목평균':o['과목평균']||'','수강자수':o['수강자수']||'',
+        '상태':r.상태,'소스':소스,'기록일':today};
+    });
+    const kill=rows.map(r=>key(r)).filter(k=>old[k]).map(k=>old[k].id);
+    if(kill.length){
+      for(let i=0;i<kill.length;i+=200){
+        const {error}=await sb.from('school_exam').delete().in('id',kill.slice(i,i+200));
+        if(error)throw new Error('기존 행 정리 실패: '+error.message);
+      }
+    }
+    await chunkInsert('school_exam',rows);
+    out('sc_out','<b>적재 완료</b> — '+rows.length+'행 (갱신 '+kill.length+' · 신규 '+(rows.length-kill.length)+')\n'+
+      '원점수만으로는 해석하지 않는다 — 시험메타(등급컷·난이도)와 조인해서 본다.');
+    toast('내신 '+rows.length+'행 적재 완료');
+    SC=null;
+  }catch(e){out('sc_out','<span class="warn">적재 실패: '+e.message+'</span>');$('sc_go').disabled=false;}
+}
+
 /* ── 뷰 전환 ── */
+const VIEWS={today:'오늘',console:'수업 콘솔',load:'성적 적재'};
 function showView(v){
-  $('view-today').classList.toggle('hidden',v!=='today');
-  $('view-console').classList.toggle('hidden',v!=='console');
-  $('nav-today').classList.toggle('on',v==='today');
-  $('nav-console').classList.toggle('on',v==='console');
-  $('viewtitle').textContent=v==='today'?'오늘':'수업 콘솔';
+  Object.keys(VIEWS).forEach(k=>{
+    $('view-'+k).classList.toggle('hidden',k!==v);
+    $('nav-'+k).classList.toggle('on',k===v);
+  });
+  $('viewtitle').textContent=VIEWS[v]||v;
   if(v==='console'&&!$('classbtns').children.length)initClassButtons();
+  if(v==='load')loadXlsx().catch(()=>{});
 }
 </script>
 </body>
