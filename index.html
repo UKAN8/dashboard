@@ -128,6 +128,11 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
  border:1px solid var(--bd);background:rgba(245,160,160,.08);color:#ffd9d9}
 .rp-lnk.none{opacity:.4;background:none}
 @media (hover:hover) and (pointer:fine){.rp-lnk:hover{border-color:var(--acc);background:rgba(245,160,160,.18)}}
+/* 전체 저장 — 이름 링크들과 같은 줄에 서되, 눌러야 할 것이라는 게 보이게 */
+.rp-save{font:inherit;font-size:12px;padding:4px 11px;border-radius:9px;cursor:pointer;
+ border:1px solid var(--acc);background:rgba(245,160,160,.22);color:#fff;margin-right:4px}
+.rp-save:disabled{opacity:.6;cursor:default}
+@media (hover:hover) and (pointer:fine){.rp-save:hover:not(:disabled){background:rgba(245,160,160,.34)}}
 
 /* ── 0811 병합: 유형맵(tm-)·영상색인(vx-) ──
    ⚠ 클래스 이름을 접두사로 가른다. 원본 정적 HTML 은 .cell·.grid·.kpi 같은 흔한 이름을
@@ -1530,11 +1535,51 @@ async function loadReportImages(el) {
   // 썸네일은 쓰지 않는다. 리포트는 2430×4800 세로 이미지에 배경이 검정이라
   // 88px 로 줄이면 새까만 사각형이 된다(0811 실측). 이름을 눌러 원본을 여는 게 목적에 맞다
   // — 카톡으로 보낼 장을 고르는 화면이다.
-  const items = data.map((d, i) => d.signedUrl
+  const links = data.map((d, i) => d.signedUrl
     ? `<a class="rp-lnk" href="${d.signedUrl}" target="_blank" rel="noopener">${E(names[i])}</a>`
     : `<span class="rp-lnk none">${E(names[i])}</span>`);
-  if (box.dataset.missing) items.push(`<span class="dim">· 없는 학생: ${E(box.dataset.missing)}</span>`);
-  box.innerHTML = items.join('') || '<span class="dim">렌더된 이미지 없음</span>';
+  if (box.dataset.missing) links.push(`<span class="dim">· 없는 학생: ${E(box.dataset.missing)}</span>`);
+  const files = data.map((d, i) => ({ name: names[i], url: d.signedUrl })).filter(x => x.url);
+  box.innerHTML = (files.length
+    ? `<button type="button" class="rp-save">⤓ 전체 저장 (${files.length}장)</button>`
+    : '') + (links.join('') || '<span class="dim">렌더된 이미지 없음</span>');
+  const btn = box.querySelector('.rp-save');
+  if (btn) btn.onclick = () => saveReports(btn, files);
+}
+
+/* ───────── 리포트 이미지 저장 (0811 — 당분간 팀톡으로 손으로 보낸다) ─────────
+ * ⚠ 서명 URL 을 `<a download>` 로 그냥 걸면 **파일명이 해시로 떨어진다**.
+ *   download 속성은 같은 오리진일 때만 먹고, Storage 는 다른 오리진이다.
+ *   Storage 키에 한글을 못 써서 파일이 `3f2a….jpg` 로 올라가 있으므로 그대로 받으면
+ *   누구 것인지 알 수 없다 → **blob 으로 받아서 이름을 붙여 저장한다.**
+ * 한 장씩 순서대로 받는다. 한꺼번에 클릭을 쏘면 크롬이 뒤쪽을 버린다.
+ * 처음 한 번은 크롬이 "파일 여러 개 다운로드를 허용하시겠습니까?" 를 묻는다 — 허용.
+ */
+async function saveOneReport(url, filename) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status + '');
+  const blob = await r.blob();
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 8000);
+}
+async function saveReports(btn, files) {
+  const orig = btn.textContent;
+  btn.disabled = true;
+  let done = 0; const failed = [];
+  for (const f of files) {
+    btn.textContent = `저장 중… ${done + 1}/${files.length}`;
+    try { await saveOneReport(f.url, f.name + '.jpg'); done++; }
+    catch (e) { failed.push(f.name); }
+    await new Promise(r => setTimeout(r, 250));
+  }
+  btn.disabled = false;
+  btn.textContent = failed.length
+    ? `${done}장 저장 · 실패: ${failed.join(', ')}`
+    : `${done}장 저장됨 ✓`;
+  setTimeout(() => { btn.textContent = orig; }, 8000);
 }
 
 /* ───────── 상호작용 (정적판 JS와 동일) ───────── */
