@@ -67,6 +67,7 @@ textarea{min-height:44px;resize:vertical;}
 .items button.s2{background:var(--ok);color:#fff;} .items button.s1{background:var(--warn);color:#fff;} .items button.s0{background:var(--bad);color:#fff;}
 .items .sum{flex:0 0 62px;text-align:center;font-weight:800;font-size:16px;color:var(--key-d);}
 .recent{font-size:11px;color:var(--sub);margin-left:8px;}
+.indhw{color:#8a4b1f;font-weight:600;line-height:1.35;max-width:260px;}
 .clinicrow{flex-wrap:wrap;}
 .clinicrow>div{min-width:0;}
 .clinicrow input{min-width:0;max-width:100%;}
@@ -305,7 +306,15 @@ async function initClassButtons(){
     box.appendChild(b);
   });
 }
-let PREVHW='', PREVHW_MAP={}, RECENT={}, NOTES={}, NEXT=null;
+let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
+// 지난 과제가 반 공통과 다른 학생만 이름칸에 한 줄 — 과제검사 기준이 사람마다 다르다는 걸 눈으로 알아야 한다
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function prevHwLine(id){
+  const v=(PREVHW_MAP[id]||'').trim();
+  if(!v||v===(PREVHW||'').trim())return '';
+  const d=(PREVHW_DATE[id]||'').slice(5);
+  return `<div class="recent indhw" style="margin-left:0">📌 지난과제(개별${d?' '+d:''}): ${esc(v).replace(/\n/g,' / ')}</div>`;
+}
 const TTCACHE={};
 /* 다음 수업일 + 반별 추가학습 기본 시간 규칙 */
 async function nextClinic(cls){
@@ -344,10 +353,10 @@ async function selectClass(cls){
   ]);
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
-  RECENT={};NOTES={};PREVHW_MAP={};(hist||[]).forEach(r=>{
+  RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
     if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);
     if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
-    if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP))PREVHW_MAP[r['학생ID']]=r['이번과제'];
+    if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   NEXT=await nextClinic(cls);
@@ -444,7 +453,7 @@ function renderTable(box,nq){
     const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
     const tr=document.createElement('tr');tr.className='stu';tr.dataset.id=id;
     tr.innerHTML=`
-      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}</td>
+      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}</td>
       <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
       <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
       ${nq?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
@@ -497,6 +506,7 @@ function renderCards(box,nq){
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
+      ${prevHwLine(id)}
       <div class="seg" data-f="출결">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div>
       <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
