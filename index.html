@@ -152,7 +152,9 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 <a href="#today" data-v="today">오늘</a><a href="#class" data-v="class">반별</a>
 <a href="#student" data-v="student">학생</a><a href="#clinic" data-v="clinic">추가학습</a>
 <a href="#loop" data-v="loop">루프</a><a href="#report" data-v="report">리포트</a>
-<a href="#weak" data-v="weak">약점</a></nav>
+<a href="#weak" data-v="weak">약점</a>
+<a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
+<a href="#exammeta" data-v="exammeta">시험메타</a></nav>
 <span id="state"><span class="pill" id="freshness"></span>
 <!-- ⚠ 절대경로다. 이 파일은 루트(/dashboard/)와 /dashboard/app/ 두 깊이에서 서빙되므로
      ../console/ 로 쓰면 루트에서 사이트 밖(/console/)을 가리킨다 -->
@@ -281,7 +283,9 @@ async function boot(session) {
 
 /* ───────── 조회 ───────── */
 const TABLES = ['daily_log', 'wrong_answers', 'weekly_exam', 'class_log', 'loop_box',
-  'loop_submit', 'clinic_roster', 'type_map'];
+  'loop_submit', 'clinic_roster', 'type_map',
+  // 0811 추가 — 정적판에 없던 뷰 3종(내신·클리닉 실시기록·시험메타)
+  'school_exam', 'exam_meta', 'exam_source', 'clinic_log'];
 async function fetchAll(table) {
   const page = 1000; let from = 0, out = [];
   for (;;) {
@@ -431,8 +435,13 @@ function compute(raw) {
   const todayBans = bans.filter(b => (clsHist[b] || []).some(
     r => within(r['날짜'], 21) && D(r['날짜']).getDay() === wd));
 
+  // 이름 → 학생 (0811 신설 뷰가 이름밖에 없는 행을 학생 페이지로 잇는 데 쓴다.
+  // ⚠ 학생ID를 조합하지 않는다 — 마스터(students)가 붙인 ID만 따라간다)
+  const byName = {};
+  students.forEach(s => { if (!(s.name in byName)) byName[s.name] = s; });
+
   return {
-    raw, journal, students, smap, bans, signal, clsHist, clsTrend, clsRateTrend,
+    raw, journal, students, smap, byName, bans, signal, clsHist, clsTrend, clsRateTrend,
     clinic, todayBans, wrByStu, REF, LAST, refdt, within, withinData
   };
 }
@@ -441,7 +450,8 @@ function compute(raw) {
 function render(st) {
   $('views').innerHTML = [
     viewToday(st), viewClass(st), viewStudent(st), viewClinic(st),
-    viewLoop(st), viewReport(st), viewWeak(st)
+    viewLoop(st), viewReport(st), viewWeak(st),
+    viewExam(st), viewClinicLog(st), viewExamMeta(st)   // 0811 신설
   ].join('');
 }
 
@@ -819,6 +829,157 @@ function viewWeak(st) {
     + '</section>';
 }
 
+/* ═════════ 0811 신설 3뷰 — 정적판에는 없다(패리티 대조 대상 아님) ═════════
+ *
+ * 내신·클리닉 실시기록·시험메타는 DB에 이미 들어와 있는데 화면이 없었다.
+ * ⚠ 등급 판정 로직은 `01_운영/시험DB/시험메타조회.py` 가 단일 진실원이다. 여기 있는 것은
+ *    그 이식본 — 규칙(컷 비교 순서·5등급 하한·학교키 정규화)을 고치면 두 쪽을 같이 고친다.
+ * ⚠ **원점수 단독 해석 금지.** 등급컷·난이도 없이 낙폭을 말하지 않는다. 그래서 화면에
+ *    점수만 크게 띄우지 않고 항상 등급·컷·난이도를 붙인다. 컷은 전부 '예상 추정치'다.
+ */
+const 학교키 = s => (String(s || '').trim().replace(/(고등학교|고)$/, '') || String(s || '').trim());
+const META_INT = ['학년', '시행년', '학기', '문항수', '총점', '등급컷1', '등급컷2', '등급컷3',
+  '등급컷4', '등급컷5하한', '응시자수'];
+
+function metaFind(st, r) {
+  const y = parseInt(r['시행년'], 10), gr = parseInt(r['학년'], 10), sm = parseInt(r['학기'], 10);
+  return st.raw.exam_meta.find(m => 학교키(m['학교']) === 학교키(r['학교'])
+    && mi(m, '학년') === gr && mi(m, '시행년') === y && mi(m, '학기') === sm
+    && (m['시험구분'] || '') === (r['시험구분'] || '')) || null;
+}
+const mi = (m, k) => { const v = m[k]; return v === '' || v == null ? null : parseInt(v, 10); };
+
+function metaGrade(score, m) {          // 시험메타조회.grade 이식
+  if (!m || score == null) return null;
+  const s = Number(score);
+  if (!isFinite(s)) return null;
+  for (const g of [1, 2, 3, 4]) { const c = mi(m, '등급컷' + g); if (c != null && s >= c) return g; }
+  return mi(m, '등급컷5하한') != null ? 5 : null;
+}
+function metaRead(score, m) {           // 시험메타조회.해석 이식
+  if (!m) return '시험 정보 없음 — 원점수만으로는 판단 불가';
+  const g = metaGrade(score, m), nan = m['전체난이도'] || '?', c1 = mi(m, '등급컷1');
+  if (g == null) return `등급컷 미확보 (난이도 ${nan})`;
+  return `${g}등급권 (${c1 != null ? '1등급컷 ' + c1 : '컷 미확보'} · 난이도 ${nan} · 예상)`;
+}
+const gradeCls = g => g == null ? 'na' : (g <= 1 ? 'good' : g <= 3 ? 'mid' : 'bad');
+
+/* 뷰 8: 내신 — 학교 시험 원점수에 등급을 붙여서 본다 */
+function viewExam(st) {
+  const rows = st.raw.school_exam.filter(r => (r['상태'] || '확보') === '확보' && r['점수'] !== '' && r['점수'] != null)
+    .map(r => {
+      const m = metaFind(st, r), sc = Number(r['점수']);
+      const real = String(r['등급'] || '').trim();
+      const g = real ? Math.round(Number(real)) : metaGrade(sc, m);
+      return {
+        r, m, sc, g, src: real ? '실측' : (g != null ? '추정' : null),
+        read: real ? `${g}등급 (실측${m && mi(m, '등급컷1') != null ? ' · 예상컷 ' + mi(m, '등급컷1') : ''})` : metaRead(sc, m),
+        gap: m && mi(m, '등급컷1') != null ? Math.round((sc - mi(m, '등급컷1')) * 10) / 10 : null,
+        key: [r['시행년'], r['학기'], r['시험구분'] === '중간' ? 0 : 1].join('-'),
+      };
+    })
+    .sort((a, b) => (b.key + b.r['이름']).localeCompare(a.key + a.r['이름'], 'ko'));
+  const g1 = rows.filter(x => x.g === 1).length;
+  const cut = rows.filter(x => x.m).length;
+  const label = x => `${x.r['시행년']} ${x.r['학기']}학기 ${x.r['시험구분']}`;
+
+  // 내신.csv 의 반은 축약(A·S·T·미적)이라 마스터의 반(고1A…)을 우선 쓴다
+  const row = x => `<div class="cl-row"><b>${E(String(x.sc))}점</b> `
+    + `${st.byName[x.r['이름']] ? slink(st.byName[x.r['이름']]) : `<span class="nm">${E(x.r['이름'])}</span>`}`
+    + ` <span class="ban">${E((st.byName[x.r['이름']] || {}).ban || x.r['반'] || '')}</span>`
+    + `${x.g != null ? chip(gradeCls(x.g), `${x.g}등급 ${x.src}`) : chip('na', '등급 미상')}`
+    + `<span class="dim">${E(x.r['학교'] || '')} · ${E(x.read)}`
+    + `${x.gap != null ? ` · 1등급컷 ${x.gap >= 0 ? '+' : ''}${x.gap}` : ''}</span></div>`;
+
+  let out = '', cur = null;
+  rows.forEach(x => {
+    const L = label(x);
+    if (L !== cur) { if (cur !== null) out += '</div></div>'; out += `<div class="card cl-day"><div class="cl-date">${E(L)}</div><div>`; cur = L; }
+    out += row(x);
+  });
+  out = rows.length ? out + '</div></div>' : '<div class="dim">확보된 내신 기록이 없다</div>';
+
+  return '<section class="view" id="v-exam">'
+    + `<h2>내신 — 학교 시험 <span class="cnt">${rows.length}</span>`
+    + '<span class="dim" style="font-size:12px"> 원점수만 보면 오독한다. 등급컷은 예상 추정치다</span></h2>'
+    + '<div class="kpis">'
+    + `<div class="kpi"><div class="lbl">확보 기록</div><div class="big">${rows.length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">1등급권</div><div class="big">${g1}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">컷 붙은 기록</div><div class="big">${cut}<small>/${rows.length}</small></div></div>`
+    + `<div class="kpi"><div class="lbl">학교</div><div class="big">${new Set(rows.map(x => 학교키(x.r['학교']))).size}<small>곳</small></div></div></div>`
+    + `<div class="grid one-grid">${out}</div></section>`;
+}
+
+/* 뷰 9: 클리닉 실시기록 — 지정(추가학습 탭)이 아니라 **실제로 한 것** */
+function viewClinicLog(st) {
+  const rows = st.raw.clinic_log.filter(r => String(r['날짜'] || '').startsWith('20'))
+    .sort((a, b) => (b['날짜'] + (b['시간'] || '')).localeCompare(a['날짜'] + (a['시간'] || '')));
+  // ⚠ 날짜로 자르지 않는다. 회수한 기록이 02~06월(구 xlsx)이라 "최근 60일"로 자르면
+  //   화면이 통째로 빈다. 최신 60건을 보여주고 기간을 KPI로 밝힌다.
+  const recent = rows.slice(0, 60);
+  const span = rows.length ? `${(rows[rows.length - 1]['날짜'] || '').slice(5)}~${(rows[0]['날짜'] || '').slice(5)}` : '—';
+  const doneCnt = rows.filter(r => (r['실시여부'] || '') === '실시').length;
+  const mine = rows.filter(r => (r['담당구분'] || '') === '유강').length;   // 값은 '유강'/'타강사'
+  const byWhy = {};
+  rows.forEach(r => { const k = (r['사유구분'] || r['사유'] || '기타').slice(0, 18); byWhy[k] = (byWhy[k] || 0) + 1; });
+  const top = Object.entries(byWhy).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  const row = r => `<div class="cl-row"><b>${E(r['시간'] || '—')}</b> `
+    + `${st.byName[r['이름']] ? slink(st.byName[r['이름']]) : `<span class="nm">${E(r['이름'])}</span>`}`
+    + ` <span class="ban">${E(r['반'] || '')}</span>`
+    + `${(r['실시여부'] || '') === '실시' ? chip('good', '실시') : chip('na', E(r['실시여부'] || '기록만'))}`
+    + `<span class="dim">${E(r['사유'] || '')}${r['담당'] ? ' · ' + E(r['담당']) : ''}`
+    + `${r['결과'] ? ' · ' + E(String(r['결과']).slice(0, 40)) : ''}</span></div>`;
+
+  return '<section class="view" id="v-cliniclog">'
+    + `<h2>클리닉 기록 — 실제로 한 것 <span class="cnt">${rows.length}</span>`
+    + '<span class="dim" style="font-size:12px"> 지정 명단은 추가학습 탭. 여기는 실시 기록이다</span></h2>'
+    + '<div class="kpis">'
+    + `<div class="kpi"><div class="lbl">전체 기록</div><div class="big">${rows.length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">실시</div><div class="big">${doneCnt}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">유강이 본 것</div><div class="big">${mine}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">기록 기간</div><div class="big" style="font-size:20px">${E(span)}</div></div></div>`
+    + `<div class="card"><div class="lbl">사유 분포</div><div class="chips" style="margin-top:8px">`
+    + (top.map(([k, v]) => chip('na', `${k} ${v}`)).join('') || '<span class="dim">—</span>') + '</div></div>'
+    + `<h2>최근 ${recent.length}건</h2><div class="grid one-grid">${group(recent, '기록 없음', r => r['날짜'], row, st.REF)}</div>`
+    + '</section>';
+}
+
+/* 뷰 10: 시험메타 — 점수를 해석하는 잣대 자체를 본다 */
+function viewExamMeta(st) {
+  const metas = [...st.raw.exam_meta].sort((a, b) =>
+    String(b['시행년'] + '-' + b['학기'] + '-' + (b['시험구분'] === '중간' ? 0 : 1) + b['학교'])
+      .localeCompare(String(a['시행년'] + '-' + a['학기'] + '-' + (a['시험구분'] === '중간' ? 0 : 1) + a['학교']), 'ko'));
+  const srcCnt = {};
+  st.raw.exam_source.forEach(s => { srcCnt[s['시험ID']] = (srcCnt[s['시험ID']] || 0) + 1; });
+  const cuts = m => [1, 2, 3, 4].map(g => mi(m, '등급컷' + g)).filter(v => v != null);
+
+  const card = m => {
+    const cs = [1, 2, 3, 4].map(g => { const v = mi(m, '등급컷' + g); return v == null ? null : `${g}등급 ${v}`; }).filter(Boolean);
+    const n = srcCnt[m['시험ID']] || 0;
+    return '<div class="card"><div class="bc-top">'
+      + `<b>${E(m['학교'] || '')} ${E(String(m['학년'] || ''))}학년 ${E(String(m['시행년'] || ''))} ${E(String(m['학기'] || ''))}학기 ${E(m['시험구분'] || '')}</b>`
+      + `<span class="dim">${E(m['시행일'] || '')}</span></div>`
+      + `<div class="chips">${m['전체난이도'] ? chip('mid', '난이도 ' + m['전체난이도']) : ''}`
+      + `${m['문항수'] ? chip('na', m['문항수'] + '문항') : ''}`
+      + `${m['학교평균'] ? chip('na', '평균 ' + m['학교평균']) : ''}`
+      + `${n ? chip('acc', '출처 ' + n + '문항') : ''}</div>`
+      + `<div class="lbl" style="margin-top:8px">예상 등급컷 ${m['컷출처'] ? `<span class="dim">(${E(m['컷출처'])})</span>` : ''}</div>`
+      + `<div class="bc-hwv">${cs.length ? E(cs.join(' · ')) : '<span class="dim">미확보</span>'}</div>`
+      + (m['범위'] ? `<div class="lbl" style="margin-top:8px">범위</div><div class="bc-hwv">${E(String(m['범위']).slice(0, 120))}</div>` : '')
+      + '</div>';
+  };
+  return '<section class="view" id="v-exammeta">'
+    + `<h2>시험메타 — 점수를 해석하는 잣대 <span class="cnt">${metas.length}</span></h2>`
+    + '<div class="kpis">'
+    + `<div class="kpi"><div class="lbl">등록 시험</div><div class="big">${metas.length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">컷 확보</div><div class="big">${metas.filter(m => cuts(m).length).length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">출처 기록</div><div class="big">${st.raw.exam_source.length}<small>문항</small></div></div>`
+    + `<div class="kpi"><div class="lbl">학교</div><div class="big">${new Set(metas.map(m => 학교키(m['학교']))).size}<small>곳</small></div></div></div>`
+    + `<div class="grid">${metas.map(card).join('') || '<div class="dim">등록된 시험이 없다</div>'}</div>`
+    + '</section>';
+}
+
 /* ───────── 리포트 이미지 (서버 렌더 → Storage) ─────────
  * 경로 규칙은 render_daily.py 와 한 몸이다: `<날짜>/<sha1(이름.jpg) 앞 16자>.jpg`.
  * (Storage 키에 한글을 못 써서 해시를 쓴다.) 그래서 매니페스트를 따로 읽지 않고
@@ -893,7 +1054,8 @@ function wire() {
   function route() {
     let h = decodeURIComponent(location.hash || '#today').slice(1);
     let [main, sub] = h.split('/');
-    if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak'].includes(main)) main = 'today';
+    if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak',
+      'exam', 'cliniclog', 'exammeta'].includes(main)) main = 'today';
     let id = 'v-' + main;
     if (main === 'class' && sub && document.getElementById('v-class-' + sub)) id = 'v-class-' + sub;
     if (main === 'student' && sub && document.getElementById('v-stu-' + sid2id(sub))) id = 'v-stu-' + sid2id(sub);
