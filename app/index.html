@@ -110,7 +110,10 @@ nav a.on{background:rgba(245,160,160,.14);color:#ffd9d9;font-weight:700}
 #state .pill{font-size:11px;color:var(--dim);border:1px solid var(--bd);border-radius:99px;padding:3px 10px}
 #state button{background:transparent;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;
  padding:5px 10px;font:inherit;font-size:12px;cursor:pointer}
-@media (hover:hover) and (pointer:fine){#state button:hover{color:var(--acc);border-color:var(--acc)}}
+/* 콘솔로 건너가는 링크 — 탭(#nav)이 아니라 상태줄에 둔다. 뷰가 아니라 다른 사이트다 */
+#state .xlink{border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:5px 10px;
+ font-size:12px;text-decoration:none;white-space:nowrap}
+@media (hover:hover) and (pointer:fine){#state button:hover,#state .xlink:hover{color:var(--acc);border-color:var(--acc)}}
 #boot{color:var(--dim);padding:30px 2px}
 .warn{color:var(--bad);font-size:12px}
 /* 리포트 이미지 갤러리 (DB 직결판에만 있는 기능) */
@@ -151,6 +154,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 <a href="#loop" data-v="loop">루프</a><a href="#report" data-v="report">리포트</a>
 <a href="#weak" data-v="weak">약점</a></nav>
 <span id="state"><span class="pill" id="freshness"></span>
+<a class="xlink" href="../console/" title="수업 입력·마감 (같은 로그인)">수업 콘솔 ↗</a>
 <button onclick="reload()">새로고침</button><button onclick="logout()">로그아웃</button></span></div>
 <div id="boot">데이터를 불러오는 중…</div>
 <div id="views"></div>
