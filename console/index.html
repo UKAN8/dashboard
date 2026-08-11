@@ -71,8 +71,32 @@ textarea{min-height:44px;resize:vertical;}
 .clinicrow>div{min-width:0;}
 .clinicrow input{min-width:0;max-width:100%;}
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;height:44px;background:#fff;}
-/* ── 데스크탑: 시트형 표 ── */
-@media(min-width:900px){ main{max-width:1560px;} body{padding-bottom:60px;} }
+/* ── 데스크탑: 시트형 표 ──────────────────────────────────────────────
+ * 입력은 전부 PC 에서 한다(0811 유강). 폰은 확인용이다.
+ * 그래서 900px 이상에서는 폰 관용구를 걷어낸다:
+ *   하단 고정 nav → 헤더 밑 가로 탭 (flex order 로 자리만 바꾼다. DOM 은 그대로)
+ *   큼직한 터치 버튼 → 조밀한 버튼 · 화면에 한 반이 다 보이게
+ *   표 머리 고정 → 20명을 훑어도 열 이름이 안 사라진다
+ */
+@media(min-width:900px){
+  #app{display:flex;flex-direction:column;min-height:100vh;}
+  header{order:0;} nav{order:1;} main{order:2;}
+  body{padding-bottom:0;}
+  main{max-width:1560px;padding:18px 24px 40px;}
+  nav{position:static;border-top:none;border-bottom:1px solid var(--line);
+      padding:0 24px;justify-content:flex-start;}
+  nav button,nav a.xlink{flex:0 0 auto;padding:12px 18px;font-size:14px;}
+  nav button.on{box-shadow:inset 0 -2px 0 var(--key);}
+  nav a.xlink{margin-left:auto;}
+  .classbtns button{flex:0 0 auto;padding:10px 20px;font-size:14px;}
+  .footbar{position:static;margin-top:16px;}
+  .footbar button{flex:0 0 auto;padding:12px 30px;font-size:15px;}
+  .grid thead th{position:sticky;top:48px;z-index:5;}
+  tr.stu:hover td{background:#fdfaf8;}
+  .toast{bottom:28px;}
+  .kbdhint{font-size:11px;color:var(--sub);margin:0 0 8px;}
+}
+@media(max-width:899px){ .kbdhint{display:none;} }
 table.grid{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
 .grid th{font-size:12px;color:var(--sub);font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;background:#faf7f5;}
 .grid td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top;}
@@ -422,7 +446,33 @@ function renderTable(box,nq){
       <td><input data-f="추가학습시간" style="width:60px" placeholder="14-16" value="${log['추가학습시간']||''}"></td>`;
     tb.appendChild(tr);wireRow(tr,id);
   });
-  t.appendChild(tb);wrap.appendChild(t);box.appendChild(wrap);
+  t.appendChild(tb);wrap.appendChild(t);
+  const hint=document.createElement('p');hint.className='kbdhint';
+  hint.textContent='Enter · ↑↓ 로 같은 칸을 세로로 옮겨 다닌다. Tab 은 옆 칸.';
+  box.appendChild(hint);box.appendChild(wrap);
+  wireGridKeys(t);
+}
+/* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다.
+   Tab 은 옆으로만 가서 매번 한 줄을 가로질러야 했다. */
+function wireGridKeys(t){
+  t.addEventListener('keydown',e=>{
+    const el=e.target;
+    if(!el.matches||!el.matches('input[data-f],textarea[data-f]'))return;
+    const ta=el.tagName==='TEXTAREA';
+    let dir=0;
+    if(e.key==='Enter'&&!ta)dir=e.shiftKey?-1:1;
+    else if(e.key==='ArrowDown'&&(!ta||e.ctrlKey))dir=1;
+    else if(e.key==='ArrowUp'&&(!ta||e.ctrlKey))dir=-1;
+    if(!dir)return;
+    const f=el.dataset.f;
+    let r=el.closest('tr');
+    while((r=dir>0?r.nextElementSibling:r.previousElementSibling)){
+      const next=r.querySelector(`[data-f="${f}"]`);
+      if(next){e.preventDefault();next.focus();
+        if(next.select)next.select();
+        next.scrollIntoView({block:'center',behavior:'smooth'});return;}
+    }
+  });
 }
 function renderCards(box,nq){
   STUDENTS.forEach(s=>{
