@@ -127,6 +127,98 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
  border:1px solid var(--bd);background:rgba(245,160,160,.08);color:#ffd9d9}
 .rp-lnk.none{opacity:.4;background:none}
 @media (hover:hover) and (pointer:fine){.rp-lnk:hover{border-color:var(--acc);background:rgba(245,160,160,.18)}}
+
+/* ── 0811 병합: 유형맵(tm-)·영상색인(vx-) ──
+   ⚠ 클래스 이름을 접두사로 가른다. 원본 정적 HTML 은 .cell·.grid·.kpi 같은 흔한 이름을
+     썼는데 대시보드 CSS 에 같은 이름이 이미 있다 — 그대로 들이면 서로 먹는다.
+   ⚠ :hover 는 반드시 미디어쿼리 안에. 폰에서 탭하면 호버가 남아 유령 선택이 된다. */
+#v-typemap{--b0:rgba(255,255,255,.04);--b1:rgba(252,232,200,.15);
+ --b2:rgba(245,160,160,.28);--b3:#ff5c8a}
+.tm-bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:9px}
+#tm-find{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;
+ padding:5px 12px;width:120px;font:inherit;font-size:13px}
+#tm-find::placeholder{color:var(--dim)}
+.tm-first{background:rgba(255,92,138,.09);border:1px solid rgba(255,92,138,.28);
+ border-radius:13px;padding:11px 15px;margin:14px 0 4px}
+.tm-first.ok{background:rgba(200,240,218,.06);border-color:rgba(200,240,218,.25)}
+.tm-first .h{font-size:11px;letter-spacing:.1em;color:var(--acc);margin-bottom:7px}
+.tm-first.ok .h{color:#c8f0da}
+.tm-first ol{margin:0;padding-left:19px}.tm-first li{margin:2px 0;cursor:pointer}
+.tm-first .why{color:var(--dim);font-size:11.5px;margin-left:5px}
+.tm-unit{margin:16px 0 0}
+.tm-uh{display:flex;align-items:baseline;gap:9px;border-bottom:1px solid var(--bd);
+ padding-bottom:6px;margin-bottom:9px}
+.tm-uh b{font-size:14px}.tm-uh .c{color:var(--dim);font-size:11px}
+.tm-sub{margin:0 0 11px}
+.tm-sl{color:var(--dim);font-size:11px;letter-spacing:.04em;margin:0 0 5px;
+ display:flex;gap:7px;align-items:center}
+.tm-bars{display:inline-flex;gap:2px}
+.tm-bars i{width:9px;height:4px;border-radius:2px;background:var(--b0);display:inline-block}
+.tm-bars i.b1{background:var(--b1)}.tm-bars i.b2{background:var(--b2)}.tm-bars i.b3{background:var(--b3)}
+.tm-grid{display:flex;flex-wrap:wrap;gap:6px}
+.tm-cell{border:1px solid var(--bd);border-radius:9px;padding:6px 11px;font-size:12.5px;
+ cursor:pointer;background:var(--b0);color:var(--dim);max-width:290px;line-height:1.35}
+.tm-cell .n{font-weight:800;margin-left:6px;font-size:11px;opacity:.85}
+.tm-cell.b1{background:var(--b1);color:#f3e6cf;border-color:rgba(252,232,200,.2)}
+.tm-cell.b2{background:var(--b2);color:#ffe2e2;border-color:rgba(245,160,160,.4)}
+.tm-cell.b3{background:rgba(255,92,138,.26);color:#ffdce7;border-color:var(--b3);font-weight:700}
+.tm-cell.mine::after{content:"단독";font-size:9px;margin-left:6px;padding:1px 4px;border-radius:5px;
+ background:rgba(255,255,255,.13);vertical-align:1px;font-weight:600}
+.tm-cell.on{outline:2px solid var(--acc)}
+#tm-detail{position:sticky;bottom:0;background:#12121a;border:1px solid var(--bd);
+ border-radius:13px;padding:12px 15px;margin-top:18px;display:none}
+#tm-detail h3{margin:0 0 2px;font-size:15px}
+#tm-detail .full{color:var(--dim);font-size:11px;margin-bottom:2px}
+#tm-detail .p{color:var(--tx2);font-size:11.5px;margin-bottom:9px}
+#tm-detail table{width:100%;border-collapse:collapse;font-size:12px}
+#tm-detail td{padding:4px 6px;border-bottom:1px solid var(--bd);color:var(--tx2)}
+#tm-detail td:first-child{color:var(--tx);white-space:nowrap}
+#tm-detail .acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+#tm-detail .acts a,#tm-detail .acts button{font-size:12px;padding:4px 11px;border-radius:8px;
+ border:1px solid var(--bd);background:var(--card);color:var(--tx2);text-decoration:none;
+ cursor:pointer;font-family:inherit}
+#tm-cmd{margin-top:8px;font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace;
+ background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:7px;padding:6px 9px;
+ display:none;word-break:break-all}
+.tm-leg{display:flex;gap:12px;flex-wrap:wrap;color:var(--dim);font-size:11px;align-items:center}
+.tm-sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;
+ vertical-align:-1px;border:1px solid var(--bd)}
+.tm-note{color:var(--dim);font-size:11px;margin-top:22px;border-top:1px solid var(--bd);padding-top:10px}
+@media (hover:hover) and (pointer:fine){
+ .tm-cell:hover{filter:brightness(1.22)}.tm-first li:hover b{color:var(--acc)}}
+.tm-cell:active{filter:brightness(1.3)}
+
+#vx-q{width:100%;max-width:640px;background:var(--card);border:1px solid var(--bd);color:var(--tx);
+ border-radius:11px;padding:11px 14px;font:inherit;font-size:15px;margin:4px 0 10px}
+#vx-q::placeholder{color:var(--dim)}
+.vx-grp{margin:16px 0 0}
+.vx-gh{display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--bd);
+ padding-bottom:5px;margin-bottom:7px}
+.vx-gh b{font-size:13px}.vx-gh .c{color:var(--dim);font-size:11px}
+.vx-row{display:block;border:1px solid transparent;border-radius:10px;padding:7px 10px;
+ color:inherit;text-decoration:none}
+.vx-row+.vx-row{margin-top:2px}
+.vx-row .k{display:inline-block;min-width:56px;font-size:10px;letter-spacing:.05em;padding:1px 6px;
+ border-radius:6px;background:rgba(255,255,255,.06);color:var(--dim);text-align:center;
+ margin-right:8px;vertical-align:1px}
+.vx-row .k.개념설명{background:rgba(200,240,218,.14);color:#c8f0da}
+.vx-row .k.문제풀이{background:rgba(245,160,160,.16);color:#ffd9d9}
+.vx-row .k.명대사{background:rgba(252,232,200,.13);color:#fce8c8}
+.vx-row .t{color:var(--acc);font-variant-numeric:tabular-nums;font-size:12px;margin-left:7px}
+.vx-row .src{color:var(--tx2);font-size:11px;margin-left:7px}
+.vx-row .n{display:block;color:var(--dim);font-size:11.5px;margin:2px 0 0 64px}
+.vx-row.dead{cursor:default}.vx-row.dead .t{color:var(--dim);text-decoration:line-through}
+.vx-warn{background:rgba(252,232,200,.08);border:1px solid rgba(252,232,200,.2);color:#fce8c8;
+ border-radius:11px;padding:9px 13px;font-size:12px;margin:12px 0}
+.vx-wait{margin-top:26px;border-top:1px solid var(--bd);padding-top:12px;font-size:12px}
+.vx-wait b{color:var(--tx2)}
+.vx-wrow{margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.vx-wrow a{color:var(--acc);text-decoration:none}
+#v-video mark{background:rgba(245,160,160,.35);color:#fff;border-radius:3px;padding:0 2px}
+@media (hover:hover) and (pointer:fine){
+ .vx-row:hover{background:rgba(255,255,255,.04);border-color:var(--bd)}
+ .vx-wrow a:hover{text-decoration:underline}}
+.vx-row:active{background:rgba(255,255,255,.06)}
 </style></head><body>
 
 <div id="login">
@@ -153,6 +245,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 <a href="#student" data-v="student">학생</a><a href="#clinic" data-v="clinic">추가학습</a>
 <a href="#loop" data-v="loop">루프</a><a href="#report" data-v="report">리포트</a>
 <a href="#weak" data-v="weak">약점</a>
+<a href="#typemap" data-v="typemap">유형맵</a><a href="#video" data-v="video">영상</a>
 <a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
 <a href="#exammeta" data-v="exammeta">시험메타</a></nav>
 <span id="state"><span class="pill" id="freshness"></span>
@@ -271,7 +364,7 @@ async function boot(session) {
     const raw = await loadAll();
     const st = compute(raw);
     render(st);
-    wire();
+    wire(st);
     $('boot').classList.add('hidden');
     $('hdr-date').textContent = `학습현황 · ${dfmt(st.REF)} 기준`;
     $('freshness').textContent = `데이터 최신 ${dfmt(st.LAST, false)} · ${new Date().toTimeString().slice(0, 5)} 조회`;
@@ -285,12 +378,22 @@ async function boot(session) {
 const TABLES = ['daily_log', 'wrong_answers', 'weekly_exam', 'class_log', 'loop_box',
   'loop_submit', 'clinic_roster', 'type_map',
   // 0811 추가 — 정적판에 없던 뷰 3종(내신·클리닉 실시기록·시험메타)
-  'school_exam', 'exam_meta', 'exam_source', 'clinic_log'];
+  'school_exam', 'exam_meta', 'exam_source', 'clinic_log',
+  // 0811 병합 — 유형맵·영상색인 (세션이 만들던 정적 HTML 두 장을 탭으로 들였다)
+  // students(학생마스터)는 집계에 안 쓰고 **반 표기를 푸는 데만** 쓴다. 오답.csv 의 반은
+  // 'A'·'S' 같은 축약이라 마스터를 안 보면 반 버튼이 '고1S'와 'S'로 갈라진다.
+  'type_system', 'round_date', 'video_record', 'video_index', 'students'];
+// 없어도 페이지가 죽지 않는 표. 스키마를 올리기 전에 앱이 먼저 배포돼도 그 탭만 비고
+// 나머지는 멀쩡히 돈다. (0811 이전엔 표 하나가 없으면 boot 이 통째로 실패했다)
+const OPTIONAL = new Set(['type_system', 'round_date', 'video_record', 'video_index', 'students']);
 async function fetchAll(table) {
   const page = 1000; let from = 0, out = [];
   for (;;) {
     const { data, error } = await sb.from(table).select('*').range(from, from + page - 1);
-    if (error) throw new Error(`${table}: ${error.message}`);
+    if (error) {
+      if (OPTIONAL.has(table)) { console.warn(`${table} 없음/못 읽음 — 빈 값으로 진행:`, error.message); return out; }
+      throw new Error(`${table}: ${error.message}`);
+    }
     out = out.concat(data);
     if (data.length < page) return out;
     from += page;
@@ -451,7 +554,8 @@ function render(st) {
   $('views').innerHTML = [
     viewToday(st), viewClass(st), viewStudent(st), viewClinic(st),
     viewLoop(st), viewReport(st), viewWeak(st),
-    viewExam(st), viewClinicLog(st), viewExamMeta(st)   // 0811 신설
+    viewExam(st), viewClinicLog(st), viewExamMeta(st),   // 0811 신설
+    viewTypemap(st), viewVideo(st)                       // 0811 병합
   ].join('');
 }
 
@@ -980,6 +1084,368 @@ function viewExamMeta(st) {
     + '</section>';
 }
 
+/* ═════════ 0811 병합 ① 유형맵 — 학생별 약점 신호 지도 ═════════
+ *
+ * 세션이 `00_대시보드/유형맵.py` 로 만들던 정적 HTML 을 탭으로 들였다(정적판 은퇴 원칙).
+ * ⚠ **성취도를 '정답률'이라 부르지 않는다.** 분모(시도수)가 없다. 여기서 재는 것은
+ *    약점 신호 강도 S = Σ 0.5^(경과일/45) — 오답을 최근일수록 무겁게 센 값이다.
+ * ⚠ 색 등급의 1순위는 **반복 여부**다. 1회 오답은 사고일 수 있다.
+ * ⚠ 화면에 뜨는 유형(universe) = 같은 학년이 실제로 만난 유형(반 오답 ∪ 문항DB).
+ *    '한 번도 안 틀림'과 '아직 안 배움'을 섞지 않으려는 장치다.
+ * ⚠ 타일 이름은 유형체계 정식명에서 형제 유형을 가르는 일련번호를 뺀 것이다.
+ *    데이터(조인 키)는 번호를 그대로 쓴다 — 화면에서만 숨긴다.
+ */
+const TM_HALF = 45;
+const tmGrade = c => String(c || '').slice(0, 2);
+
+function tmSplit(t) {                     // '접선의 방정식3 (원 밖의 점)' → ['접선의 방정식','원 밖의 점']
+  const m = /^(.*?)(\d*)\s*\(([^)]*)\)\s*$/.exec(t);
+  if (!m) return [String(t).replace(/\d+$/, '').trim(), ''];
+  return [m[1].replace(/\d+$/, '').trim(), m[3].trim()];
+}
+
+function tmBuild(st) {
+  const today = ds(new Date());
+  const ROUND = {};
+  (st.raw.round_date || []).forEach(r => { if (r['날짜']) ROUND[String(r['회차'] || '').trim()] = r['날짜']; });
+  const TMAP = {};
+  st.raw.type_map.forEach(r => {
+    const k = (r['원태그'] || '').trim();
+    if (k) TMAP[k] = [(r['정규단원'] || '').trim(), (r['정규유형'] || '').trim()];
+  });
+  const sysrows = st.raw.type_system || [];
+  const SYS = {};
+  sysrows.forEach(r => { if (!(r['유형'] in SYS)) SYS[r['유형']] = r; });
+
+  // 학생 — 활동 명단(daily_log)이 기본, 오답에만 있는 학생은 마스터에서 반을 찾아 보탠다
+  const stu = {};
+  st.students.forEach(s => stu[s.sid] = { id: s.sid, name: s.name, cls: s.ban });
+  const byName = {};
+  Object.values(stu).forEach(s => { if (!(s.name in byName)) byName[s.name] = s; });
+  // 마스터의 반은 축약(A·S·T)이라 학년을 앞에 붙여야 '고1S' 가 된다
+  const mcls = {};
+  (st.raw.students || []).forEach(r => {
+    const nm = (r['이름'] || '').trim();
+    const c = ((r['학년'] || '').trim() + (r['반'] || '').trim()).trim();
+    if (nm && c && !(nm in mcls)) mcls[nm] = c;
+  });
+
+  const EV = [];
+  st.raw.wrong_answers.forEach(r => {
+    const tag = (r['틀린유형(태그)'] || '').trim();
+    if (!tag) return;
+    const mp = TMAP[tag], type = mp ? mp[1] : tag;
+    const unit = (mp && mp[0]) || (SYS[type] || {})['중단원'] || '';
+    let sid = (r['학생ID'] || '').trim() || (r['이름'] || '').trim();
+    const name = (r['이름'] || '').trim();
+    const dt = /^\d{4}-\d{2}-\d{2}/.test(String(r['날짜'] || '')) ? String(r['날짜']).slice(0, 10)
+      : (ROUND[(r['시험명'] || '').trim()] || '');
+    const age = dt ? Math.max(days(D(today), D(dt)), 0) : 60;
+    // ⚠ 학생ID를 조합하지 않는다 — 마스터가 붙인 ID로만 이어 붙인다
+    const known = stu[sid] || byName[name];
+    const cls = (known && known.cls) || mcls[name] || (r['반'] || '').trim();
+    if (known) sid = known.id;
+    else if (!stu[sid]) stu[sid] = { id: sid, name, cls };
+    EV.push({
+      sid, type, unit, sub: (SYS[type] || {})['소단원'] || '',
+      cls, date: dt, age,
+      kind: (r['시험종류'] || '').trim(), exam: (r['시험명'] || '').trim(),
+      qno: (r['문항'] || '').trim(), raw: tag, w: Math.pow(0.5, age / TM_HALF),
+    });
+  });
+
+  // universe — 반이 실제로 만난 유형을 학년으로 합치고 문항DB로 보강
+  const uniG = {};
+  const add = (g, t) => { (uniG[g] = uniG[g] || new Set()).add(t); };
+  EV.forEach(e => { if (e.cls) add(tmGrade(e.cls), e.type); });
+  (st.raw.item_index || []).forEach(r => {
+    const t = (r['정규유형'] || '').trim();
+    if (t) add(String(r['자료명'] || '').includes('공통수학') ? '고1' : '고2', t);
+  });
+
+  // 표시 이름 — 소단원 안에서 겹치거나 앞머리가 소단원과 겉돌 때만 앞머리를 붙인다
+  const LIVE = new Set();
+  Object.values(uniG).forEach(s => s.forEach(t => LIVE.add(t)));
+  const order = [], seenKey = new Set();
+  sysrows.forEach(r => {
+    if (!LIVE.has(r['유형'])) return;
+    const k = [r['중단원'], r['소단원'], r['유형']].join('');
+    if (seenKey.has(k)) return;
+    seenKey.add(k);
+    order.push({ u: r['중단원'], s: r['소단원'], t: r['유형'] });
+  });
+  const pre = {}, lab = {};
+  order.forEach(o => { const [p, par] = tmSplit(o.t); pre[o.t] = p; lab[o.t] = par || p; });
+  const bySub = {};
+  order.forEach(o => (bySub[o.s] = bySub[o.s] || []).push(o.t));
+  Object.entries(bySub).forEach(([s, ts]) => {
+    const cnt = {};
+    ts.forEach(t => cnt[lab[t]] = (cnt[lab[t]] || 0) + 1);
+    ts.forEach(t => {
+      const p = pre[t];
+      if (p && lab[t] !== p && (cnt[lab[t]] > 1 || (!s.includes(p) && !p.includes(s))))
+        lab[t] = `${p} · ${lab[t]}`;
+    });
+  });
+  const sys = order.map(o => ({ u: o.u, s: o.s, t: o.t, l: lab[o.t] }));
+
+  // 학생별 집계
+  const per = {}, seenPair = new Set(), clsCnt = {}, clsN = {};
+  EV.forEach(e => ((per[e.sid] = per[e.sid] || {})[e.type] = (per[e.sid][e.type] || [])).push(e));
+  EV.forEach(e => {
+    const k = [e.cls, e.type, e.sid].join('');
+    if (!e.cls || seenPair.has(k)) return;
+    seenPair.add(k);
+    (clsCnt[e.cls] = clsCnt[e.cls] || {})[e.type] = ((clsCnt[e.cls] || {})[e.type] || 0) + 1;
+  });
+  Object.values(stu).forEach(s => { if (s.cls) clsN[s.cls] = (clsN[s.cls] || 0) + 1; });
+
+  const band = (n, S, fresh) => (n >= 3 || (n === 2 && S >= 1.2)) ? 3
+    : (n === 2 || (n === 1 && fresh)) ? 2 : (n ? 1 : 0);
+
+  const students = [], map = {};
+  Object.values(stu).sort((a, b) => (a.cls + a.name).localeCompare(b.cls + b.name, 'ko'))
+    .forEach(s => {
+      const rows = per[s.id] || {};
+      if (!Object.keys(rows).length && !s.cls) return;
+      const tmap = {};
+      Object.entries(rows).forEach(([t, evs]) => {
+        const S = evs.reduce((a, e) => a + e.w, 0);
+        const share = s.cls ? ((clsCnt[s.cls] || {})[t] || 0) / Math.max(clsN[s.cls] || 0, 1) : 0;
+        tmap[t] = {
+          n: evs.length, S: Math.round(S * 100) / 100,
+          b: band(evs.length, S, evs.some(e => e.age <= 21)),
+          last: evs.map(e => e.date).filter(Boolean).sort().pop() || '',
+          share: Math.round(share * 100) / 100,
+          ev: evs.map(e => ({ d: e.date, k: e.kind, q: e.qno, x: e.exam, raw: e.raw }))
+            .sort((a, b) => String(b.d).localeCompare(String(a.d))),
+        };
+      });
+      students.push({
+        id: s.id, name: s.name, cls: s.cls || '',
+        n: Object.values(tmap).reduce((a, v) => a + v.n, 0),
+        hot: Object.values(tmap).filter(v => v.b === 3).length,
+      });
+      map[s.id] = tmap;
+    });
+
+  return { today, students, sys, uniG, map, lab, evN: EV.length };
+}
+
+function viewTypemap(st) {
+  return '<section class="view" id="v-typemap">'
+    + '<h2>유형맵 — 약점 지도 <span class="dim" style="font-size:12px">'
+    + '색이 진할수록 반복해서 틀린 유형이다. 정답률이 아니라 약점 신호다</span></h2>'
+    + '<div class="tm-bar" id="tm-cls"></div>'
+    + '<div class="tm-bar"><input id="tm-find" placeholder="이름 검색" autocomplete="off">'
+    + '<span id="tm-stu" style="display:contents"></span></div>'
+    + '<div class="kpis" id="tm-kpis"></div><div id="tm-first"></div>'
+    + '<div class="tm-bar" style="margin-top:12px"><button class="fbtn" id="tm-only">구멍만 보기</button>'
+    + '<span class="tm-leg">'
+    + '<span><i class="tm-sw" style="background:rgba(255,92,138,.26);border-color:#ff5c8a"></i>반복</span>'
+    + '<span><i class="tm-sw" style="background:rgba(245,160,160,.28)"></i>눈에 띔</span>'
+    + '<span><i class="tm-sw" style="background:rgba(252,232,200,.15)"></i>한 번</span>'
+    + '<span><i class="tm-sw" style="background:rgba(255,255,255,.04)"></i>이력 없음</span>'
+    + '<span>· <b>단독</b> = 반에서 20% 미만만 틀린 개인 구멍</span></span></div>'
+    + '<div id="tm-map"></div><div id="tm-detail"></div>'
+    + '<div class="tm-note" id="tm-note"></div></section>';
+}
+
+function tmWire(st) {
+  const D2 = tmBuild(st);
+  const byId = {}; D2.students.forEach(s => byId[s.id] = s);
+  const L = t => D2.lab[t] || t;
+  const classes = [...new Set(D2.students.map(s => s.cls).filter(Boolean))].sort();
+  let cls = classes[0] || null, sid = null, sel = null, only = false, find = '';
+
+  const pick = c => {
+    const f = D2.students.filter(x => x.cls === c).sort((a, b) => b.n - a.n);
+    return f.length ? f[0].id : null;
+  };
+  sid = pick(cls);
+
+  function bars() {
+    $('tm-cls').innerHTML = classes.map(c =>
+      `<button class="fbtn${c === cls ? ' on' : ''}" data-tc="${E(c)}">${E(c)}</button>`).join('');
+    const list = D2.students.filter(s => s.cls === cls && (!find || s.name.includes(find)))
+      .sort((a, b) => b.n - a.n);
+    $('tm-stu').innerHTML = list.map(s =>
+      `<button class="fbtn${s.id === sid ? ' on' : ''}" data-ts="${E(s.id)}">${E(s.name)}`
+      + `<span class="dim" style="font-size:11px;margin-left:5px">${s.n}</span></button>`).join('')
+      || '<span class="dim">해당 없음</span>';
+  }
+
+  function draw() {
+    const s = byId[sid];
+    if (!s) { $('tm-map').innerHTML = '<div class="dim">학생이 없다.</div>'; return; }
+    const m = D2.map[sid] || {};
+    const U = new Set(D2.uniG[tmGrade(s.cls)] || []);
+    Object.keys(m).forEach(t => U.add(t));
+    const ts = Object.keys(m), hot = ts.filter(t => m[t].b === 3);
+    const recent = ts.reduce((a, t) => a + m[t].ev.filter(
+      e => e.d && days(D(D2.today), D(e.d)) <= 30).length, 0);
+    $('tm-kpis').innerHTML = [['총 오답', s.n], ['짚인 유형', ts.length],
+      ['반복 구멍', hot.length], ['최근 30일', recent]]
+      .map(([l, v]) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}</div></div>`).join('');
+
+    const top = hot.slice().sort((a, b) => m[b].S - m[a].S || m[b].n - m[a].n).slice(0, 3);
+    $('tm-first').innerHTML = top.length
+      ? '<div class="tm-first"><div class="h">먼저 손볼 것</div><ol>' + top.map(t => {
+        const v = m[t], solo = v.share > 0 && v.share < 0.2;
+        return `<li data-tt="${encodeURIComponent(t)}"><b>${E(L(t))}</b><span class="why">${v.n}회`
+          + `${v.last ? ' · 최근 ' + v.last : ''} · `
+          + `${solo ? '반에서 나만' : '반 ' + Math.round(v.share * 100) + '%도 틀림'}</span></li>`;
+      }).join('') + '</ol></div>'
+      : '<div class="tm-first ok"><div class="h">먼저 손볼 것</div>같은 유형을 두 번 이상 틀린 곳이 없다.</div>';
+
+    const units = [];
+    D2.sys.forEach(r => {
+      if (!U.has(r.t)) return;
+      if (only && !(m[r.t] && m[r.t].b >= 2)) return;
+      let u = units.find(x => x.u === r.u); if (!u) units.push(u = { u: r.u, subs: [] });
+      let sg = u.subs.find(x => x.s === r.s); if (!sg) u.subs.push(sg = { s: r.s, ts: [] });
+      sg.ts.push(r.t);
+    });
+    const sig = x => x.subs.reduce((n, g2) => n + g2.ts.reduce((k, t) => k + ((m[t] || {}).S || 0), 0), 0);
+    units.sort((a, b) => sig(b) - sig(a));
+    $('tm-map').innerHTML = units.map(u => {
+      const tot = u.subs.reduce((n, g2) => n + g2.ts.reduce((k, t) => k + ((m[t] || {}).n || 0), 0), 0);
+      return `<div class="tm-unit"><div class="tm-uh"><b>${E(u.u)}</b><span class="c">오답 ${tot}</span></div>`
+        + u.subs.map(g2 => {
+          const bs = g2.ts.map(t => `<i class="b${(m[t] || {}).b || 0}"></i>`).join('');
+          return `<div class="tm-sub"><div class="tm-sl"><span>${E(g2.s)}</span>`
+            + `<span class="tm-bars">${bs}</span></div><div class="tm-grid">`
+            + g2.ts.map(t => {
+              const v = m[t], b = v ? v.b : 0;
+              const mine = v && v.share > 0 && v.share < 0.2 ? ' mine' : '';
+              return `<div class="tm-cell b${b}${mine}${sel === t ? ' on' : ''}" `
+                + `data-tt="${encodeURIComponent(t)}" title="${E(t)}">${E(L(t))}`
+                + `${v ? `<span class="n">${v.n}</span>` : ''}</div>`;
+            }).join('') + '</div></div>';
+        }).join('') + '</div>';
+    }).join('') || '<div class="dim">표시할 유형이 없다.</div>';
+    detail();
+  }
+
+  function detail() {
+    const el = $('tm-detail'), v = sel && (D2.map[sid] || {})[sel];
+    if (!v) { el.style.display = 'none'; return; }
+    const s = byId[sid];
+    el.style.display = 'block';
+    el.innerHTML = `<h3>${E(L(sel))}</h3><div class="full">유형체계 정식명 · ${E(sel)}</div>`
+      + `<div class="p">오답 ${v.n}회 · 신호 ${v.S} · 최근 ${v.last || '-'} · `
+      + `반에서 이 유형을 틀린 비율 ${Math.round(v.share * 100)}%</div>`
+      + `<table>${v.ev.map(e => `<tr><td>${E(e.d || '-')}</td>`
+        + `<td>${E(e.k)}${e.x ? ' ' + E(e.x) : ''}</td><td>${E(e.q)}</td><td>${E(e.raw)}</td></tr>`).join('')}</table>`
+      + `<div class="acts"><a href="#video/${encodeURIComponent(L(sel))}">이 유형 수업영상 찾기</a>`
+      + `<button id="tm-cmdbtn">보충 문항 뽑는 명령</button></div>`
+      + `<div id="tm-cmd">python3 01_운영/학생DB/오답원문항조회.py ${E(s.name)}   # 유형: ${E(sel)}</div>`;
+    $('tm-cmdbtn').onclick = () => {
+      const c = $('tm-cmd');
+      c.style.display = c.style.display === 'block' ? 'none' : 'block';
+    };
+  }
+
+  document.addEventListener('click', ev => {
+    const sec = ev.target.closest('#v-typemap'); if (!sec) return;
+    const c = ev.target.closest('[data-tc]'), s = ev.target.closest('[data-ts]'),
+      t = ev.target.closest('[data-tt]');
+    if (c) { cls = c.dataset.tc; sid = pick(cls); sel = null; bars(); draw(); }
+    else if (s) { sid = s.dataset.ts; sel = null; bars(); draw(); }
+    else if (t) {
+      const k = decodeURIComponent(t.dataset.tt);
+      sel = sel === k ? null : k; draw();
+      const d = $('tm-detail');
+      if (sel && d.scrollIntoView) d.scrollIntoView({ block: 'nearest' });
+    }
+  });
+  $('tm-only').onclick = e => { only = !only; e.target.classList.toggle('on', only); draw(); };
+  $('tm-find').addEventListener('input', e => { find = e.target.value.trim(); bars(); });
+  $('tm-note').textContent = `기준일 ${D2.today} · 신호 S = Σ 0.5^(경과일/${TM_HALF}) · `
+    + '색 기준: 3회↑ 또는 2회+최근 = 반복 · 화면에 뜨는 유형 = 같은 학년이 실제로 만난 유형'
+    + `(반 오답 ∪ 문항DB) · 오답 이벤트 ${D2.evN}건`;
+  bars(); draw();
+}
+
+/* ═════════ 0811 병합 ② 영상 — 수업영상 색인 ═════════
+ *
+ * 개념 이름·문항 번호로 찾으면 **그 대목에서** 영상이 시작된다(youtu.be/<id>?t=초).
+ * 영상ID는 유튜브 수집기(06_자동화/유튜브_수집)가 채운다 — 비어 있으면 링크가 죽은 채로
+ * 색인만 보인다. 색인 자체가 이미 쓸모 있으므로 숨기지 않는다.
+ * 유형맵 상세의 [이 유형 수업영상 찾기] 가 `#video/<검색어>` 로 들어온다.
+ */
+const VX_KINDS = ['전체', '개념설명', '문제풀이', '과제안내', '명대사'];
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+function viewVideo(st) {
+  const rec = st.raw.video_record || [], idx = st.raw.video_index || [];
+  const wait = rec.filter(r => String(r['레코드'] || '').startsWith('vid:'));
+  const noid = rec.filter(r => !String(r['레코드'] || '').startsWith('vid:') && !r['영상ID']);
+  return '<section class="view" id="v-video">'
+    + `<h2>영상 — 수업영상 색인 <span class="cnt">${idx.length}</span>`
+    + '<span class="dim" style="font-size:12px"> 개념 이름이나 문항 번호로 찾으면 그 대목에서 시작된다</span></h2>'
+    + '<div class="kpis">'
+    + `<div class="kpi"><div class="lbl">색인된 수업</div><div class="big">${rec.filter(r => r['분석'] === 'done').length}<small>개</small></div></div>`
+    + `<div class="kpi"><div class="lbl">색인 대목</div><div class="big">${idx.length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">영상ID 연결</div><div class="big">${rec.filter(r => r['영상ID']).length}<small>/${rec.length}</small></div></div>`
+    + `<div class="kpi"><div class="lbl">자막 보유</div><div class="big">${rec.filter(r => r['자막'] === 'ok').length}<small>개</small></div></div></div>`
+    + (noid.length ? `<div class="vx-warn">영상ID가 아직 안 붙은 수업 ${noid.length}개 — 링크가 눌리지 않는다. `
+      + '유튜브 수집기가 제목으로 맞춰 붙인다(제목에 반·단원·파트를 적어 두면 자동).</div>' : '')
+    + '<input id="vx-q" placeholder="예: 두 원의 교점 / 수직이등분선 / 무게중심 / 32번" autocomplete="off">'
+    + `<div class="tm-bar" id="vx-kinds"></div><div id="vx-list"></div>`
+    + (wait.length ? '<div class="vx-wait"><b>분석 대기</b> — 유튜브에는 있는데 아직 레코드가 없는 영상'
+      + wait.sort((a, b) => String(b['업로드일']).localeCompare(String(a['업로드일']))).map(r =>
+        `<div class="vx-wrow"><a href="https://youtu.be/${E(r['영상ID'])}" target="_blank" rel="noopener">${E(r['제목'] || r['영상ID'])}</a>`
+        + `<span class="dim">${E(r['업로드일'] || '')}`
+        + `${r['길이_초'] ? ' · ' + mmss(Number(r['길이_초'])) : ''}`
+        + `${r['자막'] === 'ok' ? ' · 자막 있음' : ''}</span></div>`).join('') + '</div>' : '')
+    + '</section>';
+}
+
+function vxWire(st) {
+  const rec = st.raw.video_record || [], idx = st.raw.video_index || [];
+  const V = {}; rec.forEach(r => V[r['레코드']] = r);
+  let kind = '전체', q = '';
+  const hl = s => {
+    if (!q) return E(s);
+    const i = String(s).toLowerCase().indexOf(q.toLowerCase());
+    return i < 0 ? E(s) : E(String(s).slice(0, i)) + '<mark>' + E(String(s).slice(i, i + q.length))
+      + '</mark>' + E(String(s).slice(i + q.length));
+  };
+  function draw() {
+    $('vx-kinds').innerHTML = VX_KINDS.map(k =>
+      `<button class="fbtn${k === kind ? ' on' : ''}" data-vk="${k}">${k}</button>`).join('');
+    const hits = idx.filter(e => (kind === '전체' || e['종류'] === kind) && (!q ||
+      [e['제목'], e['요지'], e['출처'], (V[e['레코드']] || {})['단원']].join(' ')
+        .toLowerCase().includes(q.toLowerCase())));
+    const by = {};
+    hits.forEach(e => (by[e['레코드']] = by[e['레코드']] || []).push(e));
+    const keys = Object.keys(by).sort((a, b) =>
+      String((V[b] || {})['날짜'] || '').localeCompare(String((V[a] || {})['날짜'] || '')));
+    $('vx-list').innerHTML = keys.length ? keys.map(k => {
+      const v = V[k] || {};
+      return `<div class="vx-grp"><div class="vx-gh"><b>${E(v['날짜'] || '')} ${E(v['반'] || '')}</b>`
+        + `<span class="c">${E(v['단원'] || '')}</span><span class="c">· ${by[k].length}건</span></div>`
+        + by[k].sort((a, b) => a['t'] - b['t']).map(e => {
+          const inner = `<span class="k ${e['종류']}">${e['종류']}</span><b>${hl(e['제목'])}</b>`
+            + (e['출처'] ? `<span class="src">${E(e['출처'])}</span>` : '')
+            + `<span class="t">${mmss(Number(e['t']))}</span>`
+            + (e['요지'] ? `<span class="n">${hl(e['요지'])}</span>` : '');
+          return v['영상ID']
+            ? `<a class="vx-row" href="https://youtu.be/${E(v['영상ID'])}?t=${Number(e['t'])}" target="_blank" rel="noopener">${inner}</a>`
+            : `<div class="vx-row dead" title="영상ID 미등록">${inner}</div>`;
+        }).join('') + '</div>';
+    }).join('') : '<div class="dim">찾은 것이 없다.</div>';
+  }
+  $('vx-q').addEventListener('input', e => { q = e.target.value.trim(); draw(); });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#v-video [data-vk]');
+    if (b) { kind = b.dataset.vk; draw(); }
+  });
+  window.vxSearch = s => { q = String(s || '').trim(); $('vx-q').value = q; draw(); };
+  draw();
+}
+
 /* ───────── 리포트 이미지 (서버 렌더 → Storage) ─────────
  * 경로 규칙은 render_daily.py 와 한 몸이다: `<날짜>/<sha1(이름.jpg) 앞 16자>.jpg`.
  * (Storage 키에 한글을 못 써서 해시를 쓴다.) 그래서 매니페스트를 따로 읽지 않고
@@ -1033,7 +1499,8 @@ async function loadReportImages(el) {
 }
 
 /* ───────── 상호작용 (정적판 JS와 동일) ───────── */
-function wire() {
+function wire(st) {
+  tmWire(st); vxWire(st);          // 0811 병합 — 유형맵·영상은 상태를 들고 스스로 그린다
   document.addEventListener('toggle', e => {
     const el = e.target;
     if (el.tagName === 'DETAILS' && el.classList.contains('rp-imgs') && el.open) loadReportImages(el);
@@ -1055,8 +1522,10 @@ function wire() {
     let h = decodeURIComponent(location.hash || '#today').slice(1);
     let [main, sub] = h.split('/');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'typemap', 'video'].includes(main)) main = 'today';
     let id = 'v-' + main;
+    // 유형맵 상세에서 넘어온 검색어 (#video/두 원의 교점)
+    if (main === 'video' && sub && window.vxSearch) window.vxSearch(sub);
     if (main === 'class' && sub && document.getElementById('v-class-' + sub)) id = 'v-class-' + sub;
     if (main === 'student' && sub && document.getElementById('v-stu-' + sid2id(sub))) id = 'v-stu-' + sid2id(sub);
     document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
