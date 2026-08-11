@@ -2,7 +2,8 @@
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>학습현황 · MATHIS</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- ⚠ 버전을 박는다. @2 는 CDN 이 언제든 새 2.x 로 갈아 끼워서, 우리가 아무것도 안 고친 날에도 로그인 동작이 바뀔 수 있다. 올릴 때는 로그인 한 번 해 보고 올린다. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
 <style>
 
 :root{color-scheme:dark;
@@ -349,7 +350,8 @@ async function verifyOtp() {
   const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
   if (error) $('loginmsg').textContent = '실패: ' + error.message;
 }
-async function logout() { await sb.auth.signOut(); location.reload(); }
+/* scope:'local' — 이 브라우저에서만 나간다. 기본값(global)은 폰·다른 PC 세션까지 지운다. */
+async function logout() { await sb.auth.signOut({ scope: 'local' }); location.reload(); }
 function reload() { location.reload(); }
 sb.auth.onAuthStateChange((ev, session) => { if (session) boot(session); });
 
@@ -367,11 +369,23 @@ sb.auth.onAuthStateChange((ev, session) => { if (session) boot(session); });
   history.replaceState(null, '', location.pathname + location.search);
 })();
 
+/* ⚠ 역할 읽기 실패로 로그아웃하지 않는다 (0811 사고).
+   예전 코드는 `.single()` 이 돌려주는 것을 '역할 없음' 하나로 뭉뚱그려 **무조건 signOut** 했다.
+   ①`.single()` 은 0행일 때도 에러를 낸다 ②네트워크 한 번 튀어도 같은 자리로 떨어진다
+   ③supabase-js 의 signOut 은 기본이 **global** 이라 그 한 번이 **모든 기기의 세션을 지운다**.
+   그래서 "로그인 → 실패 → 로그아웃 → 다시 로그인"이 무한히 돌았다.
+   → 0행(maybeSingle 이 null)과 읽기 실패(error)를 가르고, 로그아웃은 local 로만 한다.
+   ⚠ 콘솔(console.html)에도 같은 코드가 있다 — 고치면 두 쪽을 같이 고친다. */
 async function boot(session) {
-  const { data: prof } = await sb.from('profiles').select('*').eq('user_id', session.user.id).single();
+  const { data: prof, error: perr } = await sb.from('profiles').select('*')
+    .eq('user_id', session.user.id).maybeSingle();
+  if (perr) {
+    $('loginmsg').textContent = '역할을 못 읽었다: ' + perr.message + ' — 새로고침해 보세요(로그아웃되지 않습니다).';
+    return;
+  }
   if (!prof) {
     $('loginmsg').textContent = '계정에 역할이 없습니다. 관리자에게 문의.';
-    await sb.auth.signOut(); return;
+    await sb.auth.signOut({ scope: 'local' }); return;
   }
   $('login').classList.add('hidden'); $('app').classList.remove('hidden');
   try {
@@ -383,7 +397,13 @@ async function boot(session) {
     $('hdr-date').textContent = `학습현황 · ${dfmt(st.REF)} 기준`;
     $('freshness').textContent = `데이터 최신 ${dfmt(st.LAST, false)} · ${new Date().toTimeString().slice(0, 5)} 조회`;
   } catch (e) {
-    $('boot').innerHTML = `<div class="warn">데이터를 못 읽었다: ${E(e.message || e)}</div>`;
+    // permission denied = 세션이 없는 채로 읽었다는 뜻(anon 은 어느 표에도 권한이 없다).
+    // "weekly_exam: permission denied" 만 띄우면 표가 깨진 줄 안다 — 실제 원인을 말한다.
+    const msg = String(e.message || e);
+    $('boot').innerHTML = /permission denied/i.test(msg)
+      ? `<div class="warn">로그인이 풀렸습니다. 새로고침해서 다시 로그인하세요.<br>
+         <span style="opacity:.7">(원문: ${E(msg)})</span></div>`
+      : `<div class="warn">데이터를 못 읽었다: ${E(msg)}</div>`;
     throw e;
   }
 }
