@@ -877,6 +877,17 @@ window.addEventListener('resize',()=>{
  * ════════════════════════════════════════════════════════════════════ */
 let LOOPIDX=null, LOOPJOB=null, LOOPTIMER=null, LOOPBUILT=null;
 
+/* 기다림이 길어지면 그렇다고 말한다. 0812 오전 GitHub 예약 실행이 4시간 밀렸는데
+   화면은 "기다린다"만 띄웠다 — 사람이 고장인지 대기인지 구분할 수 없었다.
+   (폴링은 6초 간격이라 n*6초가 곧 경과 시간이다) */
+function stallHint(n,st){
+  const sec=n*6;
+  if(sec<180)return '';
+  const m=Math.floor(sec/60);
+  return '\n<span class="warn">'+m+'분째 '+(st==='요청'?'안 집어간다':'끝나지 않는다')+
+    ' — 서버가 밀린 것이다. 급하면 세션에 알릴 것(저장소를 밀면 즉시 깨어난다).</span>';
+}
+
 async function loopIndex(){
   const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
     .order('완료시각',{ascending:false}).limit(1);
@@ -907,7 +918,7 @@ async function loopJob(kind){
     .select().single();
   if(error){$('lp_make').disabled=false;return loopSay('<span class="warn">요청 실패: '+error.message+'</span>');}
   LOOPJOB=data;
-  loopSay('요청했다 — <b>'+CLS+' · '+unit+'</b>\n서버가 10분마다 큐를 본다. 이 화면이 진행을 계속 보여 준다.');
+  loopSay('요청했다 — <b>'+CLS+' · '+unit+'</b>\n요청이 들어가는 순간 DB 가 서버를 깨운다(보통 1분 안). 이 화면이 진행을 계속 보여 준다.');
   loopPoll();
 }
 function loopPoll(){
@@ -921,7 +932,7 @@ function loopPoll(){
     if(st==='요청'||st==='처리중'){
       const dots='.'.repeat(1+(n++%3));
       loopSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+dots+
-        '\n<span style="opacity:.7">'+(data['메시지']||'')+'</span>');
+        '\n<span style="opacity:.7">'+(data['메시지']||'')+'</span>'+stallHint(n,st));
       return;
     }
     clearInterval(LOOPTIMER);
@@ -1402,7 +1413,7 @@ async function clinicJob(){
     .select().single();
   if(error){$('cl_make').disabled=false;return clSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
   CLJOB=data;
-  clSay('요청했다 — <b>'+day+' '+CLROWS.length+'명</b>\n서버가 10분마다 큐를 본다. 이 화면이 진행을 계속 보여 준다.');
+  clSay('요청했다 — <b>'+day+' '+CLROWS.length+'명</b>\n요청이 들어가는 순간 DB 가 서버를 깨운다(보통 1분 안). 이 화면이 진행을 계속 보여 준다.');
   clinicPoll();
 }
 function clinicPoll(){
@@ -1415,7 +1426,7 @@ function clinicPoll(){
     const st=data['상태'];
     if(st==='요청'||st==='처리중'){
       clSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+'.'.repeat(1+(n++%3))+
-        '\n<span style="opacity:.7">'+esc(data['메시지']||'')+'</span>');
+        '\n<span style="opacity:.7">'+esc(data['메시지']||'')+'</span>'+stallHint(n,st));
       return;
     }
     clearInterval(CLTIMER);CLJOB=null;$('cl_make').disabled=false;
