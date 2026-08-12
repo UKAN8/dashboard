@@ -931,8 +931,10 @@ function loopSay(html){$('lp_out').innerHTML=html;}
 /* ══ 오늘 물을 것 — 풀에서 고른다 ══════════════════════════════════════
  * 문항을 쓰는 일과 고르는 일을 갈랐다. 고르는 일은 화면이 한다.
  * 추천은 진도 문자열과 유형·발문의 **두 글자 겹침** 점수다(형태소 분석 없이도 잘 걸린다). */
+/* ⚠ 한글 두 글자만 센다. 숫자·영문을 넣었더니 풀 이름의 '20260808' 과 진도의 'OPT:08' 이
+   '08' 로 겹쳐 **모든 문항이 점수 1** 이 됐다(0812 실측). 코드·날짜는 내용이 아니다. */
 function planTokens(s){
-  const t=(s||'').replace(/[^가-힣A-Za-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  const t=(s||'').replace(/[^가-힣]/g,' ').replace(/\s+/g,' ').trim();
   const out=new Set();
   t.split(' ').forEach(w=>{ for(let i=0;i<w.length-1;i++) out.add(w.slice(i,i+2)); });
   return out;
@@ -973,8 +975,18 @@ function planPool(){
   }
   const 진도=planProgress();
   const scored=list.map(q=>({q,s:planScore(q,진도)})).sort((a,b)=>b.s-a.s);
-  const 추천=new Set(scored.slice(0,3).filter(x=>x.s>0||진도==='').map(x=>x.q['키']));
+  const 맞는게있다=scored.length&&scored[0].s>0;
+  // 진도와 겹치는 게 하나도 없으면 **아무것도 체크하지 않는다.** 억지로 3개를 골라 주면
+  // 다른 단원 문항이 오늘 것으로 나간다(0812: 8/11 부정적분 수업에 극한 풀밖에 없었다).
+  const 추천=new Set(맞는게있다 ? scored.filter(x=>x.s>0).slice(0,3).map(x=>x.q['키']) : []);
   const box=document.createElement('div');
+  if(!맞는게있다&&진도){
+    const w=document.createElement('div');
+    w.className='warn';
+    w.textContent='이 풀은 오늘 진도('+진도.replace(/\n/g,' / ')+')와 겹치는 유형이 없다 — 다른 단원 풀이다. '
+      +'맞는 풀이 없으면 그 단원 문항부터 만들어야 한다.';
+    box.appendChild(w);
+  }
   list.forEach(q=>{
     const row=document.createElement('label');
     row.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);cursor:pointer';
@@ -985,6 +997,29 @@ function planPool(){
     box.appendChild(row);
   });
   $('pl_list').innerHTML='';$('pl_list').appendChild(box);
+  // 발문이 $…$ 원문으로 보이면 고를 수가 없다 — 이 화면을 열 때만 KaTeX 를 받아 그린다
+  loadKatex().then(render=>render($('pl_list'),{
+    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
+    throwOnError:false})).catch(()=>{});
+}
+let KATEXP=null;
+function loadKatex(){
+  if(KATEXP)return KATEXP;
+  KATEXP=new Promise((res,rej)=>{
+    const css=document.createElement('link');
+    css.rel='stylesheet';css.href='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+    document.head.appendChild(css);
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+    s.onload=()=>{
+      const a=document.createElement('script');
+      a.src='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
+      a.onload=()=>res(window.renderMathInElement); a.onerror=rej;
+      document.head.appendChild(a);
+    };
+    s.onerror=rej; document.head.appendChild(s);
+  });
+  return KATEXP;
 }
 async function planJob(){
   if(!CLS)return toast('반을 먼저 고를 것');
