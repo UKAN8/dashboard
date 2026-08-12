@@ -199,6 +199,27 @@ button:disabled{opacity:.45;cursor:default;}
         </div>
         <div class="minirow"><button class="ghost" style="flex:1" onclick="allPresent()">전원 출석</button></div>
       </div>
+      <!-- ── 오늘 물을 것 ────────────────────────────────────────────
+       * 0812까지 이 파일(_반_<반>.json)만 제작 세션이 썼다. 문항을 **쓰는 것**은 창작이지만
+       * 오늘 무엇을 **고를지**는 선택이다 — 단원 풀에 있는 것 중에서 고르면 기계가 쓸 수 있다.
+       * 진도(class_log)에 가까운 것을 먼저 체크해 둔다. 바꾸고 확정하면 바로 만들기까지 간다.
+       -->
+      <div class="card">
+        <h2>오늘 물을 것 <span class="badge" id="pl_state"></span></h2>
+        <div class="minirow">
+          <div class="grow"><label class="lbl">문항 풀</label><select id="pl_pool" onchange="planPool()"></select></div>
+          <div style="flex:0 0 148px"><label class="lbl">수업일</label><input id="pl_date" type="date"></div>
+          <div style="flex:0 0 190px"><label class="lbl">마감 (학생 화면 문구)</label><input id="pl_due" placeholder="8월 12일(수) 21시"></div>
+        </div>
+        <div class="minirow">
+          <div class="grow"><label class="lbl">오늘 부제 — 진도에서 자동 (학생이 읽는다)</label><input id="pl_sub" placeholder="8월 12일 · 도함수의 활용(3) 파트2"></div>
+        </div>
+        <div id="pl_list" class="loadout">반을 고르면 그 학년 풀에서 문항을 불러온다. 진도에 가까운 3개가 미리 체크된다.</div>
+        <div class="row" style="margin-top:10px">
+          <button class="key" style="flex:1" id="pl_go" onclick="planJob()">오늘 물을 것 확정 → 만들기</button>
+        </div>
+      </div>
+
       <!-- ── 복습 루프 ──────────────────────────────────────────────
        * 지금까지 세트는 학원 PC 에서 루프.bat 을 켜야 나왔고, 발송은 세션에 부탁해야 했다.
        * 버튼은 job_queue 에 요청 한 줄만 쓴다(정적 페이지라 Actions 를 직접 못 깨운다).
@@ -530,6 +551,7 @@ async function selectClass(cls){
   $('lp_send').disabled=true;$('lp_make').disabled=false;
   loopSay('오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.');
   loopIndex().then(idx=>{
+    planInit();
     const tpl=idx&&idx['반']&&idx['반'][CLS];
     if(tpl)loopSay('<b>'+CLS+'</b> 오늘 문항 '+tpl['문항수']+'개 · 수업일 '+tpl['수업일']+' · 마감 '+tpl['마감']+
       '\n[루프 만들기] 를 누르면 서버가 학생별로 쪼개 만든다.');
@@ -905,6 +927,82 @@ async function loopIndex(){
   return LOOPIDX;
 }
 function loopSay(html){$('lp_out').innerHTML=html;}
+
+/* ══ 오늘 물을 것 — 풀에서 고른다 ══════════════════════════════════════
+ * 문항을 쓰는 일과 고르는 일을 갈랐다. 고르는 일은 화면이 한다.
+ * 추천은 진도 문자열과 유형·발문의 **두 글자 겹침** 점수다(형태소 분석 없이도 잘 걸린다). */
+function planTokens(s){
+  const t=(s||'').replace(/[^가-힣A-Za-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  const out=new Set();
+  t.split(' ').forEach(w=>{ for(let i=0;i<w.length-1;i++) out.add(w.slice(i,i+2)); });
+  return out;
+}
+function planScore(q,진도){
+  const a=planTokens(진도), b=planTokens((q['유형']||'')+' '+(q['단원']||''));
+  let n=0; b.forEach(x=>{ if(a.has(x))n++; });
+  return n;
+}
+function planProgress(){
+  // 오늘 입력한 진도가 있으면 그것, 없으면 직전 수업 진도(selectClass 가 이미 채워 둔다)
+  return ($('c_progress').value||'').trim();
+}
+function planInit(){
+  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[], g=(CLS||'').slice(0,2);
+  const mine=풀.filter(u=>u.endsWith('_'+g));
+  const sel=$('pl_pool');sel.innerHTML='';
+  [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
+    const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
+  });
+  $('pl_date').value=todayStr();
+  // 마감 = 다음 수업일 21시. 학생 화면과 알림톡에 이 문구가 그대로 나간다.
+  nextClinic(CLS).then(nx=>{
+    if(nx){const d=new Date(nx.date);$('pl_due').value=(d.getMonth()+1)+'월 '+d.getDate()+'일('+nx.dow+') 21시';}
+  });
+  const p=planProgress();
+  const d=new Date();
+  $('pl_sub').value=(d.getMonth()+1)+'월 '+d.getDate()+'일'+(p?' · '+p.replace(/\n/g,' / '):'');
+  planPool();
+}
+function planPool(){
+  const pool=$('pl_pool').value;
+  const list=((LOOPIDX||{})['풀문항']||{})[pool]||[];
+  $('pl_state').textContent=list.length?(pool+' · '+list.length+'문항'):'풀 목록 없음';
+  if(!list.length){
+    $('pl_list').innerHTML='<span class="warn">이 풀의 문항 목록이 없다. 서버가 목록을 갱신하면(다음 실행) 보인다.</span>';
+    return;
+  }
+  const 진도=planProgress();
+  const scored=list.map(q=>({q,s:planScore(q,진도)})).sort((a,b)=>b.s-a.s);
+  const 추천=new Set(scored.slice(0,3).filter(x=>x.s>0||진도==='').map(x=>x.q['키']));
+  const box=document.createElement('div');
+  list.forEach(q=>{
+    const row=document.createElement('label');
+    row.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);cursor:pointer';
+    const 슬롯=(q['슬롯']||[]).map(esc).join(' → ');
+    row.innerHTML=`<input type="checkbox" style="width:auto;margin-top:3px" data-k="${esc(q['키'])}" ${추천.has(q['키'])?'checked':''}>
+      <span><b>${esc(q['유형']||'')}</b> <span class="time">${esc(q['형식']||'')}${추천.has(q['키'])?' · 진도와 가까움':''}</span>
+      <div>${esc(q['발문']||'')}</div>${슬롯?'<div class="time">'+슬롯+'</div>':''}</span>`;
+    box.appendChild(row);
+  });
+  $('pl_list').innerHTML='';$('pl_list').appendChild(box);
+}
+async function planJob(){
+  if(!CLS)return toast('반을 먼저 고를 것');
+  const keys=[...$('pl_list').querySelectorAll('input:checked')].map(b=>b.dataset.k);
+  if(!keys.length)return loopSay('<span class="warn">문항을 하나도 안 골랐다.</span>');
+  if(keys.length>6&&!confirm(keys.length+'문항이면 많다(보통 3개). 계속?'))return;
+  const 수업일=$('pl_date').value, 마감=$('pl_due').value.trim();
+  if(!(수업일&&마감))return loopSay('<span class="warn">수업일·마감을 채울 것 — 학생 화면에 그대로 나간다.</span>');
+  $('pl_go').disabled=true;$('lp_make').disabled=true;$('lp_send').disabled=true;
+  const {data,error}=await sb.from('job_queue').insert({'종류':'set_plan','상태':'요청','요청자':'콘솔',
+    '파라미터':{'반':CLS,'풀':$('pl_pool').value,'수업일':수업일,'마감':마감,
+                '부제':$('pl_sub').value.trim(),'문항':keys}}).select().single();
+  $('pl_go').disabled=false;
+  if(error){$('lp_make').disabled=false;return loopSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
+  LOOPJOB=data;
+  loopSay('오늘 물을 것 '+keys.length+'문항으로 정했다 — <b>'+CLS+' · '+수업일+'</b>\n이어서 학생별 세트까지 만든다. 진행은 여기 보인다.');
+  loopPoll();
+}
 async function loopJob(kind){
   if(!CLS)return toast('반을 먼저 고를 것');
   const unit=$('lp_unit').value;
