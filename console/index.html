@@ -481,6 +481,7 @@ async function initClassButtons(){
   });
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
+let CHW='';   // 지금 반 전체에 걸려 있는 공통 과제 (개별과제 판정 기준)
 // 지난 과제가 반 공통과 다른 학생만 이름칸에 한 줄 — 과제검사 기준이 사람마다 다르다는 걸 눈으로 알아야 한다
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function prevHwLine(id){
@@ -552,6 +553,21 @@ async function selectClass(cls){
     setTest(prev[0]['테스트유형']);
   }else{
     $('c_progress').value='';$('c_hw').value='';setTest('');
+  }
+  /* CHW = '지금 반 전체에 걸려 있는 공통 과제'. 개별과제 칸의 판정 기준이 이것이다.
+     예전엔 입력칸(c_hw)의 현재 값과 비교했는데, **공통 과제를 나중에 고치면** 이미 저장된
+     학생 행(옛 공통 텍스트)이 죄다 '개별과제'로 보였다 — 적지도 않은 지난 과제가 칸에
+     들어가 있는 사고(0812 유강). CHW 를 따로 들고, 공통이 바뀌면 행까지 같이 옮긴다. */
+  CHW=$('c_hw').value.trim();
+  /* 이미 생긴 잔재 정정 — '이번과제 == 직전 수업 과제'인데 오늘 공통은 다르다면
+     프리필된 값 그대로 저장된 행이다(개별 지시가 아니다). */
+  if(CHW&&PREVHW&&CHW!==PREVHW.trim()){
+    const stale=Object.keys(LOGMAP).filter(k=>(LOGMAP[k]['이번과제']||'').trim()===PREVHW.trim());
+    if(stale.length){
+      const {error}=await sb.from('daily_log').update({'이번과제':CHW}).eq('반',cls).eq('날짜',today).in('학생ID',stale);
+      if(!error){stale.forEach(k=>LOGMAP[k]['이번과제']=CHW);
+        toast('개별과제 칸에 남은 지난 과제 '+stale.length+'건을 공통으로 정정');}
+    }
   }
   autoGrow($('c_progress'));autoGrow($('c_hw'));
   /* 문항 수는 class_log 에 칸이 없다 → 오늘 채점된 문항점수의 최대 길이로 되살린다.
@@ -685,7 +701,7 @@ function renderTable(box,nq){
       <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
       <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
-      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제']!==$('c_hw').value.trim())?log['이번과제']:''}</textarea></td>
+      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></td>
       <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
       <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
       <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${log['추가학습시간']||''}"></td>`;
@@ -740,7 +756,7 @@ function renderCards(box,nq){
       </div>
       <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
       <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
-      <div class="minirow"><div class="grow"><label class="lbl">개별 과제 (비우면 반 공통 과제)</label><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)">${(log['이번과제']&&log['이번과제']!==$('c_hw').value.trim())?log['이번과제']:''}</textarea></div></div>
+      <div class="minirow"><div class="grow"><label class="lbl">개별 과제 (비우면 반 공통 과제)</label><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></div></div>
       <div class="minirow clinicrow">
         <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
         <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
@@ -824,6 +840,29 @@ function saveClassLog(){
     },{onConflict:'반,날짜'});
     const m=$('clogmark');
     if(error){toast('수업 정보 저장 실패: '+error.message);return;}
+    /* 공통 과제를 고치면 **이미 저장된 학생 행도 같이 옮긴다.**
+       안 옮기면 그 행들이 옛 공통 텍스트를 들고 있어 '개별과제'로 보인다(0812 사고).
+       개별로 따로 적어 둔 행(값이 옛 공통과 다른 행)은 건드리지 않는다. */
+    const hw=$('c_hw').value.trim();
+    if(hw!==CHW){
+      const old=CHW; CHW=hw;
+      const ids=Object.keys(LOGMAP).filter(k=>{
+        const v=(LOGMAP[k]['이번과제']||'').trim();
+        return v===''||v===old;
+      });
+      if(ids.length){
+        const {error:e2}=await sb.from('daily_log').update({'이번과제':hw||null})
+          .eq('반',CLS).eq('날짜',today).in('학생ID',ids);
+        if(!e2){
+          ids.forEach(k=>LOGMAP[k]['이번과제']=hw||null);
+          document.querySelectorAll('.stu').forEach(c=>{
+            if(!ids.includes(c.dataset.id))return;
+            const t=c.querySelector('[data-f="개별과제"]');
+            if(t&&t.value.trim()===old)t.value='';
+          });
+        }
+      }
+    }
     m.style.display='';m.textContent='저장됨 ✓';
     clearTimeout(saveClassLog._h);
     saveClassLog._h=setTimeout(()=>{m.style.display='none';},1500);
@@ -905,28 +944,41 @@ async function genComments(){
 async function closeSession(){
   if(!CLS)return;
   const today=todayStr();
-  // 테스트 반평균 이하 → 추가학습 자동 지정 (만점자 제외, 이미 지정된 학생 제외)
+  /* 자동 추가학습 지정 — 두 가지 사유. 이미 사유가 적힌 학생은 손대지 않는다.
+     ① 테스트 반평균 이하 (만점자 제외)
+     ② 과제 이행률 100% 미달 (0812 유강). 시험을 잘 봐도 과제를 안 하면 부른다.
+     ⚠ 미응시는 대상이 아니다 — 안 본 시험을 근거로 부를 수는 없다(0812 유강).
+     ⚠ 이행률 빈 칸은 '판단 보류'다. 검사 안 한 반을 전원 호출하는 사고를 막는다. */
   {
-    const cards=[...document.querySelectorAll('.stu')];
+    const cards=[...document.querySelectorAll('.stu')].filter(c=>!c.classList.contains('na'));
+    const put=(c,why)=>{
+      const rs=c.querySelector('[data-f="추가학습사유"]');
+      if(rs.value.trim())return 0;
+      rs.value=why;
+      rs.dispatchEvent(new Event('input'));
+      rs.dispatchEvent(new Event('change'));
+      return 1;
+    };
+    const tname=$('c_test').value||'테스트';
+    const full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
+    const why={};   // 학생 카드별 사유 — 두 조건에 다 걸리면 한 줄로 합친다
     const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
     if(scored.length>=2){
       const avg=scored.reduce((a,x)=>a+x.v,0)/scored.length;
-      const full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
-      const tname=$('c_test').value||'테스트';
-      let m=0;
-      for(const {c,v} of scored){
-        if(v<=avg&&(!full||v<full)){
-          const rs=c.querySelector('[data-f="추가학습사유"]');
-          if(!rs.value.trim()){
-            rs.value=tname+' 반평균 이하 ('+v+'점/평균 '+avg.toFixed(1)+')';
-            rs.dispatchEvent(new Event('input'));
-            rs.dispatchEvent(new Event('change'));
-            m++;
-          }
-        }
-      }
-      if(m)toast('반평균 이하 '+m+'명 추가학습 자동 지정');
+      for(const {c,v} of scored)
+        if(v<=avg&&(!full||v<full))
+          (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push(tname+' 반평균 이하 ('+v+'점/평균 '+avg.toFixed(1)+')');
     }
+    for(const c of cards){
+      const raw=c.querySelector('[data-f="이행률"]').value.trim();
+      if(raw===''){continue;}                      // 미입력 = 보류
+      const ih=parseFloat(raw);
+      if(isNaN(ih)||ih>=100)continue;
+      (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push('과제 이행률 '+ih+'%');
+    }
+    let m=0;
+    for(const k in why)m+=put(why[k].c,why[k].r.join(' · '));
+    if(m)toast('추가학습 자동 지정 '+m+'명 (반평균 이하 · 과제 미흡)');
   }
   const present=[...document.querySelectorAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
   const {error:e1}=await sb.from('class_log').upsert({
