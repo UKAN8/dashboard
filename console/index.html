@@ -137,6 +137,12 @@ button:disabled{opacity:.45;cursor:default;}
 .ctab .seg{margin:0;gap:4px;}
 .ctab .seg button{flex:none;padding:7px 8px;font-size:12px;}
 .ctab a{color:var(--key-d);}
+/* 미응시 토글 — 점수 칸에 붙는다. 지각·조퇴로 시험을 못 본 학생은 0점이 아니라 '안 봤다'다.
+   0점으로 남기면 반평균과 추이가 내려앉는다(0812 유강: 균영 지각 미응시). */
+.scorecell{display:flex;gap:4px;align-items:center;white-space:nowrap;}
+.nabtn{padding:7px 8px;font-size:12px;background:#f6f0ec;color:var(--sub);border-radius:8px;}
+.nabtn.on{background:var(--sub);color:#fff;}
+.na .items button,.na input[data-f="점수"]{opacity:.35;}
 </style>
 </head>
 <body>
@@ -184,15 +190,15 @@ button:disabled{opacity:.45;cursor:default;}
     </div>
     <div id="consolebody" class="hidden">
       <div class="card">
-        <h2>수업 정보 <span class="badge" id="sessionstate"></span></h2>
+        <h2>수업 정보 <span class="badge" id="sessionstate"></span> <span class="lbl" id="clogmark" style="display:none">저장됨 ✓</span></h2>
         <label class="lbl">진도 (엔터로 여러 줄)</label>
-        <textarea id="c_progress" rows="2" placeholder="예: OPT:04 도형의 이동 파트2&#10;OPT:05 집합의 뜻 파트1" oninput="autoGrow(this)"></textarea>
+        <textarea id="c_progress" rows="2" placeholder="예: OPT:04 도형의 이동 파트2&#10;OPT:05 집합의 뜻 파트1" oninput="autoGrow(this);saveClassLog()"></textarea>
         <div class="minirow">
-          <div class="grow"><label class="lbl">이번 과제 (엔터로 여러 줄)</label><textarea id="c_hw" rows="2" oninput="autoGrow(this)"></textarea></div>
+          <div class="grow"><label class="lbl">이번 과제 (엔터로 여러 줄)</label><textarea id="c_hw" rows="2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
         </div>
         <div class="minirow">
-          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
-          <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents()"></div>
+          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test" onchange="saveClassLog()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
+          <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents();saveClassLog()"></div>
         </div>
         <div class="minirow">
           <div class="grow"><label class="lbl">지난 과제 (직전 수업에서 자동 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div>
@@ -313,7 +319,7 @@ button:disabled{opacity:.45;cursor:default;}
       <div class="minirow">
         <div style="flex:0 0 110px"><label class="lbl">반</label><select id="cl_cls" onchange="clinicStudents()"></select></div>
         <div class="grow"><label class="lbl">학생</label><select id="cl_stu"></select></div>
-        <div style="flex:0 0 84px"><label class="lbl">시간</label><input id="cl_time" placeholder="16-18"></div>
+        <div style="flex:0 0 84px"><label class="lbl">시간</label><input id="cl_time" placeholder="18-20"></div>
       </div>
       <div class="minirow">
         <div class="grow"><label class="lbl">사유 (리포트·클리닉 기록에 그대로 남는다)</label><input id="cl_why" placeholder="예: 리뷰 40점 · 과제 미흡"></div>
@@ -497,8 +503,10 @@ async function nextClinic(cls){
     if(dows.has(dw)){
       const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       let time='';
-      if(cls==='고1A'||cls==='고1S')time='16-18';
-      else if(cls==='고2A')time=dw==='토'?'14-16':'16-18';
+      // 0812 유강: A반은 18-20, S반은 16-18 로 교체. 토요일 고2A 는 수업 자체가 낮이라 예외 유지.
+      if(cls==='고1A')time='18-20';
+      else if(cls==='고1S')time='16-18';
+      else if(cls==='고2A')time=dw==='토'?'14-16':'18-20';
       else if(cls==='고1T')time=dw==='토'?'12-15':dw==='일'?'15-18':'';
       return {date,dow:dw,time};
     }
@@ -546,6 +554,17 @@ async function selectClass(cls){
     $('c_progress').value='';$('c_hw').value='';setTest('');
   }
   autoGrow($('c_progress'));autoGrow($('c_hw'));
+  /* 문항 수는 class_log 에 칸이 없다 → 오늘 채점된 문항점수의 최대 길이로 되살린다.
+     4문항으로 채점한 반이 재진입 때 5로 돌아가면 빈 5번칸이 0점으로 잡힌다. */
+  {
+    // 저장 형식은 버튼 수만큼의 자리를 갖는다("2,1,,," = 5문항 중 2개 채점) → 자리 수를 센다
+    const w=Math.max(0,...(logs||[]).map(r=>{
+      const s=(r['문항점수']||'').trim();
+      return s?(s.includes(':')?0:s.split(',').length):0;
+    }));
+    if(w>0)$('c_nq').value=w;
+  }
+  $('clogmark').style.display='none';
   // 루프 카드는 반이 바뀌면 처음부터 — 앞 반의 완성 상태로 [보내기]가 켜져 있으면 사고다
   clearInterval(LOOPTIMER);LOOPJOB=null;LOOPBUILT=null;
   $('lp_send').disabled=true;$('lp_make').disabled=false;
@@ -565,9 +584,16 @@ function allPresent(){
     if(!d.querySelector('.seg button[class*=a]')) b.click();
   });
 }
+function isNA(log){return (log['테스트상태']||'')==='미응시';}
+/* 점수 칸에 붙는 토글. 미응시는 '0점'이 아니다 — 점수·문항점수를 비우고 상태만 남긴다.
+   gen10 은 점수가 없으면 '미응시'로 그리고, 반평균 계산에서도 빠진다. */
+function naBtnHtml(log){
+  const on=isNA(log);
+  return `<button type="button" class="nabtn${on?' on':''}" data-f="미응시" data-on="${on?1:0}" title="지각·조퇴 등으로 시험을 안 본 경우">미응시</button>`;
+}
 function itemBtnsHtml(log,nq){
   // "2,1,0" 또는 구형 "1:2;2:1;3:0" 둘 다 지원
-  const raw=log['문항점수']||'';
+  const raw=isNA(log)?'':(log['문항점수']||'');
   let itemVals=[];
   if(raw.includes(':')){
     raw.split(';').forEach(p=>{const[a,b]=p.split(':');if(a&&b!==undefined)itemVals[parseInt(a)-1]=b.trim();});
@@ -590,6 +616,7 @@ function wireRow(d,id){
   });
   d.querySelectorAll('.items button').forEach(b=>{
     b.onclick=()=>{
+      if(d.classList.contains('na'))return;   // 미응시 상태에서는 채점을 받지 않는다
       const cur=b.dataset.s;
       const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
       b.dataset.s=next;b.className='s'+next;
@@ -600,6 +627,24 @@ function wireRow(d,id){
       save(id,d);
     };
   });
+  /* 미응시 토글 — 켜면 점수·문항채점을 **화면에서도** 되돌린다.
+     문항 버튼은 한 번 누르면 빈칸으로 못 돌아가는 사이클이라(0812), 여기가 그 유일한 탈출구다. */
+  const na=d.querySelector('[data-f="미응시"]');
+  if(na)na.onclick=()=>{
+    const on=na.dataset.on!=='1';
+    na.dataset.on=on?'1':'0';
+    na.classList.toggle('on',on);
+    d.classList.toggle('na',on);
+    const sc=d.querySelector('[data-f="점수"]');
+    if(on){
+      if(sc)sc.value='';
+      d.querySelectorAll('.items button').forEach(x=>{x.dataset.s='';x.className='';});
+      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='미응시';
+    }else{
+      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='—';
+    }
+    save(id,d);
+  };
   const rs=d.querySelector('[data-f="추가학습사유"]');
   rs.addEventListener('input',()=>{
     if(rs.value.trim()&&NEXT){
@@ -630,20 +675,20 @@ function renderTable(box,nq){
     const cur=log['출결'];
     const recent=(RECENT[id]||[]).slice(0,3).join('·');
     const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
-    const tr=document.createElement('tr');tr.className='stu';tr.dataset.id=id;
+    const tr=document.createElement('tr');tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     tr.innerHTML=`
       <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}</td>
       <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
       <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
       ${nq?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
-      <td><input data-f="점수" style="width:56px" value="${log['점수']||''}"></td>
+      <td><div class="scorecell"><input data-f="점수" style="width:56px" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></td>
       <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
       <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
       <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제']!==$('c_hw').value.trim())?log['이번과제']:''}</textarea></td>
       <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
       <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
-      <td><input data-f="추가학습시간" style="width:60px" placeholder="14-16" value="${log['추가학습시간']||''}"></td>`;
+      <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${log['추가학습시간']||''}"></td>`;
     tb.appendChild(tr);wireRow(tr,id);
   });
   t.appendChild(tb);wrap.appendChild(t);
@@ -677,11 +722,11 @@ function wireGridKeys(t){
 function renderCards(box,nq){
   STUDENTS.forEach(s=>{
     const id=s['학생ID'], log=LOGMAP[id]||{};
-    const d=document.createElement('div');d.className='stu';d.dataset.id=id;
+    const d=document.createElement('div');d.className='stu'+(isNA(log)?' na':'');d.dataset.id=id;
     const cur=log['출결'];
     const recent=(RECENT[id]||[]).slice(0,3).join(' · ');
     const notes=(NOTES[id]||[]).slice(0,2);
-    const itemsHtml=nq>0?'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(log['점수']||'—')+'</div></div>':'';
+    const itemsHtml=nq>0?'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(isNA(log)?'미응시':(log['점수']||'—'))+'</div></div>':'';
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
@@ -690,7 +735,7 @@ function renderCards(box,nq){
       <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
       <div class="minirow">
-        <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><input data-f="점수" inputmode="decimal" value="${log['점수']||''}"></div>
+        <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><div class="scorecell"><input data-f="점수" inputmode="decimal" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></div>
         <div class="grow"><label class="lbl">이행률 %</label><input data-f="이행률" inputmode="numeric" value="${log['이행률']||''}"></div>
       </div>
       <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
@@ -699,7 +744,7 @@ function renderCards(box,nq){
       <div class="minirow clinicrow">
         <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
         <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
-        <div style="flex:1 1 30%;min-width:0"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="14-16" value="${log['추가학습시간']||''}"></div>
+        <div style="flex:1 1 30%;min-width:0"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="18-20" value="${log['추가학습시간']||''}"></div>
       </div>`;
     wireRow(d,id);
     box.appendChild(d);
@@ -713,17 +758,20 @@ async function save(id,card){
     const s=STUDENTS.find(x=>x['학생ID']===id);
     const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
     const att=card.querySelector('.seg button[class*=a]');
-    const score=get('점수');
+    const naBtn=card.querySelector('[data-f="미응시"]');
+    const na=!!(naBtn&&naBtn.dataset.on==='1');
+    const score=na?'':get('점수');
     const itemBtns=[...card.querySelectorAll('.items button')];
-    const itemStr=itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null;
+    const itemStr=na?null:(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
       '출결':att?att.dataset.v:null,'결석사유':get('결석사유')||null,
       '진도':$('c_progress').value.trim()||null,
       '이번과제':(get('개별과제')||$('c_hw').value.trim())||null,
       '지난과제':(PREVHW_MAP[id]||PREVHW)||null,
-      '테스트유형':score?($('c_test').value.trim()||null):null,
-      '테스트상태':score?'응시':null,'점수':score||null,
+      '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):null),
+      // 미응시는 0점이 아니다 — 점수를 비우고 상태만 남긴다. gen10 이 점수 없음을 '미응시'로 그린다.
+      '테스트상태':na?'미응시':(score?'응시':null),'점수':na?null:(score||null),
       '문항점수':itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null,
       '이행률':get('이행률')||null,
       '코멘트':get('코멘트')||null,'특이사항':get('특이사항')||null,
@@ -735,10 +783,12 @@ async function save(id,card){
     if(error){toast('저장 실패: '+error.message);return;}
     const mark=card.querySelector('.savemark');mark.classList.add('show');setTimeout(()=>mark.classList.remove('show'),1200);
     // 틀린 문항 → 오답 이벤트 적재 (0점=오답, 1점=부분)
-    if(itemStr){
+    // ⚠ 미응시로 되돌릴 때도 지워야 한다. 예전엔 itemStr 이 있을 때만 지워서 채점을 취소해도
+    //    오답 이벤트가 남았다 — 약점 집계에 유령 오답이 쌓인다(0812).
+    if(itemStr||na){
       const ref='리뷰:'+CLS+':'+todayStr();
       await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
-      const ev=itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1').map(b=>({
+      const ev=(na?[]:itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1')).map(b=>({
         '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
         '유형':$('c_test').value.trim()||null,'결과':b.dataset.s==='0'?'오답':'부분','참조':ref}));
       if(ev.length)await sb.from('events').insert(ev);
@@ -756,6 +806,28 @@ async function save(id,card){
       toast(s['이름']+' 추가학습 지정');
     }
   },400);
+}
+/* 수업 정보 자동저장 — 마감을 누르지 않아도 class_log 에 남는다.
+   0812 유강: 진도·과제를 적어 놓고 다른 탭으로 갔다 오니 비어 있었다. 이 화면의 값은
+   [마감] 에서만 upsert 됐던 탓이다(학생 행은 daily_log 로 바로 저장돼 살아남았다).
+   ⚠ class_sessions 는 건드리지 않는다 — 상태는 '진행중'으로 남아야 렌더 크론이 안 돈다. */
+let CLOGT=null;
+function saveClassLog(){
+  if(!CLS)return;
+  clearTimeout(CLOGT);
+  CLOGT=setTimeout(async()=>{
+    const today=todayStr();
+    const {error}=await sb.from('class_log').upsert({
+      '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
+      '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+      '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,
+    },{onConflict:'반,날짜'});
+    const m=$('clogmark');
+    if(error){toast('수업 정보 저장 실패: '+error.message);return;}
+    m.style.display='';m.textContent='저장됨 ✓';
+    clearTimeout(saveClassLog._h);
+    saveClassLog._h=setTimeout(()=>{m.style.display='none';},1500);
+  },600);
 }
 /* 입력 데이터 기반 코멘트 자동 생성 — 손으로 쓴 코멘트는 건드리지 않음 */
 async function genComments(){
@@ -780,6 +852,7 @@ async function genComments(){
     const c=clinMap[id];
     if(c)parts.push('수업 전 추가학습으로 등원하여 '+(c['사유']?c['사유'].split('(')[0].trim()+' 보완':'복습')+'을 진행했습니다.');
     if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
+    if(card.classList.contains('na'))parts.push('오늘 '+tname+'는 응시하지 못했습니다. 다음 수업에서 같은 범위로 확인하겠습니다.');
     const score=parseFloat(card.querySelector('[data-f="점수"]').value);
     if(!isNaN(score)){
       const wrongCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
