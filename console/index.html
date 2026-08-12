@@ -128,6 +128,15 @@ tr.stu{border:none;padding:0;margin:0;}
 .loadout{font-size:13px;line-height:1.55;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--ink);margin-top:10px;max-height:340px;overflow:auto;}
 .loadout b{color:var(--key-d);}
 .loadout .warn{color:#8a4b1f;}
+/* ── 작업 현황 (0813) ── */
+#jobpill{cursor:pointer;}
+#jobpill.busy{border-color:var(--warn);color:var(--warn);font-weight:700;}
+#jobpanel .warn{color:#8a4b1f;}
+.jobrow{border-top:1px solid var(--line);padding:8px 2px;font-size:14px;}
+.jobrow:first-child{border-top:none;padding-top:2px;}
+.jstat{font-size:11px;border-radius:8px;padding:2px 7px;color:#fff;vertical-align:1px;}
+.jstat.ok{background:var(--ok);} .jstat.bad{background:var(--bad);}
+.jstat.run{background:var(--warn);} .jstat.wait{background:#b9aca2;}
 input[type=file]{padding:8px;background:#fff;}
 button:disabled{opacity:.45;cursor:default;}
 /* 추가학습 명단 — 한 사람 한 줄. 출결 칸은 잘리면 못 누르므로 폭을 내용에 맞춘다(0811 함정 ③) */
@@ -168,9 +177,19 @@ button:disabled{opacity:.45;cursor:default;}
 <header>
   <h1>MATHIS <b id="viewtitle">오늘</b></h1>
   <span class="pill" id="who"></span>
+  <button class="pill" id="jobpill" onclick="toggleJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
   <button class="ghost" style="padding:6px 10px;font-size:12px" onclick="logout()">로그아웃</button>
 </header>
 <main>
+
+  <!-- ── 작업 현황 (0813) — DB(job_queue)가 진실원이라 새로고침·탭 이동해도 안 잃는다.
+       "여기서 멈춤"의 절반은 고장이 아니라 대기였다 — 화면이 상태를 말하게 한다.
+       어느 뷰에서든 헤더의 ⚙ 작업으로 연다. -->
+  <div id="jobpanel" class="card hidden">
+    <h2>서버 작업 — 최근 24시간</h2>
+    <div id="jobrows" class="lbl">불러오는 중…</div>
+    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 밀리면 3분마다 다시 깨운다.</div>
+  </div>
 
   <section id="view-today">
     <div class="card">
@@ -249,6 +268,17 @@ button:disabled{opacity:.45;cursor:default;}
       </div>
       <div class="footbar">
         <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
+      </div>
+      <!-- ── 마감 후 흐름 (0813) — "리포트랑 루프는 어떻게 처리되는거야?"를 두 세션에서
+           물었다. 답이 화면에 없어서다. 마감되면 여기 뜬다. -->
+      <div class="card" id="closeguide" style="display:none">
+        <h2>마감 후 흐름</h2>
+        <div style="font-size:14px;line-height:1.75">
+          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="/dashboard/">학습현황 ↗</a> 데일리에서 확인<br>
+          <b>직접</b> — 복습 루프: 위 <b>복습 루프</b> 카드에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습] 탭</b><br>
+          <b>주의</b> — 리뷰테스트를 <b>새로 만든</b> 날은 세션에서 유형 매핑(render_now)이 먼저다. 매핑 없이 렌더되면 오답 태그가 빈다<br>
+          진행 상황은 상단 <b>⚙ 작업</b>에서 본다 — 새로고침해도 안 사라진다
+        </div>
       </div>
       <div class="footbar" style="bottom:auto;position:static;margin-top:8px">
         <button class="ghost" style="color:var(--bad);border-color:var(--bad)" onclick="resetToday()">오늘 입력 전체 리셋</button>
@@ -362,6 +392,52 @@ let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
 function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
 
+/* ── 작업 현황 (0813) ──────────────────────────────────────────────
+ * 각 손잡이(루프·추가학습·오늘 물을 것)는 자기 작업만 메모리로 폴링한다 —
+ * 새로고침하면 추적을 잃고, 다른 탭의 작업은 아예 안 보였다.
+ * 여기는 job_queue 를 직접 읽는다: 새로고침 생존 + 전 종류 한눈에. */
+const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지'};
+function toggleJobs(){const p=$('jobpanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))jobsRefresh();}
+function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항')].filter(Boolean).join(' · ');}
+function jobAge(t){return Math.max(0,Math.round((Date.now()-new Date(t))/60000));}
+function jobWhen(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+async function jobsRefresh(){
+  if(!ROLE)return;
+  const since=new Date(Date.now()-24*3600*1000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('*').neq('종류','loop_index')
+    .gte('요청시각',since).order('요청시각',{ascending:false}).limit(15);
+  if(error)return;                       // 조용히 — 현황판이 새 에러원이 되면 안 된다
+  const act=(data||[]).filter(j=>j['상태']==='요청'||j['상태']==='처리중');
+  const pill=$('jobpill');
+  pill.textContent=act.length?('⚙ 작업 '+act.length+' 진행중'):'⚙ 작업';
+  pill.classList.toggle('busy',act.length>0);
+  const box=$('jobrows');
+  if(!box||$('jobpanel').classList.contains('hidden'))return;
+  if(!(data||[]).length){box.innerHTML='최근 24시간 서버 작업이 없다.';return;}
+  box.innerHTML=data.map(j=>{
+    const st=j['상태'];
+    const badge=st==='완료'?'<span class="jstat ok">완료</span>'
+              :st==='실패'?'<span class="jstat bad">실패</span>'
+              :st==='처리중'?'<span class="jstat run">만드는 중</span>'
+              :'<span class="jstat wait">대기</span>';
+    let line2='';
+    if(st==='요청'||st==='처리중'){
+      const m=jobAge(j['시작시각']||j['요청시각']);
+      line2=m>=3
+        ?'<span class="warn">'+m+'분째 '+(st==='요청'
+            ?'대기 — DB가 3분마다 서버를 다시 깨운다. GitHub이 밀리는 날은 10분쯤 걸릴 수 있다'
+            :'실행 중 — 30분을 넘기면 실패로 자동 회수된다')+'</span>'
+        :m+'분 경과 · 보통 1~2분 안에 끝난다';
+    }else{
+      line2=jobWhen(j['완료시각'])+(j['메시지']?' · '+esc(j['메시지']):'');
+    }
+    const res=(j['결과']&&j['결과']['인원'])?(' · '+j['결과']['인원']+'명'):'';
+    return '<div class="jobrow"><div><b>'+esc(JOBNAMES[j['종류']]||j['종류'])+'</b> '
+      +'<span class="lbl" style="display:inline">'+esc(jobParam(j))+res+'</span> '+badge+'</div>'
+      +'<div class="lbl" style="margin:2px 0 0">'+line2+'</div></div>';
+  }).join('');
+}
+
 /* ── 로그인 ── */
 async function sendOtp(){
   const email=$('email').value.trim();
@@ -421,6 +497,8 @@ async function boot(session){
   // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
   $('nav-load').classList.toggle('hidden',ROLE!=='admin');
   $('login').classList.add('hidden');$('app').classList.remove('hidden');
+  jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
+  setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
   loadToday();
 }
 
@@ -538,7 +616,9 @@ async function selectClass(cls){
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   NEXT=await nextClinic(cls);
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
-  $('sessionstate').textContent=(sess&&sess[0]&&sess[0]['상태']==='closed')?'마감됨':'진행중';
+  const isClosed=(sess&&sess[0]&&sess[0]['상태']==='closed');
+  $('sessionstate').textContent=isClosed?'마감됨':'진행중';
+  $('closeguide').style.display=isClosed?'':'none';   // 마감 후 흐름 안내 (0813)
   const setTest=v=>{
     const sel=$('c_test');
     if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o);}
@@ -989,6 +1069,8 @@ async function closeSession(){
   const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
   if(e1||e2){toast('마감 실패: '+(e1||e2).message);return;}
   $('sessionstate').textContent='마감됨';
+  $('closeguide').style.display='';                    // 마감 후 흐름 안내 (0813)
+  $('closeguide').scrollIntoView({behavior:'smooth',block:'nearest'});
   toast(CLS+' 마감 완료 — 수업로그·일지 적재됨');
 }
 
