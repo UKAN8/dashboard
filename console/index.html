@@ -944,7 +944,7 @@ function loopPoll(){
       return loopSay('<b>발송 완료</b> — '+(r['인원']||0)+'명 · 마감 '+(r['마감']||'')+
         '\n미제출은 마감 두 시간 전에 서버가 알아서 재촉한다.');
     }
-    LOOPBUILT={반:r['반'],단원:r['단원']};
+    LOOPBUILT={반:r['반'],단원:r['단원'],수업일:r['수업일']||'',마감:r['마감']||'',인원:r['인원']||0};
     $('lp_send').disabled=false;
     const links=(r['링크']||[]).slice(0,40)
       .map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+x['이름']+'</a> ('+x['문항수']+'문항)').join('\n');
@@ -953,9 +953,19 @@ function loopPoll(){
   };
   tick();LOOPTIMER=setInterval(tick,6000);
 }
+/* ⛔ 0812 사고 — 이미 제출이 끝난 8/8 루프가 고2A 9명에게 다시 나갔다.
+   [보내기]를 누른 지 두 시간 뒤에 크론이 그 요청을 집어 간 것이다.
+   그래서 세 겹으로 막는다: ①여기서 무엇이 나가는지 보여 주고 ②지난 세트는 아예 막고
+   ③서버도 20분 지난 발송 요청과 지난 세트를 거절한다(jobs_worker). */
 function loopSend(){
   if(!LOOPBUILT)return;
-  if(!confirm(LOOPBUILT.반+' 학생들에게 루프를 발송합니다. 계속?'))return;
+  const d=LOOPBUILT['수업일']||'';
+  if(d && (Date.parse(todayStr())-Date.parse(d))/864e5 > 1)
+    return loopSay('<span class="warn">이 세트는 <b>'+d+' 수업</b> 것이다 — 지난 루프는 보내지 않는다.\n'+
+      '학생들은 이미 냈다. 오늘 물을 것을 새로 쓴 뒤에 만들어 보낼 것.</span>');
+  if(!confirm('지금 발송합니다.\n\n반: '+LOOPBUILT.반+' ('+LOOPBUILT.인원+'명)\n단원: '+LOOPBUILT.단원+
+              '\n수업일: '+(d||'—')+'\n마감: '+(LOOPBUILT.마감||'—')+
+              '\n\n오늘 보낼 것이 맞습니까?'))return;
   loopJob('send_loop');
 }
 
