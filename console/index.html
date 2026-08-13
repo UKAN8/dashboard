@@ -208,6 +208,14 @@ button:disabled{opacity:.45;cursor:default;}
       <div class="classbtns" id="classbtns"></div>
     </div>
     <div id="consolebody" class="hidden">
+      <!-- ── 불러오기 실패 잠금 (0813 사고) — 빈 화면을 그리고 그 위에 입력을 받으면
+           그 빈 값이 서버를 덮는다. 못 읽었으면 읽지 못했다고 말하고 손을 묶는다. -->
+      <div id="loadfail" class="card hidden" style="border-color:#c0392b;background:#fdf3f2">
+        <h2 style="color:#c0392b">오늘 입력을 못 불러왔다 — 입력을 잠갔다</h2>
+        <div class="lbl" id="loadfailmsg"></div>
+        <div class="lbl" style="margin-top:6px">화면의 빈칸이 서버를 덮는 것을 막으려고 잠근 것이다. <b>이미 저장된 값은 그대로 있다.</b> 새로고침해서 다시 들어와라(로그인이 풀렸으면 코드로 재로그인). 그래도 같으면 세션에 말해라.</div>
+        <button class="key" style="margin-top:8px" onclick="location.reload()">새로고침</button>
+      </div>
       <div class="card">
         <h2>수업 정보 <span class="badge" id="sessionstate"></span> <span class="lbl" id="clogmark" style="display:none">저장됨 ✓</span></h2>
         <label class="lbl">진도 (엔터로 여러 줄)</label>
@@ -388,6 +396,23 @@ const $=id=>document.getElementById(id);
 const DAYS=['일','월','화','수','목','금','토'];
 const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
+/* 불러오기 실패 잠금 (0813) — LOCKED 면 어떤 저장도 나가지 않는다.
+   LOADSEEN 은 '이 브라우저가 이 반·이 날짜에서 본 최대 입력 건수'다. 한 번 봤던 입력이
+   0건으로 돌아오면 서버가 아니라 통신이 거짓말하는 것이다 → 덮어쓰기 전에 멈춘다. */
+let LOCKED=false; const LOADSEEN={};
+function lockConsole(msg){
+  LOCKED=true;
+  const el=$('loadfail'); if(el){el.classList.remove('hidden');$('loadfailmsg').textContent=msg;}
+  document.querySelectorAll('#consolebody .card:not(#loadfail)').forEach(c=>{
+    c.style.opacity='.45'; c.style.pointerEvents='none';
+  });
+  try{window.scrollTo(0,0);}catch(e){}
+}
+function unlockConsole(){
+  LOCKED=false;
+  const el=$('loadfail'); if(el)el.classList.add('hidden');
+  document.querySelectorAll('#consolebody .card').forEach(c=>{c.style.opacity='';c.style.pointerEvents='';});
+}
 
 function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
@@ -598,7 +623,8 @@ async function selectClass(cls){
   $('consolebody').classList.remove('hidden');
   const today=todayStr();
   const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
-  const [{data:stu},{data:logs},{data:sess},{data:cl},{data:prev},{data:hist}]=await Promise.all([
+  unlockConsole();
+  const RES=await Promise.all([
     sb.from('students').select('*').eq('상태','재원'),
     sb.from('daily_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
@@ -606,6 +632,22 @@ async function selectClass(cls){
     sb.from('class_log').select('날짜,진도원문,이번과제,테스트유형').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
     sb.from('daily_log').select('학생ID,날짜,점수,특이사항,이번과제').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
+  /* ⛔ 0813 사고의 급소였던 자리다. 예전엔 여기서 error 를 통째로 버리고 data(null)만 꺼내
+     빈 화면을 그렸다 — 세션 만료·RLS 거부·네트워크 어느 쪽이든 "데이터가 사라진" 얼굴이 된다.
+     그 위에서 출석 한 번만 다시 찍으면 빈 행이 서버를 덮었다. 이제 못 읽으면 잠근다. */
+  const bad=RES.find(r=>r&&r.error);
+  if(bad){lockConsole(bad.error.message||String(bad.error));return;}
+  const [{data:stu},{data:logs},{data:sess},{data:cl},{data:prev},{data:hist}]=RES;
+  {
+    const key=cls+'|'+today;
+    // '값이 들어 있는 행' 수로 센다. 출결만 찍힌 행은 아직 잃을 게 없다.
+    const filled=(logs||[]).filter(r=>r['점수']||r['문항점수']||r['이행률']||r['코멘트']||r['테스트상태']).length;
+    if(filled===0&&(LOADSEEN[key]||0)>0){
+      lockConsole('아까는 '+LOADSEEN[key]+'명분 입력이 있었는데 지금은 0건으로 돌아왔다. 서버 응답을 믿을 수 없어 잠갔다.');
+      return;
+    }
+    LOADSEEN[key]=Math.max(LOADSEEN[key]||0,filled);
+  }
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
   RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
@@ -849,10 +891,20 @@ function renderCards(box,nq){
 
 const debounce={};
 async function save(id,card){
+  if(LOCKED)return;
   clearTimeout(debounce[id]);
   debounce[id]=setTimeout(async()=>{
+    if(LOCKED)return;
     const s=STUDENTS.find(x=>x['학생ID']===id);
     const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
+    /* 빈 칸을 무엇으로 보낼 것인가 — 0813 사고의 뿌리다.
+       이 함수는 카드 전체를 읽어 행을 통째로 upsert 한다. 그래서 '빈칸'의 뜻을 갈라야 한다.
+         null = 손댄 적 없다        → DB 가드(schema_v5)가 옛 값을 지킨다
+         ''   = 사람이 일부러 지웠다 → DB 가 비운다
+       화면이 빈 채로 그려진 사고 상황에서는 prev(=DB에서 읽어 온 값)도 비어 있으므로
+       자동으로 null 이 나간다 — 즉 빈 화면은 아무것도 못 지운다. */
+    const prev=LOGMAP[id]||{};
+    const clr=(v,dbk)=>v!==''?v:(((prev[dbk]||'')!=='')?'':null);
     const att=card.querySelector('.seg button[class*=a]');
     const naBtn=card.querySelector('[data-f="미응시"]');
     const na=!!(naBtn&&naBtn.dataset.on==='1');
@@ -861,27 +913,38 @@ async function save(id,card){
     const itemStr=na?null:(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
-      '출결':att?att.dataset.v:null,'결석사유':get('결석사유')||null,
+      '출결':att?att.dataset.v:null,'결석사유':clr(get('결석사유'),'결석사유'),
       '진도':$('c_progress').value.trim()||null,
       '이번과제':(get('개별과제')||$('c_hw').value.trim())||null,
       '지난과제':(PREVHW_MAP[id]||PREVHW)||null,
-      '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):null),
+      '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):clr('','테스트유형')),
       // 미응시는 0점이 아니다 — 점수를 비우고 상태만 남긴다. gen10 이 점수 없음을 '미응시'로 그린다.
-      '테스트상태':na?'미응시':(score?'응시':null),'점수':na?null:(score||null),
+      '테스트상태':na?'미응시':(score?'응시':clr('','테스트상태')),'점수':na?null:clr(score,'점수'),
       '문항점수':itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null,
-      '이행률':get('이행률')||null,
-      '코멘트':get('코멘트')||null,'특이사항':get('특이사항')||null,
-      '추가학습사유':get('추가학습사유')||null,
-      '추가학습날짜':get('추가학습날짜')||null,'추가학습시간':get('추가학습시간')||null,
+      '이행률':clr(get('이행률'),'이행률'),
+      '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
+      '추가학습사유':clr(get('추가학습사유'),'추가학습사유'),
+      '추가학습날짜':clr(get('추가학습날짜'),'추가학습날짜'),'추가학습시간':clr(get('추가학습시간'),'추가학습시간'),
       '소스':'수업콘솔',
     };
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){toast('저장 실패: '+error.message);return;}
+    /* LOGMAP 을 방금 보낸 값으로 맞춘다. 안 맞추면 '이번 세션에 넣었다가 지운 값'이
+       prev 에 없어서 지우기가 먹지 않는다(null 로 나가 옛 값이 살아남는다). */
+    {
+      const merged=Object.assign({},prev);
+      Object.keys(row).forEach(k=>{if(row[k]!==null)merged[k]=row[k];});
+      if(na){merged['점수']='';merged['문항점수']='';}
+      LOGMAP[id]=merged;
+    }
     const mark=card.querySelector('.savemark');mark.classList.add('show');setTimeout(()=>mark.classList.remove('show'),1200);
     // 틀린 문항 → 오답 이벤트 적재 (0점=오답, 1점=부분)
     // ⚠ 미응시로 되돌릴 때도 지워야 한다. 예전엔 itemStr 이 있을 때만 지워서 채점을 취소해도
     //    오답 이벤트가 남았다 — 약점 집계에 유령 오답이 쌓인다(0812).
-    if(itemStr||na){
+    /* ⚠ 조건이 itemStr 이면 안 된다 — 문항 버튼이 빈 채로 렌더된 상태(",,,,")도 참이라
+       아무것도 안 눌렀는데 오답 이벤트를 통째로 지웠다(0813). 실제로 채점된 게 있을 때만 손댄다. */
+    const graded=itemBtns.some(b=>b.dataset.s!=='');
+    if(graded||na){
       const ref='리뷰:'+CLS+':'+todayStr();
       await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
       const ev=(na?[]:itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1')).map(b=>({
@@ -909,7 +972,7 @@ async function save(id,card){
    ⚠ class_sessions 는 건드리지 않는다 — 상태는 '진행중'으로 남아야 렌더 크론이 안 돈다. */
 let CLOGT=null;
 function saveClassLog(){
-  if(!CLS)return;
+  if(!CLS||LOCKED)return;
   clearTimeout(CLOGT);
   CLOGT=setTimeout(async()=>{
     const today=todayStr();
