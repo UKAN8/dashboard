@@ -218,6 +218,15 @@ button:disabled{opacity:.45;cursor:default;}
       </div>
       <div class="card">
         <h2>수업 정보 <span class="badge" id="sessionstate"></span> <span class="lbl" id="clogmark" style="display:none">저장됨 ✓</span></h2>
+        <!-- 보는 날짜 (0814 신설) — 예전엔 화면이 늘 오늘에 못 박혀 있어서 자정을 넘기면
+             어제 채점·수업기록을 볼 방법이 아예 없었다. 기록은 DB에 멀쩡히 있는데 화면에서만
+             사라진 것처럼 보인다. 날짜를 바꾸면 그 날의 입력을 그대로 불러온다. -->
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px">
+          <div style="flex:0 0 156px"><label class="lbl">보는 날짜</label>
+            <input id="v_date" type="date" onchange="changeViewDay()"></div>
+          <button class="ghost" style="padding:8px 12px" onclick="$('v_date').value=todayStr();changeViewDay()">오늘로</button>
+          <span class="lbl" id="v_warn" style="display:none;color:#B26A00">지난 날짜를 보고 있다 — 저장도 이 날짜로 들어간다</span>
+        </div>
         <label class="lbl">진도 (엔터로 여러 줄)</label>
         <textarea id="c_progress" rows="2" placeholder="예: OPT:04 도형의 이동 파트2&#10;OPT:05 집합의 뜻 파트1" oninput="autoGrow(this);saveClassLog()"></textarea>
         <div class="minirow">
@@ -394,6 +403,14 @@ const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 const sb=supabase.createClient(SB_URL,SB_ANON);
 const $=id=>document.getElementById(id);
 const DAYS=['일','월','화','수','목','금','토'];
+/* 보는 날짜 — 수업 화면(채점·수업정보·마감)이 어느 날을 보고 있는가.
+   비어 있으면 오늘. 이 값이 daily_log·class_log·class_sessions 의 '날짜'가 된다. */
+const vDay=()=>($('v_date')&&$('v_date').value)||todayStr();
+function changeViewDay(){
+  const d=$('v_date').value||todayStr();
+  $('v_warn').style.display = (d===todayStr()) ? 'none' : '';
+  if(CLS) selectClass(CLS);            // 그 날짜로 다시 불러온다
+}
 const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
 /* 불러오기 실패 잠금 (0813) — LOCKED 면 어떤 저장도 나가지 않는다.
@@ -619,9 +636,11 @@ async function nextClinic(cls){
 }
 async function selectClass(cls){
   CLS=cls;
+  if($('v_date')&&!$('v_date').value)$('v_date').value=todayStr();
+  if($('v_warn'))$('v_warn').style.display=(vDay()===todayStr())?'none':'';
   document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
   $('consolebody').classList.remove('hidden');
-  const today=todayStr();
+  const today=vDay();
   const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
   unlockConsole();
   const RES=await Promise.all([
@@ -912,7 +931,7 @@ async function save(id,card){
     const itemBtns=[...card.querySelectorAll('.items button')];
     const itemStr=na?null:(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
     const row={
-      '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':todayStr(),'요일':DAYS[new Date().getDay()],
+      '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':vDay(),'요일':DAYS[new Date(vDay()+'T00:00:00').getDay()],
       '출결':att?att.dataset.v:null,'결석사유':clr(get('결석사유'),'결석사유'),
       '진도':$('c_progress').value.trim()||null,
       '이번과제':(get('개별과제')||$('c_hw').value.trim())||null,
@@ -945,7 +964,7 @@ async function save(id,card){
        아무것도 안 눌렀는데 오답 이벤트를 통째로 지웠다(0813). 실제로 채점된 게 있을 때만 손댄다. */
     const graded=itemBtns.some(b=>b.dataset.s!=='');
     if(graded||na){
-      const ref='리뷰:'+CLS+':'+todayStr();
+      const ref='리뷰:'+CLS+':'+vDay();
       await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
       const ev=(na?[]:itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1')).map(b=>({
         '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
@@ -955,7 +974,7 @@ async function save(id,card){
     // 결석 → 보강 대기 자동 등록
     if(att&&att.dataset.v==='결석'&&!card.dataset.absentDone){
       card.dataset.absentDone='1';
-      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+todayStr()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
+      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+vDay()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
       toast(s['이름']+' 보강 대기 등록');
     }
     const reason=get('추가학습사유');
@@ -975,7 +994,7 @@ function saveClassLog(){
   if(!CLS||LOCKED)return;
   clearTimeout(CLOGT);
   CLOGT=setTimeout(async()=>{
-    const today=todayStr();
+    const today=vDay();
     const {error}=await sb.from('class_log').upsert({
       '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
       '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
@@ -1013,7 +1032,7 @@ function saveClassLog(){
 }
 /* 입력 데이터 기반 코멘트 자동 생성 — 손으로 쓴 코멘트는 건드리지 않음 */
 async function genComments(){
-  const today=todayStr();
+  const today=vDay();
   const {data:clin}=await sb.from('clinic_roster').select('*').eq('날짜',today);
   const clinMap={};(clin||[]).forEach(r=>clinMap[r['학생ID']]=r);
   const nq=Math.max(0,parseInt($('c_nq').value)||0), full=nq*2;
@@ -1086,7 +1105,7 @@ async function genComments(){
 }
 async function closeSession(){
   if(!CLS)return;
-  const today=todayStr();
+  const today=vDay();
   /* 자동 추가학습 지정 — 두 가지 사유. 이미 사유가 적힌 학생은 손대지 않는다.
      ① 테스트 반평균 이하 (만점자 제외)
      ② 과제 이행률 100% 미달 (0812 유강). 시험을 잘 봐도 과제를 안 하면 부른다.
@@ -1140,7 +1159,7 @@ async function closeSession(){
 /* 오늘 이 반의 입력 전체 삭제 (오입력·테스트 정리용) */
 async function resetToday(){
   if(!CLS)return;
-  const today=todayStr();
+  const today=vDay();
   if(!confirm(CLS+' 오늘('+today+') 입력을 전부 지웁니다.\n일지·추가학습 지정·오답 이벤트·마감 기록 포함. 계속?'))return;
   if(!confirm('정말 삭제할까요? 되돌릴 수 없습니다.'))return;
   const ids=STUDENTS.map(s=>s['학생ID']);
@@ -1237,7 +1256,7 @@ function planInit(){
   [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
     const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
   });
-  $('pl_date').value=todayStr();
+  $('pl_date').value=vDay();     // 보는 날짜를 따른다 — 자정을 넘겨도 그 수업의 날짜로 찍힌다
   // 마감 = 다음 수업일 21시. 학생 화면과 알림톡에 이 문구가 그대로 나간다.
   nextClinic(CLS).then(nx=>{
     if(nx){const d=new Date(nx.date);$('pl_due').value=(d.getMonth()+1)+'월 '+d.getDate()+'일('+nx.dow+') 21시';}
