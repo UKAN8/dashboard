@@ -1180,15 +1180,27 @@ function stallHint(n,st){
     ' — 서버가 밀린 것이다. 급하면 세션에 알릴 것(저장소를 밀면 즉시 깨어난다).</span>';
 }
 
+/* 이 반에 맞는 풀을 위로 올린다.
+ * 이름만 보면 안 된다 — 풀 이름이 세 가지다.
+ *   '20260810_고1'  날짜 누적본 (학년이 이름 끝에)
+ *   '주간_고2A'      반 주간 통  (반 이름이 이름 안에)
+ *   '08정적분'       단원 통     (이름에 학년이 아예 없다 — 단원 설명의 '(고2)' 로 가린다)
+ * 0813에 단원 통을 올렸는데 이름 규칙이 달라 화면에서 아래로 밀렸다. */
+function poolsFor(풀){
+  const g=(CLS||'').slice(0,2), items=((LOOPIDX||{})['풀문항']||{});
+  return 풀.filter(u=>{
+    if(u.endsWith('_'+g)||u.includes('_'+g)||u.includes(CLS||' ')) return true;
+    const first=(items[u]||[])[0];
+    return !!(first&&(first['단원']||'').includes(g));
+  });
+}
 async function loopIndex(){
   const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
     .order('완료시각',{ascending:false}).limit(1);
   LOOPIDX=(data&&data[0]&&data[0]['결과'])||null;
   const sel=$('lp_unit');sel.innerHTML='';
   const 풀=(LOOPIDX&&LOOPIDX['풀'])||[];
-  // 이 반 학년의 풀을 위로 — 풀 이름이 '20260810_고1' 꼴이라 학년으로 갈린다
-  const g=(CLS||'').slice(0,2);
-  const mine=풀.filter(u=>u.endsWith('_'+g));
+  const mine=poolsFor(풀);
   [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
     const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
   });
@@ -1219,8 +1231,8 @@ function planProgress(){
   return ($('c_progress').value||'').trim();
 }
 function planInit(){
-  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[], g=(CLS||'').slice(0,2);
-  const mine=풀.filter(u=>u.endsWith('_'+g));
+  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[];
+  const mine=poolsFor(풀);
   const sel=$('pl_pool');sel.innerHTML='';
   [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
     const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
