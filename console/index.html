@@ -188,7 +188,7 @@ button:disabled{opacity:.45;cursor:default;}
   <div id="jobpanel" class="card hidden">
     <h2>서버 작업 — 최근 24시간</h2>
     <div id="jobrows" class="lbl">불러오는 중…</div>
-    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 밀리면 3분마다 다시 깨운다.</div>
+    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 못 깨웠으면 1분마다 다시 시도한다(3분 넘게 대기하면 깨우기가 고장 난 것이다).</div>
   </div>
 
   <section id="view-today">
@@ -450,7 +450,7 @@ async function jobsRefresh(){
       const m=jobAge(j['시작시각']||j['요청시각']);
       line2=m>=3
         ?'<span class="warn">'+m+'분째 '+(st==='요청'
-            ?'대기 — DB가 3분마다 서버를 다시 깨운다. GitHub이 밀리는 날은 10분쯤 걸릴 수 있다'
+            ?'대기 — 보통 1분 안에 시작한다. 3분이 넘으면 깨우기가 고장 난 것이니 세션에 알릴 것(schema_v4_wake.sql 맨 아래 점검 SQL)'
             :'실행 중 — 30분을 넘기면 실패로 자동 회수된다')+'</span>'
         :m+'분 경과 · 보통 1~2분 안에 끝난다';
     }else{
