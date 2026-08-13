@@ -1189,7 +1189,7 @@ function stallHint(n,st){
 function poolsFor(풀){
   const g=(CLS||'').slice(0,2), items=((LOOPIDX||{})['풀문항']||{});
   return 풀.filter(u=>{
-    if(u.endsWith('_'+g)||u.includes('_'+g)||u.includes(CLS||' ')) return true;
+    if(u.endsWith('_'+g)||u.includes('_'+g)||(CLS&&u.includes(CLS))) return true;
     const first=(items[u]||[])[0];
     return !!(first&&(first['단원']||'').includes(g));
   });
