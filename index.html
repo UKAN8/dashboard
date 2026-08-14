@@ -907,7 +907,7 @@ function viewReport(st) {
       + (absent.length ? `<div class="chips">${chip('bad', '결석 ' + absent.join(' '))}</div>` : '')
       + (miss.length ? `<div class="chips">${chip('mid', '미응시 ' + miss.join(' '))}</div>` : '')
       // 서버 렌더된 리포트 이미지 (정적판에 없는 기능 → class="dbonly" 로 표시해 패리티 게이트에서 뺀다)
-      + (names.length ? `<details class="dbonly rp-imgs" data-date="${d}" data-names="${E(names.join('|'))}">`
+      + (names.length ? `<details class="dbonly rp-imgs" data-date="${d}" data-ban="${E(ban)}" data-names="${E(names.join('|'))}">`
         + `<summary>리포트 이미지 ${names.length}장</summary><div class="thumbs">불러오는 중…</div></details>` : '')
       + '</div>';
   };
@@ -1541,44 +1541,93 @@ async function loadReportImages(el) {
   if (box.dataset.missing) links.push(`<span class="dim">· 없는 학생: ${E(box.dataset.missing)}</span>`);
   const files = data.map((d, i) => ({ name: names[i], url: d.signedUrl })).filter(x => x.url);
   box.innerHTML = (files.length
-    ? `<button type="button" class="rp-save">⤓ 전체 저장 (${files.length}장)</button>`
+    ? `<button type="button" class="rp-save">⤓ 전체 저장 (${files.length}장 · zip)</button>`
     : '') + (links.join('') || '<span class="dim">렌더된 이미지 없음</span>');
   const btn = box.querySelector('.rp-save');
-  if (btn) btn.onclick = () => saveReports(btn, files);
+  // zip 이름에 반·날짜를 박는다 — 여러 반을 받아도 다운로드 폴더에서 안 섞인다
+  if (btn) btn.onclick = () => saveReports(btn, files, `${el.dataset.ban ? el.dataset.ban + '_' : ''}${date}`);
 }
 
-/* ───────── 리포트 이미지 저장 (0811 — 당분간 팀톡으로 손으로 보낸다) ─────────
+/* ───────── 리포트 이미지 저장 — 압축파일 한 개 (0814 유강) ─────────
  * ⚠ 서명 URL 을 `<a download>` 로 그냥 걸면 **파일명이 해시로 떨어진다**.
  *   download 속성은 같은 오리진일 때만 먹고, Storage 는 다른 오리진이다.
  *   Storage 키에 한글을 못 써서 파일이 `3f2a….jpg` 로 올라가 있으므로 그대로 받으면
- *   누구 것인지 알 수 없다 → **blob 으로 받아서 이름을 붙여 저장한다.**
- * 한 장씩 순서대로 받는다. 한꺼번에 클릭을 쏘면 크롬이 뒤쪽을 버린다.
- * 처음 한 번은 크롬이 "파일 여러 개 다운로드를 허용하시겠습니까?" 를 묻는다 — 허용.
+ *   누구 것인지 알 수 없다 → **받아서 이름을 붙여 담는다.**
+ * 0811~0813 은 한 장씩 20번 떨어뜨렸다. 크롬이 "파일 여러 개 다운로드" 를 매번 묻고,
+ * 다운로드 폴더에 20장이 흩어지고, 뒤쪽 몇 장은 조용히 버려졌다.
+ * 이제 **zip 하나**로 준다 — 반·날짜가 이름에 박혀 있어 폴더가 안 섞인다.
+ *
+ * zip 은 직접 만든다. 리포트는 이미 JPEG 라 다시 압축해도 안 줄어들어 **무압축(store)** 이면
+ * 충분하고, store zip 은 헤더 몇 줄이라 이 페이지에 CDN 의존을 하나 더 물릴 이유가 없다.
+ * ⚠ 한글 이름 → UTF-8 플래그(비트 11)를 켜야 윈도 탐색기에서 안 깨진다.
  */
-async function saveOneReport(url, filename) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(r.status + '');
-  const blob = await r.blob();
+const CRC_T = (() => { const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(entries) {                       // [{name, data:Uint8Array}] → Blob
+  const enc = new TextEncoder(), d = new Date();
+  const time = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
+  const date = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  const body = [], cd = []; let off = 0, cdSize = 0;
+  for (const e of entries) {
+    const nm = enc.encode(e.name), crc = crc32(e.data), sz = e.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(8, 0, true);                     // 0 = store (무압축)
+    lh.setUint16(10, time, true); lh.setUint16(12, date, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true);
+    lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    body.push(new Uint8Array(lh.buffer), nm, e.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, time, true); ch.setUint16(14, date, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true);
+    ch.setUint16(28, nm.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true);
+    ch.setUint16(34, 0, true); ch.setUint16(36, 0, true); ch.setUint32(38, 0, true);
+    ch.setUint32(42, off, true);
+    cd.push(new Uint8Array(ch.buffer), nm);
+    off += 30 + nm.length + sz; cdSize += 46 + nm.length;
+  }
+  const eo = new DataView(new ArrayBuffer(22));
+  eo.setUint32(0, 0x06054b50, true); eo.setUint16(4, 0, true); eo.setUint16(6, 0, true);
+  eo.setUint16(8, entries.length, true); eo.setUint16(10, entries.length, true);
+  eo.setUint32(12, cdSize, true); eo.setUint32(16, off, true); eo.setUint16(20, 0, true);
+  return new Blob([...body, ...cd, new Uint8Array(eo.buffer)], { type: 'application/zip' });
+}
+function dropFile(blob, filename) {
   const u = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = u; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(u), 8000);
 }
-async function saveReports(btn, files) {
+async function saveReports(btn, files, tag) {
   const orig = btn.textContent;
   btn.disabled = true;
-  let done = 0; const failed = [];
+  const entries = [], failed = [], used = {};
   for (const f of files) {
-    btn.textContent = `저장 중… ${done + 1}/${files.length}`;
-    try { await saveOneReport(f.url, f.name + '.jpg'); done++; }
-    catch (e) { failed.push(f.name); }
-    await new Promise(r => setTimeout(r, 250));
+    btn.textContent = `받는 중… ${entries.length + failed.length + 1}/${files.length}`;
+    try {
+      const r = await fetch(f.url);
+      if (!r.ok) throw new Error(r.status + '');
+      // 동명이인이 있어도 한 장이 다른 장을 덮으면 안 된다
+      let nm = f.name; if (used[nm]) nm = `${f.name}(${used[f.name] + 1})`;
+      used[f.name] = (used[f.name] || 0) + 1;
+      entries.push({ name: nm + '.jpg', data: new Uint8Array(await r.arrayBuffer()) });
+    } catch (e) { failed.push(f.name); }
+  }
+  if (entries.length) {
+    btn.textContent = '압축하는 중…';
+    await new Promise(r => setTimeout(r, 0));     // 버튼 글씨가 바뀐 뒤에 묶는다
+    try { dropFile(makeZip(entries), `리포트_${tag}.zip`); }
+    catch (e) { btn.disabled = false; btn.textContent = '압축 실패 — 이름을 눌러 한 장씩 받아라'; return; }
   }
   btn.disabled = false;
-  btn.textContent = failed.length
-    ? `${done}장 저장 · 실패: ${failed.join(', ')}`
-    : `${done}장 저장됨 ✓`;
+  btn.textContent = !entries.length ? '한 장도 못 받았다'
+    : failed.length ? `${entries.length}장 zip 저장 · 실패: ${failed.join(', ')}`
+    : `${entries.length}장 zip 저장됨 ✓`;
   setTimeout(() => { btn.textContent = orig; }, 8000);
 }
 
