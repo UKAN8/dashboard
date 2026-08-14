@@ -631,13 +631,38 @@ function prevHwLine(id){
   return `<div class="recent indhw" style="margin-left:0">📌 지난과제(개별${d?' '+d:''}): ${esc(v).replace(/\n/g,' / ')}</div>`;
 }
 const TTCACHE={};
+/* 시간표를 요일별로 들고 있는다 — 다음 수업일 계산과 '수업 전/후' 판정이 같은 표를 본다.
+   시작·끝은 시(hour) 숫자다(예: 18, 20). */
+async function loadTT(cls){
+  if(!(cls in TTCACHE)){
+    const {data}=await sb.from('timetable').select('요일,시작,끝').eq('반',cls);
+    const byDow={};(data||[]).forEach(r=>{byDow[r['요일']]=r;});
+    TTCACHE[cls]={dows:new Set(Object.keys(byDow)),byDow};
+  }
+  return TTCACHE[cls];
+}
+const hourOf=v=>{const m=String(v==null?'':v).match(/(\d{1,2})/);return m?parseInt(m[1],10):null;};
+/* 추가학습이 '언제'인지 판정한다 — 코멘트 표현이 여기서 갈린다(0814 유강).
+     before : 오늘 수업 전에 등원해서 이미 하고 왔다   → 과거형
+     after  : 오늘 수업이 끝난 뒤 남아서 한다          → 오늘 남아서
+     future : 다음 수업일 이후로 잡아 두었다           → 예정
+   기준은 추가학습 시작시각 vs 그날 수업 끝시각이다. 시간을 안 적었으면 수업 전(기본 규칙이
+   수업 전 2시간이라)으로 본다. 날짜가 비어 있으면 판정하지 않는다(null). */
+function clinicWhen(dateStr,timeStr){
+  const today=vDay();
+  if(!dateStr)return null;
+  if(dateStr>today)return 'future';
+  if(dateStr<today)return 'before';                     // 지난 날짜 = 이미 지나간 일
+  const tt=TTCACHE[CLS];
+  const dw=DAYS[new Date(today+'T00:00:00').getDay()];
+  const end=tt&&tt.byDow&&tt.byDow[dw]?hourOf(tt.byDow[dw]['끝']):null;
+  const start=hourOf(String(timeStr||'').split('-')[0]);
+  if(start==null||end==null)return 'before';
+  return start>=end?'after':'before';
+}
 /* 다음 수업일 + 반별 추가학습 기본 시간 규칙 */
 async function nextClinic(cls){
-  if(!(cls in TTCACHE)){
-    const {data}=await sb.from('timetable').select('요일').eq('반',cls);
-    TTCACHE[cls]=new Set((data||[]).map(r=>r['요일']));
-  }
-  const dows=TTCACHE[cls];
+  const {dows}=await loadTT(cls);
   if(!dows.size)return null;
   for(let i=1;i<=14;i++){
     const d=new Date(Date.now()+i*864e5), dw=DAYS[d.getDay()];
@@ -823,6 +848,10 @@ function wireRow(d,id){
     save(id,d);
   };
   const rs=d.querySelector('[data-f="추가학습사유"]');
+  /* 그려질 때의 지정 상태를 기억해 둔다 — 이게 없으면 '적혀 있던 사유를 지웠다'를 알아채지 못해
+     명단에서 거두지 못한다. save() 의 clinicSig 비교가 이 값을 기준으로 돈다. */
+  {const r0=rs.value.trim();
+   d.dataset.clinicSig=r0?[r0,d.querySelector('[data-f="추가학습날짜"]').value||'',d.querySelector('[data-f="추가학습시간"]').value||''].join('|'):'';}
   rs.addEventListener('input',()=>{
     if(rs.value.trim()&&NEXT){
       const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
@@ -997,11 +1026,28 @@ async function save(id,card){
       await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+vDay()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
       toast(s['이름']+' 보강 대기 등록');
     }
+    /* 추가학습 지정 — 명단(clinic_roster)은 화면 칸을 따라와야 한다.
+       예전엔 카드당 한 번만 insert 하고 끝냈다(clinicDone). 사유를 적어 행이 박힌 뒤
+       날짜·시간을 고치면 명단은 옛 날짜 그대로 남아, [추가학습] 탭에서 그날 아무도 안 보였다.
+       이제 오늘 찍은 '지정' 행을 찾아 갱신하고, 사유를 지우면 그 행을 거둔다.
+       ⚠ 손대는 범위는 '오늘 이 콘솔이 만든 지정'뿐이다 — 출석이 찍힌 행·결석 보강은 건드리지 않는다. */
     const reason=get('추가학습사유');
-    if(reason && !card.dataset.clinicDone){
-      card.dataset.clinicDone='1';
-      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':get('추가학습날짜')||null,'시간':get('추가학습시간')||null,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
-      toast(s['이름']+' 추가학습 지정');
+    const cd=get('추가학습날짜')||null, ct=get('추가학습시간')||null;
+    const sig=reason?[reason,cd||'',ct||''].join('|'):'';
+    if(sig!==(card.dataset.clinicSig||'')){
+      const mine=()=>sb.from('clinic_roster').select('id,출석').eq('학생ID',id).eq('지정일',todayStr()).eq('상태','지정');
+      if(reason){
+        const {data:ex}=await mine();
+        const row=(ex||[]).find(r=>!r['출석']);
+        const body={'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':cd,'시간':ct,'상태':'지정','기록일':todayStr()};
+        if(row)await sb.from('clinic_roster').update(body).eq('id',row.id);
+        else{await sb.from('clinic_roster').insert({...body,'지정일':todayStr()});toast(s['이름']+' 추가학습 지정');}
+      }else if(card.dataset.clinicSig){
+        const {data:ex}=await mine();
+        const row=(ex||[]).find(r=>!r['출석']);
+        if(row){await sb.from('clinic_roster').delete().eq('id',row.id);toast(s['이름']+' 추가학습 지정 해제');}
+      }
+      card.dataset.clinicSig=sig;
     }
   },400);
 }
@@ -1070,8 +1116,19 @@ async function genComments(){
       ta.dispatchEvent(new Event('change'));n++;return;
     }
     const parts=[];
-    const c=clinMap[id];
-    if(c)parts.push('수업 전 추가학습으로 등원하여 '+(c['사유']?c['사유'].split('(')[0].trim()+' 보완':'복습')+'을 진행했습니다.');
+    /* 추가학습은 '오늘 수업 전 / 오늘 수업 후 / 다음 수업일' 세 갈래다. 예전엔 오늘 날짜로
+       잡힌 지정을 전부 '수업 전 등원'으로 써서, 수업 끝나고 남는 학생에게 하지도 않은 일을
+       과거형으로 적었다(0814 유강). 화면 칸이 진실원이고, 없으면 명단(clinic_roster)을 본다. */
+    const lab=r=>{const t=(r||'').split('(')[0].split('·')[0].trim();return !t?'복습':(/(보완|복습|정리)$/.test(t)?t:t+' 보완');};
+    const fR=card.querySelector('[data-f="추가학습사유"]').value.trim();
+    const fD=card.querySelector('[data-f="추가학습날짜"]').value;
+    const fT=card.querySelector('[data-f="추가학습시간"]').value;
+    const cRow=clinMap[id];                                    // 오늘 날짜로 잡힌 명단 행
+    // 오늘 것과 앞으로 것은 별개다 — 수업 전에 와서 보완하고, 오늘 결과로 다음 수업일을 또 잡을 수 있다
+    const nowC=(fR&&fD===today)?{r:fR,t:fT}:(cRow?{r:cRow['사유']||'',t:cRow['시간']||''}:null);
+    const nowWhen=nowC?clinicWhen(today,nowC.t):null;
+    const nextC=(fR&&(!fD||fD>today)&&!(cRow&&!fD))?{r:fR,d:fD,t:fT}:null;
+    if(nowWhen==='before')parts.push('수업 전 추가학습으로 등원하여 '+lab(nowC.r)+'을 진행했습니다.');
     if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
     if(card.classList.contains('na'))parts.push('오늘 '+tname+'는 응시하지 못했습니다. 다음 수업에서 같은 범위로 확인하겠습니다.');
     const score=parseFloat(card.querySelector('[data-f="점수"]').value);
@@ -1111,11 +1168,10 @@ async function genComments(){
       else if(ih>=50)parts.push('과제 이행률은 '+ih+'%입니다. 남은 과제 마무리를 부탁드립니다.');
       else parts.push('과제 이행이 부족합니다('+ih+'%). 학습 계획을 함께 점검하겠습니다.');
     }
-    const cr=card.querySelector('[data-f="추가학습사유"]').value.trim();
-    if(cr){
-      const cd=card.querySelector('[data-f="추가학습날짜"]').value, ct=card.querySelector('[data-f="추가학습시간"]').value;
-      parts.push((cd?cd.slice(5).replace('-','/')+' ':'')+(ct?ct+'시 ':'')+'추가학습을 지정하여 보완할 예정입니다.');
-    }
+    /* 앞으로 할 일은 코멘트 끝에 붙인다. 'before' 는 이미 맨 앞에서 과거형으로 썼다. */
+    if(nowWhen==='after')parts.push('오늘 수업 후 '+(nowC.t?nowC.t+'시에 ':'')+'남아 추가학습으로 '+lab(nowC.r)+'을 진행합니다.');
+    // 앞으로 잡아 둔 것은 사유를 다시 적지 않는다 — 점수·이행률 문장에 이미 이유가 나와 있다
+    if(nextC)parts.push((nextC.d?nextC.d.slice(5).replace('-','/')+' ':'')+(nextC.t?nextC.t+'시 ':'')+'추가학습을 지정하여 보완할 예정입니다.');
     if(!parts.length)return;
     ta.value=parts.join(' ');
     ta.dispatchEvent(new Event('change'));
