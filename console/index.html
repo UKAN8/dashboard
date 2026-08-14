@@ -56,6 +56,14 @@ nav a.xlink{flex:1;display:flex;align-items:center;justify-content:center;font-s
 #login .logo{font-size:26px;font-weight:800;text-align:center;margin-bottom:24px;}
 #login .logo b{color:var(--key);}
 .msg{font-size:13px;color:var(--sub);margin-top:10px;text-align:center;min-height:18px;}
+/* 반 평균 띠 (0814) — 채점하는 동안 화면에 붙어 있어야 판단 기준이 된다.
+   header 가 top:0 에 52px 로 붙어 있으므로 그 아래에 선다. 표 머리(thead)는 이 띠 아래로 밀었다. */
+.avgbar{position:sticky;top:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;
+        background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin-bottom:10px;font-size:13px;}
+.avgbar b{font-size:17px;color:var(--key-d);font-weight:800;}
+.avgbar .t{font-size:11px;font-weight:700;color:#fff;background:var(--key);border-radius:99px;padding:3px 9px;}
+.avgbar .s{color:var(--sub);font-size:12px;}
+.stu.below [data-f="점수"]{background:#FFF6E8;box-shadow:inset 0 0 0 1px #F0C88A;}
 .footbar{position:sticky;bottom:78px;display:flex;gap:8px;margin-top:14px;}
 .footbar button{flex:1;padding:15px;font-size:16px;}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;}
@@ -105,7 +113,7 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
   .grid td:nth-child(2),.grid th:nth-child(2){width:1%;white-space:nowrap;}
   .grid .seg{flex-wrap:nowrap;}
   .grid .seg button{white-space:nowrap;}
-  .grid thead th{position:sticky;top:52px;z-index:5;box-shadow:0 1px 0 var(--line);}
+  .grid thead th{position:sticky;top:104px;z-index:5;box-shadow:0 1px 0 var(--line);}   /* 52px 헤더 + 반 평균 띠 */
   tr.stu:hover td{background:#fdfaf8;}
   .toast{bottom:28px;}
   .kbdhint{font-size:11px;color:var(--sub);margin:0 0 8px;}
@@ -279,6 +287,7 @@ button:disabled{opacity:.45;cursor:default;}
         <div id="lp_out" class="loadout">오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.</div>
       </div>
 
+      <div id="clsavg" class="avgbar" style="display:none"></div>
       <div id="students"></div>
       <div class="footbar" style="bottom:auto;position:static;margin-top:14px">
         <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
@@ -869,6 +878,40 @@ function renderStudents(){
   const nq=Math.max(0,Math.min(10,parseInt($('c_nq').value)||0));
   if(window.matchMedia('(min-width:900px)').matches)renderTable(box,nq);
   else renderCards(box,nq);
+  box.addEventListener('input',updateAvgs);   // 타이핑하는 동안 바로 따라온다
+  updateAvgs();
+}
+/* 반 평균 점수·이행률 — 채점 중에 화면에 떠 있어야 한다(0814 유강).
+   예전엔 평균이 코멘트 자동생성과 마감 자동지정 안에서만 계산돼 눈에 안 보였다.
+   그래서 '이 점수가 반에서 어디쯤인가'를 매번 머리로 세야 했다.
+   ⚠ 계산 규칙은 closeSession 의 자동지정과 **같아야 한다** — 여기서 '반평균 이하'로 센 사람이
+   마감에서 불려 나가는 사람이다. 미응시는 모수에서 빼고(안 본 시험은 평균이 아니다),
+   이행률은 미응시와 무관하니 전원 중 적힌 사람만 센다. */
+function updateAvgs(){
+  const bar=$('clsavg');if(!bar)return;
+  const cards=[...document.querySelectorAll('.stu')];
+  if(!cards.length){bar.style.display='none';return;}
+  const live=cards.filter(c=>!c.classList.contains('na'));
+  const num=(c,f)=>parseFloat(c.querySelector(`[data-f="${f}"]`).value);
+  const scored=live.map(c=>({c,v:num(c,'점수')})).filter(x=>!isNaN(x.v));
+  const ihs=cards.map(c=>num(c,'이행률')).filter(v=>!isNaN(v));
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const na=cards.length-live.length, full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
+  const out=['<span class="t">반 평균</span>'];
+  cards.forEach(c=>c.classList.remove('below'));
+  if(scored.length>=1){
+    const avg=mean(scored.map(x=>x.v));
+    let below=0;
+    if(scored.length>=2)scored.forEach(({c,v})=>{if(v<=avg&&(!full||v<full)){c.classList.add('below');below++;}});
+    out.push(`<span>점수 <b>${avg.toFixed(1)}</b>${full?'<span class="s"> / '+full+'점</span>':''}</span>`
+      +`<span class="s">${scored.length}명 채점${live.length-scored.length?' · 미입력 '+(live.length-scored.length)+'명':''}${na?' · 미응시 '+na+'명':''}</span>`
+      +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b> (마감 시 추가학습 대상)</span>`:''));
+  }else out.push(`<span class="s">점수 입력 없음${na?' · 미응시 '+na+'명':''}</span>`);
+  if(ihs.length)out.push(`<span>이행률 <b>${Math.round(mean(ihs))}%</b></span>`
+    +`<span class="s">${ihs.length}명 입력${cards.length-ihs.length?' · 미입력 '+(cards.length-ihs.length)+'명':''}${ihs.filter(v=>v<100).length?' · 100% 미만 '+ihs.filter(v=>v<100).length+'명':''}</span>`);
+  else out.push('<span class="s">이행률 입력 없음</span>');
+  bar.innerHTML=out.join('');
+  bar.style.display='';
 }
 function renderTable(box,nq){
   const wrap=document.createElement('div');
@@ -960,6 +1003,7 @@ function renderCards(box,nq){
 const debounce={};
 async function save(id,card){
   if(LOCKED)return;
+  updateAvgs();          // 문항 버튼·미응시 토글은 input 이벤트가 없다 — 저장 경로에서 같이 갱신
   clearTimeout(debounce[id]);
   debounce[id]=setTimeout(async()=>{
     if(LOCKED)return;
