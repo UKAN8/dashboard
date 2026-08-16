@@ -188,23 +188,26 @@ function render(d){
       많이 틀렸던 유형일수록 빨리 돌아옵니다.</div>`);
   }
 
-  // ② 유형맵
+  // ② 유형맵 — 0816부터 반 정답률 가중 + 루프 개선(✓). (신호 계산 = portal_typemap, 여긴 표시만)
   const T=d.유형맵||{먼저:[],단원:[]};
-  H.push(`<h2>유형 지도 <small>반복해서 틀린 자리</small></h2>`);
+  H.push(`<h2>유형 지도 <small>지금 손볼 자리 · 나아지는 자리</small></h2>`);
   if(T.먼저&&T.먼저.length)
     H.push(`<div class="first"><div class="h">먼저 손볼 것</div><ol>`
-      +T.먼저.map(x=>`<li><b>${E(x.유형)}</b> <span class="dim">${x.횟수}번</span></li>`).join('')+`</ol></div>`);
+      +T.먼저.map(x=>`<li><b>${E(x.유형)}</b> <span class="dim">${x.횟수}번`
+      +`${x.개선?` · <span style="color:#7ee0a3">루프에서 ${x.개선}번 맞힘</span>`:''}</span></li>`).join('')+`</ol></div>`);
   else H.push(`<div class="first ok"><div class="h">지금 급한 자리 없음</div>
     <div class="dim">최근에 반복해서 틀린 유형이 없습니다. 이 상태를 유지하는 게 목표입니다.</div></div>`);
-  const 그린=(T.단원||[]).filter(u=>(u.유형||[]).some(t=>t.등급>0));
+  const 그린=(T.단원||[]).filter(u=>(u.유형||[]).some(t=>t.등급>0||t.개선>0));
   if(!그린.length) H.push(`<div class="none">아직 표시할 오답 기록이 없습니다.</div>`);
   else H.push(`<div class="card">`+그린.map(u=>
     `<div class="unit"><div class="uh">${E(u.중단원)}</div>`
-    +u.유형.map(t=>`<span class="chip b${t.등급}">${E(t.유형)}${t.횟수?` <b>${t.횟수}</b>`:''}</span>`).join('')
+    +u.유형.map(t=>`<span class="chip b${t.등급}">${E(t.유형)}${t.횟수?` <b>${t.횟수}</b>`:''}`
+    +`${t.개선?` <b style="color:#7ee0a3">✓</b>`:''}</span>`).join('')
     +`</div>`).join('')+`</div>`);
-  H.push(`<div class="note">색이 진할수록 <b>여러 번</b> 틀린 자리입니다. 한 번 틀린 것은 사고일 수 있어 옅게 둡니다.
-    오래된 오답은 시간이 지나면 저절로 옅어집니다(반감기 ${T.반감기||45}일).
-    <b>정답률이 아닙니다</b> — 몇 문제 중 몇 개인지가 아니라, 어디를 반복해서 놓쳤는지를 봅니다.</div>`);
+  H.push(`<div class="note">색이 진할수록 지금 급한 자리입니다 — 여러 번 틀렸거나,
+    <b>다른 친구들은 대부분 맞힌 문제</b>를 틀린 유형이 진하게 표시됩니다.
+    반대로 모두가 어려워한 문제는 옅게 둡니다. 오래된 오답은 시간이 지나면 저절로 옅어지고(반감기 ${T.반감기||45}일),
+    <b style="color:#7ee0a3">✓</b>가 붙은 유형은 반복학습(루프)에서 다시 맞혀 <b>나아지고 있는 자리</b>입니다.</div>`);
 
   // ③ 추가학습
   const C=d.클리닉||{예정:[],기록:[]};
