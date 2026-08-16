@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>내 학습 · 수학은유강</title>
+<!-- 링크를 카톡·문자에 붙였을 때 미리보기에 점수가 안 뜨게 한다 -->
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="수학은유강 — 내 학습">
+<meta property="og:description" content="개인 링크입니다. 다른 사람에게 전달하지 마세요.">
+<!-- ⚠ 버전을 박는다. @2 는 CDN 이 언제든 새 2.x 로 갈아 끼운다 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.07);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98;
+ --good:#c8f0da; --mid:#fce8c8; --bad:#ff5c8a; --acc:#f5a0a0;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
+ padding:18px clamp(12px,4vw,28px) calc(48px + env(safe-area-inset-bottom))}
+main{max-width:620px;margin:0 auto}
+a{color:inherit;text-decoration:none}
+.brand{font-weight:800;color:var(--acc);font-size:15px;letter-spacing:.02em}
+.who{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:6px 0 4px}
+.who b{font-size:24px}
+.who .ban{font-size:12px;color:var(--acc);background:rgba(245,160,160,.12);padding:2px 9px;border-radius:9px}
+.asof{color:var(--dim);font-size:12px;margin-bottom:20px}
+h2{font-size:12px;letter-spacing:.16em;color:var(--acc);margin:30px 0 10px;text-transform:uppercase}
+h2 small{color:var(--dim);letter-spacing:0;font-size:12px;margin-left:8px;text-transform:none}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:14px 16px;margin-bottom:10px}
+.dim{color:var(--dim);font-size:13px}
+.none{color:var(--dim);font-size:13px;padding:10px 2px}
+.kpis{display:flex;gap:9px;flex-wrap:wrap}
+.kpi{flex:1 1 100px;background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:11px 14px}
+.kpi .l{color:var(--dim);font-size:11px;letter-spacing:.07em}
+.kpi .v{font-size:23px;font-weight:800;margin-top:2px}
+.kpi .v small{font-size:12px;font-weight:400;color:var(--dim);margin-left:2px}
+.good{color:var(--good)} .mid{color:var(--mid)} .bad{color:var(--bad)} .na{color:var(--tx2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:9px;
+ background:rgba(255,255,255,.05);color:var(--tx2);margin:3px 4px 0 0}
+.chip.b3{background:rgba(255,92,138,.22);color:#ffdce7;font-weight:700}
+.chip.b2{background:rgba(245,160,160,.20);color:#ffe2e2}
+.chip.b1{background:rgba(252,232,200,.13);color:#f3e6cf}
+.chip.b0{background:rgba(255,255,255,.035);color:var(--dim)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+ padding:8px 0;border-bottom:1px solid var(--bd)}
+.row:last-child{border-bottom:none}
+.row .t{min-width:0;overflow-wrap:anywhere}
+.row .n{white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.bar.wait i{background:var(--bad)}
+.first{background:rgba(255,92,138,.09);border:1px solid rgba(255,92,138,.26);border-radius:14px;padding:12px 15px;margin-bottom:12px}
+.first.ok{background:rgba(200,240,218,.06);border-color:rgba(200,240,218,.24)}
+.first .h{font-size:11px;letter-spacing:.12em;color:var(--acc);margin-bottom:7px}
+.first.ok .h{color:var(--good)}
+.first ol{margin:0;padding-left:20px} .first li{margin:3px 0}
+.unit{margin-top:14px} .unit .uh{color:var(--tx2);font-size:13px;font-weight:700;margin-bottom:6px}
+.rp{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.rp a{border:1px solid var(--bd);background:rgba(245,160,160,.08);color:#ffd9d9;
+ border-radius:10px;padding:6px 12px;font-size:13px}
+.sched{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--bd)}
+.sched:last-child{border-bottom:none}
+.sched .d{font-weight:800;color:var(--acc);white-space:nowrap}
+.note{color:var(--dim);font-size:11.5px;margin-top:8px;line-height:1.6}
+.foot{margin-top:34px;border-top:1px solid var(--bd);padding-top:14px;color:var(--dim);font-size:11.5px;line-height:1.7}
+#msg{max-width:520px;margin:16vh auto;text-align:center;color:var(--tx2)}
+#msg .logo{color:var(--acc);font-weight:800;font-size:19px;margin-bottom:14px}
+#msg .big{font-size:16px;color:var(--tx);margin-bottom:8px}
+@media (hover:hover) and (pointer:fine){.rp a:hover{border-color:var(--acc)}}
+svg.spark{display:block;margin-top:6px}
+</style></head>
+<body>
+<div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
+<main id="app" style="display:none"></main>
+<script>
+/* 시험 점수를 해석하는 규칙 — 대시보드(app.js)와 학생 포털(portal)이 같이 쓴다.
+ *
+ * ⚠ **단일 진실원은 `01_운영/시험DB/시험메타조회.py`** 다. 이 파일은 그 이식본이고,
+ *   규칙(컷 비교 순서·5등급 하한·학교키 정규화)을 고치면 두 쪽을 같이 고친다.
+ *   0815 에 app.js 안에 있던 것을 여기로 빼냈다 — 포털이 같은 규칙을 써야 하는데
+ *   복사해 가면 그날부터 학원 화면과 학부모 화면이 서로 다른 등급을 말한다.
+ *
+ * ⚠ **원점수 단독 해석 금지.** 그래서 이 파일이 주는 것은 늘 (등급 · 컷 · 난이도) 묶음이다.
+ *   점수만 크게 띄우고 싶어질 때 이 주석을 다시 읽어라 — 컷 없이 낙폭을 판단하면 사고가 난다.
+ *   컷은 전부 '예상 추정치'이고 화면에도 그렇게 적는다.
+ */
+
+/* '고림고등학교'·'고림고'·'고림' 을 한 학교로 본다 */
+const 학교키 = s => (String(s || '').trim().replace(/(고등학교|고)$/, '') || String(s || '').trim());
+const mi = (m, k) => { const v = m ? m[k] : null; return v === '' || v == null ? null : parseInt(v, 10); };
+
+/* 성적 한 줄(r)에 맞는 시험메타를 찾는다. 학교·학년·시행년·학기·시험구분이 다 맞아야 한다 */
+function metaFindIn(metas, r) {
+  const y = parseInt(r['시행년'], 10), gr = parseInt(r['학년'], 10), sm = parseInt(r['학기'], 10);
+  return (metas || []).find(m => 학교키(m['학교']) === 학교키(r['학교'])
+    && mi(m, '학년') === gr && mi(m, '시행년') === y && mi(m, '학기') === sm
+    && (m['시험구분'] || '') === (r['시험구분'] || '')) || null;
+}
+
+function metaGrade(score, m) {          // 시험메타조회.grade 이식
+  if (!m || score == null) return null;
+  const s = Number(score);
+  if (!isFinite(s)) return null;
+  for (const g of [1, 2, 3, 4]) { const c = mi(m, '등급컷' + g); if (c != null && s >= c) return g; }
+  return mi(m, '등급컷5하한') != null ? 5 : null;
+}
+function metaRead(score, m) {           // 시험메타조회.해석 이식
+  if (!m) return '시험 정보 없음 — 원점수만으로는 판단 불가';
+  const g = metaGrade(score, m), nan = m['전체난이도'] || '?', c1 = mi(m, '등급컷1');
+  if (g == null) return `등급컷 미확보 (난이도 ${nan})`;
+  return `${g}등급권 (${c1 != null ? '1등급컷 ' + c1 : '컷 미확보'} · 난이도 ${nan} · 예상)`;
+}
+const gradeCls = g => g == null ? 'na' : (g <= 1 ? 'good' : g <= 3 ? 'mid' : 'bad');
+
+
+/* ── 학생·학부모 포털 (P5) ───────────────────────────────────────────────
+ * 로그인이 없다. 주소에 붙은 개인 링크 토큰 하나가 열쇠다.
+ *
+ * ⚠ 이 페이지에 박힌 것은 anon 키뿐이고, anon 은 **어느 표에도 권한이 없다**(0809 revoke).
+ *   화면에 뜨는 모든 것은 함수 하나(portal_view)가 조립해서 준 것이다. 그래서 여기 코드를
+ *   아무리 뜯어봐도 남의 데이터로 갈 길이 없다 — 학생ID 를 화면이 정하지 않기 때문이다.
+ *   ⇒ **여기에 sb.from(...) 을 새로 쓰지 마라.** 필요한 게 생기면 portal_view 를 늘린다.
+ *
+ * ⚠ 보여 주지 않는 것: 반 평균 · 석차 · 다른 학생 · 재원생 수. 대외 공개물과 같은 원칙이다.
+ * ⚠ 원점수만 크게 띄우지 않는다. 내신은 등급·컷·난이도를 늘 함께 적는다(exam_read.js).
+ */
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb=supabase.createClient(SB_URL,SB_ANON);
+const E=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+const $=id=>document.getElementById(id);
+const DOW=['일','월','화','수','목','금','토'];
+const dfmt=s=>{const[y,m,d]=String(s).split('-').map(Number);
+  return `${m}월 ${d}일(${DOW[new Date(y,m-1,d).getDay()]})`;};
+
+function say(big,small){
+  $('msg').innerHTML=`<div class="logo">수학은유강</div>`
+    +`<div class="big">${E(big)}</div><div class="dim">${small||''}</div>`;
+  $('msg').style.display=''; $('app').style.display='none';
+}
+
+/* 주간고사 추이 — 선 하나. 숫자를 그대로 얹어 그래프만 보고 오해하지 않게 한다 */
+function spark(pts,w=280,h=64){
+  if(!pts.length) return '';
+  const pad=16,lo=0,hi=100,n=pts.length;
+  const xs=pts.map((_,i)=>pad+(w-2*pad)*(n>1?i/(n-1):0.5));
+  const ys=pts.map(p=>h-14-(h-26)*(Math.max(lo,Math.min(hi,p[1]))-lo)/(hi-lo));
+  const path=pts.map((_,i)=>`${i?'L':'M'}${xs[i].toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="주간고사 추이">`
+    +`<path d="${path}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round"/>`
+    +pts.map((p,i)=>`<circle cx="${xs[i].toFixed(1)}" cy="${ys[i].toFixed(1)}" r="${i===n-1?4:3}" fill="var(--acc)"/>`
+      +`<text x="${xs[i].toFixed(1)}" y="${(ys[i]-9).toFixed(1)}" fill="var(--tx2)" font-size="11" text-anchor="middle">${p[1]}</text>`
+      +`<text x="${xs[i].toFixed(1)}" y="${h-2}" fill="var(--dim)" font-size="10" text-anchor="middle">${E(p[0])}</text>`).join('')
+    +`</svg>`;
+}
+
+/* ── 화면 ── */
+function render(d){
+  const 학부모 = d.대상==='학부모';
+  const 나 = 학부모 ? `${d.학생.이름} 학생` : '나';
+  const H=[];
+
+  H.push(`<div class="brand">수학은유강</div>`
+    +`<div class="who"><b>${E(d.학생.이름)}</b>`
+    +`${학부모?'<span class="dim">학부모님</span>':''}`
+    +`<span class="ban">${E(d.학생.반||'')}</span></div>`
+    +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 ${E(나)}의 기록만 보여줍니다</div>`);
+
+  // ① 인증도 — 루프의 핵심 한 줄
+  const L=d.루프||{유형수:0,대기:0,평균:0,목록:[]};
+  H.push(`<h2>인증도 <small>맞힐 때까지 다시 나오는 유형</small></h2>`);
+  if(!L.유형수) H.push(`<div class="none">아직 루프 기록이 없습니다.</div>`);
+  else{
+    H.push(`<div class="kpis">`
+      +`<div class="kpi"><div class="l">다시 나올 것</div><div class="v ${L.대기>=6?'bad':L.대기?'mid':'good'}">${L.대기}<small>개</small></div></div>`
+      +`<div class="kpi"><div class="l">평균 인증도</div><div class="v">${L.평균}<small>%</small></div></div>`
+      +`<div class="kpi"><div class="l">쌓인 유형</div><div class="v na">${L.유형수}<small>개</small></div></div></div>`);
+    const 대기=L.목록.filter(x=>x.대기), 든든=L.목록.filter(x=>!x.대기);
+    if(대기.length) H.push(`<div class="card">`+대기.map(x=>
+      `<div class="row"><span class="t">${E(String(x.정규유형).replace('(서술)',''))}</span>`
+      +`<span class="n mid">${x.인증도}%</span></div>`
+      +`<div class="bar wait"><i style="width:${Math.max(2,x.인증도)}%"></i></div>`).join('')+`</div>`);
+    if(든든.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:6px">잡아 둔 유형 ${든든.length}개</div>`
+      +든든.map(x=>`<span class="chip">${E(String(x.정규유형).replace('(서술)',''))} ${x.인증도}%</span>`).join('')+`</div>`);
+    H.push(`<div class="note">인증도는 <b>두 번 맞히면 100%</b>가 되고, 그 뒤로는 날마다 조금씩 내려갑니다.
+      70% 밑으로 내려가면 그 유형이 다시 나옵니다 — 벌이 아니라 <b>지금 상태</b>입니다.
+      많이 틀렸던 유형일수록 빨리 돌아옵니다.</div>`);
+  }
+
+  // ② 유형맵
+  const T=d.유형맵||{먼저:[],단원:[]};
+  H.push(`<h2>유형 지도 <small>반복해서 틀린 자리</small></h2>`);
+  if(T.먼저&&T.먼저.length)
+    H.push(`<div class="first"><div class="h">먼저 손볼 것</div><ol>`
+      +T.먼저.map(x=>`<li><b>${E(x.유형)}</b> <span class="dim">${x.횟수}번</span></li>`).join('')+`</ol></div>`);
+  else H.push(`<div class="first ok"><div class="h">지금 급한 자리 없음</div>
+    <div class="dim">최근에 반복해서 틀린 유형이 없습니다. 이 상태를 유지하는 게 목표입니다.</div></div>`);
+  const 그린=(T.단원||[]).filter(u=>(u.유형||[]).some(t=>t.등급>0));
+  if(!그린.length) H.push(`<div class="none">아직 표시할 오답 기록이 없습니다.</div>`);
+  else H.push(`<div class="card">`+그린.map(u=>
+    `<div class="unit"><div class="uh">${E(u.중단원)}</div>`
+    +u.유형.map(t=>`<span class="chip b${t.등급}">${E(t.유형)}${t.횟수?` <b>${t.횟수}</b>`:''}</span>`).join('')
+    +`</div>`).join('')+`</div>`);
+  H.push(`<div class="note">색이 진할수록 <b>여러 번</b> 틀린 자리입니다. 한 번 틀린 것은 사고일 수 있어 옅게 둡니다.
+    오래된 오답은 시간이 지나면 저절로 옅어집니다(반감기 ${T.반감기||45}일).
+    <b>정답률이 아닙니다</b> — 몇 문제 중 몇 개인지가 아니라, 어디를 반복해서 놓쳤는지를 봅니다.</div>`);
+
+  // ③ 추가학습
+  const C=d.클리닉||{예정:[],기록:[]};
+  H.push(`<h2>추가학습 <small>부르는 날 · 한 것</small></h2>`);
+  if(C.예정.length) H.push(`<div class="card">`+C.예정.map(x=>
+    `<div class="sched"><span class="d">${E(dfmt(x.날짜))}</span>`
+    +`<span class="t">${E(x.시간||'')} ${E(x.사유||'')}</span></div>`).join('')+`</div>`);
+  else H.push(`<div class="none">예정된 추가학습이 없습니다.</div>`);
+  if(C.기록.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:4px">최근에 한 것</div>`
+    +C.기록.map(x=>`<div class="row"><span class="t">${E(dfmt(x.날짜))} · ${E(x.내용||x.사유||'')}</span>`
+    +`<span class="n dim">${E(x.결과||'')}</span></div>`).join('')+`</div>`);
+
+  // ④ 성적 — 원점수만 두지 않는다
+  const S=d.성적||{주간:[],내신:[]};
+  H.push(`<h2>성적</h2>`);
+  if(S.주간.length){
+    const pts=S.주간.map(x=>[String(x.회차).replace('회',''),Number(x.점수)]);
+    H.push(`<div class="card"><div class="dim">원내 주간고사 <span style="opacity:.7">(회차별 점수)</span></div>`
+      +spark(pts)+`</div>`);
+  }
+  if(S.내신.length) H.push(`<div class="card">`+S.내신.map(x=>{
+    const m=x.메타||null, real=String(x.등급||'').trim();
+    const g=real?Math.round(Number(real)):metaGrade(x.점수,m);
+    const c1=mi(m,'등급컷1');
+    const gap=c1!=null?Math.round((Number(x.점수)-c1)*10)/10:null;
+    return `<div class="row"><span class="t"><b>${E(x.시행년)} ${E(x.학기)}학기 ${E(x.시험구분)}</b>`
+      +`<span class="dim"> ${E(x.학교||'')}</span></span>`
+      +`<span class="n"><b class="${gradeCls(g)}">${x.점수}점</b>`
+      +`${g!=null?` <span class="chip ${gradeCls(g)==='good'?'b0':'b0'}">${g}등급 ${real?'실측':'예상'}</span>`:''}</span></div>`
+      +`<div class="dim" style="margin:-4px 0 6px">${E(real&&c1!=null?`예상 1등급컷 ${c1} · 난이도 ${m['전체난이도']||'?'}`:metaRead(x.점수,m))}`
+      +`${gap!=null?` · 1등급컷 ${gap>=0?'+':''}${gap}`:''}</div>`;
+  }).join('')+`</div>`);
+  if(!S.주간.length&&!S.내신.length) H.push(`<div class="none">아직 기록된 성적이 없습니다.</div>`);
+  if(S.내신.length) H.push(`<div class="note"><b>등급컷은 예상 추정치입니다.</b> 학교가 컷을 공개하지 않기 때문에
+    응시 결과와 난이도로 추정한 값이고, 실제와 다를 수 있습니다.
+    <b>원점수만 보고 판단하지 마세요</b> — 같은 80점이라도 시험이 어려웠는지에 따라 뜻이 완전히 달라집니다.</div>`);
+
+  // ⑤ 리포트 이미지
+  H.push(`<h2>수업 리포트 <small>그날 수업 기록</small></h2>`);
+  if(!d.리포트.length) H.push(`<div class="none">아직 올라온 리포트가 없습니다.</div>`);
+  else H.push(`<div class="card"><div class="rp">`
+    +d.리포트.map(r=>`<a href="${E(r.url)}" target="_blank" rel="noopener">${E(dfmt(r.날짜))}</a>`).join('')
+    +`</div></div>`);
+
+  H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.
+    링크가 새면 알려 주시면 바로 새 링크로 바꿔 드립니다.<br>
+    화면에는 다른 학생의 기록이나 반 전체 통계가 담기지 않습니다.<br>
+    이상하거나 사실과 다른 내용이 보이면 원장에게 알려 주세요 — 010-2622-4198</div>`);
+
+  $('app').innerHTML=H.join('');
+  $('msg').style.display='none'; $('app').style.display='';
+  document.title=`${d.학생.이름} · 수학은유강`;
+}
+
+(async()=>{
+  const tok=new URLSearchParams(location.search).get('t');
+  if(!tok) return say('링크가 올바르지 않습니다.','받으신 문자·카톡의 주소를 그대로 열어 주세요.');
+  let data,err;
+  try{ ({data,error:err}=await sb.rpc('portal_view',{tok})); }
+  catch(e){ err=e; }
+  if(err) return say('지금은 열 수 없습니다.','잠시 뒤 다시 열어 주세요. 계속 같으면 원장에게 알려 주세요.');
+  if(!data) return say('만료되었거나 잘못된 링크입니다.','새 링크가 필요하면 원장에게 말씀해 주세요.');
+  render(data);
+})();
+</script></body></html>
