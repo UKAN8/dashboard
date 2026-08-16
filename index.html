@@ -953,7 +953,9 @@ const TABLES = ['daily_log', 'wrong_answers', 'weekly_exam', 'class_log', 'loop_
   // 0811 병합 — 유형맵·영상색인 (세션이 만들던 정적 HTML 두 장을 탭으로 들였다)
   // students(학생마스터)는 집계에 안 쓰고 **반 표기를 푸는 데만** 쓴다. 오답.csv 의 반은
   // 'A'·'S' 같은 축약이라 마스터를 안 보면 반 버튼이 '고1S'와 'S'로 갈라진다.
-  'type_system', 'round_date', 'video_record', 'video_index', 'students'];
+  'type_system', 'round_date', 'video_record', 'video_index', 'students',
+  // 0816 — 주간 문항별 학년 정답률(취약유형 정답률 가중의 분모). 없으면 p̂=0.5 중립으로 돈다
+  'weekly_items'];
 // 없어도 페이지가 죽지 않는 표. 스키마를 올리기 전에 앱이 먼저 배포돼도 그 탭만 비고
 // 나머지는 멀쩡히 돈다. (0811 이전엔 표 하나가 없으면 boot 이 통째로 실패했다)
 const OPTIONAL = new Set(['type_system', 'round_date', 'video_record', 'video_index', 'students']);
@@ -1638,9 +1640,13 @@ function viewExamMeta(st) {
 /* ═════════ 0811 병합 ① 유형맵 — 학생별 약점 신호 지도 ═════════
  *
  * 세션이 `00_대시보드/유형맵.py` 로 만들던 정적 HTML 을 탭으로 들였다(정적판 은퇴 원칙).
- * ⚠ **성취도를 '정답률'이라 부르지 않는다.** 분모(시도수)가 없다. 여기서 재는 것은
- *    약점 신호 강도 S = Σ 0.5^(경과일/45) — 오답을 최근일수록 무겁게 센 값이다.
- * ⚠ 색 등급의 1순위는 **반복 여부**다. 1회 오답은 사고일 수 있다.
+ * 0816 개편 — 신호에 **반 정답률 가중**이 들어갔다 (유강 확정. SQL 쌍둥이 = portal_typemap):
+ *    S = Σ p̂ × 부분0.5 × 0.5^(경과일/45),  p̂ = 그 문항의 반 정답률.
+ *    남들 다 맞은 걸 틀리면 무겁고, 전체가 어려웠던 문제는 가볍다.
+ *    · 리뷰 p̂ = (정답자+1)/(응시+2) 스무딩 — 응시=daily_log 테스트상태'응시', N=7~10 노이즈 보정
+ *    · 주간 p̂ = weekly_items 정답률(학년 전체). 표가 없거나 못 찾으면 0.5 중립
+ *    · 개선 = loop_box 인증(루프에서 그 유형을 맞힘) → 신호 0.25/건 감산 + ✓ 배지
+ * ⚠ 색 등급의 1순위는 여전히 **반복 여부**다. 단 p̂ 0.75↑ 문항은 1회 오답도 '눈에 띔'.
  * ⚠ 화면에 뜨는 유형(universe) = 같은 학년이 실제로 만난 유형(반 오답 ∪ 문항DB).
  *    '한 번도 안 틀림'과 '아직 안 배움'을 섞지 않으려는 장치다.
  * ⚠ 타일 이름은 유형체계 정식명에서 형제 유형을 가르는 일련번호를 뺀 것이다.
@@ -1681,6 +1687,40 @@ function tmBuild(st) {
     if (nm && c && !(nm in mcls)) mcls[nm] = c;
   });
 
+  // ── p̂ 준비 (0816) — 반 정답률. 응시·정답자 수는 계산에만 쓰고 화면엔 % 만 나간다
+  const tmCls = c => String(c || '').trim().replace(/^고\d/, '');   // '고1A'→'A' (표기 통일)
+  const rvN = {};                                    // (반|날짜) → 응시자수
+  (st.raw.daily_log || []).forEach(r => {
+    if (String(r['테스트상태'] || '').trim() !== '응시') return;
+    const k = tmCls(r['반']) + '|' + String(r['날짜'] || '').trim();
+    rvN[k] = (rvN[k] || 0) + 1;
+  });
+  const rvK = {};                                    // (반|날짜|문항) → 틀린 학생 set
+  st.raw.wrong_answers.forEach(r => {
+    if (String(r['시험종류'] || '').trim() !== '리뷰테스트') return;
+    const k = tmCls(r['반']) + '|' + String(r['날짜'] || '').trim() + '|' + String(r['문항'] || '').trim();
+    (rvK[k] = rvK[k] || new Set()).add(String(r['학생ID'] || r['이름'] || '').trim());
+  });
+  const wkP = {};                                    // (과목|회차|인쇄번호) → 정답률
+  (st.raw.weekly_items || []).forEach(r => {
+    const q = parseInt(r['인쇄번호'], 10), c = parseInt(r['정답률'], 10);
+    if (Number.isInteger(q) && Number.isInteger(c))
+      wkP[String(r['과목'] || '').trim() + '|' + String(r['회차'] || '').trim() + '|' + q] = c / 100;
+  });
+  const phat = (kind, cls, date, qno, exam, grade) => {
+    if (kind === '리뷰테스트') {
+      const n = rvN[tmCls(cls) + '|' + date];
+      const k = rvK[tmCls(cls) + '|' + date + '|' + qno];
+      if (n && k) return (Math.max(n - k.size, 0) + 1) / (n + 2);
+    } else if (kind === '주간테스트') {
+      const subj = grade === '고1' ? '공통수학2' : '미적분1';
+      const p = wkP[subj + '|' + String(exam || '').replace(/[^0-9]/g, '') + '|'
+        + parseInt(String(qno || '').replace(/[^0-9]/g, ''), 10)];
+      if (p !== undefined) return p;
+    }
+    return 0.5;                                      // 분모를 못 찾으면 중립
+  };
+
   const EV = [];
   st.raw.wrong_answers.forEach(r => {
     const tag = (r['틀린유형(태그)'] || '').trim();
@@ -1697,12 +1737,27 @@ function tmBuild(st) {
     const cls = (known && known.cls) || mcls[name] || (r['반'] || '').trim();
     if (known) sid = known.id;
     else if (!stu[sid]) stu[sid] = { id: sid, name, cls };
+    const kind = (r['시험종류'] || '').trim(), exam = (r['시험명'] || '').trim(),
+      qno = (r['문항'] || '').trim();
+    const p = phat(kind, cls, dt, qno, exam, tmGrade(cls));
+    const part = (r['실점구분'] || '').trim() === '부분' ? 0.5 : 1;
     EV.push({
       sid, type, unit, sub: (SYS[type] || {})['소단원'] || '',
-      cls, date: dt, age,
-      kind: (r['시험종류'] || '').trim(), exam: (r['시험명'] || '').trim(),
-      qno: (r['문항'] || '').trim(), raw: tag, w: Math.pow(0.5, age / TM_HALF),
+      cls, date: dt, age, kind, exam, qno, raw: tag,
+      p, w: p * part * Math.pow(0.5, age / TM_HALF),   // 0816: 정답률 가중 × 부분 × 감쇠
     });
+  });
+
+  // ── 개선 (0816) — 루프에서 그 유형을 맞힘 = loop_box 인증. 어휘는 원태그→정규유형
+  const IMP = {};                                    // sid → {정규유형: 인증횟수}
+  (st.raw.loop_box || []).forEach(r => {
+    const okc = parseInt(r['인증횟수'], 10);
+    if (!okc || okc <= 0) return;
+    const tag2 = (r['원태그'] || r['정규유형'] || '').trim();
+    const mp2 = TMAP[tag2];
+    const t2 = mp2 ? mp2[1] : tag2;
+    const sid2 = (r['학생ID'] || '').trim();
+    if (sid2 && t2) (IMP[sid2] = IMP[sid2] || {})[t2] = ((IMP[sid2] || {})[t2] || 0) + okc;
   });
 
   // universe — 반이 실제로 만난 유형을 학년으로 합치고 문항DB로 보강
@@ -1751,8 +1806,10 @@ function tmBuild(st) {
   });
   Object.values(stu).forEach(s => { if (s.cls) clsN[s.cls] = (clsN[s.cls] || 0) + 1; });
 
-  const band = (n, S, fresh) => (n >= 3 || (n === 2 && S >= 1.2)) ? 3
-    : (n === 2 || (n === 1 && fresh)) ? 2 : (n ? 1 : 0);
+  // 0816: 가중 신호는 구공식보다 작게 나온다(p̂~0.6대) → 등급3 문턱 1.2→0.9.
+  //       '1회 & p̂ 0.75↑'(남들 다 맞은 걸 틀림)는 최근이 아니어도 눈에 띔.
+  const band = (n, S, fresh, pmax) => (n >= 3 || (n === 2 && S >= 0.9)) ? 3
+    : (n === 2 || (n === 1 && (fresh || pmax >= 0.75))) ? 2 : (n ? 1 : 0);
 
   const students = [], map = {};
   Object.values(stu).sort((a, b) => (a.cls + a.name).localeCompare(b.cls + b.name, 'ko'))
@@ -1761,14 +1818,15 @@ function tmBuild(st) {
       if (!Object.keys(rows).length && !s.cls) return;
       const tmap = {};
       Object.entries(rows).forEach(([t, evs]) => {
-        const S = evs.reduce((a, e) => a + e.w, 0);
+        const imp = (IMP[s.id] || {})[t] || 0;
+        const S = Math.max(evs.reduce((a, e) => a + e.w, 0) - 0.25 * imp, 0);  // 개선 감산
         const share = s.cls ? ((clsCnt[s.cls] || {})[t] || 0) / Math.max(clsN[s.cls] || 0, 1) : 0;
         tmap[t] = {
-          n: evs.length, S: Math.round(S * 100) / 100,
-          b: band(evs.length, S, evs.some(e => e.age <= 21)),
+          n: evs.length, S: Math.round(S * 100) / 100, imp,
+          b: band(evs.length, S, evs.some(e => e.age <= 21), Math.max(...evs.map(e => e.p))),
           last: evs.map(e => e.date).filter(Boolean).sort().pop() || '',
           share: Math.round(share * 100) / 100,
-          ev: evs.map(e => ({ d: e.date, k: e.kind, q: e.qno, x: e.exam, raw: e.raw }))
+          ev: evs.map(e => ({ d: e.date, k: e.kind, q: e.qno, x: e.exam, raw: e.raw, p: e.p }))
             .sort((a, b) => String(b.d).localeCompare(String(a.d))),
         };
       });
@@ -1786,7 +1844,7 @@ function tmBuild(st) {
 function viewTypemap(st) {
   return '<section class="view" id="v-typemap">'
     + '<h2>유형맵 — 약점 지도 <span class="dim" style="font-size:12px">'
-    + '색이 진할수록 반복해서 틀린 유형이다. 정답률이 아니라 약점 신호다</span></h2>'
+    + '오답을 반 정답률로 가중한 약점 신호 — 남들 다 맞은 걸 틀리면 진하고, 루프에서 맞히면(✓) 옅어진다</span></h2>'
     + '<div class="tm-bar" id="tm-cls"></div>'
     + '<div class="tm-bar"><input id="tm-find" placeholder="이름 검색" autocomplete="off">'
     + '<span id="tm-stu" style="display:contents"></span></div>'
@@ -1797,6 +1855,7 @@ function viewTypemap(st) {
     + '<span><i class="tm-sw" style="background:rgba(245,160,160,.28)"></i>눈에 띔</span>'
     + '<span><i class="tm-sw" style="background:rgba(252,232,200,.15)"></i>한 번</span>'
     + '<span><i class="tm-sw" style="background:rgba(255,255,255,.04)"></i>이력 없음</span>'
+    + '<span>· <b>✓</b> = 루프에서 맞혀 개선 중</span>'
     + '<span>· <b>단독</b> = 반에서 20% 미만만 틀린 개인 구멍</span></span></div>'
     + '<div id="tm-map"></div><div id="tm-detail"></div>'
     + '<div class="tm-note" id="tm-note"></div></section>';
@@ -1871,6 +1930,7 @@ function tmWire(st) {
               const mine = v && v.share > 0 && v.share < 0.2 ? ' mine' : '';
               return `<div class="tm-cell b${b}${mine}${sel === t ? ' on' : ''}" `
                 + `data-tt="${encodeURIComponent(t)}" title="${E(t)}">${E(L(t))}`
+                + `${v && v.imp ? '<span class="n" style="color:#7ee0a3">✓</span>' : ''}`
                 + `${v ? `<span class="n">${v.n}</span>` : ''}</div>`;
             }).join('') + '</div></div>';
         }).join('') + '</div>';
@@ -1884,10 +1944,11 @@ function tmWire(st) {
     const s = byId[sid];
     el.style.display = 'block';
     el.innerHTML = `<h3>${E(L(sel))}</h3><div class="full">유형체계 정식명 · ${E(sel)}</div>`
-      + `<div class="p">오답 ${v.n}회 · 신호 ${v.S} · 최근 ${v.last || '-'} · `
-      + `반에서 이 유형을 틀린 비율 ${Math.round(v.share * 100)}%</div>`
+      + `<div class="p">오답 ${v.n}회 · 신호 ${v.S}${v.imp ? ` <span style="color:#7ee0a3">(루프 정답 ${v.imp}건 반영)</span>` : ''}`
+      + ` · 최근 ${v.last || '-'} · 반에서 이 유형을 틀린 비율 ${Math.round(v.share * 100)}%</div>`
       + `<table>${v.ev.map(e => `<tr><td>${E(e.d || '-')}</td>`
-        + `<td>${E(e.k)}${e.x ? ' ' + E(e.x) : ''}</td><td>${E(e.q)}</td><td>${E(e.raw)}</td></tr>`).join('')}</table>`
+        + `<td>${E(e.k)}${e.x ? ' ' + E(e.x) : ''}</td><td>${E(e.q)}</td>`
+        + `<td title="이 문항의 반 정답률">${Math.round((e.p ?? 0.5) * 100)}%</td><td>${E(e.raw)}</td></tr>`).join('')}</table>`
       + `<div class="acts">${window.ROLE === 'admin' ? `<a href="#video/${encodeURIComponent(L(sel))}">이 유형 수업영상 찾기</a>` : ''}`
       + `<button id="tm-cmdbtn">보충 문항 뽑는 명령</button></div>`
       + `<div id="tm-cmd">python3 01_운영/학생DB/오답원문항조회.py ${E(s.name)}   # 유형: ${E(sel)}</div>`;
