@@ -2574,7 +2574,7 @@ async function selectClass(cls){
   renderStudents();
 }
 function allPresent(){
-  document.querySelectorAll('.stu').forEach(d=>{
+  csAll('.stu').forEach(d=>{
     const b=d.querySelector('.seg button[data-v="출석"]');
     if(!d.querySelector('.seg button[class*=a]')) b.click();
   });
@@ -2673,7 +2673,7 @@ function renderStudents(){
    이행률은 미응시와 무관하니 전원 중 적힌 사람만 센다. */
 function updateAvgs(){
   const bar=$('clsavg');if(!bar)return;
-  const cards=[...document.querySelectorAll('.stu')];
+  const cards=[...csAll('.stu')];
   if(!cards.length){bar.style.display='none';return;}
   const live=cards.filter(c=>!c.classList.contains('na'));
   const num=(c,f)=>parseFloat(c.querySelector(`[data-f="${f}"]`).value);
@@ -2911,7 +2911,7 @@ function saveClassLog(){
           .eq('반',CLS).eq('날짜',today).in('학생ID',ids);
         if(!e2){
           ids.forEach(k=>LOGMAP[k]['이번과제']=hw||null);
-          document.querySelectorAll('.stu').forEach(c=>{
+          csAll('.stu').forEach(c=>{
             if(!ids.includes(c.dataset.id))return;
             const t=c.querySelector('[data-f="개별과제"]');
             if(t&&t.value.trim()===old)t.value='';
@@ -2932,13 +2932,15 @@ async function genComments(){
   const nq=Math.max(0,parseInt($('c_nq').value)||0), full=nq*2;
   const tname=$('c_test').value||'테스트';
   let n=0;
-  document.querySelectorAll('.stu').forEach(card=>{
+  csAll('.stu').forEach(card=>{
     const id=card.dataset.id;
     const ta=card.querySelector('[data-f="코멘트"]');
-    if(ta.value.trim())return;
+    // 입력칸이 없는 행이 섞여도 그 행만 건너뛴다 — 한 행 때문에 전원 생성이 죽으면 안 된다
+    if(!ta||ta.value.trim())return;
     const att=card.querySelector('.seg button[class*=a]');
     const attV=att?att.dataset.v:null;
-    const reason=card.querySelector('[data-f="결석사유"]').value.trim();
+    const val=f=>{const el=card.querySelector('[data-f="'+f+'"]');return el?el.value:'';};
+    const reason=val('결석사유').trim();
     if(attV==='결석'){
       ta.value='금일 '+(reason?reason+' 사유로 ':'')+'결석하여 수업에 참여하지 못했습니다. 보강 일정을 잡아 진행하겠습니다.';
       ta.dispatchEvent(new Event('change'));n++;return;
@@ -2948,9 +2950,9 @@ async function genComments(){
        잡힌 지정을 전부 '수업 전 등원'으로 써서, 수업 끝나고 남는 학생에게 하지도 않은 일을
        과거형으로 적었다(0814 유강). 화면 칸이 진실원이고, 없으면 명단(clinic_roster)을 본다. */
     const lab=r=>{const t=(r||'').split('(')[0].split('·')[0].trim();return !t?'복습':(/(보완|복습|정리)$/.test(t)?t:t+' 보완');};
-    const fR=card.querySelector('[data-f="추가학습사유"]').value.trim();
-    const fD=card.querySelector('[data-f="추가학습날짜"]').value;
-    const fT=card.querySelector('[data-f="추가학습시간"]').value;
+    const fR=val('추가학습사유').trim();
+    const fD=val('추가학습날짜');
+    const fT=val('추가학습시간');
     const cRow=clinMap[id];                                    // 오늘 날짜로 잡힌 명단 행
     // 오늘 것과 앞으로 것은 별개다 — 수업 전에 와서 보완하고, 오늘 결과로 다음 수업일을 또 잡을 수 있다
     const nowC=(fR&&fD===today)?{r:fR,t:fT}:(cRow?{r:cRow['사유']||'',t:cRow['시간']||''}:null);
@@ -2959,13 +2961,13 @@ async function genComments(){
     if(nowWhen==='before')parts.push('수업 전 추가학습으로 등원하여 '+lab(nowC.r)+'을 진행했습니다.');
     if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
     if(card.classList.contains('na'))parts.push('오늘 '+tname+'는 응시하지 못했습니다. 다음 수업에서 같은 범위로 확인하겠습니다.');
-    const score=parseFloat(card.querySelector('[data-f="점수"]').value);
+    const score=parseFloat(val('점수'));
     if(!isNaN(score)){
       const wrongCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
       const partCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='1').length;
       const rec=(RECENT[id]||[]).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
       // 반평균 (오늘 입력된 점수 기준)
-      const allScores=[...document.querySelectorAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+      const allScores=[...csAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
       const avg=allScores.length>=2?allScores.reduce((a,b)=>a+b,0)/allScores.length:null;
       let t;
       if(full&&score>=full){
@@ -2990,7 +2992,7 @@ async function genComments(){
       }
       parts.push(t);
     }
-    const ih=parseFloat(card.querySelector('[data-f="이행률"]').value);
+    const ih=parseFloat(val('이행률'));
     if(!isNaN(ih)){
       if(ih>=100)parts.push('과제는 모두 완수했습니다.');
       else if(ih>=50)parts.push('과제 이행률은 '+ih+'%입니다. 남은 과제 마무리를 부탁드립니다.');
@@ -3016,7 +3018,7 @@ async function closeSession(){
      ⚠ 미응시는 대상이 아니다 — 안 본 시험을 근거로 부를 수는 없다(0812 유강).
      ⚠ 이행률 빈 칸은 '판단 보류'다. 검사 안 한 반을 전원 호출하는 사고를 막는다. */
   {
-    const cards=[...document.querySelectorAll('.stu')].filter(c=>!c.classList.contains('na'));
+    const cards=[...csAll('.stu')].filter(c=>!c.classList.contains('na'));
     const put=(c,why)=>{
       const rs=c.querySelector('[data-f="추가학습사유"]');
       if(rs.value.trim())return 0;
@@ -3046,7 +3048,7 @@ async function closeSession(){
     for(const k in why)m+=put(why[k].c,why[k].r.join(' · '));
     if(m)toast('추가학습 자동 지정 '+m+'명 (반평균 이하 · 과제 미흡)');
   }
-  const present=[...document.querySelectorAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
+  const present=[...csAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
   const {error:e1}=await sb.from('class_log').upsert({
     '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
     '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
