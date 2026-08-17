@@ -2329,6 +2329,8 @@ function csJobs() {
 <script>
 window.CS_ROUTED = true;   // 콘솔의 showView 가 주소(#cs-…)를 거치게 한다
 
+const csRoot=()=>document.getElementById('cs')||document;
+const csAll=sel=>csRoot().querySelectorAll(sel);
 const DAYS=['일','월','화','수','목','금','토'];
 /* 보는 날짜 — 수업 화면(채점·수업정보·마감)이 어느 날을 보고 있는가.
    비어 있으면 오늘. 이 값이 daily_log·class_log·class_sessions 의 '날짜'가 된다. */
