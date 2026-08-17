@@ -549,6 +549,15 @@ body.cs-on #boot{display:none}
         <div class="lbl" style="margin-top:6px">화면의 빈칸이 서버를 덮는 것을 막으려고 잠근 것이다. <b>이미 저장된 값은 그대로 있다.</b> 새로고침해서 다시 들어와라(로그인이 풀렸으면 코드로 재로그인). 그래도 같으면 세션에 말해라.</div>
         <button class="key" style="margin-top:8px" onclick="location.reload()">새로고침</button>
       </div>
+      <!-- ── 저장 실패 배너 (0817 사고) — 저장이 RLS·세션만료로 튕겨도 토스트 1.8초가
+           전부라 조교는 알아채지 못하고 계속 입력했다. 새로고침하면 DB에서 다시 그리므로
+           "다 사라진" 얼굴이 된다. 실패가 나면 이 줄을 세우고, 다음 저장이 성공할 때까지
+           내리지 않는다. -->
+      <div id="savefail" class="card hidden" style="border-color:#c0392b;background:#fdf3f2">
+        <h2 style="color:#c0392b">저장이 서버에 들어가지 않는다</h2>
+        <div class="lbl" id="savefailmsg"></div>
+        <div class="lbl" style="margin-top:6px"><b>지금 화면의 입력은 저장 안 된 상태다 — 새로고침하면 사라진다.</b> 입력을 멈추고 관리자에게 알려라. 이 줄은 저장이 다시 성공하면 스스로 사라진다.</div>
+      </div>
       <div class="card">
         <h2>수업 정보 <span class="badge" id="sessionstate"></span> <span class="lbl" id="clogmark" style="display:none">저장됨 ✓</span></h2>
         <!-- 보는 날짜 (0814 신설) — 예전엔 화면이 늘 오늘에 못 박혀 있어서 자정을 넘기면
@@ -2845,6 +2854,20 @@ function renderCards(box,nq){
   });
 }
 
+/* 저장 실패 배너 (0817) — 원천(daily·clslog·close)별로 실패를 기억하고,
+   전부 성공으로 돌아와야 내린다. 토스트는 1.8초, 이건 붙박이다. */
+const FAILSRC=new Set();
+function saveFail(src,msg){
+  FAILSRC.add(src);
+  const el=$('savefail'); if(!el)return;
+  el.classList.remove('hidden'); $('savefailmsg').textContent=msg;
+  try{el.scrollIntoView({block:'nearest'});}catch(e){}
+}
+function saveOk(src){
+  FAILSRC.delete(src);
+  if(FAILSRC.size)return;
+  const el=$('savefail'); if(el)el.classList.add('hidden');
+}
 const debounce={};
 async function save(id,card){
   if(LOCKED)return;
@@ -2885,7 +2908,8 @@ async function save(id,card){
       '소스':'수업콘솔',
     };
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
-    if(error){toast('저장 실패: '+error.message);return;}
+    if(error){toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
+    saveOk('daily');
     /* LOGMAP 을 방금 보낸 값으로 맞춘다. 안 맞추면 '이번 세션에 넣었다가 지운 값'이
        prev 에 없어서 지우기가 먹지 않는다(null 로 나가 옛 값이 살아남는다). */
     {
@@ -2956,7 +2980,8 @@ function saveClassLog(){
       '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,
     },{onConflict:'반,날짜'});
     const m=$('clogmark');
-    if(error){toast('수업 정보 저장 실패: '+error.message);return;}
+    if(error){toast('수업 정보 저장 실패: '+error.message);saveFail('clslog','수업 정보 — '+error.message);return;}
+    saveOk('clslog');
     /* 공통 과제를 고치면 **이미 저장된 학생 행도 같이 옮긴다.**
        안 옮기면 그 행들이 옛 공통 텍스트를 들고 있어 '개별과제'로 보인다(0812 사고).
        개별로 따로 적어 둔 행(값이 옛 공통과 다른 행)은 건드리지 않는다. */
@@ -3116,7 +3141,8 @@ async function closeSession(){
     '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,'인원':String(present),
   },{onConflict:'반,날짜'});
   const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
-  if(e1||e2){toast('마감 실패: '+(e1||e2).message);return;}
+  if(e1||e2){toast('마감 실패: '+(e1||e2).message);saveFail('close','마감 — '+(e1||e2).message);return;}
+  saveOk('close');
   $('sessionstate').textContent='마감됨';
   $('closeguide').style.display='';                    // 마감 후 흐름 안내 (0813)
   $('closeguide').scrollIntoView({behavior:'smooth',block:'nearest'});
