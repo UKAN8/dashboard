@@ -344,7 +344,10 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
   #cs .kbdhint{font-size:11px;color:var(--sub);margin:0 0 8px;}
 }
 @media(max-width:899px){ #cs .kbdhint{display:none;} }
-#cs table.grid{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
+/* ⚠ display:table 을 명시한다 (0818). 통합 셸의 전역 `.grid{display:grid}` (조회용 유틸)가
+   이 표에도 맞아 표 레이아웃이 해체됐다 — thead·tbody 가 grid item 으로 blockify 되면서
+   헤더와 본문의 열 폭이 따로 놀아 "항목명이 밀려" 보인다. 스코프(#cs) 덕에 이 줄이 이긴다. */
+#cs table.grid{display:table;width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
 #cs .grid th{font-size:12px;color:var(--sub);font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;background:#faf7f5;}
 #cs .grid td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top;}
 #cs tr.stu{border:none;padding:0;margin:0;}
