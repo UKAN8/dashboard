@@ -638,6 +638,7 @@ body.cs-on #boot{display:none}
         <h2>마감 후 흐름</h2>
         <div style="font-size:14px;line-height:1.75">
           <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="/dashboard/">학습현황 ↗</a> 데일리에서 확인<br>
+          <b>재마감</b> — 수정 후 [마감]을 다시 누르면 그날 데이터를 리셋하고 다시 적재·렌더한다 (0818)<br>
           <b>직접</b> — 복습 루프: 위 <b>복습 루프</b> 카드에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습] 탭</b><br>
           <b>주의</b> — 리뷰테스트를 <b>새로 만든</b> 날은 세션에서 유형 매핑(render_now)이 먼저다. 매핑 없이 렌더되면 오답 태그가 빈다<br>
           진행 상황은 상단 <b>⚙ 작업</b>에서 본다 — 새로고침해도 안 사라진다
@@ -3103,6 +3104,7 @@ async function genComments(){
 async function closeSession(){
   if(!CLS)return;
   const today=vDay();
+  const reclose=$('sessionstate').textContent==='마감됨';   // 재마감 = 리셋 후 재적재·재렌더 (0818)
   /* 자동 추가학습 지정 — 두 가지 사유. 이미 사유가 적힌 학생은 손대지 않는다.
      ① 테스트 반평균 이하 (만점자 제외)
      ② 과제 이행률 100% 미달 (0812 유강). 시험을 잘 봐도 과제를 안 하면 부른다.
@@ -3151,7 +3153,7 @@ async function closeSession(){
   $('sessionstate').textContent='마감됨';
   $('closeguide').style.display='';                    // 마감 후 흐름 안내 (0813)
   $('closeguide').scrollIntoView({behavior:'smooth',block:'nearest'});
-  toast(CLS+' 마감 완료 — 수업로그·일지 적재됨');
+  toast(reclose?CLS+' 재마감 — 데이터 리셋 후 재적재·리포트 재렌더 기동':CLS+' 마감 완료 — 수업로그·일지 적재됨');
 }
 
 /* 오늘 이 반의 입력 전체 삭제 (오입력·테스트 정리용) */
