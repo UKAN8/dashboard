@@ -208,6 +208,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
  border-radius:6px;background:rgba(255,255,255,.06);color:var(--dim);text-align:center;
  margin-right:8px;vertical-align:1px}
 .vx-row .k.개념설명{background:rgba(200,240,218,.14);color:#c8f0da}
+.vx-row .k.유형구간{background:rgba(160,190,245,.16);color:#c9dcff}
 .vx-row .k.문제풀이{background:rgba(245,160,160,.16);color:#ffd9d9}
 .vx-row .k.명대사{background:rgba(252,232,200,.13);color:#fce8c8}
 .vx-row .t{color:var(--acc);font-variant-numeric:tabular-nums;font-size:12px;margin-left:7px}
@@ -968,10 +969,12 @@ const TABLES = ['daily_log', 'wrong_answers', 'weekly_exam', 'class_log', 'loop_
   // 'A'·'S' 같은 축약이라 마스터를 안 보면 반 버튼이 '고1S'와 'S'로 갈라진다.
   'type_system', 'round_date', 'video_record', 'video_index', 'students',
   // 0816 — 주간 문항별 학년 정답률(취약유형 정답률 가중의 분모). 없으면 p̂=0.5 중립으로 돈다
-  'weekly_items'];
+  'weekly_items',
+  // 0818 — 자막×유형 매핑 구간(yt_seg.py → v9). 화면은 점수>=7 만 쓴다(계약)
+  'video_segment'];
 // 없어도 페이지가 죽지 않는 표. 스키마를 올리기 전에 앱이 먼저 배포돼도 그 탭만 비고
 // 나머지는 멀쩡히 돈다. (0811 이전엔 표 하나가 없으면 boot 이 통째로 실패했다)
-const OPTIONAL = new Set(['type_system', 'round_date', 'video_record', 'video_index', 'students']);
+const OPTIONAL = new Set(['type_system', 'round_date', 'video_record', 'video_index', 'students', 'video_segment']);
 async function fetchAll(table) {
   const page = 1000; let from = 0, out = [];
   for (;;) {
@@ -1999,19 +2002,23 @@ function tmWire(st) {
  * 색인만 보인다. 색인 자체가 이미 쓸모 있으므로 숨기지 않는다.
  * 유형맵 상세의 [이 유형 수업영상 찾기] 가 `#video/<검색어>` 로 들어온다.
  */
-const VX_KINDS = ['전체', '개념설명', '문제풀이', '과제안내', '명대사'];
+const VX_KINDS = ['전체', '유형구간', '개념설명', '문제풀이', '과제안내', '명대사'];
 const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+// 자막×유형 매핑(video_segment)은 **점수>=7 만** 화면에 쓴다 — yt_seg.py 초안의 신뢰 층(0818 계약)
+const vxSegs = st => (st.raw.video_segment || []).filter(s => Number(s['점수']) >= 7);
 
 function viewVideo(st) {
   const rec = st.raw.video_record || [], idx = st.raw.video_index || [];
+  const segs = vxSegs(st);
   const wait = rec.filter(r => String(r['레코드'] || '').startsWith('vid:'));
   const noid = rec.filter(r => !String(r['레코드'] || '').startsWith('vid:') && !r['영상ID']);
   return '<section class="view" id="v-video">'
-    + `<h2>영상 — 수업영상 색인 <span class="cnt">${idx.length}</span>`
+    + `<h2>영상 — 수업영상 색인 <span class="cnt">${idx.length + segs.length}</span>`
     + '<span class="dim" style="font-size:12px"> 개념 이름이나 문항 번호로 찾으면 그 대목에서 시작된다</span></h2>'
     + '<div class="kpis">'
     + `<div class="kpi"><div class="lbl">색인된 수업</div><div class="big">${rec.filter(r => r['분석'] === 'done').length}<small>개</small></div></div>`
     + `<div class="kpi"><div class="lbl">색인 대목</div><div class="big">${idx.length}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">유형 구간(자막)</div><div class="big">${segs.length}<small>건</small></div></div>`
     + `<div class="kpi"><div class="lbl">영상ID 연결</div><div class="big">${rec.filter(r => r['영상ID']).length}<small>/${rec.length}</small></div></div>`
     + `<div class="kpi"><div class="lbl">자막 보유</div><div class="big">${rec.filter(r => r['자막'] === 'ok').length}<small>개</small></div></div></div>`
     + (noid.length ? `<div class="vx-warn">영상ID가 아직 안 붙은 수업 ${noid.length}개 — 링크가 눌리지 않는다. `
@@ -2030,6 +2037,21 @@ function viewVideo(st) {
 function vxWire(st) {
   const rec = st.raw.video_record || [], idx = st.raw.video_index || [];
   const V = {}; rec.forEach(r => V[r['레코드']] = r);
+  // 자막×유형 구간을 색인과 같은 모양의 가짜 행으로 병합한다. 그룹 키 = 'seg:<영상ID>'.
+  // 이 덕에 유형맵 상세의 [이 유형 수업영상 찾기](#video/<유형명>)가 실제로 잡힌다.
+  const recById = {}; rec.forEach(r => { if (r['영상ID']) recById[r['영상ID']] = r; });
+  const segIdx = vxSegs(st).map(s => {
+    const k = 'seg:' + s['영상ID'];
+    if (!V[k]) {
+      const r = recById[s['영상ID']] || {};
+      V[k] = { '영상ID': s['영상ID'], '날짜': r['날짜'] || r['업로드일'] || '',
+               '반': r['반'] || s['반'] || '', '단원': r['단원'] || s['중단원'] || '',
+               '제목': r['제목'] || s['제목'] || '' };
+    }
+    return { '레코드': k, '종류': '유형구간', '제목': s['유형'], '요지': s['근거'] || '',
+             't': Number(s['시작초']) || 0, '출처': '' };
+  });
+  const idxAll = idx.concat(segIdx);
   let kind = '전체', q = '';
   const hl = s => {
     if (!q) return E(s);
@@ -2040,8 +2062,8 @@ function vxWire(st) {
   function draw() {
     $('vx-kinds').innerHTML = VX_KINDS.map(k =>
       `<button class="fbtn${k === kind ? ' on' : ''}" data-vk="${k}">${k}</button>`).join('');
-    const hits = idx.filter(e => (kind === '전체' || e['종류'] === kind) && (!q ||
-      [e['제목'], e['요지'], e['출처'], (V[e['레코드']] || {})['단원']].join(' ')
+    const hits = idxAll.filter(e => (kind === '전체' || e['종류'] === kind) && (!q ||
+      [e['제목'], e['요지'], e['출처'], (V[e['레코드']] || {})['단원'], (V[e['레코드']] || {})['제목']].join(' ')
         .toLowerCase().includes(q.toLowerCase())));
     const by = {};
     hits.forEach(e => (by[e['레코드']] = by[e['레코드']] || []).push(e));
@@ -2050,7 +2072,7 @@ function vxWire(st) {
     $('vx-list').innerHTML = keys.length ? keys.map(k => {
       const v = V[k] || {};
       return `<div class="vx-grp"><div class="vx-gh"><b>${E(v['날짜'] || '')} ${E(v['반'] || '')}</b>`
-        + `<span class="c">${E(v['단원'] || '')}</span><span class="c">· ${by[k].length}건</span></div>`
+        + `<span class="c">${E(v['단원'] || v['제목'] || '')}</span><span class="c">· ${by[k].length}건</span></div>`
         + by[k].sort((a, b) => a['t'] - b['t']).map(e => {
           const inner = `<span class="k ${e['종류']}">${e['종류']}</span><b>${hl(e['제목'])}</b>`
             + (e['출처'] ? `<span class="src">${E(e['출처'])}</span>` : '')
