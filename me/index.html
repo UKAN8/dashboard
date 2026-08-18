@@ -14,6 +14,7 @@
  --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98;
  --good:#c8f0da; --mid:#fce8c8; --bad:#ff5c8a; --acc:#f5a0a0;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--tx);
  font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
  padding:18px clamp(12px,4vw,28px) calc(48px + env(safe-area-inset-bottom))}
@@ -36,7 +37,11 @@ h2 small{color:var(--dim);letter-spacing:0;font-size:12px;margin-left:8px;text-t
 .kpi .v small{font-size:12px;font-weight:400;color:var(--dim);margin-left:2px}
 .good{color:var(--good)} .mid{color:var(--mid)} .bad{color:var(--bad)} .na{color:var(--tx2)}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:9px;
- background:rgba(255,255,255,.05);color:var(--tx2);margin:3px 4px 0 0}
+ background:rgba(255,255,255,.05);color:var(--tx2);margin:3px 4px 0 0;max-width:100%;overflow-wrap:anywhere}
+.xtra{display:none}
+#tmap.showall .xtra{display:inline-flex}
+.tmbtn{display:block;margin-top:12px;background:none;border:1px solid var(--bd);color:var(--tx2);
+ border-radius:9px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
 .chip.b3{background:rgba(255,92,138,.22);color:#ffdce7;font-weight:700}
 .chip.b2{background:rgba(245,160,160,.20);color:#ffe2e2}
 .chip.b1{background:rgba(252,232,200,.13);color:#f3e6cf}
@@ -133,6 +138,13 @@ const $=id=>document.getElementById(id);
 const DOW=['일','월','화','수','목','금','토'];
 const dfmt=s=>{const[y,m,d]=String(s).split('-').map(Number);
   return `${m}월 ${d}일(${DOW[new Date(y,m-1,d).getDay()]})`;};
+/* 추가학습 사유가 반 통계를 실어 오면 걷어낸다 — 화면 원칙(반 평균 비노출).
+ * 실사례(0818): "리뷰테스트 반평균 이하 (5점/평균 6.7)" → "리뷰테스트 보충" */
+const 사유정리=s=>String(s==null?'':s)
+  .replace(/\([^)]*평균[^)]*\)/g,'')
+  .replace(/반\s*평균\s*(이하|미만|이상)?/g,'보충')
+  .replace(/평균\s*[\d.]+\s*점?/g,'')
+  .replace(/\s{2,}/g,' ').trim();
 
 function say(big,small){
   $('msg').innerHTML=`<div class="logo">수학은유강</div>`
@@ -167,60 +179,7 @@ function render(d){
     +`<span class="ban">${E(d.학생.반||'')}</span></div>`
     +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 ${E(나)}의 기록만 보여줍니다</div>`);
 
-  // ① 인증도 — 루프의 핵심 한 줄
-  const L=d.루프||{유형수:0,대기:0,평균:0,목록:[]};
-  H.push(`<h2>인증도 <small>맞힐 때까지 다시 나오는 유형</small></h2>`);
-  if(!L.유형수) H.push(`<div class="none">아직 루프 기록이 없습니다.</div>`);
-  else{
-    H.push(`<div class="kpis">`
-      +`<div class="kpi"><div class="l">다시 나올 것</div><div class="v ${L.대기>=6?'bad':L.대기?'mid':'good'}">${L.대기}<small>개</small></div></div>`
-      +`<div class="kpi"><div class="l">평균 인증도</div><div class="v">${L.평균}<small>%</small></div></div>`
-      +`<div class="kpi"><div class="l">쌓인 유형</div><div class="v na">${L.유형수}<small>개</small></div></div></div>`);
-    const 대기=L.목록.filter(x=>x.대기), 든든=L.목록.filter(x=>!x.대기);
-    if(대기.length) H.push(`<div class="card">`+대기.map(x=>
-      `<div class="row"><span class="t">${E(String(x.정규유형).replace('(서술)',''))}</span>`
-      +`<span class="n mid">${x.인증도}%</span></div>`
-      +`<div class="bar wait"><i style="width:${Math.max(2,x.인증도)}%"></i></div>`).join('')+`</div>`);
-    if(든든.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:6px">잡아 둔 유형 ${든든.length}개</div>`
-      +든든.map(x=>`<span class="chip">${E(String(x.정규유형).replace('(서술)',''))} ${x.인증도}%</span>`).join('')+`</div>`);
-    H.push(`<div class="note">인증도는 <b>두 번 맞히면 100%</b>가 되고, 그 뒤로는 날마다 조금씩 내려갑니다.
-      70% 밑으로 내려가면 그 유형이 다시 나옵니다 — 벌이 아니라 <b>지금 상태</b>입니다.
-      많이 틀렸던 유형일수록 빨리 돌아옵니다.</div>`);
-  }
-
-  // ② 유형맵 — 0816부터 반 정답률 가중 + 루프 개선(✓). (신호 계산 = portal_typemap, 여긴 표시만)
-  const T=d.유형맵||{먼저:[],단원:[]};
-  H.push(`<h2>유형 지도 <small>지금 손볼 자리 · 나아지는 자리</small></h2>`);
-  if(T.먼저&&T.먼저.length)
-    H.push(`<div class="first"><div class="h">먼저 손볼 것</div><ol>`
-      +T.먼저.map(x=>`<li><b>${E(x.유형)}</b> <span class="dim">${x.횟수}번`
-      +`${x.개선?` · <span style="color:#7ee0a3">루프에서 ${x.개선}번 맞힘</span>`:''}</span></li>`).join('')+`</ol></div>`);
-  else H.push(`<div class="first ok"><div class="h">지금 급한 자리 없음</div>
-    <div class="dim">최근에 반복해서 틀린 유형이 없습니다. 이 상태를 유지하는 게 목표입니다.</div></div>`);
-  const 그린=(T.단원||[]).filter(u=>(u.유형||[]).some(t=>t.등급>0||t.개선>0));
-  if(!그린.length) H.push(`<div class="none">아직 표시할 오답 기록이 없습니다.</div>`);
-  else H.push(`<div class="card">`+그린.map(u=>
-    `<div class="unit"><div class="uh">${E(u.중단원)}</div>`
-    +u.유형.map(t=>`<span class="chip b${t.등급}">${E(t.유형)}${t.횟수?` <b>${t.횟수}</b>`:''}`
-    +`${t.개선?` <b style="color:#7ee0a3">✓</b>`:''}</span>`).join('')
-    +`</div>`).join('')+`</div>`);
-  H.push(`<div class="note">색이 진할수록 지금 급한 자리입니다 — 여러 번 틀렸거나,
-    <b>다른 친구들은 대부분 맞힌 문제</b>를 틀린 유형이 진하게 표시됩니다.
-    반대로 모두가 어려워한 문제는 옅게 둡니다. 오래된 오답은 시간이 지나면 저절로 옅어지고(반감기 ${T.반감기||45}일),
-    <b style="color:#7ee0a3">✓</b>가 붙은 유형은 반복학습(루프)에서 다시 맞혀 <b>나아지고 있는 자리</b>입니다.</div>`);
-
-  // ③ 추가학습
-  const C=d.클리닉||{예정:[],기록:[]};
-  H.push(`<h2>추가학습 <small>부르는 날 · 한 것</small></h2>`);
-  if(C.예정.length) H.push(`<div class="card">`+C.예정.map(x=>
-    `<div class="sched"><span class="d">${E(dfmt(x.날짜))}</span>`
-    +`<span class="t">${E(x.시간||'')} ${E(x.사유||'')}</span></div>`).join('')+`</div>`);
-  else H.push(`<div class="none">예정된 추가학습이 없습니다.</div>`);
-  if(C.기록.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:4px">최근에 한 것</div>`
-    +C.기록.map(x=>`<div class="row"><span class="t">${E(dfmt(x.날짜))} · ${E(x.내용||x.사유||'')}</span>`
-    +`<span class="n dim">${E(x.결과||'')}</span></div>`).join('')+`</div>`);
-
-  // ④ 성적 — 원점수만 두지 않는다
+  // ① 성적 — 제일 자주 찾는 것을 맨 위에. 원점수만 두지 않는다
   const S=d.성적||{주간:[],내신:[]};
   H.push(`<h2>성적</h2>`);
   if(S.주간.length){
@@ -245,12 +204,71 @@ function render(d){
     응시 결과와 난이도로 추정한 값이고, 실제와 다를 수 있습니다.
     <b>원점수만 보고 판단하지 마세요</b> — 같은 80점이라도 시험이 어려웠는지에 따라 뜻이 완전히 달라집니다.</div>`);
 
-  // ⑤ 리포트 이미지
+  // ② 먼저 손볼 것 — 유형 지도의 머리. 전체 지도는 맨 아래 ⑥에 접어 둔다
+  const T=d.유형맵||{먼저:[],단원:[]};
+  H.push(`<h2>먼저 손볼 것 <small>반복해서 틀린 자리</small></h2>`);
+  if(T.먼저&&T.먼저.length)
+    H.push(`<div class="first"><ol>`
+      +T.먼저.map(x=>`<li><b>${E(x.유형)}</b> <span class="dim">${x.횟수}번`
+      +`${x.개선?` · <span style="color:#7ee0a3">루프에서 ${x.개선}번 맞힘</span>`:''}</span></li>`).join('')+`</ol></div>`);
+  else H.push(`<div class="first ok"><div class="h">지금 급한 자리 없음</div>
+    <div class="dim">최근에 반복해서 틀린 유형이 없습니다. 이 상태를 유지하는 게 목표입니다.</div></div>`);
+
+  // ③ 추가학습 — 사유는 걷어내고 보여준다(반 통계 비노출 원칙)
+  const C=d.클리닉||{예정:[],기록:[]};
+  H.push(`<h2>추가학습 <small>부르는 날 · 한 것</small></h2>`);
+  if(C.예정.length) H.push(`<div class="card">`+C.예정.map(x=>
+    `<div class="sched"><span class="d">${E(dfmt(x.날짜))}</span>`
+    +`<span class="t">${E(x.시간||'')} ${E(사유정리(x.사유||''))}</span></div>`).join('')+`</div>`);
+  else H.push(`<div class="none">예정된 추가학습이 없습니다.</div>`);
+  if(C.기록.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:4px">최근에 한 것</div>`
+    +C.기록.map(x=>`<div class="row"><span class="t">${E(dfmt(x.날짜))} · ${E(사유정리(x.내용||x.사유||''))}</span>`
+    +`<span class="n dim">${E(x.결과||'')}</span></div>`).join('')+`</div>`);
+
+  // ④ 리포트 이미지
   H.push(`<h2>수업 리포트 <small>그날 수업 기록</small></h2>`);
   if(!d.리포트.length) H.push(`<div class="none">아직 올라온 리포트가 없습니다.</div>`);
   else H.push(`<div class="card"><div class="rp">`
     +d.리포트.map(r=>`<a href="${E(r.url)}" target="_blank" rel="noopener">${E(dfmt(r.날짜))}</a>`).join('')
     +`</div></div>`);
+
+  // ⑤ 인증도 — 설명이 숫자보다 먼저 온다. 낮은 %가 성적표처럼 읽히면 안 된다
+  const L=d.루프||{유형수:0,대기:0,평균:0,목록:[]};
+  H.push(`<h2>인증도 <small>맞힐 때까지 다시 나오는 유형</small></h2>`);
+  if(!L.유형수) H.push(`<div class="none">아직 루프 기록이 없습니다.</div>`);
+  else{
+    H.push(`<div class="note" style="margin:0 0 9px">인증도는 시험 점수가 아니라 <b>지금 기억 상태</b>입니다.
+      <b>두 번 맞히면 100%</b>가 되고, 그 뒤로는 날마다 조금씩 내려갑니다. 70% 밑으로 내려가면
+      그 유형이 다시 나옵니다 — 낮다고 벌이 아니라 <b>다시 볼 때가 됐다</b>는 뜻입니다.
+      많이 틀렸던 유형일수록 빨리 돌아옵니다.</div>`);
+    H.push(`<div class="kpis">`
+      +`<div class="kpi"><div class="l">다시 나올 것</div><div class="v ${L.대기>=6?'bad':L.대기?'mid':'good'}">${L.대기}<small>개</small></div></div>`
+      +`<div class="kpi"><div class="l">평균 인증도</div><div class="v">${L.평균}<small>%</small></div></div>`
+      +`<div class="kpi"><div class="l">쌓인 유형</div><div class="v na">${L.유형수}<small>개</small></div></div></div>`);
+    const 대기=L.목록.filter(x=>x.대기), 든든=L.목록.filter(x=>!x.대기);
+    if(대기.length) H.push(`<div class="card">`+대기.map(x=>
+      `<div class="row"><span class="t">${E(String(x.정규유형).replace('(서술)',''))}</span>`
+      +`<span class="n mid">${x.인증도}%</span></div>`
+      +`<div class="bar wait"><i style="width:${Math.max(2,x.인증도)}%"></i></div>`).join('')+`</div>`);
+    if(든든.length) H.push(`<div class="card"><div class="dim" style="margin-bottom:6px">잡아 둔 유형 ${든든.length}개</div>`
+      +든든.map(x=>`<span class="chip">${E(String(x.정규유형).replace('(서술)',''))} ${x.인증도}%</span>`).join('')+`</div>`);
+  }
+
+  // ⑥ 유형맵 전체 — 신호 있는 유형만 펴고 나머지는 접는다 (신호 계산 = portal_typemap, 여긴 표시만)
+  H.push(`<h2>유형 지도 <small>단원별 전체 기록</small></h2>`);
+  const 그린=(T.단원||[]).filter(u=>(u.유형||[]).some(t=>t.등급>0||t.개선>0));
+  if(!그린.length) H.push(`<div class="none">아직 표시할 오답 기록이 없습니다.</div>`);
+  else H.push(`<div class="card" id="tmap">`+그린.map(u=>
+    `<div class="unit"><div class="uh">${E(u.중단원)}</div>`
+    +u.유형.map(t=>{const on=t.등급>0||t.개선>0;
+      return `<span class="chip b${t.등급}${on?'':' xtra'}">${E(t.유형)}${t.횟수?` <b>${t.횟수}</b>`:''}`
+      +`${t.개선?` <b style="color:#7ee0a3">✓</b>`:''}</span>`;}).join('')
+    +`</div>`).join('')
+    +`<button type="button" id="tmbtn" class="tmbtn">틀린 적 없는 유형까지 모두 보기</button></div>`);
+  H.push(`<div class="note">색이 진할수록 지금 급한 자리입니다 — 여러 번 틀렸거나,
+    <b>다른 친구들은 대부분 맞힌 문제</b>를 틀린 유형이 진하게 표시됩니다.
+    반대로 모두가 어려워한 문제는 옅게 둡니다. 오래된 오답은 시간이 지나면 저절로 옅어지고(반감기 ${T.반감기||45}일),
+    <b style="color:#7ee0a3">✓</b>가 붙은 유형은 반복학습(루프)에서 다시 맞혀 <b>나아지고 있는 자리</b>입니다.</div>`);
 
   H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.
     링크가 새면 알려 주시면 바로 새 링크로 바꿔 드립니다.<br>
@@ -258,6 +276,9 @@ function render(d){
     이상하거나 사실과 다른 내용이 보이면 원장에게 알려 주세요 — 010-2622-4198</div>`);
 
   $('app').innerHTML=H.join('');
+  const tb=$('tmbtn');
+  if(tb) tb.onclick=()=>{const on=$('tmap').classList.toggle('showall');
+    tb.textContent=on?'틀린 유형만 보기':'틀린 적 없는 유형까지 모두 보기';};
   $('msg').style.display='none'; $('app').style.display='';
   document.title=`${d.학생.이름} · 수학은유강`;
 }
