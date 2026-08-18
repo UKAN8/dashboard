@@ -232,6 +232,26 @@ function render(d){
     +d.리포트.map(r=>`<a href="${E(r.url)}" target="_blank" rel="noopener">${E(dfmt(r.날짜))}</a>`).join('')
     +`</div></div>`);
 
+  // ④-b 복습 루프 — 나에게 나간 것과 낸 것 (0818). 재촉·중단 이력은 학생 화면에 싣지 않는다
+  const LS=d.루프출제||[];
+  H.push(`<h2>복습 루프 <small>받은 것 · 제출한 것</small></h2>`);
+  if(!LS.length) H.push(`<div class="none">아직 받은 루프가 없습니다.</div>`);
+  else{
+    const done=LS.filter(x=>x.상태==='제출').length;
+    H.push(`<div class="card"><div class="dim" style="margin-bottom:4px">최근 ${LS.length}개 중 ${done}개 제출</div>`
+      +LS.map(x=>{
+        const ok=x.상태==='제출';
+        const res=ok?(x.총문항?`${x.맞은개수||0}/${x.총문항}`:'제출'):(x.상태==='진행중'?'진행중':'미제출');
+        const cls=ok?'good':(x.상태==='진행중'?'mid':'bad');
+        return `<div class="row"><span class="t">${x.수업일?E(dfmt(x.수업일)):''} · ${E(x.단원||'복습')}`
+          +`<span class="dim"> ${E(x.문항수||'?')}문항</span></span>`
+          +`<span class="n ${cls}">${E(res)}</span></div>`;
+      }).join('')+`</div>`);
+    if(LS.some(x=>x.상태==='미제출'))
+      H.push(`<div class="note">미제출로 남은 루프도 <b>늦게라도 내면</b> 인증도에 그대로 반영됩니다 —
+        받으신 링크는 계속 열립니다.</div>`);
+  }
+
   // ⑤ 인증도 — 설명이 숫자보다 먼저 온다. 낮은 %가 성적표처럼 읽히면 안 된다
   const L=d.루프||{유형수:0,대기:0,평균:0,목록:[]};
   H.push(`<h2>인증도 <small>맞힐 때까지 다시 나오는 유형</small></h2>`);
