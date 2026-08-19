@@ -361,14 +361,6 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .grid input[type=date]{height:36px;}
 #cs .namecell{white-space:nowrap;}
 #cs .grid .savemark{float:none;margin-left:6px;}
-/* 0819 — 표 칸을 수업 시간 흐름 순으로(출결→이행률→채점→코멘트). 마감 때만 쓰는 칸
-   (특이사항·개별과제·추가학습 3칸)은 기본 접고, 결석사유 칸은 결석이 있을 때만 나타난다.
-   ⚠ 칸 숨김은 열 단위(th+td 같은 클래스) — wireGridKeys 의 세로 이동은 열 전체가 같이
-   숨으므로 숨은 칸으로 포커스가 새지 않는다. */
-#cs .grid .c-abs{display:none;}#cs .grid.showabs .c-abs{display:table-cell;}
-#cs .grid .cx{display:none;}#cs .grid.showx .cx{display:table-cell;}
-#cs .gridbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;}
-#cs .gridbar .kbdhint{margin:0;}
 /* 적재 화면 — 미리보기는 '무엇이 들어가는지'를 글로 보여준다(표로 안 만든다: 확인용이지 편집용이 아니다) */
 #cs .loadout{font-size:13px;line-height:1.55;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--ink);margin-top:10px;max-height:340px;overflow:auto;}
 #cs .loadout b{color:var(--key-d);}
@@ -595,6 +587,28 @@ body.cs-on #boot{display:none}
         </div>
         <div class="minirow"><button class="ghost" style="flex:1" onclick="allPresent()">전원 출석</button></div>
       </div>
+      <div id="clsavg" class="avgbar" style="display:none"></div>
+      <div id="students"></div>
+      <div class="footbar" style="bottom:auto;position:static;margin-top:14px">
+        <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
+      </div>
+      <div class="footbar">
+        <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
+      </div>
+      <!-- ── 마감 후 흐름 (0813) — "리포트랑 루프는 어떻게 처리되는거야?"를 두 세션에서
+           물었다. 답이 화면에 없어서다. 마감되면 여기 뜬다. -->
+      <div class="card" id="closeguide" style="display:none">
+        <h2>마감 후 흐름</h2>
+        <div style="font-size:14px;line-height:1.75">
+          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="/dashboard/">학습현황 ↗</a> 데일리에서 확인<br>
+          <b>재마감</b> — 수정 후 [마감]을 다시 누르면 그날 데이터를 리셋하고 다시 적재·렌더한다 (0818)<br>
+          <b>직접</b> — 복습 루프: 아래 <b>복습 루프</b> 카드에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습] 탭</b><br>
+          <b>주의</b> — 리뷰테스트를 <b>새로 만든</b> 날은 세션에서 유형 매핑(render_now)이 먼저다. 매핑 없이 렌더되면 오답 태그가 빈다<br>
+          진행 상황은 상단 <b>⚙ 작업</b>에서 본다 — 새로고침해도 안 사라진다
+        </div>
+      </div>
+      <!-- ── 루프 관련 카드는 하단 (0819 유강) — 수업 중 입력 동선(수업정보→학생 표→마감)에서
+           안 쓰고, 쓰는 시점도 마감 뒤라서 표 아래로 내렸다. -->
       <!-- ── 오늘 물을 것 ────────────────────────────────────────────
        * 0812까지 이 파일(_반_<반>.json)만 제작 세션이 썼다. 문항을 **쓰는 것**은 창작이지만
        * 오늘 무엇을 **고를지**는 선택이다 — 단원 풀에 있는 것 중에서 고르면 기계가 쓸 수 있다.
@@ -639,26 +653,6 @@ body.cs-on #boot{display:none}
         <div id="lp_status" style="font-size:13px;line-height:1.9"></div>
       </div>
 
-      <div id="clsavg" class="avgbar" style="display:none"></div>
-      <div id="students"></div>
-      <div class="footbar" style="bottom:auto;position:static;margin-top:14px">
-        <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
-      </div>
-      <div class="footbar">
-        <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
-      </div>
-      <!-- ── 마감 후 흐름 (0813) — "리포트랑 루프는 어떻게 처리되는거야?"를 두 세션에서
-           물었다. 답이 화면에 없어서다. 마감되면 여기 뜬다. -->
-      <div class="card" id="closeguide" style="display:none">
-        <h2>마감 후 흐름</h2>
-        <div style="font-size:14px;line-height:1.75">
-          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="/dashboard/">학습현황 ↗</a> 데일리에서 확인<br>
-          <b>재마감</b> — 수정 후 [마감]을 다시 누르면 그날 데이터를 리셋하고 다시 적재·렌더한다 (0818)<br>
-          <b>직접</b> — 복습 루프: 위 <b>복습 루프</b> 카드에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습] 탭</b><br>
-          <b>주의</b> — 리뷰테스트를 <b>새로 만든</b> 날은 세션에서 유형 매핑(render_now)이 먼저다. 매핑 없이 렌더되면 오답 태그가 빈다<br>
-          진행 상황은 상단 <b>⚙ 작업</b>에서 본다 — 새로고침해도 안 사라진다
-        </div>
-      </div>
       <div class="footbar" style="bottom:auto;position:static;margin-top:8px">
         <button class="ghost" style="color:var(--bad);border-color:var(--bad)" onclick="resetToday()">오늘 입력 전체 리셋</button>
       </div>
@@ -2719,7 +2713,6 @@ function wireRow(d,id){
       b.classList.add('a'+([...seg.children].indexOf(b)+1));
       const ab=d.querySelector('.absent.togglable');
       if(ab)ab.classList.toggle('hidden',b.dataset.v!=='결석');
-      if(typeof applyColx==='function')applyColx();   // 표 모드 — 결석사유 칸 자동 노출
       save(id,d);
     };
   });
@@ -2815,9 +2808,7 @@ function renderTable(box,nq){
   const wrap=document.createElement('div');
   wrap.className='card';wrap.style.overflowX='auto';wrap.style.padding='0';
   const t=document.createElement('table');t.className='grid';
-  /* 칸 순서 = 실제 수업 동선(0819 유강): 출결 전체 → 과제검사(이행률) → 테스트 채점 → 코멘트.
-     특이사항·개별과제·추가학습은 마감 때만 만지므로 cx(접힘), 결석사유는 c-abs(결석 있을 때만). */
-  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th class="c-abs">결석사유</th><th>이행률%</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>코멘트 (리포트)</th><th class="cx">특이사항 (내부)</th><th class="cx">개별 과제</th><th class="cx">추가학습 사유</th><th class="cx">날짜</th><th class="cx">시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -2828,37 +2819,23 @@ function renderTable(box,nq){
     tr.innerHTML=`
       <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}</td>
       <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
-      <td class="c-abs"><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
-      <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
+      <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
       ${nq?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
       <td><div class="scorecell"><input data-f="점수" style="width:56px" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></td>
+      <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
-      <td class="cx"><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
-      <td class="cx"><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></td>
-      <td class="cx"><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
-      <td class="cx"><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
-      <td class="cx"><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${log['추가학습시간']||''}"></td>`;
+      <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
+      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></td>
+      <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
+      <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
+      <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${log['추가학습시간']||''}"></td>`;
     tb.appendChild(tr);wireRow(tr,id);
   });
   t.appendChild(tb);wrap.appendChild(t);
-  const bar=document.createElement('div');bar.className='gridbar';
-  bar.innerHTML='<p class="kbdhint">Enter · ↑↓ 로 같은 칸을 세로로 옮겨 다닌다. Tab 은 옆 칸.</p>'
-    +'<button type="button" class="ghost" id="colx_btn" onclick="csToggleColx()" title="특이사항·개별과제·추가학습 — 마감 때만 쓰는 칸"></button>';
-  box.appendChild(bar);box.appendChild(wrap);
-  applyColx();
+  const hint=document.createElement('p');hint.className='kbdhint';
+  hint.textContent='Enter · ↑↓ 로 같은 칸을 세로로 옮겨 다닌다. Tab 은 옆 칸.';
+  box.appendChild(hint);box.appendChild(wrap);
   wireGridKeys(t);
-}
-/* 0819 — 마감 칸(특이사항·개별과제·추가학습) 접기. 평소 채점 동선에서 안 쓰는 칸을 치운다.
-   상태는 localStorage 에 남아 다음 수업에도 유지된다. 결석사유 칸은 토글과 무관하게
-   결석이 하나라도 있으면 자동으로 나타난다(적을 데가 없어지면 안 되니까). */
-let COLX=false;try{COLX=localStorage.getItem('cs_colx')==='1';}catch(e){}   // 스토리지 막힌 브라우저에서도 죽지 않게
-function csToggleColx(){COLX=!COLX;try{localStorage.setItem('cs_colx',COLX?'1':'0');}catch(e){}applyColx();}
-function applyColx(){
-  const t=[...csAll('table.grid')][0];if(!t)return;
-  t.classList.toggle('showx',COLX);
-  const b=$('colx_btn');if(b)b.textContent=COLX?'마감 칸 접기 ◂':'마감 칸 펼치기 ▸';
-  const anyAbs=[...t.querySelectorAll('.stu .seg button[data-v="결석"]')].some(x=>/(^|\s)a\d/.test(x.className));
-  t.classList.toggle('showabs',anyAbs);
 }
 /* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다.
    Tab 은 옆으로만 가서 매번 한 줄을 가로질러야 했다. */
