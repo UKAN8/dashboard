@@ -1277,6 +1277,46 @@ function attCalendar(st, s) {
   }
   return out;
 }
+/* 학생별 루프 발송 이력 (0819) — 발송 현황 보드와 같은 소스 두 벌 겹쳐 읽기.
+   출제·재촉·중단 = loop_status, 제출 = loop_submit (루프ID 조인, 총문항 있는 행 우선).
+   viewStudent 가 한 번만 만들어 st.loopHist 에 얹는다 (학생마다 다시 돌면 O(n·m)). */
+function loopHistBySid(st) {
+  const sub = {};
+  (st.raw.loop_submit || []).forEach(r => {
+    const k = r['루프ID'];
+    if (k && (!sub[k] || (r['총문항'] && !sub[k]['총문항']))) sub[k] = r;
+  });
+  const by = {};
+  (st.raw.loop_status || []).forEach(r => {
+    if (r['학생ID']) (by[r['학생ID']] = by[r['학생ID']] || []).push(r);
+  });
+  Object.values(by).forEach(a => a.sort((x, y) =>
+    String(y['수업일'] || '').localeCompare(String(x['수업일'] || ''))
+    || String(y['루프ID'] || '').localeCompare(String(x['루프ID'] || ''))));
+  return { sub, by };
+}
+function loopHistRows(st, s) {
+  const lh = st.loopHist || { sub: {}, by: {} };
+  const rows = lh.by[s.sid] || [];
+  const row = r => {
+    const s2 = lh.sub[r['루프ID']];
+    const late = !s2 && r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now();
+    const stat = s2 ? ('✓' + (s2['총문항'] ? ' ' + (s2['맞은개수'] || 0) + '/' + s2['총문항'] : '')) : (late ? '미제출' : '진행중');
+    const col = s2 ? 'var(--good)' : (late ? 'var(--bad)' : 'var(--dim)');
+    const flags = (r['재촉1차'] ? ' 재촉①' : '') + (r['재촉2차'] ? ' 재촉②' : '') + (r['중단'] ? ' ⏸' : '');
+    return `<div class="cl-row"><b>${E(String(r['수업일'] || '').slice(5))}</b>`
+      + ` ${E(r['단원'] || '—')}${r['문항수'] ? `<span class="dim">${E(r['문항수'])}문항</span>` : ''}`
+      + ` <b style="color:${col}">${E(stat)}</b>`
+      + (flags ? `<span class="dim">${E(flags)}</span>` : '')
+      + (s2 && s2['제출시각'] ? `<span class="dim">${E(String(s2['제출시각']).slice(5, 16))}</span>` : '')
+      + '</div>';
+  };
+  const head = rows.slice(0, 12).map(row).join('');
+  const rest = rows.slice(12);
+  return head + (rest.length
+    ? `<details><summary class="dim">지난 이력 ${rest.length}건 더</summary>${rest.map(row).join('')}</details>`
+    : '');
+}
 function stuDetail(st, s) {
   const wr = s.wrRank.slice(0, 12).map(([t, c]) =>
     `<div class="wr-row"><span class="cnt2">${c}</span>${E(t)}</div>`).join('')
@@ -1288,6 +1328,10 @@ function stuDetail(st, s) {
     `<div class="cl-row"><b>${dfmt(d)}</b> ${E(t || '—')}시 <span class="dim">${E(why || '')}</span>`
     + `${d >= st.REF ? chip('acc', '예정') : ''}</div>`).join('')
     || '<div class="dim">추가학습 이력 없음</div>';
+  // 루프 발송 이력 — loop_status 는 DB 직결판에만 있다(정적판 대조 제외 = dbonly).
+  // 이력이 아예 없으면(정적판 포함) 섹션 자체를 접는다.
+  const lp = loopHistRows(st, s);
+  const lpN = ((st.loopHist || {}).by || {})[s.sid];
   return `<section class="view" id="v-stu-${sid2id(s.sid)}"><div class="bk"><a href="#student">← 학생 전체</a></div>`
     + `<h1>${E(s.name)} <span class="ban" style="font-size:13px">${E(s.ban)}</span>`
     + `<span class="dim" style="font-size:13px"> ${E(s.school)} · 최근 수업 ${dfmt(s.lastDate)}</span></h1>`
@@ -1303,9 +1347,14 @@ function stuDetail(st, s) {
     + `<div><h2>출결 (최근 10주)</h2><div class="card">${attCalendar(st, s)}</div>`
     + `<h2>누적 오답 유형</h2><div class="card">${wr}</div></div></div>`
     + `<div class="two"><div><h2>추가학습 이력</h2><div class="card">${ex}</div></div>`
-    + `<div><h2>코멘트 타임라인</h2><div class="card">${cmts}</div></div></div></section>`;
+    + `<div><h2>코멘트 타임라인</h2><div class="card">${cmts}</div></div></div>`
+    + (lpN && lpN.length ? `<div class="dbonly"><h2>루프 발송 이력 <span class="cnt">${lpN.length}</span>`
+      + '<span class="dim" style="font-size:12px"> 출제·재촉=loop_status · 제출=loop_submit</span></h2>'
+      + `<div class="card">${lp}</div></div>` : '')
+    + '</section>';
 }
 function viewStudent(st) {
+  st.loopHist = loopHistBySid(st);          // 상세 카드들이 공유 (한 번만 조립)
   const fb = st.bans.map(b => `<button class="fbtn" data-f="${E(b)}">${E(b)}</button>`).join('');
   return `<section class="view" id="v-student"><h2>학생 전체 <span class="cnt">${st.students.length}</span>`
     + '<span class="dim" style="font-size:12px"> 행을 누르면 개인 페이지</span></h2>'
