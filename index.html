@@ -389,6 +389,20 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .nabtn{padding:7px 8px;font-size:12px;background:#f6f0ec;color:var(--sub);border-radius:8px;}
 #cs .nabtn.on{background:var(--sub);color:#fff;}
 #cs .na .items button,#cs .na input[data-f="점수"]{opacity:.35;}
+/* ── 기출테스트 답 입력 (0823) — 정오 탭 대신 학생이 적은 답을 그대로 받는다.
+   더미코드(9/99/444) 채점은 폐기 — 정답 행이 실답이 아니게 되어 데이터 회수가 불가능했다. */
+#cs .gtwrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+#cs .gtq{display:flex;flex-direction:column;align-items:center;gap:2px;}
+#cs .gtq .ql{font-size:10px;color:var(--sub);white-space:nowrap;}
+#cs input.gta{width:52px;padding:7px 3px;font-size:13px;text-align:center;}
+#cs input.gta.ok{border-color:var(--ok);background:#f2fbf2;}
+#cs input.gta.bad{border-color:var(--bad);background:#fdf3f2;color:var(--bad);font-weight:700;}
+#cs .gtq button{width:52px;padding:8px 0;font-size:12px;font-weight:700;background:#f6f0ec;color:var(--sub);border-radius:8px;}
+#cs .gtq button.s2{background:var(--ok);color:#fff;}#cs .gtq button.s1{background:var(--warn);color:#fff;}#cs .gtq button.s0{background:var(--bad);color:#fff;}
+#cs .gtsum{font-weight:800;font-size:15px;color:var(--key-d);min-width:48px;text-align:center;}
+#cs .na input.gta,#cs .na .gtq button{opacity:.35;}
+#cs .grid input.gta{width:46px;padding:6px 2px;font-size:12px;}
+#cs .grid .gtq button{width:46px;padding:7px 0;font-size:11px;}
 
 /* 흡수된 수업 콘솔 — 어두운 껍데기에 맞춘 덧칠 (0815 병합)
  *
@@ -579,8 +593,23 @@ body.cs-on #boot{display:none}
           <div class="grow"><label class="lbl">이번 과제 (엔터로 여러 줄)</label><textarea id="c_hw" rows="2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
         </div>
         <div class="minirow">
-          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test" onchange="saveClassLog()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
+          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test" onchange="testChanged()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
           <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents();saveClassLog()"></div>
+        </div>
+        <!-- ── 기출테스트 정답표 (0823) — 반 공통. 시트의 정답·배점 행이 여기로 왔다.
+             정답을 넣으면 학생 표가 답 입력 칸으로 바뀌고, 답=정답이면 배점이 자동으로 붙는다.
+             서술형·증명 등 자동 대조가 안 되는 문항은 정답에 M — 그 칸만 탭 채점(정답/부분/오답). -->
+        <div id="gt_setup" class="hidden" style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-bottom:10px">
+          <div class="minirow">
+            <div class="grow"><label class="lbl">시험지명 (어느 기출인지 — 학생 기록·오답 이벤트에 남는다)</label><input id="gt_src" placeholder="예: 흥덕고_고1_1학기기말" onchange="gtKeyUpdate()"></div>
+          </div>
+          <div class="minirow">
+            <div class="grow"><label class="lbl">정답 (쉼표로 · 실답 그대로 — 수동채점은 M, 소문항은 20-1=212 처럼)</label><textarea id="gt_ans" rows="2" placeholder="3,1,4,212,M" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
+          </div>
+          <div class="minirow">
+            <div class="grow"><label class="lbl">배점 (쉼표로 · 정답과 같은 개수 — 합 100 검산이 아래 뜬다)</label><textarea id="gt_pts" rows="1" placeholder="3.8,3.9,4,4.1,6.5" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
+          </div>
+          <div class="lbl" id="gt_stat" style="margin-top:4px">정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.</div>
         </div>
         <div class="minirow">
           <div class="grow"><label class="lbl">지난 과제 (직전 수업에서 자동 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div>
@@ -2692,7 +2721,7 @@ async function selectClass(cls){
   {
     const key=cls+'|'+today;
     // '값이 들어 있는 행' 수로 센다. 출결만 찍힌 행은 아직 잃을 게 없다.
-    const filled=(logs||[]).filter(r=>r['점수']||r['문항점수']||r['이행률']||r['코멘트']||r['테스트상태']).length;
+    const filled=(logs||[]).filter(r=>r['점수']||r['문항점수']||r['답안']||r['이행률']||r['코멘트']||r['테스트상태']).length;
     if(filled===0&&(LOADSEEN[key]||0)>0){
       lockConsole('아까는 '+LOADSEEN[key]+'명분 입력이 있었는데 지금은 0건으로 돌아왔다. 서버 응답을 믿을 수 없어 잠갔다.');
       return;
@@ -2753,6 +2782,8 @@ async function selectClass(cls){
     }));
     if(w>0)$('c_nq').value=w;
   }
+  // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
+  gtRestore(cl&&cl[0]);
   $('clogmark').style.display='none';
   // 루프 카드는 반이 바뀌면 처음부터 — 앞 반의 완성 상태로 [보내기]가 켜져 있으면 사고다
   clearInterval(LOOPTIMER);LOOPJOB=null;LOOPBUILT=null;
@@ -2792,6 +2823,84 @@ function itemBtnsHtml(log,nq){
     return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
   }).join('');
 }
+
+/* ══ 기출테스트 모드 (0823) ═══════════════════════════════════════════════
+ * 테스트유형='기출테스트' + 정답표가 있으면 학생 표의 정오 탭이 답 입력 칸으로 바뀐다.
+ * 정답표(정답·배점·시험지명)는 반×날짜 class_log 에 저장·복원된다.
+ * 판정·직렬화는 위 PARSE 구간의 순수함수 — 여기는 DOM 배선만.                        */
+let GTKEY=null, GTPREV={};
+function isGT(){return $('c_test').value.trim()==='기출테스트';}
+function gtStat(){
+  const st=$('gt_stat');if(!st)return;
+  if(!GTKEY){st.textContent='정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.';return;}
+  const sum=gtPtsSum(GTKEY.pts), man=GTKEY.ans.filter(gtIsManual).length;
+  const npts=GTKEY.pts.filter(p=>p!=null).length;
+  st.innerHTML=GTKEY.ans.length+'문항'+(man?' · 수동채점(M) '+man:'')
+    +' · 배점 '+(npts<GTKEY.ans.length
+      ?'<span style="color:#B26A00">'+npts+'/'+GTKEY.ans.length+'개만 입력됨 — 빈 문항은 0점 처리된다</span>'
+      :(Math.abs(sum-100)<0.05?'합 <b>100</b>':'<span style="color:#B26A00">합 '+sum+' — 100이 아니다(학교 배점 확인)</span>'));
+}
+function gtKeyUpdate(){
+  GTKEY=isGT()?gtParseKey($('gt_ans').value,$('gt_pts').value):null;
+  if(GTKEY)$('c_nq').value=GTKEY.ans.length;   // 문항 수 = 정답 개수 (기출 20~25문항)
+  gtStat();renderStudents();saveClassLog();
+}
+function testChanged(){
+  $('gt_setup').classList.toggle('hidden',!isGT());
+  gtKeyUpdate();
+}
+/* 반 진입 시 class_log 에서 정답표 복원 — 저장은 saveClassLog 가 clr 규칙으로 한다 */
+function gtRestore(cl0){
+  GTPREV=cl0?{'기출정답':cl0['기출정답']||'','기출배점':cl0['기출배점']||'','시험지명':cl0['시험지명']||''}:{};
+  $('gt_ans').value=GTPREV['기출정답']||'';
+  $('gt_pts').value=GTPREV['기출배점']||'';
+  $('gt_src').value=GTPREV['시험지명']||'';
+  autoGrow($('gt_ans'));autoGrow($('gt_pts'));
+  $('gt_setup').classList.toggle('hidden',!isGT());
+  GTKEY=isGT()?gtParseKey($('gt_ans').value,$('gt_pts').value):null;
+  if(GTKEY)$('c_nq').value=GTKEY.ans.length;
+  gtStat();
+}
+/* 학생 한 명분 답 입력 칸 — 자동 문항은 input, M 문항은 탭(정답/부분/오답) */
+function gtItemsHtml(log){
+  const na=isNA(log);
+  const ansMap=na?{}:gtDes(log['답안']||'');
+  const grMap=na?{}:gtDes(log['문항점수']||'');
+  return '<div class="gtwrap">'+GTKEY.labels.map((l,i)=>{
+    const g=grMap[l]!==undefined?grMap[l]:'';
+    if(gtIsManual(GTKEY.ans[i]))
+      return `<div class="gtq"><span class="ql">${esc(l)}·M</span><button type="button" data-gq="${i}" data-s="${g}" class="${g!==''?'s'+g:''}">${g===''?'—':g==='2'?'정답':g==='1'?'부분':'오답'}</button></div>`;
+    const v=ansMap[l]!==undefined?ansMap[l]:'';
+    const cls=g==='2'?' ok':(g==='0'?' bad':'');
+    return `<div class="gtq"><span class="ql">${esc(l)}</span><input class="gta${cls}" data-gq="${i}" value="${esc(v)}" autocomplete="off"></div>`;
+  }).join('')+`<div class="gtsum">${na?'미응시':(log['점수']||'—')}</div></div>`;
+}
+/* 카드의 답을 다시 채점해 점수·직렬화(dataset)·색을 맞춘다. 저장 직전에 항상 불린다.
+ * 답이 하나도 없으면 점수 칸을 건드리지 않는다 — 손으로 총점만 적는 경우를 지우면 안 된다. */
+function gtRecalc(card){
+  if(!GTKEY)return;
+  const grades=[],answers=[];
+  GTKEY.labels.forEach((l,i)=>{
+    const el=card.querySelector(`[data-gq="${i}"]`);
+    if(!el){grades.push('');answers.push('');return;}
+    if(el.tagName==='BUTTON'){grades.push(el.dataset.s||'');answers.push('');return;}
+    const v=el.value.trim();
+    answers.push(v);
+    const g=gtGradeOne(v,GTKEY.ans[i])||'';
+    grades.push(g);
+    el.classList.toggle('ok',g==='2');el.classList.toggle('bad',g==='0');
+  });
+  const any=grades.some(g=>g!=='');
+  if(any){
+    const total=gtScore(grades,GTKEY.pts);
+    const sc=card.querySelector('[data-f="점수"]');if(sc)sc.value=total;
+    const gs=card.querySelector('.gtsum');if(gs)gs.textContent=total;
+  }
+  card.dataset.gtItems=gtSer(GTKEY.labels,grades);
+  card.dataset.gtAns=gtSer(GTKEY.labels,answers);
+  card.dataset.gtWrong=grades.filter(g=>g==='0').length;
+  card.dataset.gtPart=grades.filter(g=>g==='1').length;
+}
 function wireRow(d,id){
   const seg=d.querySelector('.seg');
   seg.querySelectorAll('button').forEach(b=>{
@@ -2816,6 +2925,18 @@ function wireRow(d,id){
       save(id,d);
     };
   });
+  /* 기출 M(수동채점) 문항 탭 — 정답→부분→오답→정답 사이클. 자동 문항(input)은
+     아래 공용 change/blur 리스너가 save 를 부르고, save 가 gtRecalc 로 채점한다. */
+  d.querySelectorAll('.gtq button').forEach(b=>{
+    b.onclick=()=>{
+      if(d.classList.contains('na'))return;
+      const cur=b.dataset.s;
+      const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
+      b.dataset.s=next;b.className='s'+next;
+      b.textContent=next==='2'?'정답':next==='1'?'부분':'오답';
+      save(id,d);
+    };
+  });
   /* 미응시 토글 — 켜면 점수·문항채점을 **화면에서도** 되돌린다.
      문항 버튼은 한 번 누르면 빈칸으로 못 돌아가는 사이클이라(0812), 여기가 그 유일한 탈출구다. */
   const na=d.querySelector('[data-f="미응시"]');
@@ -2829,8 +2950,14 @@ function wireRow(d,id){
       if(sc)sc.value='';
       d.querySelectorAll('.items button').forEach(x=>{x.dataset.s='';x.className='';});
       const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='미응시';
+      // 기출 칸도 되돌린다 — 답·채점·색 전부
+      d.querySelectorAll('input.gta').forEach(x=>{x.value='';x.classList.remove('ok','bad');});
+      d.querySelectorAll('.gtq button').forEach(x=>{x.dataset.s='';x.className='';x.textContent='—';});
+      delete d.dataset.gtItems;delete d.dataset.gtAns;d.dataset.gtWrong='0';d.dataset.gtPart='0';
+      const gs=d.querySelector('.gtsum');if(gs)gs.textContent='미응시';
     }else{
       const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='—';
+      const gs=d.querySelector('.gtsum');if(gs)gs.textContent='—';
     }
     save(id,d);
   };
@@ -2853,9 +2980,15 @@ function wireRow(d,id){
 }
 function renderStudents(){
   const box=$('students');box.innerHTML='';
-  const nq=Math.max(0,Math.min(10,parseInt($('c_nq').value)||0));
+  // 상한 30 — 리뷰는 5문항이지만 기출은 20~25문항 (0823)
+  const nq=Math.max(0,Math.min(30,parseInt($('c_nq').value)||0));
   if(window.matchMedia('(min-width:900px)').matches)renderTable(box,nq);
   else renderCards(box,nq);
+  // 기출 모드는 저장된 답을 정답표로 다시 채점해 색·오답 수(dataset)를 맞춘다
+  // — 정답표를 나중에 고쳐도 화면이 즉시 재채점된 상태가 된다 (저장은 손대야 나간다)
+  if(isGT()&&GTKEY)csRoot().querySelectorAll('#students .stu').forEach(c=>{
+    if(!c.classList.contains('na'))gtRecalc(c);
+  });
   box.addEventListener('input',updateAvgs);   // 타이핑하는 동안 바로 따라온다
   updateAvgs();
 }
@@ -2874,7 +3007,9 @@ function updateAvgs(){
   const scored=live.map(c=>({c,v:num(c,'점수')})).filter(x=>!isNaN(x.v));
   const ihs=cards.map(c=>num(c,'이행률')).filter(v=>!isNaN(v));
   const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  const na=cards.length-live.length, full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
+  // 만점 = 리뷰는 문항수×2, 기출은 배점 합 (0823)
+  const na=cards.length-live.length,
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
   const out=['<span class="t">반 평균</span>'];
   cards.forEach(c=>c.classList.remove('below'));
   if(scored.length>=1){
@@ -2892,10 +3027,11 @@ function updateAvgs(){
   bar.style.display='';
 }
 function renderTable(box,nq){
+  const gtMode=isGT()&&GTKEY;
   const wrap=document.createElement('div');
   wrap.className='card';wrap.style.overflowX='auto';wrap.style.padding='0';
   const t=document.createElement('table');t.className='grid';
-  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${nq?'<th>'+(gtMode?'문항별 답 (정답 일치 = 자동 채점 · M은 탭)':'문항 채점 (탭: 2→1→0)')+'</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -2907,7 +3043,7 @@ function renderTable(box,nq){
       <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}</td>
       <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
       <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
-      ${nq?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
+      ${nq?`<td>${gtMode?gtItemsHtml(log):`<div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div>`}</td>`:''}
       <td><div class="scorecell"><input data-f="점수" style="width:56px" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></td>
       <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
@@ -2929,17 +3065,18 @@ function renderTable(box,nq){
 function wireGridKeys(t){
   t.addEventListener('keydown',e=>{
     const el=e.target;
-    if(!el.matches||!el.matches('input[data-f],textarea[data-f]'))return;
+    if(!el.matches||!el.matches('input[data-f],textarea[data-f],input.gta'))return;
     const ta=el.tagName==='TEXTAREA';
     let dir=0;
     if(e.key==='Enter'&&!ta)dir=e.shiftKey?-1:1;
     else if(e.key==='ArrowDown'&&(!ta||e.ctrlKey))dir=1;
     else if(e.key==='ArrowUp'&&(!ta||e.ctrlKey))dir=-1;
     if(!dir)return;
-    const f=el.dataset.f;
+    // 기출 답 칸은 data-gq(문항 번호)로 같은 문항을 세로로 탄다. Tab 은 옆 문항.
+    const sel=el.dataset.f?`[data-f="${el.dataset.f}"]`:`input[data-gq="${el.dataset.gq}"]`;
     let r=el.closest('tr');
     while((r=dir>0?r.nextElementSibling:r.previousElementSibling)){
-      const next=r.querySelector(`[data-f="${f}"]`);
+      const next=r.querySelector(sel);
       if(next){e.preventDefault();next.focus();
         if(next.select)next.select();
         next.scrollIntoView({block:'center',behavior:'smooth'});return;}
@@ -2947,13 +3084,15 @@ function wireGridKeys(t){
   });
 }
 function renderCards(box,nq){
+  const gtMode=isGT()&&GTKEY;
   STUDENTS.forEach(s=>{
     const id=s['학생ID'], log=LOGMAP[id]||{};
     const d=document.createElement('div');d.className='stu'+(isNA(log)?' na':'');d.dataset.id=id;
     const cur=log['출결'];
     const recent=(RECENT[id]||[]).slice(0,3).join(' · ');
     const notes=(NOTES[id]||[]).slice(0,2);
-    const itemsHtml=nq>0?'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(isNA(log)?'미응시':(log['점수']||'—'))+'</div></div>':'';
+    const itemsHtml=nq>0?(gtMode?gtItemsHtml(log)
+      :'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(isNA(log)?'미응시':(log['점수']||'—'))+'</div></div>'):'';
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
@@ -2962,7 +3101,7 @@ function renderCards(box,nq){
       <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
       <div class="minirow">
-        <div class="grow"><label class="lbl">리뷰 점수 (문항 탭하면 자동)</label><div class="scorecell"><input data-f="점수" inputmode="decimal" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></div>
+        <div class="grow"><label class="lbl">${gtMode?'기출 점수 (답을 넣으면 자동)':'리뷰 점수 (문항 탭하면 자동)'}</label><div class="scorecell"><input data-f="점수" inputmode="decimal" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></div>
         <div class="grow"><label class="lbl">이행률 %</label><input data-f="이행률" inputmode="numeric" value="${log['이행률']||''}"></div>
       </div>
       <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
@@ -2995,6 +3134,8 @@ function saveOk(src){
 const debounce={};
 async function save(id,card){
   if(LOCKED)return;
+  // 기출 모드는 저장 전에 항상 재채점 — 색·점수·직렬화(dataset)가 이 한 곳에서 맞는다
+  if(isGT()&&GTKEY&&card&&!card.classList.contains('na'))gtRecalc(card);
   updateAvgs();          // 문항 버튼·미응시 토글은 input 이벤트가 없다 — 저장 경로에서 같이 갱신
   clearTimeout(debounce[id]);
   debounce[id]=setTimeout(async()=>{
@@ -3013,8 +3154,14 @@ async function save(id,card){
     const naBtn=card.querySelector('[data-f="미응시"]');
     const na=!!(naBtn&&naBtn.dataset.on==='1');
     const score=na?'':get('점수');
+    /* 기출 모드(gt): 문항점수는 "라벨:정오;…" 키 형식, 답안은 학생 실답 "라벨:답;…".
+       리뷰 모드: 기존 "2,1,0" 자리 형식 그대로. */
+    const gt=!!(isGT()&&GTKEY);
     const itemBtns=[...card.querySelectorAll('.items button')];
-    const itemStr=na?null:(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
+    const itemStr=na?null
+      :gt?((card.dataset.gtItems||'')||null)
+      :(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
+    const gtAnsStr=(!gt||na)?null:((card.dataset.gtAns||'')||null);
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':vDay(),'요일':DAYS[new Date(vDay()+'T00:00:00').getDay()],
       '출결':att?att.dataset.v:null,'결석사유':clr(get('결석사유'),'결석사유'),
@@ -3024,7 +3171,11 @@ async function save(id,card){
       '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):clr('','테스트유형')),
       // 미응시는 0점이 아니다 — 점수를 비우고 상태만 남긴다. gen10 이 점수 없음을 '미응시'로 그린다.
       '테스트상태':na?'미응시':(score?'응시':clr('','테스트상태')),'점수':na?null:clr(score,'점수'),
-      '문항점수':itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null,
+      // 기출: 키 형식("1:2;20-1:0"). 다 지운 상태는 ''(명시 삭제) — 리뷰: 자리 형식 그대로
+      '문항점수':gt?(na?null:(itemStr!==null?itemStr:clr('','문항점수')))
+                :(itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null),
+      '답안':gt?(na?null:(gtAnsStr!==null?gtAnsStr:clr('','답안'))):clr('','답안'),
+      '시험지출처':gt?($('gt_src').value.trim()||clr('','시험지출처')):clr('','시험지출처'),
       '이행률':clr(get('이행률'),'이행률'),
       '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
       '추가학습사유':clr(get('추가학습사유'),'추가학습사유'),
@@ -3048,13 +3199,24 @@ async function save(id,card){
     //    오답 이벤트가 남았다 — 약점 집계에 유령 오답이 쌓인다(0812).
     /* ⚠ 조건이 itemStr 이면 안 된다 — 문항 버튼이 빈 채로 렌더된 상태(",,,,")도 참이라
        아무것도 안 눌렀는데 오답 이벤트를 통째로 지웠다(0813). 실제로 채점된 게 있을 때만 손댄다. */
-    const graded=itemBtns.some(b=>b.dataset.s!=='');
+    const graded=gt?((card.dataset.gtItems||'')!==''):itemBtns.some(b=>b.dataset.s!=='');
     if(graded||na){
-      const ref='리뷰:'+CLS+':'+vDay();
+      // 기출은 소스·참조를 '기출'로 갈라 쌓는다 (RLS 도 '기출:%' 를 연다 — schema_v11)
+      const ref=(gt?'기출:':'리뷰:')+CLS+':'+vDay();
       await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
-      const ev=(na?[]:itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1')).map(b=>({
-        '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
-        '유형':$('c_test').value.trim()||null,'결과':b.dataset.s==='0'?'오답':'부분','참조':ref}));
+      let ev;
+      if(na)ev=[];
+      else if(gt){
+        const grm=gtDes(card.dataset.gtItems||'');
+        ev=GTKEY.labels.filter(l=>grm[l]==='0'||grm[l]==='1').map(l=>({
+          '소스':'기출','학생ID':id,'반':CLS,'이벤트':'오답','문항':l+'번',
+          '유형':($('gt_src').value.trim()||$('c_test').value.trim())||null,
+          '결과':grm[l]==='0'?'오답':'부분','참조':ref}));
+      }else{
+        ev=itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1').map(b=>({
+          '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
+          '유형':$('c_test').value.trim()||null,'결과':b.dataset.s==='0'?'오답':'부분','참조':ref}));
+      }
       if(ev.length)await sb.from('events').insert(ev);
     }
     // 결석 → 보강 대기 자동 등록
@@ -3098,11 +3260,17 @@ function saveClassLog(){
   clearTimeout(CLOGT);
   CLOGT=setTimeout(async()=>{
     const today=vDay();
+    /* 기출 정답표 3칸 — clr 규칙(null=미변경/''=삭제). 가드가 class_log 에도 걸려 있어
+       null 은 옛 값을 지킨다. GTPREV = 이 반·이 날짜에서 마지막으로 읽거나 저장한 값. */
+    const gtv=(id,k)=>{const v=$(id).value.trim();return v!==''?v:(((GTPREV[k]||'')!=='')?'':null);};
+    const gtRow={'시험지명':gtv('gt_src','시험지명'),'기출정답':gtv('gt_ans','기출정답'),'기출배점':gtv('gt_pts','기출배점')};
     const {error}=await sb.from('class_log').upsert({
       '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
       '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
       '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,
+      ...gtRow,
     },{onConflict:'반,날짜'});
+    if(!error)Object.keys(gtRow).forEach(k=>{GTPREV[k]=gtRow[k]===null?(GTPREV[k]||''):(gtRow[k]===''?'':gtRow[k]);});
     const m=$('clogmark');
     if(error){toast('수업 정보 저장 실패: '+error.message);saveFail('clslog','수업 정보 — '+error.message);return;}
     saveOk('clslog');
@@ -3139,7 +3307,8 @@ async function genComments(){
   const today=vDay();
   const {data:clin}=await sb.from('clinic_roster').select('*').eq('날짜',today);
   const clinMap={};(clin||[]).forEach(r=>clinMap[r['학생ID']]=r);
-  const nq=Math.max(0,parseInt($('c_nq').value)||0), full=nq*2;
+  const nq=Math.max(0,parseInt($('c_nq').value)||0),
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):nq*2;
   const tname=$('c_test').value||'테스트';
   let n=0;
   csAll('.stu').forEach(card=>{
@@ -3173,8 +3342,9 @@ async function genComments(){
     if(card.classList.contains('na'))parts.push('오늘 '+tname+'는 응시하지 못했습니다. 다음 수업에서 같은 범위로 확인하겠습니다.');
     const score=parseFloat(val('점수'));
     if(!isNaN(score)){
-      const wrongCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
-      const partCnt=[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='1').length;
+      const gtC=isGT()&&GTKEY;   // 기출은 gtRecalc 가 dataset 에 세어 둔다 (렌더 때 일괄 실행)
+      const wrongCnt=gtC?parseInt(card.dataset.gtWrong||'0',10):[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
+      const partCnt=gtC?parseInt(card.dataset.gtPart||'0',10):[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='1').length;
       const rec=(RECENT[id]||[]).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
       // 반평균 (오늘 입력된 점수 기준)
       const allScores=[...csAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
@@ -3239,7 +3409,7 @@ async function closeSession(){
       return 1;
     };
     const tname=$('c_test').value||'테스트';
-    const full=(Math.max(0,parseInt($('c_nq').value)||0))*2;
+    const full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
     const why={};   // 학생 카드별 사유 — 두 조건에 다 걸리면 한 줄로 합친다
     const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
     if(scored.length>=2){
@@ -3282,6 +3452,7 @@ async function resetToday(){
   if(!confirm('정말 삭제할까요? 되돌릴 수 없습니다.'))return;
   const ids=STUDENTS.map(s=>s['학생ID']);
   await sb.from('events').delete().eq('참조','리뷰:'+CLS+':'+today);
+  await sb.from('events').delete().eq('참조','기출:'+CLS+':'+today);
   await sb.from('clinic_roster').delete().eq('지정일',today).in('학생ID',ids);
   await sb.from('daily_log').delete().eq('반',CLS).eq('날짜',today);
   await sb.from('class_log').delete().eq('반',CLS).eq('날짜',today);
@@ -3639,6 +3810,61 @@ function parseSchool(rows){
 function guessWeekly(fname){
   const rd=/(\d+)\s*(?:회|주차)/.exec(fname||''), gr=/고\s*([123])/.exec(fname||'');
   return {rd:rd?rd[1]:'',grade:gr?'고'+gr[1]:''};
+}
+
+/* ── 기출테스트 채점 (0823) — 대조는 _검증/gt_test.mjs ─────────────────────
+ * 원칙: 학생이 적은 답을 그대로 받아 정규화 후 문자열 비교. 더미코드 금지.
+ * 시트 실측에서 '2,041'과 '2041', '④'와 '4'가 같은 답으로 섞여 있었다 — 정규화가 흡수한다.
+ * '11-10' 같은 문자열 답은 정규화 후에도 문자열 그대로 비교된다. */
+function gtNorm(s){
+  let t=String(s==null?'':s).trim();
+  if(!t)return '';
+  t=t.replace(/[０-９．]/g,c=>c==='．'?'.':String.fromCharCode(c.charCodeAt(0)-0xFEE0));  // 전각→반각
+  t=t.replace(/[①②③④⑤]/g,c=>'12345'['①②③④⑤'.indexOf(c)]);                            // 선지 기호→숫자
+  t=t.replace(/[,\s]/g,'').toLowerCase();                                                  // 천단위 쉼표·공백
+  if(/^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)){const n=parseFloat(t);if(!isNaN(n))return String(n);} // 3.0→3
+  return t;
+}
+/* 정답·배점 문자열 → {labels, ans, pts}. 항목은 쉼표 구분, '라벨=값'이면 소문항 라벨.
+ * 정답이 하나도 없으면 null. 배점이 모자라면 그 자리는 null(화면이 경고한다). */
+function gtParseKey(ansStr,ptsStr){
+  const labels=[],ans=[];
+  String(ansStr||'').split(',').map(x=>x.trim()).filter(x=>x!=='').forEach(tok=>{
+    let label=String(labels.length+1),v=tok;
+    const eq=tok.indexOf('=');
+    if(eq>0){label=tok.slice(0,eq).trim();v=tok.slice(eq+1).trim();}
+    labels.push(label);ans.push(v);
+  });
+  if(!ans.length)return null;
+  const pts=ans.map(()=>null);
+  String(ptsStr||'').split(',').map(x=>x.trim()).forEach((p,i)=>{
+    if(i<ans.length&&p!==''){const n=parseFloat(p);pts[i]=isNaN(n)?null:n;}
+  });
+  return {labels,ans,pts};
+}
+function gtIsManual(a){return String(a).trim().toUpperCase()==='M';}
+function gtPtsSum(pts){return Math.round(pts.reduce((a,p)=>a+(p||0),0)*10)/10;}
+/* 한 문항 판정: '2'=정답 '0'=오답 ''=미입력, null=수동채점 문항(M) */
+function gtGradeOne(stuAns,keyAns){
+  if(gtIsManual(keyAns))return null;
+  const a=gtNorm(stuAns);
+  if(a==='')return '';
+  return a===gtNorm(keyAns)?'2':'0';
+}
+/* 총점 = 정답 배점 합 + 부분(1)은 배점 절반. 소수 배점이라 한 자리 반올림. */
+function gtScore(grades,pts){
+  let s=0;
+  grades.forEach((g,i)=>{const p=pts[i]||0;if(g==='2')s+=p;else if(g==='1')s+=p/2;});
+  return Math.round(s*10)/10;
+}
+/* 직렬화 "라벨:값;…" — 빈 값은 항목을 만들지 않는다. 값 속 ';' 는 제거(형식 보호). */
+function gtSer(labels,arr){
+  return labels.map((l,i)=>(arr[i]!==''&&arr[i]!=null)?l+':'+String(arr[i]).replace(/;/g,''):null)
+    .filter(Boolean).join(';');
+}
+function gtDes(str){
+  const m={};String(str||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i>0)m[p.slice(0,i)]=p.slice(i+1);});
+  return m;
 }
 /*PARSE>>*/
 
