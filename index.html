@@ -3174,7 +3174,8 @@ async function save(id,card){
       // 기출: 키 형식("1:2;20-1:0"). 다 지운 상태는 ''(명시 삭제) — 리뷰: 자리 형식 그대로
       '문항점수':gt?(na?null:(itemStr!==null?itemStr:clr('','문항점수')))
                 :(itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null),
-      '답안':gt?(na?null:(gtAnsStr!==null?gtAnsStr:clr('','답안'))):clr('','답안'),
+      // 미응시·비기출은 clr — 이전 답이 있으면 ''(명시 삭제), 없으면 null(아래서 키 생략)
+      '답안':(gt&&!na)?(gtAnsStr!==null?gtAnsStr:clr('','답안')):clr('','답안'),
       '시험지출처':gt?($('gt_src').value.trim()||clr('','시험지출처')):clr('','시험지출처'),
       '이행률':clr(get('이행률'),'이행률'),
       '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
@@ -3182,6 +3183,9 @@ async function save(id,card){
       '추가학습날짜':clr(get('추가학습날짜'),'추가학습날짜'),'추가학습시간':clr(get('추가학습시간'),'추가학습시간'),
       '소스':'수업콘솔',
     };
+    /* 신규 컬럼(답안 — schema_v11)은 null 이면 키를 아예 뺀다. 뜻이 같고(미변경 = 가드가 지킴),
+       v11 을 아직 안 돌린 DB 에서도 리뷰 저장이 "없는 컬럼" 으로 죽지 않는다. */
+    if(row['답안']===null)delete row['답안'];
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
     saveOk('daily');
@@ -3264,6 +3268,8 @@ function saveClassLog(){
        null 은 옛 값을 지킨다. GTPREV = 이 반·이 날짜에서 마지막으로 읽거나 저장한 값. */
     const gtv=(id,k)=>{const v=$(id).value.trim();return v!==''?v:(((GTPREV[k]||'')!=='')?'':null);};
     const gtRow={'시험지명':gtv('gt_src','시험지명'),'기출정답':gtv('gt_ans','기출정답'),'기출배점':gtv('gt_pts','기출배점')};
+    // 신규 컬럼(schema_v11): null 은 키를 뺀다 — v11 이전 DB 에서도 수업정보 저장이 안 죽는다
+    Object.keys(gtRow).forEach(k=>{if(gtRow[k]===null)delete gtRow[k];});
     const {error}=await sb.from('class_log').upsert({
       '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
       '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
