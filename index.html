@@ -1536,25 +1536,31 @@ function viewLoop(st) {
       const g = {};
       lsRows.filter(r => r['수업일'] === day).forEach(r => { const c = r['반'] || '?'; (g[c] = g[c] || []).push(r); });
       Object.keys(g).sort().forEach(ban => {
-        /* 제출 결과순 정렬 (0824 유강): 미제출 → 진행중 → 제출. 같은 상태끼리는 이름순. */
-        const rank = r => {
-          if (sub[r['루프ID']]) return 2;
-          return (r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now()) ? 0 : 1;
-        };
-        const list = g[ban].sort((a, b) => rank(a) - rank(b) || (a['이름'] || '').localeCompare(b['이름'] || '', 'ko'));
+        /* 상태별 칸 나누기 (0824 유강): 미제출 / 진행중 / 제출 세 줄. 라벨이 상태를 말하므로
+           학생 옆엔 점수(제출)와 재촉 플래그만 남긴다. 빈 상태 줄은 안 그린다. */
+        const list = g[ban].sort((a, b) => (a['이름'] || '').localeCompare(b['이름'] || '', 'ko'));
         const n = list.filter(r => sub[r['루프ID']]).length;
         H.push(`<div style="margin-top:8px;border-top:1px solid var(--bd);padding-top:7px"><b>${E(String(day).slice(5))} · ${E(ban)}</b>`
           + ` <span class="dim">제출 ${n}/${list.length}${list[0]['단원'] ? ' · ' + E(list[0]['단원']) : ''}</span></div>`);
-        H.push('<div style="line-height:2">' + list.map(r => {
+        const byRank = [[], [], []];
+        list.forEach(r => {
           const s2 = sub[r['루프ID']];
           const late = !s2 && r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now();
-          const stat = s2 ? ('✓' + (s2['총문항'] ? ' ' + (s2['맞은개수'] || 0) + '/' + s2['총문항'] : '')) : (late ? '미제출' : '진행중');
-          const col = s2 ? 'var(--good)' : (late ? 'var(--bad)' : 'var(--dim)');
-          const flags = (r['재촉1차'] ? ' 재촉①' : '') + (r['재촉2차'] ? ' 재촉②' : '') + (r['중단'] ? ' ⏸' : '');
-          const nm = st.smap[r['학생ID']] ? slink(st.smap[r['학생ID']]) : E(r['이름'] || '');
-          return `<span style="display:inline-block;margin-right:12px;white-space:nowrap">${nm}`
-            + ` <b style="color:${col}">${E(stat)}</b>${flags ? `<span class="dim">${E(flags)}</span>` : ''}</span>`;
-        }).join('') + '</div>');
+          byRank[s2 ? 2 : (late ? 0 : 1)].push(r);
+        });
+        const GL = [['미제출', 'var(--bad)'], ['진행중', 'var(--dim)'], ['제출', 'var(--good)']];
+        byRank.forEach((rows, gi) => {
+          if (!rows.length) return;
+          H.push(`<div style="line-height:2"><b style="color:${GL[gi][1]};display:inline-block;min-width:64px">${GL[gi][0]} ${rows.length}</b>`
+            + rows.map(r => {
+              const s2 = sub[r['루프ID']];
+              const score = s2 ? (s2['총문항'] ? ' <b style="color:var(--good)">' + E((s2['맞은개수'] || 0) + '/' + s2['총문항']) + '</b>' : '') : '';
+              const flags = (r['재촉1차'] ? ' 재촉①' : '') + (r['재촉2차'] ? ' 재촉②' : '') + (r['중단'] ? ' ⏸' : '');
+              const nm = st.smap[r['학생ID']] ? slink(st.smap[r['학생ID']]) : E(r['이름'] || '');
+              return `<span style="display:inline-block;margin-right:12px;white-space:nowrap">${nm}${score}`
+                + (flags ? `<span class="dim">${E(flags)}</span>` : '') + '</span>';
+            }).join('') + '</div>');
+        });
       });
     });
     sendBoard = '<h2>발송 현황 — 최근 3수업일 '
