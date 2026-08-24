@@ -98,6 +98,13 @@ nav a.on{background:rgba(245,160,160,.14);color:#ffd9d9;font-weight:700}
 @media(max-width:900px){.srow,.thead{grid-template-columns:105px 1fr 85px}
  .s-rspark,.s-rate,.s-att,.s-wk,.s-extra,.th4,.th5,.th6,.th7,.th8{display:none}}
 
+/* ── 드롭다운 팝업 (0824) — 네이티브 select 목록은 OS 가 그린다.
+   :root color-scheme 만으론 크롬(윈도우)이 팝업을 밝게 그리면서 글자만 우리 밝은 색을
+   상속해 "흰 바탕에 흰 글씨"가 됐다. select 자체에 color-scheme 을 박고
+   option 배경·색을 명시하면 어느 쪽으로 그려도 읽힌다. */
+select{color-scheme:dark}
+select option{background-color:#15151c;color:var(--tx)}
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -481,6 +488,10 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .footbar{position:static;bottom:auto}
 #cs main{padding:0;max-width:none}
 #cs .toast{bottom:28px}
+
+/* 드롭다운 팝업 — 위 app_styles 전역 규칙과 같은 이유. #cs 스코프 특이도 보강 */
+#cs select{color-scheme:dark}
+#cs select option{background-color:#15151c;color:var(--tx)}
 
 /* 상단 nav 의 두 묶음을 가르는 세로선 — 입력하러 온 건지 보러 온 건지가 한눈에 갈린다 */
 #nav .sep{width:1px;align-self:stretch;background:var(--bd);margin:2px 7px}
