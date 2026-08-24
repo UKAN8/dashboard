@@ -104,6 +104,7 @@ nav a.on{background:rgba(245,160,160,.14);color:#ffd9d9;font-weight:700}
    option 배경·색을 명시하면 어느 쪽으로 그려도 읽힌다. */
 select{color-scheme:dark}
 select option{background-color:#15151c;color:var(--tx)}
+select optgroup{background-color:#15151c;color:var(--dim)}
 
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
@@ -492,6 +493,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 /* 드롭다운 팝업 — 위 app_styles 전역 규칙과 같은 이유. #cs 스코프 특이도 보강 */
 #cs select{color-scheme:dark}
 #cs select option{background-color:#15151c;color:var(--tx)}
+#cs select optgroup{background-color:#15151c;color:var(--dim)}
 
 /* 상단 nav 의 두 묶음을 가르는 세로선 — 입력하러 온 건지 보러 온 건지가 한눈에 갈린다 */
 #nav .sep{width:1px;align-self:stretch;background:var(--bd);margin:2px 7px}
@@ -2893,12 +2895,40 @@ async function gtBank(){
   GTBANK=by;
   return by;
 }
+/* 자료명 규칙(0824 유강): 시험메타 시험ID 뼈대 — 학교_고N_연도_학기_구분(_이본).
+   드롭다운은 학기 그룹(optgroup)으로 묶고 최신 학기가 위, 지난 학기는 라벨로 표시한다. */
+function gtSemNow(){
+  const d=new Date();let y=d.getFullYear();const m=d.getMonth()+1;
+  const s=(m>=3&&m<=7)?1:2; if(m<3)y--;          // 1~2월은 전년도 2학기
+  return y*10+s;
+}
+function gtGroupOf(nm){
+  const m=/_(\d{4})_([12])_(기말|중간)/.exec(nm);
+  if(!m)return {k:0,label:'기타'};
+  const v=parseInt(m[1],10)*10+parseInt(m[2],10);
+  return {k:v,label:m[1]+' '+m[2]+'학기 '+m[3]+(v<gtSemNow()?' · 지난학기':'')};
+}
+function gtDispName(nm){
+  const m=/^(.+?)_(고[123])_\d{4}_[12]_(?:기말|중간)(?:_(.+))?$/.exec(nm);
+  return m?(m[1]+' '+m[2]+(m[3]?' · '+m[3]:'')):nm;
+}
 async function gtFillPick(){
   const by=await gtBank();
   const sel=$('gt_pick');if(!sel)return;
   const cur=sel.value;
-  sel.innerHTML='<option value="">— 직접 입력</option>'
-    +Object.keys(by).sort((a,b)=>a.localeCompare(b,'ko')).map(n=>'<option>'+esc(n)+'</option>').join('');
+  const groups={};
+  Object.keys(by).forEach(n=>{
+    const g=gtGroupOf(n);
+    (groups[g.label]=groups[g.label]||{k:g.k,names:[]}).names.push(n);
+  });
+  let html='<option value="">— 직접 입력</option>';
+  Object.keys(groups).sort((a,b)=>groups[b].k-groups[a].k).forEach(lb=>{
+    html+='<optgroup label="'+esc(lb)+'">'
+      +groups[lb].names.sort((a,b)=>a.localeCompare(b,'ko'))
+        .map(n=>'<option value="'+esc(n)+'">'+esc(gtDispName(n))+'</option>').join('')
+      +'</optgroup>';
+  });
+  sel.innerHTML=html;
   // 시험지명이 은행 이름과 같으면 선택 상태도 맞춰 준다 (재진입 복원)
   sel.value=cur||((($('gt_src').value.trim()) in by)?$('gt_src').value.trim():'');
 }
