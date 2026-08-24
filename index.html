@@ -1536,7 +1536,12 @@ function viewLoop(st) {
       const g = {};
       lsRows.filter(r => r['수업일'] === day).forEach(r => { const c = r['반'] || '?'; (g[c] = g[c] || []).push(r); });
       Object.keys(g).sort().forEach(ban => {
-        const list = g[ban].sort((a, b) => (a['이름'] || '').localeCompare(b['이름'] || '', 'ko'));
+        /* 제출 결과순 정렬 (0824 유강): 미제출 → 진행중 → 제출. 같은 상태끼리는 이름순. */
+        const rank = r => {
+          if (sub[r['루프ID']]) return 2;
+          return (r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now()) ? 0 : 1;
+        };
+        const list = g[ban].sort((a, b) => rank(a) - rank(b) || (a['이름'] || '').localeCompare(b['이름'] || '', 'ko'));
         const n = list.filter(r => sub[r['루프ID']]).length;
         H.push(`<div style="margin-top:8px;border-top:1px solid var(--bd);padding-top:7px"><b>${E(String(day).slice(5))} · ${E(ban)}</b>`
           + ` <span class="dim">제출 ${n}/${list.length}${list[0]['단원'] ? ' · ' + E(list[0]['단원']) : ''}</span></div>`);
