@@ -2896,17 +2896,20 @@ async function gtBank(){
   return by;
 }
 /* 자료명 규칙(0824 유강): 시험메타 시험ID 뼈대 — 학교_고N_연도_학기_구분(_이본).
-   드롭다운은 학기 그룹(optgroup)으로 묶고 최신 학기가 위, 지난 학기는 라벨로 표시한다. */
-function gtSemNow(){
-  const d=new Date();let y=d.getFullYear();const m=d.getMonth()+1;
-  const s=(m>=3&&m<=7)?1:2; if(m<3)y--;          // 1~2월은 전년도 2학기
-  return y*10+s;
+   드롭다운은 학기 그룹(optgroup)으로 묶는다. 기출은 원래 지난 학기 것이므로
+   '지난학기' 대신 시즌 기준(0825 유강): 지금 대비 중인 학기·구분과 같은 그룹에만
+   '이번 시즌 대비'를 붙이고 최상단으로 올린다. 시즌 판정: 3~4월=1학기 중간,
+   5~7월=1학기 기말, 8~10월=2학기 중간, 11~2월=2학기 기말. */
+function gtSeasonNow(){
+  const m=new Date().getMonth()+1;
+  return (m>=3&&m<=4)?'1중간':(m>=5&&m<=7)?'1기말':(m>=8&&m<=10)?'2중간':'2기말';
 }
 function gtGroupOf(nm){
   const m=/_(\d{4})_([12])_(기말|중간)/.exec(nm);
   if(!m)return {k:0,label:'기타'};
   const v=parseInt(m[1],10)*10+parseInt(m[2],10);
-  return {k:v,label:m[1]+' '+m[2]+'학기 '+m[3]+(v<gtSemNow()?' · 지난학기':'')};
+  const hit=(m[2]+m[3])===gtSeasonNow();
+  return {k:v+(hit?100000:0),label:m[1]+' '+m[2]+'학기 '+m[3]+(hit?' · 이번 시즌 대비':'')};
 }
 function gtDispName(nm){
   const m=/^(.+?)_(고[123])_\d{4}_[12]_(?:기말|중간)(?:_(.+))?$/.exec(nm);
@@ -3586,6 +3589,17 @@ async function closeSession(){
   const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
   if(e1||e2){toast('마감 실패: '+(e1||e2).message);saveFail('close','마감 — '+(e1||e2).message);return;}
   saveOk('close');
+  /* (0825) 기출 모드 마감 → 학생별 취약유형 과제 잡 적재.
+     학원 PC의 hw_watch 폴러가 주워 circuit_hw --auto 실행 → hwpx 생성 → 한글 워처 PDF → 인쇄.
+     새 전역 심볼 없음(MERGE-CUT 안전). 실패해도 마감 자체는 이미 끝난 상태다. */
+  if(isGT()&&GTKEY){
+    const src=$('gt_src').value.trim();
+    if(src){
+      const {error:e3}=await sb.from('job_queue').insert({'종류':'기출과제','상태':'요청','요청자':'콘솔',
+        '파라미터':{'반':CLS,'날짜':today,'시험지명':src}});
+      toast(e3?'기출과제 요청 실패: '+e3.message:'기출과제 생성 요청됨 — 학원 PC가 곧 인쇄한다 (작업 현황에서 진행 확인)');
+    }
+  }
   $('sessionstate').textContent='마감됨';
   $('closeguide').style.display='';                    // 마감 후 흐름 안내 (0813)
   $('closeguide').scrollIntoView({behavior:'smooth',block:'nearest'});
