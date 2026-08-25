@@ -3563,7 +3563,9 @@ async function closeSession(){
     const full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
     const why={};   // 학생 카드별 사유 — 두 조건에 다 걸리면 한 줄로 합친다
     const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
-    if(scored.length>=2){
+    /* (0825 유강) 기출(모의)테스트는 반평균 이하 지정 제외 — 타교 시험이라 평균이 잣대가 아니다.
+       기출의 추가학습 사유는 소수오답(아래 ③)과 이행률만. */
+    if(!isGT()&&scored.length>=2){
       const avg=scored.reduce((a,x)=>a+x.v,0)/scored.length;
       for(const {c,v} of scored)
         if(v<=avg&&(!full||v<full))
