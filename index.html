@@ -3576,9 +3576,26 @@ async function closeSession(){
       if(isNaN(ih)||ih>=100)continue;
       (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push('과제 이행률 '+ih+'%');
     }
+    /* ③ (0825 유강) 기출 모드 소수오답 — 문항 오답자가 2명 이하면 그 오답자는 추가학습 대상.
+       남들 다 맞은 문제를 틀림 = 개인 결핍. 유형과제(주 유형만)와 별개로 클리닉으로 부른다.
+       '0'(완전 오답)만 센다 — 부분(1)·미입력·수동채점(M)은 제외. */
+    if(isGT()&&GTKEY){
+      const wrongBy={};   // 문항 라벨 → 오답 학생 카드들
+      for(const c of cards){
+        const items=gtDes(c.dataset.gtItems||'');
+        for(const k in items)if(items[k]==='0')(wrongBy[k]=wrongBy[k]||[]).push(c);
+      }
+      const src=$('gt_src').value.trim()||'기출';
+      for(const k in wrongBy){
+        const ws=wrongBy[k];
+        if(ws.length<1||ws.length>2)continue;
+        for(const c of ws)
+          (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push(src+' '+k+'번 소수오답('+ws.length+'명)');
+      }
+    }
     let m=0;
     for(const k in why)m+=put(why[k].c,why[k].r.join(' · '));
-    if(m)toast('추가학습 자동 지정 '+m+'명 (반평균 이하 · 과제 미흡)');
+    if(m)toast('추가학습 자동 지정 '+m+'명 (반평균 이하 · 과제 미흡 · 소수오답)');
   }
   const present=[...csAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
   const {error:e1}=await sb.from('class_log').upsert({
