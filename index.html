@@ -1870,7 +1870,7 @@ function tmBuild(st) {
   });
   const rvK = {};                                    // (반|날짜|문항) → 틀린 학생 set
   st.raw.wrong_answers.forEach(r => {
-    if (String(r['시험종류'] || '').trim() !== '리뷰테스트') return;
+    if (String(r['시험종류'] || '').trim() !== '03_리뷰테스트') return;
     const k = tmCls(r['반']) + '|' + String(r['날짜'] || '').trim() + '|' + String(r['문항'] || '').trim();
     (rvK[k] = rvK[k] || new Set()).add(String(r['학생ID'] || r['이름'] || '').trim());
   });
@@ -1881,7 +1881,7 @@ function tmBuild(st) {
       wkP[String(r['과목'] || '').trim() + '|' + String(r['회차'] || '').trim() + '|' + q] = c / 100;
   });
   const phat = (kind, cls, date, qno, exam, grade) => {
-    if (kind === '리뷰테스트') {
+    if (kind === '03_리뷰테스트') {
       const n = rvN[tmCls(cls) + '|' + date];
       const k = rvK[tmCls(cls) + '|' + date + '|' + qno];
       if (n && k) return (Math.max(n - k.size, 0) + 1) / (n + 2);
@@ -3295,6 +3295,10 @@ async function save(id,card){
        자동으로 null 이 나간다 — 즉 빈 화면은 아무것도 못 지운다. */
     const prev=LOGMAP[id]||{};
     const clr=(v,dbk)=>v!==''?v:(((prev[dbk]||'')!=='')?'':null);
+    /* 이행률은 숫자만 저장한다. 칸이 자유 입력이라 '100%'가 그대로 들어가는데,
+       JS parseFloat 은 100 으로 읽어 화면이 멀쩡해 보이고 파이썬 float 은 죽는다.
+       → 리포트에서 이행률이 통째로 빠짐(0819·0826 실사고). 숫자·소수점만 남긴다. */
+    const rateNum=v=>{const s=String(v||'').replace(/[^0-9.]/g,'');return s===''?'':s;};
     const att=card.querySelector('.seg button[class*=a]');
     const naBtn=card.querySelector('[data-f="미응시"]');
     const na=!!(naBtn&&naBtn.dataset.on==='1');
@@ -3322,7 +3326,7 @@ async function save(id,card){
       // 미응시·비기출은 clr — 이전 답이 있으면 ''(명시 삭제), 없으면 null(아래서 키 생략)
       '답안':(gt&&!na)?(gtAnsStr!==null?gtAnsStr:clr('','답안')):clr('','답안'),
       '시험지출처':gt?($('gt_src').value.trim()||clr('','시험지출처')):clr('','시험지출처'),
-      '이행률':clr(get('이행률'),'이행률'),
+      '이행률':clr(rateNum(get('이행률')),'이행률'),
       '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
       '추가학습사유':clr(get('추가학습사유'),'추가학습사유'),
       '추가학습날짜':clr(get('추가학습날짜'),'추가학습날짜'),'추가학습시간':clr(get('추가학습시간'),'추가학습시간'),
