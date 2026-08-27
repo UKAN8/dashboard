@@ -65,7 +65,7 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
   <div class="brand">수학은유강</div>
   <div class="who"><b id="nm"></b><span class="ban" id="cl"></span></div>
   <div class="lead" id="lead"></div>
-  <div class="note">답은 <b>성적·평가와 아무 상관이 없다.</b> 다음 과제를 고치려고 묻는 것이라 솔직할수록 도움이 된다. 2분이면 끝난다.</div>
+  <div class="note">답은 <b>성적이랑 아무 상관 없어요.</b> 다음 과제 만들 때 반영하려고 여쭤보는 거라, 솔직할수록 도움이 됩니다~ 1분이면 끝나요.</div>
   <div id="qs"></div>
   <div class="foot" id="foot"></div>
 </div>
@@ -98,34 +98,39 @@ const $=id=>document.getElementById(id);
  * ③ 유형이 제대로 겨눴는가 ④ 무엇을 바꿔야 하는가.
  * 나머지는 안 묻는다 — 길어지면 대충 누르고, 대충 누른 답으로는 못 고친다.
  * `when` 이 있는 문항은 앞 답에 따라 나타난다(필수 판정에서도 빠진다).
+ *
+ * ⚠ 말투 — 학생에게는 **존댓말 + ~요**다. 유강이 실제로 쓰는 결이고(팀톡 실측),
+ *   여기만 반말·명령형이면 그 순간 '학원이 아니라 시스템이 보낸 것'이 된다.
+ *   선택지는 학생이 자기 말로 고르는 자리라 평서형('~했다')으로 둔다.
  */
 const DEFAULT='hw0827';
 const SURVEYS={
  'hw0827':{
-  제목:'지난 시간 <b>기출 오답 개별 과제</b>는 어땠는지 알려 줘.',
+  제목:'지난 시간 <b>기출 오답 개별 과제</b> 어땠는지 알려주세요~',
   문항:[
-   {k:'진행', t:'과제를 어디까지 했어?', s:'솔직하게. 여기 답이 다음 과제 분량을 정한다.',
+   {k:'진행', t:'과제 어디까지 하셨어요?', s:'솔직하게 골라주세요. 이 답으로 다음 과제 분량을 정합니다.',
     o:['다 풀었다','대부분 풀었다','절반쯤','조금 손댔다','거의 못 했다']},
-   {k:'못한이유', t:'다 못 한 가장 큰 이유는?', s:'하나만 골라.',
+   {k:'못한이유', t:'다 못 하신 이유는요?', s:'제일 큰 것 하나만요.',
     when:v=>['절반쯤','조금 손댔다','거의 못 했다','대부분 풀었다'].includes(v.진행),
-    o:['양이 너무 많아서','너무 어려워서','시간이 없어서','뭘 어떻게 할지 몰라서','다른 과제가 밀려서','솔직히 하기 싫었다']},
-   {k:'시간', t:'실제로 붙잡은 시간은?', s:'푼 만큼만 기준으로.',
+    o:['양이 너무 많아서','너무 어려워서','시간이 없어서','뭘 어떻게 할지 몰라서','다른 과제가 밀려서','솔직히 하기 싫어서']},
+   {k:'시간', t:'실제로 붙잡은 시간은요?', s:'푼 만큼만 기준으로요.',
     o:['30분 이하','30분~1시간','1~2시간','2~3시간','3시간 이상']},
-   {k:'분량', t:'문항 수는 어땠어?',
+   {k:'분량', t:'문항 수는 어땠어요?',
     o:['너무 많다','조금 많다','딱 적당하다','조금 적다']},
-   {k:'난이도', t:'난이도는 어땠어?',
+   {k:'난이도', t:'난이도는 어땠어요?',
     o:['너무 어렵다','조금 어렵다','딱 적당하다','조금 쉽다']},
-   {k:'적중', t:'나온 유형이 <b>내가 약한 유형</b>이 맞았어?', s:'이게 과제 생성 규칙을 고치는 자리다.',
+   {k:'적중', t:'나온 유형이 <b>본인이 약한 유형</b> 맞았나요?', s:'이 답이 제일 중요해요.',
     o:['딱 내가 약한 것들','대체로 맞다','절반은 이미 아는 것','이미 아는 것이 대부분']},
-   {k:'막힘', t:'막혔을 때 어떻게 했어?',
+   {k:'막힘', t:'막혔을 때 어떻게 하셨어요?',
     o:['해설을 봤다','교재·필기를 다시 봤다','쌤이나 친구에게 물었다','한참 붙잡다 넘어갔다','바로 넘어갔다']},
-   {k:'해설', t:'해설은 충분했어?',
+   {k:'해설', t:'해설은 충분했나요?',
     o:['충분했다','조금 부족하다','많이 부족하다','해설을 안 봐서 모르겠다']},
-   {k:'효과', t:'같은 유형이 시험에 또 나오면?',
+   {k:'효과', t:'같은 유형이 시험에 또 나오면요?',
     o:['이제 맞힐 자신 있다','비슷하면 맞힐 것 같다','아직 불안하다','여전히 모르겠다']},
-   {k:'개선', t:'다음 과제에서 <b>딱 하나만</b> 바꾼다면?', s:'제일 아쉬웠던 것 하나.',
-    o:['문항 수를 줄여 달라','쉬운 것부터 단계적으로','유형마다 예시 풀이 1개','해설을 더 자세히','틀린 문제와 더 비슷하게','지금 이대로가 좋다']},
-   {k:'한마디', t:'하고 싶은 말', s:'없으면 비워도 된다. (선택)', free:true, ph:'좋았던 것, 불편했던 것, 아무거나'}
+   {k:'개선', t:'다음 과제에서 <b>딱 하나만</b> 바꾼다면요?', s:'제일 아쉬웠던 것 하나만요.',
+    o:['문항 수를 줄여주세요','쉬운 것부터 단계적으로','유형마다 예시 풀이 1개','해설을 더 자세히','틀린 문제와 더 비슷하게','지금 이대로가 좋아요']},
+   {k:'한마디', t:'하고 싶은 말 있으면 편하게 써주세요', s:'없으면 비워두셔도 돼요~ (선택)', free:true,
+    ph:'좋았던 것, 불편했던 것, 아무거나'}
   ]}
 };
 
@@ -167,7 +172,7 @@ function gauge(){
   $('pg').style.width = Math.round(got/Math.max(need.length,1)*100)+'%';
   const b=$('send');
   b.disabled = got<need.length;
-  b.textContent = got<need.length ? `${need.length-got}개 남았어` : '제출';
+  b.textContent = got<need.length ? `${need.length-got}개 남았어요` : '제출하기';
 }
 
 /* 임시 저장 — 폰에서 카톡 알림에 튕겨 나갔다 돌아와도 답이 남아 있어야 한다.
@@ -182,21 +187,21 @@ function 완료(수정){
   $('app').style.display='none'; $('bar').style.display='none';
   $('msg').style.display='';
   $('msg').className='done';
-  $('msg').innerHTML=`<div class="k">✓</div><b>${수정?'고쳐서 다시 냈어':'냈다. 고맙다'}</b>
-    <p>다음 과제에 반영할게.<br>바꾸고 싶으면 다시 눌러서 고쳐도 된다.</p>
+  $('msg').innerHTML=`<div class="k">✓</div><b>${수정?'다시 제출됐어요~':'제출됐어요. 고마워요~'}</b>
+    <p>다음 과제에 반영할게요.<br>바꾸고 싶으면 다시 눌러서 고치셔도 돼요.</p>
     <button class="again" id="again">답 고치기</button>`;
   $('again').onclick=()=>{ $('msg').style.display='none'; $('msg').className='msg';
     $('app').style.display=''; $('bar').style.display=''; draw(); };
 }
 
 async function send(){
-  const b=$('send'); b.disabled=true; b.textContent='보내는 중…';
+  const b=$('send'); b.disabled=true; b.textContent='보내는 중이에요…';
   const 낼것={}; visible().forEach(q=>{ if(ANS[q.k]) 낼것[q.k]=ANS[q.k]; });
   let data,err;
   try{ ({data,error:err}=await sb.rpc('survey_submit',{tok:TOK,skey:SKEY,ans:낼것})); }
   catch(e){ err=e; }
-  if(err||!data||!data.ok){ b.disabled=false; b.textContent='다시 제출';
-    return alert('전송이 안 됐어. 잠깐 뒤에 다시 눌러 줘.'); }
+  if(err||!data||!data.ok){ b.disabled=false; b.textContent='다시 제출하기';
+    return alert('전송이 안 됐어요. 잠깐 뒤에 다시 눌러주세요~'); }
   save(); 완료(false);
 }
 
@@ -204,19 +209,19 @@ async function send(){
   const p=new URLSearchParams(location.search);
   TOK=p.get('t')||''; SKEY=p.get('s')||DEFAULT;
   DEF=SURVEYS[SKEY];
-  if(!TOK) return say('링크가 올바르지 않습니다.','받은 문자·카톡의 주소를 그대로 열어 줘.');
-  if(!DEF) return say('끝난 설문이야.','새 링크가 필요하면 쌤에게 말해 줘.');
+  if(!TOK) return say('링크가 올바르지 않아요.','받으신 문자 주소를 그대로 열어주세요~');
+  if(!DEF) return say('끝난 설문이에요.','새 링크가 필요하면 쌤한테 말해주세요~');
   let data,err;
   try{ ({data,error:err}=await sb.rpc('survey_open',{tok:TOK,skey:SKEY})); }
   catch(e){ err=e; }
-  if(err) return say('지금은 열 수 없어.','잠시 뒤 다시 열어 줘. 계속 같으면 쌤에게 알려 줘.');
-  if(!data) return say('만료되었거나 잘못된 링크야.','새 링크가 필요하면 쌤에게 말해 줘.');
+  if(err) return say('지금은 열 수 없어요.','잠시 뒤에 다시 열어주세요. 계속 이러면 쌤한테 알려주세요~');
+  if(!data) return say('만료되었거나 잘못된 링크예요.','새 링크가 필요하면 쌤한테 말해주세요~');
 
   $('nm').textContent=data.이름||'';
   $('cl').textContent=data.반||'';
   $('lead').innerHTML=DEF.제목;
-  $('foot').innerHTML=`이 주소는 ${E(data.이름||'')} 개인 링크입니다. 다른 사람에게 전달하지 마세요.<br>
-    답은 쌤만 봅니다. 반 전체에 공개되지 않습니다.`;
+  $('foot').innerHTML=`이 주소는 ${E(data.이름||'')} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>
+    답은 쌤만 봅니다. 다른 친구들에게 공개되지 않아요.`;
   ANS = Object.assign({}, data.지난답||{}, load());   // 이미 낸 답 위에 임시저장을 얹는다
   $('msg').style.display='none'; $('app').style.display=''; $('bar').style.display='';
   draw();
