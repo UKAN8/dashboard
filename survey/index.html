@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>설문 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="수학은유강 — 과제 설문">
+<meta property="og:description" content="개인 링크입니다. 다른 사람에게 전달하지 마세요.">
+<!-- ⚠ 버전을 박는다. @2 는 CDN 이 언제든 새 2.x 로 갈아 끼운다 (포털과 같은 버전) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.07);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0; --good:#c8f0da;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
+ padding:18px clamp(12px,4vw,28px) calc(120px + env(safe-area-inset-bottom))}
+main{max-width:620px;margin:0 auto}
+.brand{font-weight:800;color:var(--acc);font-size:15px;letter-spacing:.02em}
+.who{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:6px 0 4px}
+.who b{font-size:23px}
+.who .ban{font-size:12px;color:var(--acc);background:rgba(245,160,160,.12);padding:2px 9px;border-radius:9px}
+.lead{color:var(--tx2);font-size:13px;margin:10px 0 4px}
+.lead b{color:var(--tx)}
+.note{color:var(--dim);font-size:12px;margin-bottom:22px}
+.q{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:14px 15px;margin-bottom:11px}
+.q.hide{display:none}
+.q .n{font-size:11px;letter-spacing:.14em;color:var(--acc);margin-bottom:5px}
+.q .t{font-weight:700;margin-bottom:3px;overflow-wrap:anywhere}
+.q .s{color:var(--dim);font-size:12.5px;margin-bottom:10px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:block;width:100%;text-align:left;font:inherit;font-size:14px;color:var(--tx2);
+ background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:11px;
+ padding:11px 13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.opt.on{background:rgba(245,160,160,.16);border-color:rgba(245,160,160,.5);color:#ffe9e9;font-weight:700}
+/* ⚠ :hover 는 반드시 미디어쿼리 안에 — 폰에서 탭 뒤 호버가 남아 오답을 부른다 */
+@media (hover:hover) and (pointer:fine){ .opt:hover{border-color:rgba(245,160,160,.35);color:var(--tx)} }
+textarea{width:100%;min-height:88px;resize:vertical;font:inherit;font-size:14px;color:var(--tx);
+ background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+textarea::placeholder{color:var(--dim)}
+.cnt{text-align:right;color:var(--dim);font-size:11px;margin-top:4px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,#0a0a0f 62%,rgba(10,10,15,0));
+ padding:14px clamp(12px,4vw,28px) calc(16px + env(safe-area-inset-bottom))}
+.bar .in{max-width:620px;margin:0 auto}
+.prog{height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:9px}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+button.send{width:100%;font:inherit;font-size:15px;font-weight:800;color:#1a0d12;
+ background:var(--acc);border:none;border-radius:13px;padding:14px;cursor:pointer}
+button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:default}
+.msg{color:var(--dim);font-size:14px;padding:40px 2px}
+.msg b{display:block;color:var(--tx);font-size:16px;margin-bottom:6px}
+.done{text-align:center;padding:60px 10px}
+.done .k{font-size:44px;line-height:1}
+.done b{display:block;font-size:20px;margin:14px 0 6px}
+.done p{color:var(--tx2);font-size:14px;margin:0 0 20px}
+.again{font:inherit;font-size:13px;color:var(--tx2);background:none;border:1px solid var(--bd);
+ border-radius:10px;padding:9px 16px;cursor:pointer}
+.foot{color:var(--dim);font-size:11.5px;line-height:1.7;margin-top:26px;
+ border-top:1px solid var(--bd);padding-top:14px}
+</style></head>
+<body><main>
+<div id="msg" class="msg">불러오는 중…</div>
+<div id="app" style="display:none">
+  <div class="brand">수학은유강</div>
+  <div class="who"><b id="nm"></b><span class="ban" id="cl"></span></div>
+  <div class="lead" id="lead"></div>
+  <div class="note">답은 <b>성적·평가와 아무 상관이 없다.</b> 다음 과제를 고치려고 묻는 것이라 솔직할수록 도움이 된다. 2분이면 끝난다.</div>
+  <div id="qs"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div id="bar" class="bar" style="display:none"><div class="in">
+  <div class="prog"><i id="pg"></i></div>
+  <button class="send" id="send" disabled>제출</button>
+</div></div>
+</main>
+<script>
+/* 과제 설문 — 학생 개인 링크(포털과 같은 토큰)로 연다.
+ *
+ * 주소: /survey/?t=<토큰>&s=<설문키>   (s 없으면 아래 DEFAULT)
+ *
+ * ⚠ 이 페이지에 박힌 것은 anon 키뿐이고, anon 은 어느 표에도 권한이 없다(0809 revoke).
+ *   열린 것은 함수 둘(survey_open·survey_submit)뿐이고, 그 함수가 토큰→학생을 정한다.
+ *   ⇒ **여기에 sb.from(...) 을 새로 쓰지 마라.** build_survey.py 가 기계로 막는다.
+ *
+ * ⚠ 새 설문을 만들 때는 SURVEYS 에 키 하나를 더할 뿐이다. 옛 키는 지우지 않는다 —
+ *   지우면 이미 나간 링크가 죽고, 지난 답과 문항의 짝이 어긋난다.
+ */
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb=supabase.createClient(SB_URL,SB_ANON);
+const E=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+const $=id=>document.getElementById(id);
+
+/* ── 설문 정의 ────────────────────────────────────────────────────────────
+ * 묻는 것은 넷뿐이다: ① 실제로 했는가 ② 분량·난이도가 맞았는가
+ * ③ 유형이 제대로 겨눴는가 ④ 무엇을 바꿔야 하는가.
+ * 나머지는 안 묻는다 — 길어지면 대충 누르고, 대충 누른 답으로는 못 고친다.
+ * `when` 이 있는 문항은 앞 답에 따라 나타난다(필수 판정에서도 빠진다).
+ */
+const DEFAULT='hw0827';
+const SURVEYS={
+ 'hw0827':{
+  제목:'지난 시간 <b>기출 오답 개별 과제</b>는 어땠는지 알려 줘.',
+  문항:[
+   {k:'진행', t:'과제를 어디까지 했어?', s:'솔직하게. 여기 답이 다음 과제 분량을 정한다.',
+    o:['다 풀었다','대부분 풀었다','절반쯤','조금 손댔다','거의 못 했다']},
+   {k:'못한이유', t:'다 못 한 가장 큰 이유는?', s:'하나만 골라.',
+    when:v=>['절반쯤','조금 손댔다','거의 못 했다','대부분 풀었다'].includes(v.진행),
+    o:['양이 너무 많아서','너무 어려워서','시간이 없어서','뭘 어떻게 할지 몰라서','다른 과제가 밀려서','솔직히 하기 싫었다']},
+   {k:'시간', t:'실제로 붙잡은 시간은?', s:'푼 만큼만 기준으로.',
+    o:['30분 이하','30분~1시간','1~2시간','2~3시간','3시간 이상']},
+   {k:'분량', t:'문항 수는 어땠어?',
+    o:['너무 많다','조금 많다','딱 적당하다','조금 적다']},
+   {k:'난이도', t:'난이도는 어땠어?',
+    o:['너무 어렵다','조금 어렵다','딱 적당하다','조금 쉽다']},
+   {k:'적중', t:'나온 유형이 <b>내가 약한 유형</b>이 맞았어?', s:'이게 과제 생성 규칙을 고치는 자리다.',
+    o:['딱 내가 약한 것들','대체로 맞다','절반은 이미 아는 것','이미 아는 것이 대부분']},
+   {k:'막힘', t:'막혔을 때 어떻게 했어?',
+    o:['해설을 봤다','교재·필기를 다시 봤다','쌤이나 친구에게 물었다','한참 붙잡다 넘어갔다','바로 넘어갔다']},
+   {k:'해설', t:'해설은 충분했어?',
+    o:['충분했다','조금 부족하다','많이 부족하다','해설을 안 봐서 모르겠다']},
+   {k:'효과', t:'같은 유형이 시험에 또 나오면?',
+    o:['이제 맞힐 자신 있다','비슷하면 맞힐 것 같다','아직 불안하다','여전히 모르겠다']},
+   {k:'개선', t:'다음 과제에서 <b>딱 하나만</b> 바꾼다면?', s:'제일 아쉬웠던 것 하나.',
+    o:['문항 수를 줄여 달라','쉬운 것부터 단계적으로','유형마다 예시 풀이 1개','해설을 더 자세히','틀린 문제와 더 비슷하게','지금 이대로가 좋다']},
+   {k:'한마디', t:'하고 싶은 말', s:'없으면 비워도 된다. (선택)', free:true, ph:'좋았던 것, 불편했던 것, 아무거나'}
+  ]}
+};
+
+let TOK='', SKEY='', DEF=null, ANS={};
+
+function visible(){ return DEF.문항.filter(q=>!q.when||q.when(ANS)); }
+function 필수(){ return visible().filter(q=>!q.free); }
+
+function draw(){
+  const H=[]; let n=0;
+  DEF.문항.forEach(q=>{
+    const on = !q.when || q.when(ANS);
+    if(on && !q.free) n++;
+    const head=`<div class="n">${q.free?'끝으로':'Q'+n}</div><div class="t">${q.t}</div>`
+      +(q.s?`<div class="s">${q.s}</div>`:'');
+    if(q.free){
+      H.push(`<div class="q${on?'':' hide'}" data-k="${q.k}">${head}
+        <textarea id="free" maxlength="500" placeholder="${E(q.ph||'')}">${E(ANS[q.k]||'')}</textarea>
+        <div class="cnt"><span id="cnt">${(ANS[q.k]||'').length}</span>/500</div></div>`);
+    }else{
+      H.push(`<div class="q${on?'':' hide'}" data-k="${q.k}">${head}<div class="opts">`
+        + q.o.map(o=>`<button class="opt${ANS[q.k]===o?' on':''}" data-k="${E(q.k)}" data-v="${E(o)}">${E(o)}</button>`).join('')
+        + `</div></div>`);
+    }
+  });
+  $('qs').innerHTML=H.join('');
+  $('qs').querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k, v=b.dataset.v;
+    ANS[k] = (ANS[k]===v ? '' : v);          // 한 번 더 누르면 해제 — 잘못 눌렀을 때 되돌릴 길
+    save(); draw();
+  });
+  const f=$('free');
+  if(f) f.oninput=()=>{ ANS['한마디']=f.value; $('cnt').textContent=f.value.length; save(); gauge(); };
+  gauge();
+}
+
+function gauge(){
+  const need=필수(), got=need.filter(q=>ANS[q.k]).length;
+  $('pg').style.width = Math.round(got/Math.max(need.length,1)*100)+'%';
+  const b=$('send');
+  b.disabled = got<need.length;
+  b.textContent = got<need.length ? `${need.length-got}개 남았어` : '제출';
+}
+
+/* 임시 저장 — 폰에서 카톡 알림에 튕겨 나갔다 돌아와도 답이 남아 있어야 한다.
+   ⚠ 사생활 모드·저장 차단이면 던진다. 실패해도 설문은 그냥 돌아가야 하므로 통째로 감싼다. */
+const LK=()=>'survey:'+SKEY+':'+TOK.slice(0,8);
+function save(){ try{ localStorage.setItem(LK(), JSON.stringify(ANS)); }catch(e){} }
+function load(){ try{ return JSON.parse(localStorage.getItem(LK())||'{}'); }catch(e){ return {}; } }
+
+function say(t,s){ $('msg').innerHTML=`<b>${E(t)}</b>${E(s||'')}`; $('msg').style.display=''; }
+
+function 완료(수정){
+  $('app').style.display='none'; $('bar').style.display='none';
+  $('msg').style.display='';
+  $('msg').className='done';
+  $('msg').innerHTML=`<div class="k">✓</div><b>${수정?'고쳐서 다시 냈어':'냈다. 고맙다'}</b>
+    <p>다음 과제에 반영할게.<br>바꾸고 싶으면 다시 눌러서 고쳐도 된다.</p>
+    <button class="again" id="again">답 고치기</button>`;
+  $('again').onclick=()=>{ $('msg').style.display='none'; $('msg').className='msg';
+    $('app').style.display=''; $('bar').style.display=''; draw(); };
+}
+
+async function send(){
+  const b=$('send'); b.disabled=true; b.textContent='보내는 중…';
+  const 낼것={}; visible().forEach(q=>{ if(ANS[q.k]) 낼것[q.k]=ANS[q.k]; });
+  let data,err;
+  try{ ({data,error:err}=await sb.rpc('survey_submit',{tok:TOK,skey:SKEY,ans:낼것})); }
+  catch(e){ err=e; }
+  if(err||!data||!data.ok){ b.disabled=false; b.textContent='다시 제출';
+    return alert('전송이 안 됐어. 잠깐 뒤에 다시 눌러 줘.'); }
+  save(); 완료(false);
+}
+
+(async()=>{
+  const p=new URLSearchParams(location.search);
+  TOK=p.get('t')||''; SKEY=p.get('s')||DEFAULT;
+  DEF=SURVEYS[SKEY];
+  if(!TOK) return say('링크가 올바르지 않습니다.','받은 문자·카톡의 주소를 그대로 열어 줘.');
+  if(!DEF) return say('끝난 설문이야.','새 링크가 필요하면 쌤에게 말해 줘.');
+  let data,err;
+  try{ ({data,error:err}=await sb.rpc('survey_open',{tok:TOK,skey:SKEY})); }
+  catch(e){ err=e; }
+  if(err) return say('지금은 열 수 없어.','잠시 뒤 다시 열어 줘. 계속 같으면 쌤에게 알려 줘.');
+  if(!data) return say('만료되었거나 잘못된 링크야.','새 링크가 필요하면 쌤에게 말해 줘.');
+
+  $('nm').textContent=data.이름||'';
+  $('cl').textContent=data.반||'';
+  $('lead').innerHTML=DEF.제목;
+  $('foot').innerHTML=`이 주소는 ${E(data.이름||'')} 개인 링크입니다. 다른 사람에게 전달하지 마세요.<br>
+    답은 쌤만 봅니다. 반 전체에 공개되지 않습니다.`;
+  ANS = Object.assign({}, data.지난답||{}, load());   // 이미 낸 답 위에 임시저장을 얹는다
+  $('msg').style.display='none'; $('app').style.display=''; $('bar').style.display='';
+  draw();
+  $('send').onclick=send;
+  if(data.제출함 && !Object.keys(load()).length) 완료(true);   // 이미 냈고 손댄 흔적도 없으면 완료 화면부터
+})();
+</script></body></html>
