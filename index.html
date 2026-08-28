@@ -106,6 +106,32 @@ select{color-scheme:dark}
 select option{background-color:#15151c;color:var(--tx)}
 select optgroup{background-color:#15151c;color:var(--dim)}
 
+/* ── 시험일정 탭 (0828, sc- 접두 — 흔한 이름 충돌 방지) ── */
+.sc-cards{grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}
+.sc-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.sc-dday{float:right;font-size:11px;padding:1px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--tx2)}
+.sc-dday.on{background:rgba(255,92,138,.15);color:#ffd7e3;font-weight:700}
+.sc-dday.off{opacity:.5}
+.sc-math{display:flex;gap:16px;margin-top:8px;font-size:12px;flex-wrap:wrap}
+.sc-head{display:flex;align-items:center;gap:10px;margin:18px 0 8px}
+.sc-head b{font-size:16px}
+.sc-head button{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:12px}
+@media (hover:hover) and (pointer:fine){.sc-head button:hover{border-color:var(--acc)}}
+.sc-cal{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:var(--card)}
+.sc-dow,.sc-week{display:grid;grid-template-columns:repeat(7,1fr)}
+.sc-dow div{padding:6px 8px;font-size:11px;color:var(--dim)}
+.sc-week{border-top:1px solid var(--bd);padding-bottom:6px}
+.sc-day{grid-row:1;padding:4px 8px;min-height:32px;font-size:12px;color:var(--tx2)}
+.sc-day.out{opacity:.28}
+.sc-day.sun .n{color:#ff8fa8}
+.sc-day.sat .n{color:#8fb8ff}
+.sc-day.today .n{background:var(--acc);color:#14141c;border-radius:50%;padding:1px 6px;font-weight:700}
+.sc-day .hol{font-size:10px;color:#ff8fa8;margin-left:4px}
+.sc-bar{height:20px;line-height:20px;font-size:11px;margin:2px 3px 0;padding:0 8px;border-radius:6px;white-space:nowrap;overflow:hidden;font-weight:600}
+.sc-bar.cl{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.sc-bar.cr{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.sc-mb{display:inline-block;font-size:10px;line-height:15px;padding:0 5px;border-radius:5px;margin:2px 2px 0 0;font-weight:700;color:#14141c;white-space:nowrap}
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -540,7 +566,8 @@ body.cs-on #boot{display:none}
 <a href="#weak" data-v="weak">약점</a>
 <a href="#typemap" data-v="typemap">유형맵</a><a href="#video" data-v="video">영상</a>
 <a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
-<a href="#exammeta" data-v="exammeta">시험메타</a></nav>
+<a href="#exammeta" data-v="exammeta">시험메타</a>
+<a href="#sched" data-v="sched">시험일정</a></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
 <button onclick="reload()">새로고침</button><button onclick="logout()">로그아웃</button></span></div>
@@ -1202,6 +1229,7 @@ function render(st) {
     viewToday(st), viewClass(st), viewStudent(st), viewClinic(st),
     viewLoop(st), viewReport(st), viewWeak(st),
     viewExam(st), viewClinicLog(st), viewExamMeta(st),   // 0811 신설
+    viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewTypemap(st), viewVideo(st)                       // 0811 병합
   ].join('');
 }
@@ -1808,6 +1836,130 @@ function viewExamMeta(st) {
     + `<div class="kpi"><div class="lbl">학교</div><div class="big">${new Set(metas.map(m => 학교키(m['학교']))).size}<small>곳</small></div></div></div>`
     + `<div class="grid">${metas.map(card).join('') || '<div class="dim">등록된 시험이 없다</div>'}</div>`
     + '</section>';
+}
+
+/* ═════════ 0828 신설 — 시험일정 (학교별 시험기간 캘린더) ═════════
+ *
+ * 데이터는 아래 SCHED 하나가 진실원. 학교 시간표가 나오면 math 에 날짜만 채운다.
+ *   s/e = 시험기간 (e:null 이면 종료 미정 — 시작일만 표기)
+ *   math = 학년별 수학 시험일. 예: math:{ '고1':'2026-10-07', '고2':'2026-10-08' }
+ * 캘린더는 조회 데이터(st)를 안 쓴다 — 표가 죽어도 이 탭은 뜬다.
+ */
+const SCHED = [
+  { school: '포곡고', s: '2026-09-30', e: '2026-10-06', c: '#b39df3', math: {} },
+  { school: '삼계고', s: '2026-09-30', e: '2026-10-07', c: '#e88fb0', math: {} },
+  { school: '용인고', s: '2026-10-06', e: '2026-10-14', c: '#7fb3d8', math: {} },
+  { school: '태성고', s: '2026-10-07', e: null,         c: '#e0b36a', math: {} },
+  { school: '효양고', s: '2026-10-12', e: '2026-10-15', c: '#94cfa4', math: {} },
+  { school: '진덕고', s: '2026-10-12', e: '2026-10-14', c: '#7fcdc8', math: {} },
+  { school: '고림고', s: '2026-10-13', e: '2026-10-16', c: '#cf9de0', math: {} },
+];
+const SCHED_TITLE = '2학기 중간고사';
+const SCHED_HOLI = {
+  '2026-09-24': '추석', '2026-09-25': '추석', '2026-09-26': '추석',
+  '2026-10-03': '개천절', '2026-10-05': '대체휴일', '2026-10-09': '한글날',
+  '2026-12-25': '성탄절',
+};
+
+const scD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const scK = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const scDOW = '일월화수목금토';
+const scFmt = s => { const d = scD(s); return `${d.getMonth() + 1}/${d.getDate()}(${scDOW[d.getDay()]})`; };
+const scToday = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const scShort = ev => ev.school.replace(/고$/, '') || ev.school;   // '포곡고'→'포곡', '고림고'→'고림'
+
+function scDday(ev) {                       // 학교 카드 오른쪽 상태 칩
+  const t = scToday(), s = scD(ev.s), e = ev.e ? scD(ev.e) : s;
+  if (t < s) { const n = Math.round((s - t) / 864e5); return ['', `D-${n}`]; }
+  if (t <= e || !ev.e) return ['on', ev.e ? '시험 중' : '시험 중?'];
+  return ['off', '종료'];
+}
+
+function scMathRow(ev, g) {                 // 카드 안 학년별 수학 시험일 한 줄
+  const d = ev.math[g];
+  if (!d) return `<div><span class="lbl" style="display:inline">${g} 수학</span> <span class="dim">미정</span></div>`;
+  const t = scToday(), n = Math.round((scD(d) - t) / 864e5);
+  const dd = n > 0 ? ` <b style="color:${ev.c}">D-${n}</b>` : (n === 0 ? ' <b style="color:var(--bad)">오늘</b>' : '');
+  return `<div><span class="lbl" style="display:inline">${g} 수학</span> <b>${scFmt(d)}</b>${dd}</div>`;
+}
+
+function scCalHTML(y, m) {                  // 한 달 치 캘린더 (일요일 시작)
+  const first = new Date(y, m - 1, 1), last = new Date(y, m, 0);
+  const w0 = new Date(first); w0.setDate(1 - first.getDay());
+  const today = scK(scToday());
+  // 이 달에 걸치는 시험 (미정 종료는 시작일 하루로 그린다)
+  const evs = SCHED.map(ev => ({ ...ev, S: scD(ev.s), E: ev.e ? scD(ev.e) : scD(ev.s) }))
+    .filter(ev => ev.S <= last && ev.E >= first)
+    .sort((a, b) => a.S - b.S);
+  // 수학 시험일 배지: 날짜키 → [{ev, g}]
+  const mm = {};
+  SCHED.forEach(ev => Object.entries(ev.math).forEach(([g, d]) => {
+    if (d) (mm[d] = mm[d] || []).push({ ev, g });
+  }));
+
+  let weeks = '';
+  for (let ws = new Date(w0); ws <= last; ws.setDate(ws.getDate() + 7)) {
+    const we = new Date(ws); we.setDate(we.getDate() + 6);
+    let cells = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(ws); d.setDate(d.getDate() + i);
+      const k = scK(d), hol = SCHED_HOLI[k];
+      const cls = ['sc-day', i === 0 && 'sun', i === 6 && 'sat', d.getMonth() !== m - 1 && 'out',
+        (hol && i !== 0 && i !== 6) && 'sun', k === today && 'today'].filter(Boolean).join(' ');
+      const badges = (mm[k] || []).map(({ ev, g }) =>
+        `<span class="sc-mb" style="background:${ev.c}">${scShort(ev)} ${g}수학</span>`).join('');
+      cells += `<div class="${cls}" style="grid-column:${i + 1}"><span class="n">${d.getDate()}</span>`
+        + (hol ? `<span class="hol">${hol}</span>` : '') + (badges ? `<div>${badges}</div>` : '') + '</div>';
+    }
+    let bars = '';
+    evs.filter(ev => ev.S <= we && ev.E >= ws).forEach((ev, lane) => {
+      const a = ev.S > ws ? ev.S.getDay() : 0, b = ev.E < we ? ev.E.getDay() : 6;
+      const cl = ev.S < ws, cr = ev.E > we;
+      bars += `<div class="sc-bar${cl ? ' cl' : ''}${cr ? ' cr' : ''}" title="${ev.school} ${SCHED_TITLE}"`
+        + ` style="grid-column:${a + 1}/${b + 2};grid-row:${lane + 2};background:${ev.c}2e;color:${ev.c};`
+        + `${cl ? '' : `box-shadow:inset 3px 0 0 ${ev.c};`}">`
+        + `${ev.school}${ev.e ? '' : ' (종료 미정)'}</div>`;
+    });
+    weeks += `<div class="sc-week">${cells}${bars}</div>`;
+  }
+  return `<div class="sc-head"><button onclick="scNav(-1)">◀</button><b>${y}년 ${m}월</b>`
+    + `<button onclick="scNav(1)">▶</button><button onclick="scNav(0)">오늘</button></div>`
+    + `<div class="sc-cal"><div class="sc-dow">${[...scDOW].map(c => `<div>${c}</div>`).join('')}</div>${weeks}</div>`;
+}
+
+function scHome() {                         // 기본 달 = 다가오는 첫 시험의 달 (월말 시작이면 다음 달)
+  const t = scToday();
+  const up = SCHED.filter(ev => (ev.e ? scD(ev.e) : scD(ev.s)) >= t).sort((a, b) => scD(a.s) - scD(b.s));
+  const d = up.length ? scD(up[0].s) : t;
+  let y = d.getFullYear(), m = d.getMonth() + 1;
+  if (d.getDate() >= 28) { m === 12 ? (y++, m = 1) : m++; }
+  return [y, m];
+}
+window.SC_YM = null;
+window.scNav = function (dir) {
+  let [y, m] = window.SC_YM || scHome();
+  if (dir === 0) [y, m] = scHome();
+  else { m += dir; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } }
+  window.SC_YM = [y, m];
+  const el = document.getElementById('sc-cal'); if (el) el.innerHTML = scCalHTML(y, m);
+};
+
+function viewSched() {
+  const [y, m] = window.SC_YM || (window.SC_YM = scHome());
+  const cards = [...SCHED].sort((a, b) => scD(a.s) - scD(b.s)).map(ev => {
+    const [k, dd] = scDday(ev);
+    return `<div class="card" style="border-left:3px solid ${ev.c}">`
+      + `<div><span class="sc-dot" style="background:${ev.c}"></span><b>${ev.school}</b>`
+      + `<span class="sc-dday ${k}">${dd}</span></div>`
+      + `<div style="margin-top:6px">${scFmt(ev.s)} ~ ${ev.e ? scFmt(ev.e) : '<span class="dim">미정</span>'}</div>`
+      + `<div class="sc-math">${scMathRow(ev, '고1')}${scMathRow(ev, '고2')}</div></div>`;
+  }).join('');
+  return `<section class="view" id="v-sched">
+<h2>시험일정 — ${SCHED_TITLE} <span class="cnt">${SCHED.length}개교</span></h2>
+<div class="grid sc-cards">${cards}</div>
+<div id="sc-cal">${scCalHTML(y, m)}</div>
+<div class="dim" style="margin-top:8px">수학 시험일은 학교 시간표 확정 시 반영 · 데이터: app.js SCHED</div>
+</section>`;
 }
 
 /* ═════════ 0811 병합 ① 유형맵 — 학생별 약점 신호 지도 ═════════
@@ -2417,7 +2569,7 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'typemap', 'video'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video'].includes(main)) main = 'today';
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
     let id = 'v-' + main;
     // 유형맵 상세에서 넘어온 검색어 (#video/두 원의 교점)
