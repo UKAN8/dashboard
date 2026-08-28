@@ -2750,7 +2750,7 @@ async function jobsRefresh(){
     const up=(j['종류']==='기출과제'&&st==='완료'&&j['결과']&&j['결과']['업로드'])||null;
     if(up&&up.length)
       pdfline='<div class="lbl gtpdf" data-j="'+j.id+'" style="margin:3px 0 0">'
-        +(GTPDF[j.id]||'<button type="button" class="pill gtpdf-btn" data-j="'+j.id+'">학생별 PDF 받기 ('+up.length+')</button>')
+        +(GTPDF[j.id]?GTPDF[j.id].html:'<button type="button" class="pill gtpdf-btn" data-j="'+j.id+'">학생별 PDF 받기 ('+up.length+')</button>')
         +'</div>';
     return '<div class="jobrow"><div><b>'+esc(JOBNAMES[j['종류']]||j['종류'])+'</b> '
       +'<span class="lbl" style="display:inline">'+esc(jobParam(j))+res+'</span> '+badge+'</div>'
@@ -2758,22 +2758,57 @@ async function jobsRefresh(){
   }).join('');
   box.querySelectorAll('.gtpdf-btn').forEach(b=>{b.onclick=()=>{
     const j=(data||[]).find(x=>String(x.id)===b.dataset.j);
-    if(j)gtJobLinks(j.id,(j['결과']||{})['업로드']||[],b.parentElement);
+    if(j)gtJobLinks(j,b.parentElement);
   };});
+  box.querySelectorAll('.gtzip').forEach(b=>{b.onclick=()=>gtZip(b.closest('.gtpdf').dataset.j,b);});
 }
-/* 기출과제 PDF 서명 URL — 만든 걸 캐시해 20초 재렌더에도 링크가 유지된다.
- * ⚠ Storage 키는 해시(한글 금지, 0811)라 download 파일명을 실명으로 박아 내려준다. */
+/* 기출과제 PDF 서명 URL — 만든 걸 캐시해 20초 재렌더에도 링크·zip이 유지된다.
+ * ⚠ Storage 키는 해시(한글 금지, 0811)라 download 파일명은 학생 이름으로 박는다(0828 유강). */
 const GTPDF={};
-async function gtJobLinks(jid,files,el){
+async function gtJobLinks(j,el){
   el.textContent='링크 만드는 중…';
-  const out=[];
+  const files=(j['결과']||{})['업로드']||[];
+  const out=[],zf=[];
   for(const f of files){
-    const {data,error}=await sb.storage.from('reports').createSignedUrl(f['키'],3600,{download:f['파일'].replace(/\.hwpx$/,'.pdf')});
-    out.push(error?'<span class="warn">'+esc(f['이름'])+' 실패</span>'
-      :'<a href="'+data.signedUrl+'" target="_blank" rel="noopener">'+esc(f['이름'])+'</a>');
+    const {data,error}=await sb.storage.from('reports').createSignedUrl(f['키'],3600,{download:f['이름']+'.pdf'});
+    if(error){out.push('<span class="warn">'+esc(f['이름'])+' 실패</span>');continue;}
+    out.push('<a href="'+data.signedUrl+'" target="_blank" rel="noopener">'+esc(f['이름'])+'</a>');
+    zf.push({name:f['이름']+'.pdf',url:data.signedUrl});
   }
-  GTPDF[jid]=out.join(' · ')+' <span style="opacity:.6">· 링크 1시간 유효</span>';
-  el.innerHTML=GTPDF[jid];
+  const p=j['파라미터']||{};
+  GTPDF[j.id]={files:zf,tag:[p['반'],(p['날짜']||'').replace(/-/g,'').slice(4)].filter(Boolean).join('_'),
+    html:(zf.length?'<button type="button" class="pill gtzip">⤓ 전체 저장 ('+zf.length+'명 · zip)</button> ':'')
+      +out.join(' · ')+' <span style="opacity:.6">· 링크 1시간 유효</span>'};
+  el.innerHTML=GTPDF[j.id].html;
+  const zb=el.querySelector('.gtzip'); if(zb)zb.onclick=()=>gtZip(j.id,zb);
+}
+/* zip 한 방 저장 — 조회 리포트와 같은 원리(무압축 store zip, 파일명=학생이름.pdf).
+ * makeZip·dropFile 은 통합 셸(app.js)의 전역 — 단독 콘솔에서는 이름을 눌러 한 명씩. */
+async function gtZip(jid,btn){
+  const c=GTPDF[jid];
+  if(!c||!c.files.length)return;
+  if(typeof makeZip!=='function'||typeof dropFile!=='function'){toast('zip 저장은 통합 셸(/dashboard/)에서만 — 이름을 눌러 한 명씩 받아라');return;}
+  const orig=btn.textContent;btn.disabled=true;
+  const entries=[],failed=[];
+  for(const f of c.files){
+    btn.textContent='받는 중… '+(entries.length+failed.length+1)+'/'+c.files.length;
+    try{
+      const r=await fetch(f.url);
+      if(!r.ok)throw new Error(r.status+'');
+      entries.push({name:f.name,data:new Uint8Array(await r.arrayBuffer())});
+    }catch(e){failed.push(f.name);}
+  }
+  if(entries.length){
+    btn.textContent='압축하는 중…';
+    await new Promise(r=>setTimeout(r,0));
+    try{dropFile(makeZip(entries),'기출과제_'+c.tag+'.zip');}
+    catch(e){btn.disabled=false;btn.textContent='압축 실패 — 이름을 눌러 한 명씩';return;}
+  }
+  btn.disabled=false;
+  btn.textContent=!entries.length?'하나도 못 받았다 — 링크가 만료됐으면 새로고침'
+    :failed.length?entries.length+'명 저장 · 실패: '+failed.join(', ')
+    :entries.length+'명 zip 저장됨 ✓';
+  setTimeout(()=>{btn.textContent=orig;},8000);
 }
 
 
