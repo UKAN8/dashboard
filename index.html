@@ -2708,7 +2708,7 @@ function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');
  * 각 손잡이(루프·추가학습·오늘 물을 것)는 자기 작업만 메모리로 폴링한다 —
  * 새로고침하면 추적을 잃고, 다른 탭의 작업은 아예 안 보였다.
  * 여기는 job_queue 를 직접 읽는다: 새로고침 생존 + 전 종류 한눈에. */
-const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트',진단발송:'개념 진단 발송',기출과제:'기출 퍼스널트레이닝'};
+const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트',진단발송:'개념 진단 발송',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝'};
 function toggleJobs(){const p=$('jobpanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))jobsRefresh();}
 function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항')].filter(Boolean).join(' · ');}
 function jobAge(t){return Math.max(0,Math.round((Date.now()-new Date(t))/60000));}
@@ -2747,12 +2747,12 @@ async function jobsRefresh(){
     /* (0828) 기출과제 완료 → 학생별 PDF 받기. hw_watch 가 Storage(reports/gt/)에 올리고
        결과.업로드에 [{이름,파일,키}]를 남긴다. 서명 URL은 누를 때 만든다(1시간). */
     let pdfline='';
-    /* (0831) 진단발송 완료 → 학생별 진단 링크 목록 (미열람 학생 안내용) */
+    /* (0831) 진단발송 완료 → 학생별 진단 링크 + [진단 알림톡 보내기] (승인 게이트) */
     const dg=(j['종류']==='진단발송'&&st==='완료'&&j['결과']&&j['결과']['목록'])||null;
     if(dg&&dg.length)
       pdfline='<div class="lbl" style="margin:3px 0 0">'
         +dg.map(x=>'<a href="'+esc(x.url)+'" target="_blank">'+esc(x.이름)+'('+esc(String(x.문항수))+')</a>').join(' · ')
-        +'</div>';
+        +' <button type="button" class="pill dgsend-btn" data-j="'+j.id+'">진단 알림톡 보내기 ('+dg.length+')</button></div>';
     const up=(j['종류']==='기출과제'&&st==='완료'&&j['결과']&&j['결과']['업로드'])||null;
     if(up&&up.length)
       pdfline='<div class="lbl gtpdf" data-j="'+j.id+'" style="margin:3px 0 0">'
@@ -2765,6 +2765,19 @@ async function jobsRefresh(){
   box.querySelectorAll('.gtpdf-btn').forEach(b=>{b.onclick=()=>{
     const j=(data||[]).find(x=>String(x.id)===b.dataset.j);
     if(j)gtJobLinks(j,b.parentElement);
+  };});
+  /* (0831) 진단 알림톡 — 버튼 클릭이 곧 발송 승인. 같은 반·날짜 진단알림 잡이 있으면 중복 금지 */
+  box.querySelectorAll('.dgsend-btn').forEach(b=>{b.onclick=async()=>{
+    const j=(data||[]).find(x=>String(x.id)===b.dataset.j);
+    if(!j)return;
+    const p=j['파라미터']||{};
+    const {data:pend}=await sb.from('job_queue').select('id,상태').eq('종류','진단알림')
+      .in('상태',['요청','처리중','진행','완료']).contains('파라미터',{'반':p['반'],'날짜':p['날짜']});
+    if((pend||[]).length){toast('이미 보냈거나 보내는 중');return;}
+    const {error}=await sb.from('job_queue').insert({'종류':'진단알림','상태':'요청','요청자':'콘솔진단발송',
+      '파라미터':{'반':p['반'],'날짜':p['날짜']}});
+    toast(error?'요청 실패: '+error.message:'알림톡 발송 큐로 넘김 — 1~2분 내 발송');
+    jobsRefresh();
   };});
   box.querySelectorAll('.gtzip').forEach(b=>{b.onclick=()=>gtZip(b.closest('.gtpdf').dataset.j,b);});
 }
@@ -3928,15 +3941,21 @@ async function closeSession(){
   if(isGT()&&GTKEY){
     const src=$('gt_src').value.trim();
     if(src){
-      // (0828) 조교가 [점수입력 완료]로 이미 만들었으면 재적재 금지 — 같은 날 잡이 있으면 건너뛴다.
-      const {data:gp}=await sb.from('job_queue').select('id,상태').eq('종류','기출과제')
+      // (0828) 조교가 이미 만들었으면 재적재 금지. (0831) 진단트리거의 **학생별** 잡은
+      // 반 전체 백스톱을 막지 않는다 — 대신 그 학생들은 '제외'로 넘겨 진단 반영본을 지킨다.
+      const {data:gp}=await sb.from('job_queue').select('id,상태,파라미터').eq('종류','기출과제')
         .in('상태',['요청','처리중','진행','완료']).contains('파라미터',{'반':CLS,'날짜':today});
-      if((gp||[]).length){
-        toast('기출과제는 이미 '+((gp||[]).some(x=>x['상태']==='완료')?'생성됨':'만드는 중')+' — 작업 현황(⚙)에서 PDF');
+      const classJobs=(gp||[]).filter(j=>!(j['파라미터']||{})['학생']);
+      const perStu=[...new Set((gp||[]).map(j=>(j['파라미터']||{})['학생']).filter(Boolean))];
+      if(classJobs.length){
+        toast('기출과제는 이미 '+(classJobs.some(x=>x['상태']==='완료')?'생성됨':'만드는 중')+' — 작업 현황(⚙)에서 PDF');
       }else{
+        const prm={'반':CLS,'날짜':today,'시험지명':src};
+        if(perStu.length)prm['제외']=perStu;   // 진단 제출자 — 이미 학생별 PT가 있다
         const {error:e3}=await sb.from('job_queue').insert({'종류':'기출과제','상태':'요청','요청자':'콘솔',
-          '파라미터':{'반':CLS,'날짜':today,'시험지명':src}});
-        toast(e3?'기출과제 요청 실패: '+e3.message:'기출과제 생성 요청됨 — 작업 현황(⚙)에서 학생별 PDF를 받아 출력');
+          '파라미터':prm});
+        toast(e3?'기출과제 요청 실패: '+e3.message
+                :'기출과제 생성 요청됨'+(perStu.length?' (진단 제출 '+perStu.length+'명 제외)':'')+' — 작업 현황(⚙)에서 PDF');
       }
     }
   }
