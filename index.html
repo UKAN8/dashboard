@@ -2916,6 +2916,11 @@ async function initClassButtons(){
   });
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
+/* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
+   첫 기출이 무조건 '오름세'로 찍히고(0831 유강), 반대로 기출 뒤 첫 리뷰는 전원 '급락'으로
+   잡혀 코멘트 자동생성이 막힌다. RECENT 원소 = {v:점수, gt:기출여부}. */
+const isGTtype=t=>String(t||'').trim()==='기출테스트';
+function recentOf(id){const cur=isGT();return (RECENT[id]||[]).filter(r=>r.gt===cur).map(r=>r.v);}
 let CHW='';   // 지금 반 전체에 걸려 있는 공통 과제 (개별과제 판정 기준)
 // 지난 과제가 반 공통과 다른 학생만 이름칸에 한 줄 — 과제검사 기준이 사람마다 다르다는 걸 눈으로 알아야 한다
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -2989,7 +2994,7 @@ async function selectClass(cls){
     sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
     sb.from('class_log').select('날짜,진도원문,이번과제,테스트유형').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
-    sb.from('daily_log').select('학생ID,날짜,점수,특이사항,이번과제').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
+    sb.from('daily_log').select('학생ID,날짜,점수,특이사항,이번과제,테스트유형').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
   ]);
   /* ⛔ 0813 사고의 급소였던 자리다. 예전엔 여기서 error 를 통째로 버리고 data(null)만 꺼내
      빈 화면을 그렸다 — 세션 만료·RLS 거부·네트워크 어느 쪽이든 "데이터가 사라진" 얼굴이 된다.
@@ -3010,7 +3015,7 @@ async function selectClass(cls){
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
   RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
-    if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push(r['점수']);
+    if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
     if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
     if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
   });
@@ -3412,7 +3417,7 @@ function renderTable(box,nq){
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
     const cur=log['출결'];
-    const recent=(RECENT[id]||[]).slice(0,3).join('·');
+    const recent=recentOf(id).slice(0,3).join('·');
     const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
     const tr=document.createElement('tr');
     if(!gtMode){tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;}
@@ -3503,7 +3508,7 @@ function renderCards(box,nq){
     const id=s['학생ID'], log=LOGMAP[id]||{};
     const d=document.createElement('div');d.className='stu'+(isNA(log)?' na':'');d.dataset.id=id;
     const cur=log['출결'];
-    const recent=(RECENT[id]||[]).slice(0,3).join(' · ');
+    const recent=recentOf(id).slice(0,3).join(' · ');
     const notes=(NOTES[id]||[]).slice(0,2);
     const itemsHtml=nq>0?(gtMode?gtItemsHtml(log)
       :'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(isNA(log)?'미응시':(log['점수']||'—'))+'</div></div>'):'';
@@ -3765,10 +3770,12 @@ async function genComments(){
     if(card.classList.contains('na'))return flag(tname+' 미응시');
     const score=parseFloat(val('점수'));
     const ih=parseFloat(val('이행률'));
-    const rec=(RECENT[id]||[]).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+    const rec=recentOf(id).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
     const ravg=rec.length>=2?rec.slice(0,3).reduce((a,b)=>a+b,0)/Math.min(rec.length,3):null;
+    // 판정 폭도 만점을 따라간다 — 100점 만점에서 1.5점 차이는 노이즈다 (0831)
+    const K=isGT()?10:1;
     if(!isNaN(ih)&&ih<50)return flag('과제 이행률 '+ih+'%');
-    if(!isNaN(score)&&ravg!==null&&score<ravg-1.5)return flag('최근 평균 대비 급락 ('+score+'점 / 최근 '+ravg.toFixed(1)+')');
+    if(!isNaN(score)&&ravg!==null&&score<ravg-1.5*K)return flag('최근 평균 대비 급락 ('+score+'점 / 최근 '+ravg.toFixed(1)+')');
     const parts=[];
     /* 추가학습은 '오늘 수업 전 / 오늘 수업 후 / 다음 수업일' 세 갈래다. 예전엔 오늘 날짜로
        잡힌 지정을 전부 '수업 전 등원'으로 써서, 수업 끝나고 남는 학생에게 하지도 않은 일을
@@ -3806,12 +3813,12 @@ async function genComments(){
         t='오늘 '+tname+'는 '+(nq?nq+'문항 중 '+(miss.join('·')||'감점')
           :score+'점');
         if(avg!==null){
-          if(score>avg+0.5)t+=pick(['으로, 반평균보다 좋은 결과입니다.','으로, 반평균을 웃돌았습니다.'],3);
-          else if(score<avg-0.5)t+=pick(['으로, 반평균에 조금 못 미쳤습니다.','으로, 반평균보다 소폭 아래입니다.'],3);
+          if(score>avg+0.5*K)t+=pick(['으로, 반평균보다 좋은 결과입니다.','으로, 반평균을 웃돌았습니다.'],3);
+          else if(score<avg-0.5*K)t+=pick(['으로, 반평균에 조금 못 미쳤습니다.','으로, 반평균보다 소폭 아래입니다.'],3);
           else t+=pick(['으로, 반평균 수준입니다.','으로, 반평균과 비슷한 결과입니다.'],3);
         }else t+='입니다.';
       }
-      if(ravg!==null&&score>ravg+0.5)t+=pick([' 최근 흐름보다 좋아지고 있습니다.',' 최근 몇 회보다 오름세입니다.'],4);
+      if(ravg!==null&&score>ravg+0.5*K)t+=pick([' 최근 흐름보다 좋아지고 있습니다.',' 최근 몇 회보다 오름세입니다.'],4);
       parts.push(t);
     }
     if(!isNaN(ih)){
