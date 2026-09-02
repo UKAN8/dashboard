@@ -199,6 +199,7 @@ function render(d){
     if(!(G && !G.없음 && !학부모))
       H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
     H.push(`<div class="note">다른 기록(성적·루프·리포트)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+    H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.</div>`);
     $('app').innerHTML=H.join('');
     $('msg').style.display='none'; $('app').style.display='';
     document.title=`${d.학생.이름} · 수학은유강`;
