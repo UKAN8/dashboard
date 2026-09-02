@@ -2919,6 +2919,30 @@ async function initClassButtons(){
   });
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
+/* (0902 유강) 지난 수업 루프 미제출 = 과제 미흡. 반을 열 때 loop_overdue(schema_v15) 로 받아
+   이름 옆 배지 + 이행률 빈칸이면 0 으로 채워 저장한다(조교가 고치면 그 값이 남는다). 재촉은 없다. */
+let LOOPMISS={};
+function loopMissLine(id){
+  const m=LOOPMISS[id]; if(!m||!m.length)return '';
+  const d=(m[0]['수업일']||'').slice(5).replace('-','/');
+  return `<div class="recent" style="margin-left:0;color:#ff5c8a">⛔ 루프 미제출 (${d} ${esc(m[0]['단원']||'루프')}${m.length>1?' 외 '+(m.length-1):''}) → 이행률 0</div>`;
+}
+async function loadLoopMiss(cls,today){
+  LOOPMISS={};
+  try{
+    const {data,error}=await sb.rpc('loop_overdue',{p_cls:cls,p_day:today});
+    if(error){console.warn('loop_overdue',error.message);return;}
+    (data||[]).forEach(r=>{(LOOPMISS[r['학생ID']]=LOOPMISS[r['학생ID']]||[]).push(r);});
+  }catch(e){console.warn('loop_overdue',e);}
+}
+/* 그려진 뒤 — 미제출 학생의 이행률이 비어 있으면 0 을 넣고 저장한다. 이미 값이 있으면 손대지 않는다. */
+function applyLoopMiss(){
+  csRoot().querySelectorAll('#students .stu').forEach(c=>{
+    const id=c.dataset.id; if(!LOOPMISS[id])return;
+    const inp=c.querySelector('[data-f="이행률"]'); if(!inp||inp.value.trim()!=='')return;
+    inp.value='0'; save(id,c);
+  });
+}
 /* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
    첫 기출이 무조건 '오름세'로 찍히고(0831 유강), 반대로 기출 뒤 첫 리뷰는 전원 '급락'으로
    잡혀 코멘트 자동생성이 막힌다. RECENT 원소 = {v:점수, gt:기출여부}. */
@@ -3024,6 +3048,7 @@ async function selectClass(cls){
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   NEXT=await nextClinic(cls);
+  await loadLoopMiss(cls,today);
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   const isClosed=(sess&&sess[0]&&sess[0]['상태']==='closed');
   $('sessionstate').textContent=isClosed?'마감됨':'진행중';
@@ -3372,6 +3397,7 @@ function renderStudents(){
     if(!c.classList.contains('na'))gtRecalc(c);
   });
   box.addEventListener('input',updateAvgs);   // 타이핑하는 동안 바로 따라온다
+  applyLoopMiss();                             // (0902) 지난 루프 미제출 → 이행률 0
   updateAvgs();
 }
 /* 반 평균 점수·이행률 — 채점 중에 화면에 떠 있어야 한다(0814 유강).
@@ -3425,7 +3451,7 @@ function renderTable(box,nq){
     const tr=document.createElement('tr');
     if(!gtMode){tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;}
     tr.innerHTML=`
-      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}</td>
+      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
       <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
       <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
       ${(nq&&!gtMode)?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
@@ -3518,7 +3544,7 @@ function renderCards(box,nq){
     d.innerHTML=`
       <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
       ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
-      ${prevHwLine(id)}
+      ${prevHwLine(id)}${loopMissLine(id)}
       <div class="seg" data-f="출결">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div>
       <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
       ${itemsHtml}
