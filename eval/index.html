@@ -98,7 +98,7 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
  * 무엇을 받나: 문항마다 `내 답` + `확신(확실/애매/찍음/안 품)`. 문항당 두 탭, 20문항 2분.
  * 정답은 화면에 안 띄운다 — 같은 시험지를 다른 반이 나중에 본다(0831 지시서).
  *   객관식(정답 1~5) → ①~⑤ 버튼 / 단답(정수) → 숫자 칸 / 정답이 √·분수 같은 것('보임') →
- *   정답을 보여주고 맞음·아님 / M(수동채점 서술형) → 맞음·부분·아님 을 학생이 스스로.
+ *   정답을 보여주고 맞음·아님 / M(수동채점 서술형) → 답은 안 묻고 확신만(정오는 조교 채점).
  * 화면엔 점수도, 채점 결과도 안 띄운다 — 공식 점수는 조교 입력(OMR)이 정본이다.
  * 5분류(숙달·불안정·가짜정답·개념오해·미학습·미응시문항)는 서버(circuit_hw)가 만든다.
  *
@@ -124,7 +124,7 @@ let TOK='', DAY='', DATA=null, ITEMS=[], ANS={}, T0=Date.now();
 function doneQ(it){
   const a=ANS[it.라벨]||{};
   if(!a.c) return false;
-  if(a.c==='안품') return true;
+  if(a.c==='안품' || it.종류==='수동') return true;   // 서술형은 확신만
   return !!(a.a&&String(a.a).trim());
 }
 
@@ -141,12 +141,11 @@ function draw(){
     }else if(it.종류==='보임'){
       ansRow=`<div class="row an">`+[['O','이렇게 적었다'],['X','다르게 적었다']].map(([v,t])=>
         `<button class="b${a.a===v?' on':''}" data-k="${E(it.라벨)}" data-a="${v}">${t}</button>`).join('')+`</div>`;
-    }else{ // 수동(서술형)
-      ansRow=`<div class="row an">`+[['O','맞은 것 같다'],['P','부분만'],['X','틀린 것 같다']].map(([v,t])=>
-        `<button class="b${a.a===v?' on':''}" data-k="${E(it.라벨)}" data-a="${v}">${t}</button>`).join('')+`</div>`;
+    }else{ // 수동(서술형) — 답은 안 묻는다(0902 유강: 옮겨 적기 무리). 확신만. 정오는 조교 채점이 정한다.
+      ansRow='';
     }
     const key = it.종류==='보임' ? `<span class="key">정답 <b>${E(it.정답)}</b></span>`
-              : it.종류==='수동' ? `<span class="key">서술형</span>` : '';
+              : it.종류==='수동' ? `<span class="key">서술형 · 확신만</span>` : '';
     H.push(`<div class="q${doneQ(it)?' ok':''}" id="q_${E(it.라벨)}">
       <div class="hd"><span class="no">${E(it.라벨)}번</span>${it.배점!=null?`<span class="pt">${it.배점}점</span>`:''}${key}</div>
       ${ansRow}
