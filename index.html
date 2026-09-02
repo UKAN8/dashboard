@@ -1493,14 +1493,17 @@ function group(items, empty, dateOf, rowOf, REF) {
   return out + '</div></div>';
 }
 function viewClinic(st) {
+  /* (0902 유강) 이 화면의 '오늘'은 진짜 오늘이다. st.REF 는 학습현황용 '다음 수업일'이라
+     daily_log 에 오늘 행이 생기는 순간 내일로 넘어가 오늘 올 학생이 안 보였다. */
+  const TD = ds(new Date());
   const rows = st.raw.clinic_roster.filter(r => String(r['날짜'] || '').startsWith('20'))
     .sort((a, b) => (a['날짜'] + (a['시간'] || '') + (a['이름'] || '')) < (b['날짜'] + (b['시간'] || '') + (b['이름'] || '')) ? -1 : 1);
-  const up = rows.filter(r => r['날짜'] >= st.REF);
-  const past = rows.filter(r => r['날짜'] < st.REF && st.within(r['날짜'], 15));
+  const up = rows.filter(r => r['날짜'] >= TD);
+  const past = rows.filter(r => r['날짜'] < TD && st.within(r['날짜'], 15));
   const done = past.filter(r => r['출석']);
   const attRate = done.length ? `${pyR0(100 * done.filter(r => r['출석'] === '출석').length / done.length)}%` : '—';
-  const clUp = st.clinic.filter(c => c.d >= st.REF);
-  const clPast = st.clinic.filter(c => c.d < st.REF && st.within(c.d, 8));
+  const clUp = st.clinic.filter(c => c.d >= TD);
+  const clPast = st.clinic.filter(c => c.d < TD && st.within(c.d, 8));
   const cRow = c => `<div class="cl-row"><b>${E(c.t || '—')}시</b> ${slink(c.s)} <span class="ban">${E(c.s.ban)}</span>`
     + `<span class="dim">${E(c.why || '')}</span></div>`;
   return '<section class="view" id="v-clinic">'
@@ -1510,11 +1513,11 @@ function viewClinic(st) {
     + `<div class="kpi"><div class="lbl">지난 2주 실시</div><div class="big">${done.length}<small>건</small></div></div>`
     + `<div class="kpi"><div class="lbl">출석률</div><div class="big">${attRate}</div></div>`
     + `<div class="kpi"><div class="lbl">문항 낸 세션</div><div class="big">${rows.filter(r => r['문항수']).length}<small>건</small></div></div></div>`
-    + `<div class="grid one-grid">${group(up, '지정한 대상자가 없다. 루프 화면 5번에서 고른다', r => r['날짜'], r => extRow(st, r), st.REF)}</div>`
-    + `<h2>지난 2주</h2><div class="grid one-grid">${group(past, '이력 없음', r => r['날짜'], r => extRow(st, r), st.REF)}</div>`
+    + `<div class="grid one-grid">${group(up, '지정한 대상자가 없다. 루프 화면 5번에서 고른다', r => r['날짜'], r => extRow(st, r), TD)}</div>`
+    + `<h2>지난 2주</h2><div class="grid one-grid">${group(past, '이력 없음', r => r['날짜'], r => extRow(st, r), TD)}</div>`
     + `<h2>데일리 시트에 적힌 등원 예정 <span class="cnt" id="clinic-up-cnt">${clUp.length}</span></h2>`
-    + `<div class="grid one-grid" id="clinic-up">${group(clUp, '예정된 추가학습 없음', c => c.d, cRow, st.REF)}</div>`
-    + `<div class="grid one-grid" id="clinic-past" style="margin-top:12px">${group(clPast, '', c => c.d, cRow, st.REF)}</div>`
+    + `<div class="grid one-grid" id="clinic-up">${group(clUp, '예정된 추가학습 없음', c => c.d, cRow, TD)}</div>`
+    + `<div class="grid one-grid" id="clinic-past" style="margin-top:12px">${group(clPast, '', c => c.d, cRow, TD)}</div>`
     + '</section>';
 }
 
