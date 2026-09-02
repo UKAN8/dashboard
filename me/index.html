@@ -168,6 +168,7 @@ function spark(pts,w=280,h=64){
 }
 
 /* ── 화면 ── */
+const MINIMAL=true;   // (0902) 자기평가 카드만. 포털 정비 끝나면 false
 function render(d){
   const 학부모 = d.대상==='학부모';
   const 나 = 학부모 ? `${d.학생.이름} 학생` : '나';
@@ -191,6 +192,17 @@ function render(d){
       H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.08)">`
         +`<div class="row"><span class="t"><b>오늘 기출테스트 자기평가</b><span class="dim"> 문항마다 내 답 + 확신 · 2분</span></span>`
         +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`);
+  }
+  // (0902 유강) 포털은 정비 전까지 자기평가만 보여준다 — 나머지 섹션은 전부 숨김.
+  //   되살리려면 MINIMAL=false. 데이터·portal_view 는 그대로라 켜는 순간 종전 화면이다.
+  if(MINIMAL){
+    if(!(G && !G.없음 && !학부모))
+      H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
+    H.push(`<div class="note">다른 기록(성적·루프·리포트)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+    $('app').innerHTML=H.join('');
+    $('msg').style.display='none'; $('app').style.display='';
+    document.title=`${d.학생.이름} · 수학은유강`;
+    return;
   }
 
   // ① 성적 — 제일 자주 찾는 것을 맨 위에. 원점수만 두지 않는다
