@@ -179,6 +179,20 @@ function render(d){
     +`<span class="ban">${E(d.학생.반||'')}</span></div>`
     +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 ${E(나)}의 기록만 보여줍니다</div>`);
 
+  // ⓪ 오늘 기출테스트 자기평가 (0902) — 시험 직후 답안지 걷자마자 폰으로. 학생 화면에만.
+  //    정보는 gt_eval_open 이 따로 준다(portal_view 는 손대지 않았다). 없으면 아무것도 안 그린다.
+  const G=d.자평||null;
+  if(G && !G.없음 && !학부모){
+    const url=`https://ukan8.github.io/dashboard/eval/?t=${encodeURIComponent(d.토큰||'')}`;
+    if(G.제출함)
+      H.push(`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">오늘 기출테스트 자기평가 <b class="good">제출 완료</b></span>`
+        +`<a class="n dim" href="${E(url)}" style="text-decoration:none">고치기</a></div></div>`);
+    else
+      H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.08)">`
+        +`<div class="row"><span class="t"><b>오늘 기출테스트 자기평가</b><span class="dim"> 문항마다 내 답 + 확신 · 2분</span></span>`
+        +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`);
+  }
+
   // ① 성적 — 제일 자주 찾는 것을 맨 위에. 원점수만 두지 않는다
   const S=d.성적||{주간:[],내신:[]};
   H.push(`<h2>성적</h2>`);
@@ -323,6 +337,10 @@ function render(d){
   catch(e){ err=e; }
   if(err) return say('지금은 열 수 없습니다.','잠시 뒤 다시 열어 주세요. 계속 같으면 원장에게 알려 주세요.');
   if(!data) return say('만료되었거나 잘못된 링크입니다.','새 링크가 필요하면 원장에게 말씀해 주세요.');
+  // (0902) 오늘 기출 자기평가가 열려 있나 — 학생 토큰만 답이 온다(학부모 토큰은 null). 실패해도 포털은 그냥 뜬다.
+  if(data.대상!=='학부모'){
+    try{ const r=await sb.rpc('gt_eval_open',{tok}); if(r&&r.data&&(r.data.문항||r.data.없음)){ data.자평=r.data; data.토큰=tok; } }catch(e){}
+  }
   render(data);
 })();
 </script></body></html>
