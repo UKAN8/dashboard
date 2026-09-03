@@ -100,11 +100,28 @@ pre{background:#2E2E2E;color:#E8E8E8;padding:14px;border-radius:10px;overflow-x:
  background:var(--ink);color:#fff;font-weight:700}
 .flag .sent{font-size:12.5px;color:var(--ok);font-weight:700}
 .foot{text-align:center;padding:22px;color:#B5B5B5;font-size:11.5px}
+.card{margin:2px 20px 6px;padding:18px 18px 16px;background:var(--tint);border-radius:14px}
+.card .cl{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--deep)}
+.card .ct{font-size:17.5px;font-weight:800;margin:4px 0 12px;color:var(--ink);letter-spacing:-.01em}
+.card h4{margin:15px 0 5px;font-size:14px;font-weight:800;color:var(--deep)}
+.card h4:first-of-type{margin-top:0}
+.card p{margin:0 0 6px;font-size:14.5px;line-height:1.7}
+.card .eq{margin:10px 0;text-align:center;font-size:16.5px;overflow-x:auto}
+.card .key{margin-top:13px;padding:12px 14px;background:#fff;border-radius:10px;
+ font-size:14px;font-weight:700;color:var(--deep);line-height:1.6}
+.ov{border-top:1.15px solid currentColor;padding-top:1px;margin:0 .06em;
+ font-family:'Cambria Math','Times New Roman',Georgia,serif;font-style:normal;white-space:nowrap}
+.ov+sup{font-style:normal;font-family:'Cambria Math','Times New Roman',Georgia,serif}
+.card .fig{margin:12px 0 14px;text-align:center;line-height:0}
+.card .fig svg{max-width:100%;height:auto;display:inline-block}
+.card .fig .cap{display:block;line-height:1.5;margin-top:5px;font-size:12px;color:var(--mute)}
+.card .cwarn{margin-top:9px;padding:11px 14px;background:var(--warnbg);color:var(--warn);
+ border-radius:10px;font-size:13.5px;font-weight:700;line-height:1.6}
 math{font-family:'Cambria Math','STIX Two Math','Latin Modern Math','Times New Roman',serif;font-size:1.06em}
 .disp math{font-size:1.18em}
 .stem math,.ch math,.sk math,.sol math{vertical-align:-0.1em}
 </style></head><body><div class="wrap"><header><div class="brand">수학은유강 · 추가학습</div><h1>이명수 추가학습</h1><div class="meta">고1T · 오늘 클리닉 시간까지 · 1문항 · 6분</div><div class="bar" id="bar"><i></i></div></header><div class="guide"><b>연습장에 풀고 답만 적는다</b>암산으로 찍지 마라. 식을 다 쓰고 나온 값을 그대로 넣으면 된다. 확인을 누르면 풀이가 열린다. 틀린 문항은 다음에 또 나온다.</div><div class="part"><div class="pl">인증</div><div class="pt">인증이 밀린 유형</div><div class="pd">인증도가 70% 밑으로 내려간 것들이다</div></div><section class="q" data-i="0"><div class="qhead"><span class="qno">1</span><span class="tag">원 위의 점에서의 접선 방정식 유도(서술)</span><span class="tag grey">단답</span><span class="tag pct">인증도 50%</span></div><p class="stem">원 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>25</mn></mrow></math> 위의 점 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mn>3</mn><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mn>4</mn><mo stretchy="false">&#x00029;</mo></mrow></math> 에서의 접선의 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>x</mi></mrow></math>절편을 구하여라.</p><div class="field"><label class="flabel">답</label><div class="row"><input type="text" id="q0a0" placeholder="답 입력"><button class="btn" onclick="grade(0)">확인</button></div></div><div class="verdict" id="v0"></div><div class="flag" id="fb0"><button class="fl" onclick="flagOpen(0)">이 문제 이상해요</button></div></section><section class="result" id="result"><div class="score"><div class="n" id="sc"></div><div class="l" id="scl"></div></div><div class="rsec"><div class="rh">인증이 밀린 유형</div><div class="rlist" id="r1"></div></div><div class="next" id="nextbox"></div></section><details class="dev"><summary>제출 데이터 (선생님용)</summary><pre id="payload">아직 제출 전</pre></details><div class="foot">수학은유강 · 추가학습</div></div><script>
-const META={"루프ID": "20260905-CG1T-f73cb8be", "학생": {"학생ID": "이명수_고1T_태성", "이름": "이명수", "반": "고1T"}, "말": {"다맞음": "짚은 건 잡았다", "거의": "짚은 건 거의 잡았다", "미흡": "짚은 것부터 다시 보자", "파트1": "오늘 짚은 것", "다음": "아직 {n}개 남았다. 다음 클리닉에 또 나온다", "끝": "다 인증했다. 이 유형들은 당분간 안 나온다", "종류": "추가학습"}, "답안함URL": "https://script.google.com/macros/s/AKfycbwVJn85PNsD9bs4hpljvT2eGC-M2s6hEG1jEcVLGWMdCg3ovVgXR7CoEOg1u-MPsLwq/exec"};
+const META={"루프ID": "20260905-CG1T-f73cb8be", "학생": {"학생ID": "이명수_고1T_태성", "이름": "이명수", "반": "고1T"}, "말": {"다맞음": "짚은 건 잡았다", "거의": "짚은 건 거의 잡았다", "미흡": "짚은 것부터 다시 보자", "파트1": "오늘 짚은 것", "다음": "아직 {n}개 남았다. 다음 클리닉에 또 나온다", "끝": "다 인증했다. 이 유형들은 당분간 안 나온다", "종류": "추가학습"}, "과정": "", "답안함URL": "https://script.google.com/macros/s/AKfycbwVJn85PNsD9bs4hpljvT2eGC-M2s6hEG1jEcVLGWMdCg3ovVgXR7CoEOg1u-MPsLwq/exec"};
 const ITEMS=[{"유형": "원 위의 점에서의 접선 방정식 유도(서술)", "형식": "단답", "단원": "원의 방정식", "난이도": "중", "발문": "원 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>25</mn></mrow></math> 위의 점 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mo stretchy=\"false\">&#x00028;</mo><mn>3</mn><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mn>4</mn><mo stretchy=\"false\">&#x00029;</mo></mrow></math> 에서의 접선의 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>x</mi></mrow></math>절편을 구하여라.", "정답": ["25/3"], "풀이": ["원 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><msup><mi>r</mi><mn>2</mn></msup></mrow></math> 위의 점 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mo stretchy=\"false\">&#x00028;</mo><msub><mi>x</mi><mn>1</mn></msub><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><msub><mi>y</mi><mn>1</mn></msub><mo stretchy=\"false\">&#x00029;</mo></mrow></math> 에서의 접선은 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mi>x</mi><mn>1</mn></msub><mi>x</mi><mo>&#x0002B;</mo><msub><mi>y</mi><mn>1</mn></msub><mi>y</mi><mo>&#x0003D;</mo><msup><mi>r</mi><mn>2</mn></msup></mrow></math> 이다.", "접선의 방정식은 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mn>3</mn><mi>x</mi><mo>&#x0002B;</mo><mn>4</mn><mi>y</mi><mo>&#x0003D;</mo><mn>25</mn></mrow></math> 이다.", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>y</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> 을 대입하면 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>x</mi><mo>&#x0003D;</mo><mstyle displaystyle=\"true\" scriptlevel=\"0\"><mfrac><mrow><mn>25</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mstyle></mrow></math> 이다."], "파트": 1, "출처": "추가학습", "원태그": "원 위의 점에서의 접선 방정식 유도(서술)", "인증도": 50}];
 
 const KEY = 'metaloop:' + META.루프ID;
@@ -234,12 +251,24 @@ function finish(silent){
       다음: now>=100 ? '인증 100%' : (ok ? now+'% · 한 번 더' : '0%로 떨어짐')};
   });
   const left = rot.filter(r=>r.인증도<100).length + (i1.length-p1);
-  document.getElementById('nextbox').innerHTML='<b>인증 현황</b>'
-    +rot.map(r=>'<div class="nl"><span>'+r.유형+'</span><em class="'
-      +(r.인증도>=100?'done':(r.정답?'half':'zero'))+'">'+r.다음+'</em></div>').join('')
-    +'<div class="nl"><span>'+W.파트1+'</span><em class="'+(p1===i1.length?'done':'zero')+'">'
-      +(p1===i1.length?'다 맞음':(i1.length-p1)+'개 인증 대기')+'</em></div>'
-    +'<div class="nn">'+(left ? W.다음.replace('{n}', left) : W.끝)+'</div>';
+
+  // 학습 루프(개념카드 → 확인 → 유형)는 인증 회전이 아니라 '무엇을 다시 볼지'가 결론이다.
+  if(W.모드==='학습'){
+    const bad=ITEMS.map((it,i)=>state[i].ok?null:it.유형).filter(Boolean);
+    document.getElementById('nextbox').innerHTML='<b>'+(W.요약제목||'오늘 잡은 것')+'</b>'
+      +ITEMS.map((it,i)=>'<div class="nl"><span>'+it.유형+'</span><em class="'
+        +(state[i].ok?'done':'zero')+'">'+(state[i].ok?'잡음':'다시')+'</em></div>').join('')
+      +'<div class="nn">'+(bad.length
+        ? (W.다시||'{n}개는 풀이를 다시 읽자').replace('{n}', bad.length)
+        : (W.끝||'개념도 유형도 다 잡았다'))+'</div>';
+  } else {
+    document.getElementById('nextbox').innerHTML='<b>인증 현황</b>'
+      +rot.map(r=>'<div class="nl"><span>'+r.유형+'</span><em class="'
+        +(r.인증도>=100?'done':(r.정답?'half':'zero'))+'">'+r.다음+'</em></div>').join('')
+      +'<div class="nl"><span>'+W.파트1+'</span><em class="'+(p1===i1.length?'done':'zero')+'">'
+        +(p1===i1.length?'다 맞음':(i1.length-p1)+'개 인증 대기')+'</em></div>'
+      +'<div class="nn">'+(left ? W.다음.replace('{n}', left) : W.끝)+'</div>';
+  }
 
   document.getElementById('payload').textContent=JSON.stringify({
     종류:W.종류,
