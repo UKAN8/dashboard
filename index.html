@@ -1097,7 +1097,13 @@ async function loadAll() {
 
 /* ───────── 집계 (dashboard.py '데이터 조립' 이식) ───────── */
 function compute(raw) {
-  const journal = raw.daily_log.filter(r => String(r['날짜'] || '').startsWith('20'));
+  // (0904) 유령 행 제외 — 콘솔이 반을 열기만 해도 '루프 미제출 → 이행률 0' 을 저장하던 시절의 잔재.
+  // 출결·테스트상태·점수·코멘트가 전부 비고 이행률만 0 인 행은 수업 기록이 아니다
+  // (0903 고1T 3행이 수업 없는 날에 잡히고, 0904 고1A 이행률 추이가 한 명 0% 로 꺾인 사고).
+  const ghost = r => !(r['출결'] || '').trim() && !(r['테스트상태'] || '').trim()
+    && fnum(r['점수']) == null && !(r['코멘트'] || '').trim()
+    && (fnum(r['이행률']) == null || fnum(r['이행률']) === 0);
+  const journal = raw.daily_log.filter(r => String(r['날짜'] || '').startsWith('20') && !ghost(r));
   const dates = [...new Set(journal.map(r => r['날짜']))].sort();
   const LAST = dates[dates.length - 1];
   const TODAY = ds(new Date());
@@ -2935,12 +2941,17 @@ async function loadLoopMiss(cls,today){
     (data||[]).forEach(r=>{(LOOPMISS[r['학생ID']]=LOOPMISS[r['학생ID']]||[]).push(r);});
   }catch(e){console.warn('loop_overdue',e);}
 }
-/* 그려진 뒤 — 미제출 학생의 이행률이 비어 있으면 0 을 넣고 저장한다. 이미 값이 있으면 손대지 않는다. */
+/* 그려진 뒤 — 미제출 학생의 이행률이 비어 있으면 0 을 채운다. 이미 값이 있으면 손대지 않는다.
+   ⚠ (0904) 여기서 무조건 save() 하면 안 된다 — 반 버튼만 눌러도(수업 없는 날, 수업 전, 구경)
+   출결 없는 '이행률 0' 행이 그 날짜로 생겨 대시보드 이행률 추이가 0%로 꺾였다
+   (0903 고1T 3행·0904 고1A 김현조 실사고). 오늘 행이 이미 있는 학생(LOGMAP)만 저장하고,
+   나머지는 칸에만 채워 둔다 — 조교가 출결을 찍는 순간 그 카드의 save 가 0 을 같이 올린다. */
 function applyLoopMiss(){
   csRoot().querySelectorAll('#students .stu').forEach(c=>{
     const id=c.dataset.id; if(!LOOPMISS[id])return;
     const inp=c.querySelector('[data-f="이행률"]'); if(!inp||inp.value.trim()!=='')return;
-    inp.value='0'; save(id,c);
+    inp.value='0';
+    if(LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
   });
 }
 /* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
