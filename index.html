@@ -2809,7 +2809,15 @@ async function gtJobLinks(j,el){
   for(const f of files){
     const {data,error}=await sb.storage.from('reports').createSignedUrl(f['키'],3600,{download:f['이름']+'.pdf'});
     if(error){out.push('<span class="warn">'+esc(f['이름'])+' 실패</span>');continue;}
-    out.push('<a href="'+data.signedUrl+'" target="_blank" rel="noopener">'+esc(f['이름'])+'</a>');
+    /* (0905 유강) 문제~빠른정답 / 빠른정답~해설 두 파일 — hw_watch 가 나눠 올린 잡만 링크가 붙는다.
+       조교가 한 파일을 쪽 기준으로 잘라 두 번 뽑던 일을 없앤 것. 전체 파일은 이름에 그대로. */
+    let sub='';
+    for(const [suf,k] of [['문제','문제키'],['해설','해설키']]){
+      if(!f[k])continue;
+      const r=await sb.storage.from('reports').createSignedUrl(f[k],3600,{download:f['이름']+'_'+suf+'.pdf'});
+      if(!r.error)sub+=' <a href="'+r.data.signedUrl+'" target="_blank" rel="noopener" style="opacity:.85">['+suf+(f[suf+'쪽']?' '+f[suf+'쪽']+'쪽':'')+']</a>';
+    }
+    out.push('<span style="white-space:nowrap"><a href="'+data.signedUrl+'" target="_blank" rel="noopener">'+esc(f['이름'])+'</a>'+sub+'</span>');
     zf.push({name:f['이름']+'.pdf',url:data.signedUrl});
   }
   const p=j['파라미터']||{};
