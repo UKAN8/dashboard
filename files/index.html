@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>과제 파일 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<!-- ⚠ 버전을 박는다 (콘솔·포털과 같은 버전) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.08);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0; --good:#c8f0da; --warn:#ffd48a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.brand{font-weight:800;color:var(--acc)}
+header .t{font-weight:700;font-size:16px}
+header .dim{color:var(--dim);font-size:12px}
+select{font:inherit;color:var(--tx);background:#15151d;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
+.wrap{display:grid;grid-template-columns:minmax(420px,520px) 1fr;gap:0;height:calc(100vh - 52px)}
+.left{overflow:auto;padding:12px 14px;border-right:1px solid var(--bd)}
+.right{background:#111118;display:flex;flex-direction:column}
+.right .bar{padding:8px 12px;color:var(--tx2);font-size:13px;border-bottom:1px solid var(--bd);display:flex;gap:10px;align-items:center}
+.right iframe{flex:1;border:0;width:100%;background:#fff}
+.right .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dim)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11.5px;color:var(--dim);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--bd);letter-spacing:.04em}
+td{padding:7px 6px;border-bottom:1px solid var(--bd);vertical-align:middle}
+tr.sel td{background:rgba(245,160,160,.07)}
+td.nm{font-weight:700;font-size:15px}
+td.nm small{display:block;font-weight:400;color:var(--dim);font-size:11.5px}
+a.f{display:inline-block;font:inherit;font-size:13px;color:var(--tx);background:rgba(255,255,255,.05);border:1px solid var(--bd);
+ border-radius:8px;padding:4px 9px;margin:0 3px 0 0;text-decoration:none;white-space:nowrap}
+a.f.q{border-color:rgba(200,240,218,.35)} a.f.s{border-color:rgba(245,160,160,.35)}
+a.f small{color:var(--dim);margin-left:3px}
+button.pv{font:inherit;font-size:12px;color:var(--tx2);background:transparent;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;cursor:pointer}
+button.pv.on{color:var(--acc);border-color:rgba(245,160,160,.5)}
+@media (hover:hover) and (pointer:fine){ a.f:hover,button.pv:hover{border-color:rgba(255,255,255,.3)} }
+.miss{margin:12px 0 0;padding:9px 11px;border:1px solid rgba(255,212,138,.35);border-radius:10px;color:var(--warn);font-size:13px}
+.miss b{display:block;margin-bottom:3px}
+.note{color:var(--dim);font-size:12px;margin:10px 0 0;line-height:1.55}
+.msg{padding:40px 20px;color:var(--dim)} .msg a{color:var(--acc)}
+.sum{color:var(--tx2);font-size:13px;margin:0 0 8px}
+.sum b{color:var(--tx)}
+@media (max-width:900px){ .wrap{grid-template-columns:1fr;height:auto} .right{min-height:70vh} }
+</style></head>
+<body>
+<header>
+  <span class="brand">수학은유강</span><span class="t">기출과제 파일</span>
+  <select id="grp"></select>
+  <button class="pv" id="reload" title="작업 현황 다시 읽기">↻</button>
+  <span class="dim">문제 = 문제~빠른정답 · 해설 = 빠른정답~해설 · 링크는 1시간 유효</span>
+</header>
+<div class="wrap">
+  <div class="left" id="left"><div class="msg">불러오는 중…</div></div>
+  <div class="right" id="right"><div class="empty">이름 옆 [보기] 를 누르면 여기서 미리 본다</div></div>
+</div>
+<script>
+const SB_URL = 'https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+/* 콘솔(/dashboard/)과 같은 오리진·같은 프로젝트라 로그인 세션을 그대로 쓴다 — 여기서 따로 로그인시키지 않는다. */
+const sb = supabase.createClient(SB_URL, SB_ANON);
+const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = s => document.querySelector(s);
+let JOBS = [], GROUPS = {}, CUR = null;
+
+async function load() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan8.github.io/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
+    return;
+  }
+  const { data, error } = await sb.from('job_queue').select('id,종류,상태,요청자,파라미터,결과,메시지,요청시각,완료시각')
+    .eq('종류', '기출과제').order('id', { ascending: false }).limit(400);
+  if (error) { $('#left').innerHTML = '<div class="msg">작업 현황을 못 읽었다: ' + E(error.message) + '</div>'; return; }
+  JOBS = data || [];
+  GROUPS = {};
+  for (const j of JOBS) {
+    const p = j['파라미터'] || {};
+    if (!p['반'] || !p['날짜']) continue;
+    const k = p['반'] + ' · ' + p['날짜'];
+    (GROUPS[k] = GROUPS[k] || { 반: p['반'], 날짜: p['날짜'], 시험지명: p['시험지명'] || '', jobs: [] }).jobs.push(j);
+  }
+  const keys = Object.keys(GROUPS).sort((a, b) => GROUPS[b].날짜.localeCompare(GROUPS[a].날짜) || a.localeCompare(b));
+  const sel = $('#grp');
+  sel.innerHTML = keys.map(k => `<option value="${E(k)}">${E(k)}${GROUPS[k].시험지명 ? ' — ' + E(GROUPS[k].시험지명) : ''}</option>`).join('');
+  const want = new URLSearchParams(location.search).get('g');
+  sel.value = (want && GROUPS[want]) ? want : keys[0];
+  await show(sel.value);
+}
+
+async function show(k) {
+  const g = GROUPS[k]; CUR = k;
+  if (!g) { $('#left').innerHTML = '<div class="msg">기출과제 작업이 없다</div>'; return; }
+  history.replaceState(null, '', '?g=' + encodeURIComponent(k));
+  /* 학생별 잡(자평 체인)과 반 전체 잡(마감 백스톱)이 섞여 있다 — 이름으로 합치고 최신 잡이 이긴다 */
+  const rows = {}, fails = [], pending = [];
+  const jobsAsc = g.jobs.slice().sort((a, b) => a.id - b.id);
+  for (const j of jobsAsc) {
+    const p = j['파라미터'] || {}, r = j['결과'] || {};
+    if (j['상태'] === '완료' && Array.isArray(r['업로드']) && r['업로드'].length) {
+      const cnt = {}; for (const s of (r['학생'] || [])) if (Array.isArray(s)) cnt[s[0]] = s[1];
+      for (const f of r['업로드']) rows[f['이름']] = { ...f, 문항: cnt[f['이름']], 잡: j.id, 시각: j['완료시각'] };
+    } else if (j['상태'] === '실패' || (j['상태'] === '완료' && p['학생'] && !(r['업로드'] || []).length)) {
+      fails.push({ 이름: p['학생'] || '(반 전체)', 메시지: j['메시지'] || '', 잡: j.id });
+    } else if (j['상태'] === '요청' || j['상태'] === '진행' || j['상태'] === '처리중') {
+      pending.push({ 이름: p['학생'] || '(반 전체)', 상태: j['상태'], 잡: j.id });
+    }
+  }
+  const names = Object.keys(rows).sort((a, b) => a.localeCompare(b, 'ko'));
+  /* 서명 URL 은 한 번에 — 학생당 전체·문제·해설 세 개 */
+  const paths = [];
+  for (const n of names) for (const key of ['키', '문제키', '해설키']) if (rows[n][key]) paths.push(rows[n][key]);
+  const urls = {};
+  if (paths.length) {
+    const { data } = await sb.storage.from('reports').createSignedUrls(paths, 3600);
+    for (const d of (data || [])) if (d.signedUrl) urls[d.path] = d.signedUrl;
+  }
+  const dl = (u, name) => u ? u + '&download=' + encodeURIComponent(name) : '';
+  let html = `<p class="sum"><b>${E(g.반)} ${E(g.날짜)}</b> · PDF <b>${names.length}</b>명` +
+    (fails.length ? ` · <span style="color:var(--warn)">없음 ${fails.length}</span>` : '') +
+    (pending.length ? ` · 만드는 중 ${pending.length}` : '') + '</p>';
+  html += '<table><tr><th>학생</th><th>파일</th><th></th></tr>';
+  for (const n of names) {
+    const f = rows[n], u0 = urls[f['키']], u1 = f['문제키'] && urls[f['문제키']], u2 = f['해설키'] && urls[f['해설키']];
+    const nm = n.length >= 3 ? n.slice(1) : n;
+    html += `<tr data-n="${E(n)}"><td class="nm">${E(nm)}<small>${f.문항 ? '유형 ' + E(f.문항) + '문항 · ' : ''}${f['문제쪽'] ? (f['문제쪽'] + f['해설쪽'] - 1) + '쪽' : ''}</small></td><td>` +
+      (u1 ? `<a class="f q" href="${dl(u1, n + '_문제.pdf')}" target="_blank" rel="noopener">문제<small>${f['문제쪽']}쪽</small></a>` : '') +
+      (u2 ? `<a class="f s" href="${dl(u2, n + '_해설.pdf')}" target="_blank" rel="noopener">해설<small>${f['해설쪽']}쪽</small></a>` : '') +
+      (u0 ? `<a class="f" href="${dl(u0, n + '.pdf')}" target="_blank" rel="noopener" style="opacity:.75">전체</a>` : '<span class="dim">링크 실패</span>') +
+      (!u1 && u0 ? ' <span style="color:var(--dim);font-size:11.5px">(분할 전 잡)</span>' : '') +
+      `</td><td><button class="pv" data-u="${E(u1 || u0 || '')}" data-n="${E(nm)}">보기</button></td></tr>`;
+  }
+  html += '</table>';
+  if (fails.length) html += '<div class="miss"><b>PT 없음 ' + fails.length + '명</b>' +
+    fails.map(x => E(x.이름) + ' — ' + E((x.메시지 || '').slice(0, 90)) + ' <span style="opacity:.6">#' + x.잡 + '</span>').join('<br>') + '</div>';
+  if (pending.length) html += '<div class="note">만드는 중: ' + pending.map(x => E(x.이름) + '(' + E(x.상태) + ')').join(', ') + ' — 1~2분 뒤 ↻</div>';
+  html += '<div class="note">문제 파일과 해설 파일에 빠른정답 장이 둘 다 들어 있다. 파일명은 학생 이름으로 떨어진다. '
+    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다.</div>';
+  $('#left').innerHTML = html;
+  document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
+}
+
+function preview(b) {
+  const u = b.dataset.u; if (!u) return;
+  document.querySelectorAll('button.pv.on').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('tr.sel').forEach(x => x.classList.remove('sel'));
+  b.classList.add('on'); b.closest('tr').classList.add('sel');
+  $('#right').innerHTML = `<div class="bar"><b>${E(b.dataset.n)}</b> <span style="opacity:.7">문제 파일 미리보기</span>`
+    + `<a class="f" href="${u}" target="_blank" rel="noopener" style="margin-left:auto">새 탭에서 열기</a></div>`
+    + `<iframe src="${u}#toolbar=1"></iframe>`;
+}
+
+$('#grp').onchange = e => show(e.target.value);
+$('#reload').onclick = () => load();
+load();
+</script>
+</body></html>
