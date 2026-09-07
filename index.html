@@ -134,9 +134,12 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 
 /* ── 기출 (0907) — gc- 접두사. 답안표는 가로로 길다: 첫 열 고정 + 가로 스크롤 ── */
 .gc-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0} .gc-sp{flex:1}
-.gc-pick{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.gc-pk{display:flex;flex-wrap:wrap;gap:6px;align-items:center} .gc-pk .lbl{min-width:52px;margin:0}
-.gc-pk .fbtn small{display:block;font-size:10px;color:var(--dim);line-height:1.2}
+.gc-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px} .gc-pick .lbl{margin:0}
+.gc-sel,.gc-q{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 10px;font-size:13px}
+.gc-sel{min-width:260px;max-width:100%} .gc-q{width:110px}
+.gc-pick .fbtn[disabled]{opacity:.35;cursor:default}
+.gc-tbl th.sort{cursor:pointer;user-select:none} .gc-tbl th.sort.on{color:var(--tx)} .gc-tbl th.sort i{font-style:normal;font-size:9px;margin-left:2px;color:var(--acc)}
+@media (hover:hover) and (pointer:fine){ .gc-tbl th.sort:hover{color:var(--tx2)} }
 .gc-head{margin-bottom:12px} .gc-stu2{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:8px}
 .gc-hard{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .gc-hd{font-size:12px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.05);border-left:3px solid var(--dim)}
@@ -2576,10 +2579,26 @@ function viewGichul(st) {
 
 function gcWire(st) {
   const G = st.gc || gcBuild(st);
-  let mode = 'paper', grade = '*', paper = null, sid = null, showAns = false;
+  let mode = 'paper', grade = '*', paper = null, sid = null, showAns = false, q = '';
+  // 정렬 상태 — 표마다 따로. 머리글을 누르면 같은 열은 방향만 뒤집는다. (0907 유강: 정렬은 필수)
+  const sort = { paper: { k: 'score', d: -1 }, ban: { k: 'first', d: -1 } };
   const inG = p => grade === '*' || p.grade === grade || [...p.bans].some(b => gcGrade(b) === grade);
   const papers = () => G.papers.filter(inG);
   const nm = t => t.stu ? slink(t.stu) : `<span class="nm">${E(t.name)}</span>`;
+  const cmp = (a, b) => a == null && b == null ? 0 : a == null ? 1 : b == null ? -1
+    : typeof a === 'string' ? a.localeCompare(b, 'ko') : a - b;         // null 은 방향과 무관하게 맨 뒤
+  const sortRows = (rows, key, s) => [...rows].sort((x, y) => {
+    const a = key(x), b = key(y); if (a == null || b == null) return cmp(a, b);
+    return cmp(a, b) * s.d;
+  });
+  const th = (tbl, k, label, cls) => {                                  // 정렬 가능한 머리글
+    const s = sort[tbl], on = s.k === k;
+    return `<th class="sort${cls ? ' ' + cls : ''}${on ? ' on' : ''}" data-gt="${tbl}" data-sk="${E(k)}" title="눌러서 정렬">${label}${on ? `<i>${s.d < 0 ? '▼' : '▲'}</i>` : ''}</th>`;
+  };
+  // 선택은 <select> 하나 — 학년·학교(반)별 optgroup. 버튼 벽은 고1·고2가 섞여 못 쓴다(0907).
+  const sel = (id, groups, cur) => `<select class="gc-sel" data-gsel="${id}">` + groups.map(([g, opts]) =>
+    `<optgroup label="${E(g)}">` + opts.map(o => `<option value="${E(o.v)}"${o.v === cur ? ' selected' : ''}>${E(o.t)}</option>`).join('') + '</optgroup>').join('') + '</select>';
+  const grpKey = (a, b) => (gcGrade(a) || a).localeCompare(gcGrade(b) || b) || a.localeCompare(b, 'ko');
   const okCell = (v, l, t) => {
     if (v == null) return '<td class="gc-c na" title="미채점">·</td>';
     const a = showAns ? (t.ans[l] || '') : '';
@@ -2593,12 +2612,15 @@ function gcWire(st) {
     if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
     if (!paper || !ps.find(p => p.id === paper)) paper = ps[0].id;
     const p = ps.find(x => x.id === paper);
-    const bySchool = {};
-    ps.forEach(x => (bySchool[gcSchool(x.id)] = bySchool[gcSchool(x.id)] || []).push(x));
-    const pick = '<div class="gc-pick">' + Object.keys(bySchool).sort((a, b) => a.localeCompare(b, 'ko')).map(s =>
-      `<div class="gc-pk"><span class="lbl">${E(s)}</span>` + bySchool[s].map(x =>
-        `<button class="fbtn${x.id === paper ? ' on' : ''}" data-gp="${E(x.id)}">${E(gcPaperLabel(x.id).replace(s + ' ', ''))}`
-        + `<small>${[...x.bans].join('·')} · ${x.takes.length}명</small></button>`).join('') + '</div>').join('') + '</div>';
+    const bySchool = {};                                    // '고1 · 청덕고' → 시험지들 (학년 먼저, 학교 다음)
+    ps.forEach(x => { const g = (x.grade || '학년미상') + ' · ' + gcSchool(x.id); (bySchool[g] = bySchool[g] || []).push(x); });
+    const groups = Object.keys(bySchool).sort(grpKey).map(g => [g, bySchool[g].map(x =>
+      ({ v: x.id, t: `${gcPaperLabel(x.id).replace(gcSchool(x.id) + ' ', '')} · ${[...x.bans].join('·')} · ${x.takes.length}명` }))]);
+    const idx = ps.findIndex(x => x.id === paper);
+    const pick = `<div class="gc-pick"><span class="lbl">시험지</span>${sel('paper', groups, paper)}`
+      + `<button class="fbtn" data-gnav="-1"${idx <= 0 ? ' disabled' : ''} title="이전 시험지">‹</button>`
+      + `<button class="fbtn" data-gnav="1"${idx >= ps.length - 1 ? ' disabled' : ''} title="다음 시험지">›</button>`
+      + `<span class="dim">${idx + 1}/${ps.length}</span></div>`;
 
     const hasAns = p.takes.some(t => Object.keys(t.ans).length);
     const scores = p.takes.map(t => t.score);
@@ -2615,21 +2637,25 @@ function gcWire(st) {
       + (p.miss.length ? `<div class="lbl" style="margin-top:8px">미응시</div><div class="dim">${p.miss.map(m => E(m.name) + '(' + E(m.ban) + ')').join(', ')}</div>` : '')
       + '</div>';
 
-    const th = p.labels.map(l => `<th class="gc-l" title="${E(p.topic[l] || '')}">${E(l)}</th>`).join('');
+    const ths = p.labels.map(l => th('paper', 'q:' + l, E(l), 'gc-l')).join('');
+    const s = sort.paper;
+    const keyF = s.k === 'name' ? t => t.name : s.k === 'ban' ? t => t.ban : s.k === 'score' ? t => t.score
+      : s.k === 'grade' ? t => t.grade : s.k.startsWith('q:') ? t => t.ok[s.k.slice(2)] : t => t.score;
+    const takes = sortRows(p.takes, keyF, s);
     const keyRow = p.hasKey ? `<tr class="gc-key"><td class="gc-fz">정답</td><td></td><td></td>${p.labels.map(l =>
       `<td>${E(p.key[l] === 'M' ? '서술' : (p.key[l] || ''))}</td>`).join('')}</tr>` : '';
     const ptRow = Object.keys(p.pts).length ? `<tr class="gc-pt"><td class="gc-fz">배점</td><td></td><td></td>${p.labels.map(l =>
       `<td>${p.pts[l] != null ? E(String(p.pts[l])) : ''}</td>`).join('')}</tr>` : '';
     const rateRow = `<tr class="gc-rate"><td class="gc-fz">정답률</td><td></td><td></td>${p.labels.map(l =>
       `<td class="${gcCls(p.rate[l])}"><span class="gc-bar1" style="height:${Math.round((p.rate[l] || 0) * 22)}px"></span>${p.rate[l] == null ? '' : Math.round(p.rate[l] * 100)}</td>`).join('')}</tr>`;
-    const body = p.takes.map(t => `<tr class="gc-row" data-ban="${E(t.ban)}"><td class="gc-fz">${nm(t)} <span class="ban">${E(t.ban)}</span></td>`
+    const body = takes.map(t => `<tr class="gc-row" data-ban="${E(t.ban)}"><td class="gc-fz">${nm(t)} <span class="ban">${E(t.ban)}</span></td>`
       + `<td class="gc-sc"><b>${E(String(t.score))}</b></td>`
       + `<td class="gc-gr">${t.grade != null ? chip(gradeCls(t.grade), t.grade + '등급') : '<span class="dim">—</span>'}</td>`
       + p.labels.map(l => okCell(t.ok[l], l, t)).join('') + '</tr>').join('');
-    const tbl = `<div class="gc-tools"><span class="dim">○ 정답 · △ 부분 · × 오답 · ‘·’ 미채점. 이름을 누르면 학생 페이지</span>`
+    const tbl = `<div class="gc-tools"><span class="dim">○ 정답 · △ 부분 · × 오답 · ‘·’ 미채점. 이름을 누르면 학생 페이지 · 머리글을 누르면 정렬</span>`
       + (hasAns ? `<button class="fbtn${showAns ? ' on' : ''}" data-ga="1">${showAns ? '정오로 보기' : '학생 답안 보기'}</button>` : '')
       + '</div>'
-      + `<div class="gc-wrap"><table class="gc-tbl"><thead><tr><th class="gc-fz">학생</th><th>점수</th><th>등급</th>${th}</tr>${keyRow}${ptRow}${rateRow}</thead>`
+      + `<div class="gc-wrap"><table class="gc-tbl"><thead><tr>${th('paper', 'name', '학생', 'gc-fz')}${th('paper', 'score', '점수')}${th('paper', 'grade', '등급')}${ths}</tr>${keyRow}${ptRow}${rateRow}</thead>`
       + `<tbody>${body || '<tr><td colspan="99" class="dim">응시 기록 없음</td></tr>'}</tbody></table></div>`;
     return pick + head + tbl;
   }
@@ -2641,10 +2667,16 @@ function gcWire(st) {
     if (!sids.length) return '<div class="dim">응시 학생이 없다.</div>';
     if (!sid || !sids.includes(sid)) sid = sids[0];
     const byBan = {};
-    sids.forEach(s => (byBan[G.byStu[s][0].t.ban] = byBan[G.byStu[s][0].t.ban] || []).push(s));
-    const pick = '<div class="gc-pick">' + Object.keys(byBan).sort().map(b =>
-      `<div class="gc-pk"><span class="lbl">${E(b)}</span>` + byBan[b].map(s =>
-        `<button class="fbtn${s === sid ? ' on' : ''}" data-gs="${E(s)}">${E(G.byStu[s][0].t.name)}</button>`).join('') + '</div>').join('') + '</div>';
+    const hit = sids.filter(s => !q || G.byStu[s][0].t.name.includes(q));
+    (hit.length ? hit : sids).forEach(s => (byBan[G.byStu[s][0].t.ban] = byBan[G.byStu[s][0].t.ban] || []).push(s));
+    const groups = Object.keys(byBan).sort(grpKey).map(b => [b, byBan[b].map(s =>
+      ({ v: s, t: `${G.byStu[s][0].t.name} · ${G.byStu[s].length}회 · 평균 ${r1(gcMean(G.byStu[s].map(h => h.t.score)))}` }))]);
+    const idx = sids.indexOf(sid);
+    const pick = `<div class="gc-pick"><span class="lbl">학생</span>`
+      + `<input class="gc-q" data-gq="1" value="${E(q)}" placeholder="이름 검색" size="8">${sel('stu', groups, sid)}`
+      + `<button class="fbtn" data-gnav="-1"${idx <= 0 ? ' disabled' : ''} title="이전 학생">‹</button>`
+      + `<button class="fbtn" data-gnav="1"${idx >= sids.length - 1 ? ' disabled' : ''} title="다음 학생">›</button>`
+      + `<span class="dim">${idx + 1}/${sids.length}${q && !hit.length ? ' · 검색 결과 없음' : ''}</span></div>`;
 
     const hist = G.byStu[sid], t0 = hist[0].t;
     const pts = hist.map(h => [h.t.date, h.t.score]);
@@ -2677,8 +2709,11 @@ function gcWire(st) {
 
   /* ③ 반별 — 반 × 시험지 평균·응시율, 반별 추이 */
   function drawBan() {
-    const ps = [...papers()].sort((a, b) => a.first.localeCompare(b.first));
     const bans = G.bans.filter(b => grade === '*' || gcGrade(b) === grade);
+    const s = sort.ban, banAvg = (p, b) => gcMean(p.takes.filter(t => t.ban === b).map(t => t.score));
+    const keyF = s.k === 'paper' ? p => gcPaperLabel(p.id) : s.k === 'first' ? p => p.first : s.k === 'cut' ? p => mi(p.meta, '등급컷1')
+      : s.k === 'avg' ? p => p.avg : s.k.startsWith('b:') ? p => banAvg(p, s.k.slice(2)) : p => p.first;
+    const ps = sortRows(papers(), keyF, s);
     if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
     const cell = (p, b) => {
       const tk = p.takes.filter(t => t.ban === b), ms = p.miss.filter(t => t.ban === b);
@@ -2688,7 +2723,7 @@ function gcWire(st) {
       return `<td class="gc-c gc-avg ${a == null ? 'na' : c1 != null ? (a >= c1 ? 'good' : a >= c1 - 15 ? 'mid' : 'bad') : ''}" title="${E(b)} · ${tk.length}명 응시${ms.length ? ' · 미응시 ' + ms.length : ''}">`
         + `<b>${a == null ? '—' : r1(a)}</b><small>${tk.length}명${ms.length ? '+' + ms.length : ''}</small></td>`;
     };
-    const tbl = `<div class="gc-wrap"><table class="gc-tbl gc-ban"><thead><tr><th class="gc-fz">시험지</th><th>시행</th><th>1등급컷</th>${bans.map(b => `<th>${E(b)}</th>`).join('')}<th>전체</th></tr></thead><tbody>`
+    const tbl = `<div class="gc-wrap"><table class="gc-tbl gc-ban"><thead><tr>${th('ban', 'paper', '시험지', 'gc-fz')}${th('ban', 'first', '시행')}${th('ban', 'cut', '1등급컷')}${bans.map(b => th('ban', 'b:' + b, E(b))).join('')}${th('ban', 'avg', '전체')}</tr></thead><tbody>`
       + ps.map(p => `<tr><td class="gc-fz"><a class="nm" href="#gichul" data-gp="${E(p.id)}">${E(gcPaperLabel(p.id))}</a></td>`
         + `<td class="dim">${dfmt(p.first, false)}</td><td class="dim">${mi(p.meta, '등급컷1') ?? '—'}</td>`
         + bans.map(b => cell(p, b)).join('') + `<td class="gc-c gc-avg"><b>${r1(p.avg)}</b><small>${p.takes.length}명</small></td></tr>`).join('')
@@ -2717,15 +2752,38 @@ function gcWire(st) {
     document.querySelectorAll('#gc-mode [data-gg]').forEach(b => b.classList.toggle('on', b.dataset.gg === grade));
     $('gc-body').innerHTML = mode === 'paper' ? drawPaper() : mode === 'stu' ? drawStu() : drawBan();
   }
+  const step = d => {                                       // ‹ › 이전·다음
+    if (mode === 'paper') { const ps = papers(), i = ps.findIndex(x => x.id === paper) + d; if (ps[i]) paper = ps[i].id; }
+    else { const o = [...document.querySelectorAll('#v-gichul [data-gsel="stu"] option')].map(x => x.value), i = o.indexOf(sid) + d; if (o[i]) sid = o[i]; }
+  };
   document.addEventListener('click', e => {
-    const el = e.target.closest('#v-gichul [data-gm],#v-gichul [data-gg],#v-gichul [data-gp],#v-gichul [data-gs],#v-gichul [data-ga]');
+    const el = e.target.closest('#v-gichul [data-gm],#v-gichul [data-gg],#v-gichul [data-gp],#v-gichul [data-gs],#v-gichul [data-ga],#v-gichul [data-sk],#v-gichul [data-gnav]');
     if (!el) return;
     if (el.dataset.gp) { paper = el.dataset.gp; mode = 'paper'; e.preventDefault(); }
     else if (el.dataset.gm) mode = el.dataset.gm;
     if (el.dataset.gg) grade = el.dataset.gg;
     if (el.dataset.gs) sid = el.dataset.gs;
     if (el.dataset.ga) showAns = !showAns;
+    if (el.dataset.gnav) step(+el.dataset.gnav);
+    if (el.dataset.sk) {                                    // 같은 열이면 방향만 뒤집는다
+      const s = sort[el.dataset.gt];
+      if (s.k === el.dataset.sk) s.d = -s.d; else { s.k = el.dataset.sk; s.d = /^(name|ban|paper)$/.test(s.k) ? 1 : -1; }
+    }
     draw();
+  });
+  document.addEventListener('change', e => {
+    const el = e.target.closest('#v-gichul [data-gsel]'); if (!el) return;
+    if (el.dataset.gsel === 'paper') paper = el.value; else sid = el.value;
+    draw();
+  });
+  document.addEventListener('input', e => {
+    const el = e.target.closest('#v-gichul [data-gq]'); if (!el) return;
+    q = el.value.trim();
+    const all = Object.keys(G.byStu).filter(s => grade === '*' || gcGrade(G.byStu[s][0].t.ban) === grade);
+    const first = q && (all.find(s => G.byStu[s][0].t.name.startsWith(q)) || all.find(s => G.byStu[s][0].t.name.includes(q)));
+    if (first) sid = first;
+    const pos = el.selectionStart; draw();
+    const nel = document.querySelector('#v-gichul [data-gq]'); if (nel) { nel.focus(); nel.setSelectionRange(pos, pos); }
   });
   // 주소 #gichul/<학생ID> 로 들어오면 그 학생의 추이로 연다 (학생 페이지에서 링크)
   window.gcOpen = s => { if (s && G.byStu[s]) { sid = s; mode = 'stu'; draw(); } };
