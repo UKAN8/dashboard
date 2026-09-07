@@ -132,6 +132,39 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 .sc-bar.cr{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
 .sc-mb{display:inline-block;font-size:10px;line-height:15px;padding:0 5px;border-radius:5px;margin:2px 2px 0 0;font-weight:700;color:#14141c;white-space:nowrap}
 
+/* ── 기출 (0907) — gc- 접두사. 답안표는 가로로 길다: 첫 열 고정 + 가로 스크롤 ── */
+.gc-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0} .gc-sp{flex:1}
+.gc-pick{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.gc-pk{display:flex;flex-wrap:wrap;gap:6px;align-items:center} .gc-pk .lbl{min-width:52px;margin:0}
+.gc-pk .fbtn small{display:block;font-size:10px;color:var(--dim);line-height:1.2}
+.gc-head{margin-bottom:12px} .gc-stu2{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:8px}
+.gc-hard{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.gc-hd{font-size:12px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.05);border-left:3px solid var(--dim)}
+.gc-hd.bad{border-color:var(--bad)} .gc-hd.mid{border-color:var(--mid)} .gc-hd.good{border-color:var(--good)}
+.gc-hd i{font-style:normal;color:var(--dim);margin-left:6px}
+.gc-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 6px}
+.gc-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.gc-tbl{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;min-width:100%}
+.gc-tbl th,.gc-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid var(--bd)}
+.gc-tbl thead th{color:var(--dim);font-weight:600;font-size:11px;position:sticky;top:0;background:#14141c;z-index:2}
+.gc-tbl .gc-fz{position:sticky;left:0;background:#14141c;text-align:left;z-index:1;min-width:120px}
+.gc-tbl thead .gc-fz{z-index:3}
+.gc-tbl .gc-key td,.gc-tbl .gc-pt td{color:var(--dim);font-size:11px;background:rgba(255,255,255,.02)}
+.gc-tbl .gc-key td{color:#ffd9d9;font-weight:700}
+.gc-tbl .gc-rate td{font-size:10px;color:var(--dim);vertical-align:bottom;height:34px}
+.gc-bar1{display:block;width:14px;margin:0 auto 2px;border-radius:2px 2px 0 0;background:var(--dim);opacity:.6}
+.gc-rate td.good .gc-bar1{background:var(--good)} .gc-rate td.mid .gc-bar1{background:var(--mid)} .gc-rate td.bad .gc-bar1{background:var(--bad);opacity:.9}
+.gc-c{min-width:26px;font-weight:700} .gc-c.good{color:var(--good)} .gc-c.mid{color:var(--mid)} .gc-c.bad{color:var(--bad);background:rgba(255,92,138,.08)} .gc-c.na{color:var(--dim);font-weight:400}
+.gc-sc b{font-size:14px} .gc-gr .chip{margin:0}
+.gc-avg small{display:block;font-size:10px;color:var(--dim);font-weight:400}
+.gc-ban td{padding:6px 10px}
+.gc-hrow{flex-wrap:wrap} .gc-hrow b{min-width:48px} .gc-hrow .nm{min-width:150px}
+.gc-wl{display:flex;flex-wrap:wrap;gap:3px}
+.gc-w{font-size:11px;padding:0 6px;border-radius:6px;background:rgba(255,92,138,.15);color:#ffd7e3}
+.gc-w.mid{background:rgba(252,232,200,.15);color:var(--mid)}
+@media (hover:hover) and (pointer:fine){ .gc-tbl tbody tr:hover td{background:rgba(255,255,255,.04)} .gc-tbl tbody tr:hover .gc-fz{background:#1b1b26} }
+@media (max-width:640px){ .gc-tbl .gc-fz{min-width:90px} .gc-hrow .nm{min-width:0} }
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -565,7 +598,7 @@ body.cs-on #boot{display:none}
 <a href="#loop" data-v="loop">루프</a><a href="#report" data-v="report">리포트</a>
 <a href="#weak" data-v="weak">약점</a>
 <a href="#typemap" data-v="typemap">유형맵</a><a href="#video" data-v="video">영상</a>
-<a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
+<a href="#gichul" data-v="gichul">기출</a><a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
 <a href="#exammeta" data-v="exammeta">시험메타</a>
 <a href="#sched" data-v="sched">시험일정</a></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
@@ -1234,7 +1267,8 @@ function render(st) {
     viewLoop(st), viewReport(st), viewWeak(st),
     viewExam(st), viewClinicLog(st), viewExamMeta(st),   // 0811 신설
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
-    viewTypemap(st), viewVideo(st)                       // 0811 병합
+    viewTypemap(st), viewVideo(st),                      // 0811 병합
+    viewGichul(st)                                       // 0907 기출테스트 결과
   ].join('');
 }
 
@@ -1425,7 +1459,8 @@ function stuDetail(st, s) {
     + '<div class="two">'
     + `<div><h2>리뷰테스트 이력</h2><div class="card">${sparkline(s.scored.slice(-14), 460, 90)}</div>`
     + `<h2>과제 이행률</h2><div class="card">${sparkline(s.rates.slice(-14).map(([d, rt]) => [d, pyR0(rt * 100)]), 460, 80, 0, 100, '%')}</div>`
-    + `<h2>주간고사</h2><div class="card">${sparkline(s.wk.map(([n, v]) => [`${n}회`, v]), 460, 80, 0, 100)}</div></div>`
+    + `<h2>주간고사</h2><div class="card">${sparkline(s.wk.map(([n, v]) => [`${n}회`, v]), 460, 80, 0, 100)}</div>`
+    + `<div class="dbonly" style="margin-top:8px"><a class="fbtn" href="#gichul/${encodeURIComponent(s.sid)}" style="text-decoration:none">기출테스트 추이 →</a></div></div>`
     + `<div><h2>출결 (최근 10주)</h2><div class="card">${attCalendar(st, s)}</div>`
     + `<h2>누적 오답 유형</h2><div class="card">${wr}</div></div></div>`
     + `<div class="two"><div><h2>추가학습 이력</h2><div class="card">${ex}</div></div>`
@@ -2408,6 +2443,295 @@ function vxWire(st) {
   draw();
 }
 
+/* ═════════ 0907 신설 — 기출 (기출테스트 결과) ═════════
+ *
+ * 원천: daily_log(테스트유형='기출테스트') × class_log(반·날짜 → 시험지명·기출정답·기출배점)
+ *       × exam_meta(시험ID = 시험지출처 → 예상 등급컷·난이도) × exam_source(시험ID·문항번호 → 메모=주제)
+ * 데이터 계약은 circuit_hw.py --auto 와 같다:
+ *   문항점수 "1:2;2:0;20-1:1" → '2'=정답 '1'=부분 '0'=오답, 빈칸=미채점.
+ *   ⚠ 문항 명부는 **기출정답 라벨**(0907). 정답표에 있는데 채점칸에 없는 라벨은 오답으로 센다
+ *     (콘솔 gtSer 가 빈 칸을 아예 안 만든다 — 안 그러면 그 문항이 통째로 사라진다).
+ *   정답표가 없는 시험지(옛 기록)는 학생들 문항점수 라벨의 합집합을 명부로 쓴다.
+ * 세 화면: 시험지(모든 학생 답안표) · 학생(회차별 추이) · 반(반×시험지 평균).
+ * ⚠ 원점수 단독 해석 금지 — 등급은 exam_meta 컷이 있을 때만, '예상'이라 적는다.
+ * 클래스는 gc- 접두사. 상태는 gcWire 안에서만 산다(주소는 #gichul 하나).
+ */
+const gcParseKey = s => {            // '2,3,20-1=5,M' → {라벨: 정답}  (콘솔 gtParseKey · circuit_hw.parse_key)
+  const out = {};
+  String(s || '').split(',').map(x => x.trim()).forEach(tok => {
+    if (!tok) return;
+    const i = tok.indexOf('=');
+    if (i > 0) out[tok.slice(0, i).trim()] = tok.slice(i + 1).trim();
+    else out[String(Object.keys(out).length + 1)] = tok;
+  });
+  return out;
+};
+const gcParseMarks = s => {          // '1:2;20-1:0' → {라벨: 값}
+  const out = {};
+  String(s || '').split(';').forEach(kv => {
+    const i = kv.indexOf(':'); if (i < 0) return;
+    out[kv.slice(0, i).trim()] = kv.slice(i + 1).trim();
+  });
+  return out;
+};
+const gcLabKey = l => { const [a, b] = String(l).split('-'); return (parseInt(a, 10) || 0) * 100 + (parseInt(b, 10) || 0); };
+const gcLabSort = (a, b) => gcLabKey(a) - gcLabKey(b);
+const gcMean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const gcPct = v => v == null ? '—' : Math.round(v * 100) + '%';
+const gcCls = v => v == null ? 'na' : (v >= 0.8 ? 'good' : v >= 0.5 ? 'mid' : 'bad');
+const gcGrade = b => (String(b || '').match(/^고\d/) || [''])[0];        // '고1A' → '고1'
+const gcPaperLabel = p => {        // '청덕고_고1_2025_2_중간' → '청덕고 25년 2학기 중간'
+  const m = String(p).match(/^(.+?)_(고\d)_(\d{4})_(\d)_(중간|기말)$/);
+  return m ? `${m[1]} ${m[3].slice(2)}년 ${m[4]}학기 ${m[5]}` : String(p);
+};
+const gcSchool = p => (String(p).split('_')[0] || '');
+
+/* 집계 — 한 번만 만들어 세 화면이 나눠 쓴다 */
+function gcBuild(st) {
+  const rows = st.raw.daily_log.filter(r => (r['테스트유형'] || '').trim() === '기출테스트'
+    && String(r['날짜'] || '').startsWith('20'));
+  const keyOf = {};                                         // 반|날짜 → {paper, key, pts}
+  st.raw.class_log.forEach(r => {
+    if (!(r['기출정답'] || '').trim() && !(r['시험지명'] || '').trim()) return;
+    const key = gcParseKey(r['기출정답']);
+    const pts = String(r['기출배점'] || '').split(',').map(x => fnum(x));
+    const ptOf = {}; Object.keys(key).forEach((l, i) => { if (pts[i] != null) ptOf[l] = pts[i]; });
+    keyOf[r['반'] + '|' + r['날짜']] = { paper: (r['시험지명'] || '').trim(), key, pts: ptOf };
+  });
+  const metaOf = {}; (st.raw.exam_meta || []).forEach(m => metaOf[m['시험ID']] = m);
+  const topicOf = {};                                       // 시험ID → {문항번호: 메모}
+  (st.raw.exam_source || []).forEach(s => {
+    if (!s['메모']) return;
+    (topicOf[s['시험ID']] = topicOf[s['시험ID']] || {})[String(s['문항번호']).trim()] = s['메모'];
+  });
+
+  const papers = {};                                        // paper → {id, dates, bans, key, pts, labels, takes[], miss[]}
+  rows.forEach(r => {
+    const k = keyOf[r['반'] + '|' + r['날짜']] || {};
+    const pid = (r['시험지출처'] || '').trim() || k.paper
+      || String(r['진도'] || '').replace(/^\[기출테스트\]\s*/, '').trim() || '(시험지 미상)';
+    const p = papers[pid] = papers[pid] || { id: pid, dates: new Set(), bans: new Set(), key: {}, pts: {}, takes: [], miss: [] };
+    p.dates.add(r['날짜']); p.bans.add(r['반']);
+    if (k.key) { Object.assign(p.key, k.key); Object.assign(p.pts, k.pts); }
+    const stu = st.smap[r['학생ID']] || st.byName[r['이름']];
+    const base = { sid: r['학생ID'], name: r['이름'], ban: r['반'], date: r['날짜'], stu, paper: pid };
+    if ((r['테스트상태'] || '').trim() !== '응시' || fnum(r['점수']) == null) { p.miss.push(base); return; }
+    p.takes.push({ ...base, score: fnum(r['점수']), marks: gcParseMarks(r['문항점수']), ans: gcParseMarks(r['답안']) });
+  });
+  Object.values(papers).forEach(p => {
+    const labs = new Set(Object.keys(p.key));
+    if (!labs.size) p.takes.forEach(t => Object.keys(t.marks).forEach(l => labs.add(l)));
+    p.labels = [...labs].sort(gcLabSort);
+    p.hasKey = Object.keys(p.key).length > 0;
+    p.meta = metaOf[p.id] || null;
+    p.topic = topicOf[p.id] || {};
+    // 문항 정오 확정: '2'=1, '1'=0.5, '0'=0, 빈칸 → 정답표 라벨이면 0(0907 규칙), 아니면 null(미채점)
+    p.takes.forEach(t => {
+      t.ok = {};
+      p.labels.forEach(l => {
+        const v = t.marks[l];
+        t.ok[l] = v === '2' ? 1 : v === '1' ? 0.5 : v === '0' ? 0 : (p.hasKey ? 0 : null);
+      });
+      t.wrong = p.labels.filter(l => t.ok[l] != null && t.ok[l] < 1);
+      t.grade = metaGrade(t.score, p.meta);
+    });
+    p.rate = {};                                            // 문항별 정답률(부분=0.5)
+    p.labels.forEach(l => { const v = p.takes.map(t => t.ok[l]).filter(x => x != null); p.rate[l] = gcMean(v); });
+    p.avg = gcMean(p.takes.map(t => t.score));
+    p.first = [...p.dates].sort()[0];
+    p.grade = [...p.bans].map(gcGrade).find(Boolean) || '';
+    p.takes.sort((a, b) => a.ban === b.ban ? b.score - a.score : (a.ban < b.ban ? -1 : 1));
+  });
+  const list = Object.values(papers).sort((a, b) => b.first.localeCompare(a.first) || a.id.localeCompare(b.id, 'ko'));
+
+  const byStu = {};                                         // sid → [{p, t}] 시간순
+  list.forEach(p => p.takes.forEach(t => (byStu[t.sid] = byStu[t.sid] || []).push({ p, t })));
+  Object.values(byStu).forEach(a => a.sort((x, y) => x.t.date.localeCompare(y.t.date)));
+  const bans = [...new Set(rows.map(r => r['반']))].sort();
+  return { papers: list, byStu, bans, n: rows.length };
+}
+
+function viewGichul(st) {
+  const G = st.gc = gcBuild(st);
+  const takes = G.papers.reduce((s, p) => s + p.takes.length, 0);
+  const g1 = G.papers.reduce((s, p) => s + p.takes.filter(t => t.grade === 1).length, 0);
+  const cut = G.papers.filter(p => p.meta).length;
+  return '<section class="view" id="v-gichul">'
+    + `<h2>기출 — 기출테스트 결과 <span class="cnt">${G.papers.length}</span>`
+    + '<span class="dim" style="font-size:12px"> 시험지별 답안표 · 학생별 추이 · 반별 평균. 등급은 시험메타 컷이 있을 때만, 예상치다</span></h2>'
+    + '<div class="kpis">'
+    + `<div class="kpi"><div class="lbl">시험지</div><div class="big">${G.papers.length}<small>장</small></div></div>`
+    + `<div class="kpi"><div class="lbl">응시 기록</div><div class="big">${takes}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">응시 학생</div><div class="big">${Object.keys(G.byStu).length}<small>명</small></div></div>`
+    + `<div class="kpi"><div class="lbl">1등급권 응시</div><div class="big">${g1}<small>건</small></div></div>`
+    + `<div class="kpi"><div class="lbl">컷 붙은 시험지</div><div class="big">${cut}<small>/${G.papers.length}</small></div></div></div>`
+    + '<div class="gc-bar" id="gc-mode">'
+    + '<button class="fbtn on" data-gm="paper">시험지별 답안표</button>'
+    + '<button class="fbtn" data-gm="stu">학생별 추이</button>'
+    + '<button class="fbtn" data-gm="ban">반별 평균</button>'
+    + '<span class="gc-sp"></span>'
+    + '<button class="fbtn on" data-gg="*">전체</button><button class="fbtn" data-gg="고1">고1</button><button class="fbtn" data-gg="고2">고2</button>'
+    + '</div><div id="gc-body"></div></section>';
+}
+
+function gcWire(st) {
+  const G = st.gc || gcBuild(st);
+  let mode = 'paper', grade = '*', paper = null, sid = null, showAns = false;
+  const inG = p => grade === '*' || p.grade === grade || [...p.bans].some(b => gcGrade(b) === grade);
+  const papers = () => G.papers.filter(inG);
+  const nm = t => t.stu ? slink(t.stu) : `<span class="nm">${E(t.name)}</span>`;
+  const okCell = (v, l, t) => {
+    if (v == null) return '<td class="gc-c na" title="미채점">·</td>';
+    const a = showAns ? (t.ans[l] || '') : '';
+    const sym = v === 1 ? '○' : v === 0.5 ? '△' : '×';
+    return `<td class="gc-c ${v === 1 ? 'good' : v === 0.5 ? 'mid' : 'bad'}" title="${E(l)}번 ${sym}${a ? ' · 답 ' + E(a) : ''}">${a ? E(a) : sym}</td>`;
+  };
+
+  /* ① 시험지별 — 모든 학생 × 모든 문항 */
+  function drawPaper() {
+    const ps = papers();
+    if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
+    if (!paper || !ps.find(p => p.id === paper)) paper = ps[0].id;
+    const p = ps.find(x => x.id === paper);
+    const bySchool = {};
+    ps.forEach(x => (bySchool[gcSchool(x.id)] = bySchool[gcSchool(x.id)] || []).push(x));
+    const pick = '<div class="gc-pick">' + Object.keys(bySchool).sort((a, b) => a.localeCompare(b, 'ko')).map(s =>
+      `<div class="gc-pk"><span class="lbl">${E(s)}</span>` + bySchool[s].map(x =>
+        `<button class="fbtn${x.id === paper ? ' on' : ''}" data-gp="${E(x.id)}">${E(gcPaperLabel(x.id).replace(s + ' ', ''))}`
+        + `<small>${[...x.bans].join('·')} · ${x.takes.length}명</small></button>`).join('') + '</div>').join('') + '</div>';
+
+    const hasAns = p.takes.some(t => Object.keys(t.ans).length);
+    const scores = p.takes.map(t => t.score);
+    const c1 = mi(p.meta, '등급컷1');
+    const hard = p.labels.filter(l => p.rate[l] != null).sort((a, b) => p.rate[a] - p.rate[b]).slice(0, 5);
+    const head = `<div class="card gc-head"><div class="bc-top"><b>${E(gcPaperLabel(p.id))}</b>`
+      + `<span class="dim">${[...p.dates].sort().map(d => dfmt(d, false)).join(' · ')} 시행 · ${[...p.bans].join(', ')}</span></div>`
+      + `<div class="chips">${chip('acc', `응시 ${p.takes.length}명`)}${p.miss.length ? chip('bad', `미응시 ${p.miss.length}명`) : ''}`
+      + `${chip('na', `평균 ${p.avg == null ? '—' : r1(p.avg)}점`)}${scores.length ? chip('good', `최고 ${Math.max(...scores)}`) + chip('mid', `최저 ${Math.min(...scores)}`) : ''}`
+      + `${c1 != null ? chip('na', `1등급컷 ${c1} (예상)`) : chip('na', '컷 미확보')}${p.meta && p.meta['전체난이도'] ? chip('na', '난이도 ' + p.meta['전체난이도']) : ''}`
+      + `${p.hasKey ? '' : chip('mid', '정답표 없음 — 채점칸 기준')}</div>`
+      + (hard.length ? `<div class="lbl" style="margin-top:8px">가장 많이 틀린 문항</div><div class="gc-hard">${hard.map(l =>
+        `<span class="gc-hd ${gcCls(p.rate[l])}"><b>${E(l)}</b> ${gcPct(p.rate[l])}${p.topic[l] ? `<i>${E(p.topic[l])}</i>` : ''}</span>`).join('')}</div>` : '')
+      + (p.miss.length ? `<div class="lbl" style="margin-top:8px">미응시</div><div class="dim">${p.miss.map(m => E(m.name) + '(' + E(m.ban) + ')').join(', ')}</div>` : '')
+      + '</div>';
+
+    const th = p.labels.map(l => `<th class="gc-l" title="${E(p.topic[l] || '')}">${E(l)}</th>`).join('');
+    const keyRow = p.hasKey ? `<tr class="gc-key"><td class="gc-fz">정답</td><td></td><td></td>${p.labels.map(l =>
+      `<td>${E(p.key[l] === 'M' ? '서술' : (p.key[l] || ''))}</td>`).join('')}</tr>` : '';
+    const ptRow = Object.keys(p.pts).length ? `<tr class="gc-pt"><td class="gc-fz">배점</td><td></td><td></td>${p.labels.map(l =>
+      `<td>${p.pts[l] != null ? E(String(p.pts[l])) : ''}</td>`).join('')}</tr>` : '';
+    const rateRow = `<tr class="gc-rate"><td class="gc-fz">정답률</td><td></td><td></td>${p.labels.map(l =>
+      `<td class="${gcCls(p.rate[l])}"><span class="gc-bar1" style="height:${Math.round((p.rate[l] || 0) * 22)}px"></span>${p.rate[l] == null ? '' : Math.round(p.rate[l] * 100)}</td>`).join('')}</tr>`;
+    const body = p.takes.map(t => `<tr class="gc-row" data-ban="${E(t.ban)}"><td class="gc-fz">${nm(t)} <span class="ban">${E(t.ban)}</span></td>`
+      + `<td class="gc-sc"><b>${E(String(t.score))}</b></td>`
+      + `<td class="gc-gr">${t.grade != null ? chip(gradeCls(t.grade), t.grade + '등급') : '<span class="dim">—</span>'}</td>`
+      + p.labels.map(l => okCell(t.ok[l], l, t)).join('') + '</tr>').join('');
+    const tbl = `<div class="gc-tools"><span class="dim">○ 정답 · △ 부분 · × 오답 · ‘·’ 미채점. 이름을 누르면 학생 페이지</span>`
+      + (hasAns ? `<button class="fbtn${showAns ? ' on' : ''}" data-ga="1">${showAns ? '정오로 보기' : '학생 답안 보기'}</button>` : '')
+      + '</div>'
+      + `<div class="gc-wrap"><table class="gc-tbl"><thead><tr><th class="gc-fz">학생</th><th>점수</th><th>등급</th>${th}</tr>${keyRow}${ptRow}${rateRow}</thead>`
+      + `<tbody>${body || '<tr><td colspan="99" class="dim">응시 기록 없음</td></tr>'}</tbody></table></div>`;
+    return pick + head + tbl;
+  }
+
+  /* ② 학생별 — 회차별 점수·등급·반평균 대비·오답 문항 */
+  function drawStu() {
+    const sids = Object.keys(G.byStu).filter(s => grade === '*' || gcGrade(G.byStu[s][0].t.ban) === grade)
+      .sort((a, b) => { const x = G.byStu[a][0].t, y = G.byStu[b][0].t; return x.ban === y.ban ? x.name.localeCompare(y.name, 'ko') : x.ban.localeCompare(y.ban); });
+    if (!sids.length) return '<div class="dim">응시 학생이 없다.</div>';
+    if (!sid || !sids.includes(sid)) sid = sids[0];
+    const byBan = {};
+    sids.forEach(s => (byBan[G.byStu[s][0].t.ban] = byBan[G.byStu[s][0].t.ban] || []).push(s));
+    const pick = '<div class="gc-pick">' + Object.keys(byBan).sort().map(b =>
+      `<div class="gc-pk"><span class="lbl">${E(b)}</span>` + byBan[b].map(s =>
+        `<button class="fbtn${s === sid ? ' on' : ''}" data-gs="${E(s)}">${E(G.byStu[s][0].t.name)}</button>`).join('') + '</div>').join('') + '</div>';
+
+    const hist = G.byStu[sid], t0 = hist[0].t;
+    const pts = hist.map(h => [h.t.date, h.t.score]);
+    const avgAll = gcMean(hist.map(h => h.t.score));
+    const diffs = hist.map(h => h.t.score - h.p.avg), dAvg = gcMean(diffs);
+    const topicCnt = {};
+    hist.forEach(h => h.t.wrong.forEach(l => { const k = h.p.topic[l]; if (k) topicCnt[k] = (topicCnt[k] || 0) + 1; }));
+    const topics = Object.entries(topicCnt).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const g1n = hist.filter(h => h.t.grade === 1).length;
+    const head = `<div class="card gc-head"><div class="bc-top"><b>${nm(t0)} <span class="ban">${E(t0.ban)}</span></b>`
+      + `<span class="dim">기출테스트 ${hist.length}회</span></div>`
+      + `<div class="gc-stu2"><div>${sparkline(pts, 260, 44, 0, 100)}</div>`
+      + `<div class="chips">${chip('acc', `평균 ${r1(avgAll)}점`)}${chip(dAvg >= 0 ? 'good' : 'bad', `반평균 대비 ${dAvg >= 0 ? '+' : ''}${r1(dAvg)}`)}`
+      + `${chip('na', `최고 ${Math.max(...pts.map(x => x[1]))} · 최저 ${Math.min(...pts.map(x => x[1]))}`)}${g1n ? chip('good', `1등급권 ${g1n}회`) : ''}</div></div>`
+      + (topics.length ? `<div class="lbl" style="margin-top:8px">자주 틀린 주제 <span class="dim">(시험출처 메모 기준)</span></div><div class="chips">${topics.map(([k, v]) =>
+        chip(v >= 2 ? 'bad' : 'mid', `${k} ${v}`)).join('')}</div>` : '')
+      + '</div>';
+    const rows = [...hist].reverse().map(h => {
+      const d = h.t.score - h.p.avg;
+      const wr = h.t.wrong.map(l => `<span class="gc-w ${h.t.ok[l] === 0.5 ? 'mid' : 'bad'}" title="${E(h.p.topic[l] || '')}">${E(l)}</span>`).join('');
+      return `<div class="cl-row gc-hrow"><b>${dfmt(h.t.date, false)}</b>`
+        + `<a class="nm" href="#gichul" data-gp="${E(h.p.id)}">${E(gcPaperLabel(h.p.id))}</a>`
+        + `<span class="gc-sc"><b>${E(String(h.t.score))}</b>점</span>`
+        + `${h.t.grade != null ? chip(gradeCls(h.t.grade), h.t.grade + '등급 예상') : ''}`
+        + `<span class="dim">반평균 ${r1(h.p.avg)} (${d >= 0 ? '+' : ''}${r1(d)}) · ${h.p.takes.filter(x => x.ban === h.t.ban).length}명 중 ${h.p.takes.filter(x => x.ban === h.t.ban && x.score > h.t.score).length + 1}위</span>`
+        + `<span class="gc-wl">${wr || '<span class="dim">오답 없음</span>'}</span></div>`;
+    }).join('');
+    return pick + head + `<div class="card"><div class="lbl">회차별 (최근순) · 틀린 문항 번호</div>${rows}</div>`;
+  }
+
+  /* ③ 반별 — 반 × 시험지 평균·응시율, 반별 추이 */
+  function drawBan() {
+    const ps = [...papers()].sort((a, b) => a.first.localeCompare(b.first));
+    const bans = G.bans.filter(b => grade === '*' || gcGrade(b) === grade);
+    if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
+    const cell = (p, b) => {
+      const tk = p.takes.filter(t => t.ban === b), ms = p.miss.filter(t => t.ban === b);
+      if (!tk.length && !ms.length) return '<td class="gc-c na"></td>';
+      const a = gcMean(tk.map(t => t.score));
+      const c1 = mi(p.meta, '등급컷1');
+      return `<td class="gc-c gc-avg ${a == null ? 'na' : c1 != null ? (a >= c1 ? 'good' : a >= c1 - 15 ? 'mid' : 'bad') : ''}" title="${E(b)} · ${tk.length}명 응시${ms.length ? ' · 미응시 ' + ms.length : ''}">`
+        + `<b>${a == null ? '—' : r1(a)}</b><small>${tk.length}명${ms.length ? '+' + ms.length : ''}</small></td>`;
+    };
+    const tbl = `<div class="gc-wrap"><table class="gc-tbl gc-ban"><thead><tr><th class="gc-fz">시험지</th><th>시행</th><th>1등급컷</th>${bans.map(b => `<th>${E(b)}</th>`).join('')}<th>전체</th></tr></thead><tbody>`
+      + ps.map(p => `<tr><td class="gc-fz"><a class="nm" href="#gichul" data-gp="${E(p.id)}">${E(gcPaperLabel(p.id))}</a></td>`
+        + `<td class="dim">${dfmt(p.first, false)}</td><td class="dim">${mi(p.meta, '등급컷1') ?? '—'}</td>`
+        + bans.map(b => cell(p, b)).join('') + `<td class="gc-c gc-avg"><b>${r1(p.avg)}</b><small>${p.takes.length}명</small></td></tr>`).join('')
+      + '</tbody></table></div>';
+    const cards = bans.map(b => {
+      const seq = ps.filter(p => p.takes.some(t => t.ban === b)).map(p => [p.first, gcMean(p.takes.filter(t => t.ban === b).map(t => t.score))]);
+      if (!seq.length) return '';
+      const n = new Set(ps.flatMap(p => p.takes.filter(t => t.ban === b).map(t => t.sid))).size;
+      const miss = ps.reduce((s, p) => s + p.miss.filter(t => t.ban === b).length, 0);
+      const tot = ps.reduce((s, p) => s + p.takes.filter(t => t.ban === b).length, 0);
+      const wcnt = {};
+      ps.forEach(p => p.takes.filter(t => t.ban === b).forEach(t => t.wrong.forEach(l => { const k = p.topic[l]; if (k) wcnt[k] = (wcnt[k] || 0) + 1; })));
+      const top = Object.entries(wcnt).sort((x, y) => y[1] - x[1]).slice(0, 5);
+      return `<div class="card"><div class="bc-top"><b>${E(b)}</b><span class="dim">${seq.length}회 · ${n}명</span></div>`
+        + `<div>${sparkline(seq, 260, 40, 0, 100)}</div>`
+        + `<div class="chips">${chip('acc', `평균 ${r1(gcMean(seq.map(x => x[1])))}`)}${chip(miss ? 'bad' : 'good', `응시율 ${Math.round(100 * tot / (tot + miss))}%`)}`
+        + `${chip(seq.length >= 2 && seq[seq.length - 1][1] >= seq[seq.length - 2][1] ? 'good' : 'mid', `최근 ${r1(seq[seq.length - 1][1])}`)}</div>`
+        + (top.length ? `<div class="lbl" style="margin-top:8px">반이 자주 틀린 주제</div><div class="chips">${top.map(([k, v]) => chip('na', `${k} ${v}`)).join('')}</div>` : '')
+        + '</div>';
+    }).join('');
+    return tbl + `<div class="grid ban-grid" style="margin-top:12px">${cards}</div>`;
+  }
+
+  function draw() {
+    document.querySelectorAll('#gc-mode [data-gm]').forEach(b => b.classList.toggle('on', b.dataset.gm === mode));
+    document.querySelectorAll('#gc-mode [data-gg]').forEach(b => b.classList.toggle('on', b.dataset.gg === grade));
+    $('gc-body').innerHTML = mode === 'paper' ? drawPaper() : mode === 'stu' ? drawStu() : drawBan();
+  }
+  document.addEventListener('click', e => {
+    const el = e.target.closest('#v-gichul [data-gm],#v-gichul [data-gg],#v-gichul [data-gp],#v-gichul [data-gs],#v-gichul [data-ga]');
+    if (!el) return;
+    if (el.dataset.gp) { paper = el.dataset.gp; mode = 'paper'; e.preventDefault(); }
+    else if (el.dataset.gm) mode = el.dataset.gm;
+    if (el.dataset.gg) grade = el.dataset.gg;
+    if (el.dataset.gs) sid = el.dataset.gs;
+    if (el.dataset.ga) showAns = !showAns;
+    draw();
+  });
+  // 주소 #gichul/<학생ID> 로 들어오면 그 학생의 추이로 연다 (학생 페이지에서 링크)
+  window.gcOpen = s => { if (s && G.byStu[s]) { sid = s; mode = 'stu'; draw(); } };
+  draw();
+}
+
 /* ───────── 리포트 이미지 (서버 렌더 → Storage) ─────────
  * 경로 규칙은 render_daily.py 와 한 몸이다: `<날짜>/<sha1(이름.jpg) 앞 16자>.jpg`.
  * (Storage 키에 한글을 못 써서 해시를 쓴다.) 그래서 매니페스트를 따로 읽지 않고
@@ -2552,6 +2876,7 @@ async function saveReports(btn, files, tag) {
 /* ───────── 상호작용 (정적판 JS와 동일) ───────── */
 function wire(st) {
   tmWire(st); vxWire(st);          // 0811 병합 — 유형맵·영상은 상태를 들고 스스로 그린다
+  gcWire(st);                      // 0907 기출 — 같은 방식
   document.addEventListener('toggle', e => {
     const el = e.target;
     if (el.tagName === 'DETAILS' && el.classList.contains('rp-imgs') && el.open) loadReportImages(el);
@@ -2575,9 +2900,10 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul'].includes(main)) main = 'today';
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
     let id = 'v-' + main;
+    if (main === 'gichul' && sub && window.gcOpen) window.gcOpen(sub);   // #gichul/<학생ID> → 그 학생 추이
     // 유형맵 상세에서 넘어온 검색어 (#video/두 원의 교점)
     if (main === 'video' && sub && window.vxSearch) window.vxSearch(sub);
     if (main === 'class' && sub && document.getElementById('v-class-' + sub)) id = 'v-class-' + sub;
