@@ -382,7 +382,8 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 /* ── 학생 그리드 ── 행=학생. 첫 열 고정, 가로 스크롤(기출 25문항이 한 줄에 선다) */
 #cs .cs-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
 #cs table.cs-grid{display:table;border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%;white-space:nowrap}
-#cs .cs-grid th{font-size:11px;color:var(--dim);font-weight:600;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:left;position:sticky;top:44px;background:#14141c;z-index:4}
+/* ⚠ .cs-wrap 이 overflow-x:auto 라 sticky 의 기준이 표 감싼 상자다 — top 을 주면 첫 행을 덮는다(0811 함정). top:0 은 무해 */
+#cs .cs-grid th{font-size:11px;color:var(--dim);font-weight:600;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:left;position:sticky;top:0;background:#14141c;z-index:4}
 #cs .cs-grid th.q{text-align:center;padding:7px 2px;min-width:34px}
 #cs .cs-grid td{padding:4px 5px;border-bottom:1px solid var(--bd);vertical-align:middle}
 #cs .cs-grid .fz{position:sticky;left:0;background:#14141c;z-index:3;min-width:150px;max-width:220px;white-space:normal}
