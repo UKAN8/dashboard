@@ -168,6 +168,40 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 @media (hover:hover) and (pointer:fine){ .gc-tbl tbody tr:hover td{background:rgba(255,255,255,.04)} .gc-tbl tbody tr:hover .gc-fz{background:#1b1b26} }
 @media (max-width:640px){ .gc-tbl .gc-fz{min-width:90px} .gc-hrow .nm{min-width:0} }
 
+/* ── 히트맵 (0908) hm- ── */
+.hm-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card);max-width:100%}
+.hm-tbl{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;min-width:100%}
+.hm-tbl th,.hm-tbl td{padding:4px 5px;text-align:center;border-bottom:1px solid var(--bd)}
+.hm-tbl thead th{color:var(--dim);font-weight:600;font-size:11px;background:#14141c;position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;vertical-align:bottom}
+.hm-tbl thead th.hm-u{cursor:default;font-size:10px;letter-spacing:.04em;color:var(--acc);border-left:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;max-width:0}
+.hm-tbl thead th.hm-t{height:118px;min-width:26px;max-width:26px;padding:6px 2px}
+.hm-tbl thead th.hm-t span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);max-height:104px;overflow:hidden;text-overflow:ellipsis;line-height:1.1}
+.hm-tbl thead th.hm-t i{display:block;font-style:normal;font-size:9px;color:var(--acc);height:10px;line-height:10px}
+.hm-tbl thead th.hm-nm i,.hm-tbl thead th.hm-sum i{font-style:normal;font-size:9px;color:var(--acc);margin-left:3px}
+.hm-tbl thead th.hm-on{color:var(--tx)}
+.hm-tbl .hm-fz{position:sticky;left:0;background:#14141c;text-align:left;z-index:1;min-width:88px;font-weight:600}
+.hm-tbl thead .hm-fz{z-index:3}
+.hm-c{min-width:26px;font-weight:700;color:var(--tx)}
+.hm-c0{color:transparent} .hm-c1{background:rgba(255,92,138,.14);color:#ffd7e3} .hm-c2{background:rgba(255,92,138,.30);color:#ffe2ea} .hm-c3{background:rgba(255,92,138,.52);color:#fff}
+.hm-c.hm-sum{color:var(--tx2);background:rgba(255,255,255,.03);border-left:1px solid var(--bd)}
+.hm-tot td{color:var(--dim);font-size:11px;background:rgba(255,255,255,.02);border-bottom:none}
+.hm-tot .hm-fz{color:var(--dim)}
+@media (hover:hover) and (pointer:fine){ .hm-tbl thead th[data-hk]:hover{color:var(--tx2)} .hm-tbl tbody tr:hover td{filter:brightness(1.15)} .hm-tbl tbody tr:hover .hm-fz{background:#1b1b26} }
+@media (max-width:640px){ .hm-tbl .hm-fz{min-width:70px} .hm-tbl thead th.hm-t{height:96px} .hm-tbl thead th.hm-t span{max-height:82px} }
+
+/* ── 학생 허브 (0908) sh- ── */
+.sh-blk{margin-bottom:10px} .sh-h{margin-bottom:8px}
+.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px}
+.sh-cell .sh-v{font-size:15px;font-weight:700;margin:1px 0} .sh-cell .dim{font-size:11px}
+.sh-blk b.good{color:var(--good)} .sh-blk b.bad{color:var(--bad)}
+.sh-row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--bd)} .sh-row:last-of-type{border-bottom:none}
+.sh-row>b{min-width:58px} .sh-row .chip{margin:0} .sh-pp{min-width:140px}
+.sh-wrap{overflow-x:auto;max-width:100%}
+.sh-tbl{border-collapse:collapse;font-size:12px;white-space:nowrap;min-width:100%}
+.sh-tbl th{color:var(--dim);font-weight:600;font-size:11px;text-align:left;padding:2px 8px 6px 0}
+.sh-tbl td{padding:4px 8px 4px 0;border-top:1px solid var(--bd);vertical-align:middle}
+.sh-tbl td .chip{margin:0} .sh-tbl .sh-cm{white-space:normal;min-width:160px;color:var(--tx2);font-size:12px}
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -297,269 +331,116 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
  .vx-wrow a:hover{text-decoration:underline}}
 .vx-row:active{background:rgba(255,255,255,.06)}
 
-/* ── 0815 병합: 수업 콘솔 (#cs) ────────────────────────────────────────
-   콘솔 CSS 는 `06_자동화/통합_작업실/console.html` 이 정본이고, 빌더가 그것을 통째로
-   `#cs` 아래로 스코프해 아래에 끼운다. 어두운 껍데기에 맞춘 덧칠은 console_dark.css.
-   ⚠ 여기(위쪽 대시보드 CSS)에 콘솔용 규칙을 쓰지 마라 — 스코프 밖이라 조회 탭까지 먹는다. */
-#cs{--key:var(--acc);--key-d:#ffd9d9}
+/* ── 수업 콘솔 (#cs) — console.css (0908 대공사, 전부 #cs 아래) ── */
+/* ── 수업 콘솔 (0908 대공사) — 전부 #cs 아래. 데스크톱 전용, 어두운 셸 색을 그대로 쓴다.
+   폰 규칙 없음. :hover 는 미디어쿼리 안에만. 조회 쪽 .grid(display:grid) 와 겹치지 않게
+   표는 .cs-grid 로 부른다. */
+#cs{--key:var(--acc);--key-d:#ffd9d9;--ok:#2f7d4a;--warn:#9a7413;--bad2:#a83c3c;--line:var(--bd);--sub:var(--dim);--ink:var(--tx)}
+#cs main{max-width:none;padding:0}
+#cs .card{margin-bottom:12px}
+#cs .card h2{font-size:12px;letter-spacing:.1em;color:var(--dim);margin:0 0 10px;text-transform:none}
+#cs button{font:inherit;font-size:13px;border:1px solid var(--bd);border-radius:9px;padding:7px 12px;background:rgba(255,255,255,.05);color:var(--tx);cursor:pointer}
+#cs button.key{background:var(--acc);border-color:var(--acc);color:#141018;font-weight:800}
+#cs button.ghost{background:transparent}
+#cs button.sm{padding:5px 10px;font-size:12px}
+#cs button.danger{color:var(--bad);border-color:rgba(255,92,138,.4)}
+#cs button.pill{border-radius:99px;font-size:12px;padding:5px 12px}
+#cs button:disabled{opacity:.4;cursor:default}
+#cs button:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){#cs button:hover{filter:brightness(1.15)}}
+#cs input,#cs textarea,#cs select{font:inherit;font-size:13px;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;width:100%;background:rgba(255,255,255,.04);color:var(--tx)}
+#cs input:focus,#cs textarea:focus,#cs select:focus{outline:2px solid var(--acc);border-color:var(--acc)}
+#cs textarea{min-height:34px;resize:vertical}
+#cs input[type=date]{color-scheme:dark;height:34px}
+#cs input[type=file]{padding:5px}
+#cs .row{display:flex;gap:8px;align-items:center} #cs .grow{flex:1} #cs .cs-sp{flex:1}
+#cs .warn{color:var(--bad)} #cs .ok{color:var(--good)}
+#cs .badge{font-size:11px;border-radius:99px;padding:2px 8px;background:rgba(245,160,160,.14);color:var(--key-d);font-weight:700}
+#cs .alert{border-color:var(--bad);background:rgba(255,92,138,.08)} #cs .alert h2{color:var(--bad)}
+#cs .prevhw{font-size:13px;background:rgba(255,255,255,.03);border:1px dashed var(--bd);border-radius:8px;padding:8px 10px;white-space:pre-wrap;color:var(--tx2)}
+#cs .loadout{font-size:13px;line-height:1.55;background:rgba(255,255,255,.03);border:1px dashed var(--bd);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--tx2);margin-top:10px;max-height:340px;overflow:auto}
+#cs .loadout b{color:var(--key-d)} #cs .loadout .warn{color:var(--bad)}
+#cs .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#f5f5fa;color:#14141c;padding:9px 18px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
+#cs .toast.show{opacity:.96}
+/* 반 선택 띠 */
+#cs .cs-classbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+#cs .cs-classbar .lbl{margin:0} #cs .cs-classbar input[type=date]{width:150px}
+#cs .classbtns{display:flex;gap:6px;flex-wrap:wrap}
+#cs .classbtns button{padding:7px 16px;font-weight:700}
+#cs .classbtns button.today{border-color:var(--acc);color:var(--key-d)}
+#cs .classbtns button.on{background:var(--acc);color:#141018;border-color:var(--acc)}
+/* 수업 정보 띠 */
+#cs .cs-info-head{display:flex;align-items:baseline;gap:10px} #cs .cs-info-head h2{margin:0 0 8px}
+#cs .cs-info-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
+#cs .cs-info-row .f{display:flex;flex-direction:column;min-width:0} #cs .cs-info-row .f.grow{flex:1 1 220px}
+#cs .cs-gt{border-top:1px dashed var(--bd);margin-top:10px;padding-top:6px}
+/* 반 평균 띠 — 채점 중 화면에 붙어 있어야 기준이 된다 */
+#cs .avgbar{position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;background:#14141c;border:1px solid var(--bd);border-radius:10px;padding:7px 14px;margin-bottom:8px;font-size:13px}
+#cs .avgbar b{font-size:16px;color:var(--key-d);font-weight:800}
+#cs .avgbar .t{font-size:11px;font-weight:700;color:#141018;background:var(--acc);border-radius:99px;padding:2px 9px}
+#cs .avgbar .s{color:var(--dim);font-size:12px}
+/* ── 학생 그리드 ── 행=학생. 첫 열 고정, 가로 스크롤(기출 25문항이 한 줄에 선다) */
+#cs .cs-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#cs table.cs-grid{display:table;border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%;white-space:nowrap}
+#cs .cs-grid th{font-size:11px;color:var(--dim);font-weight:600;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:left;position:sticky;top:44px;background:#14141c;z-index:4}
+#cs .cs-grid th.q{text-align:center;padding:7px 2px;min-width:34px}
+#cs .cs-grid td{padding:4px 5px;border-bottom:1px solid var(--bd);vertical-align:middle}
+#cs .cs-grid .fz{position:sticky;left:0;background:#14141c;z-index:3;min-width:150px;max-width:220px;white-space:normal}
+#cs .cs-grid th.fz{z-index:5}
+#cs .cs-grid .name{font-weight:700;font-size:14px} #cs .cs-grid .school{font-size:11px;color:var(--dim);margin-left:5px}
+#cs .cs-grid .recent{font-size:11px;color:var(--dim);line-height:1.3}
+#cs .cs-grid .indhw{color:#f0b27a} #cs .cs-grid .miss{color:var(--bad)}
+#cs .cs-grid input,#cs .cs-grid textarea{padding:5px 7px;font-size:13px}
+#cs .cs-grid textarea{min-height:30px;min-width:200px;resize:both}
+#cs .cs-grid input[type=date]{height:30px;width:130px}
+/* 저장 상태 — 이름 옆 점 하나. ● 수정중(주황) ✓ 저장됨(초록) ✗ 실패(빨강) */
+#cs .st{display:inline-block;min-width:16px;font-size:12px;margin-left:4px;color:var(--dim)}
+#cs tr.stu.dirty .st{color:#f0b27a} #cs tr.stu.saving .st{color:var(--dim)}
+#cs tr.stu.saved .st{color:var(--good)} #cs tr.stu.failed .st{color:var(--bad);font-weight:800}
+#cs tr.stu.failed td{background:rgba(255,92,138,.06)}
+/* 출결 3버튼 — 한 글자 */
+#cs .seg{display:flex;gap:3px} #cs .seg button{padding:5px 8px;font-size:12px;min-width:30px}
+#cs .seg button.a1{background:var(--ok);border-color:var(--ok);color:#fff}
+#cs .seg button.a2{background:var(--warn);border-color:var(--warn);color:#fff}
+#cs .seg button.a3{background:var(--bad2);border-color:var(--bad2);color:#fff}
+/* 문항 채점 칸 — 2/1/0 을 친다. 색은 값이 정한다 */
+#cs .it,#cs .gta{width:34px;text-align:center;padding:5px 2px;font-weight:700;font-variant-numeric:tabular-nums}
+#cs .gta{width:46px}
+#cs .it.s2,#cs .gta.ok{background:rgba(47,125,74,.45);border-color:var(--ok)}
+#cs .it.s1{background:rgba(154,116,19,.45);border-color:var(--warn)}
+#cs .it.s0,#cs .gta.bad{background:rgba(168,60,60,.5);border-color:var(--bad2);color:#fff}
+#cs .gta.man::placeholder{color:var(--dim)}
+#cs td.q{text-align:center;padding:4px 2px}
+#cs .sum{font-weight:800;color:var(--key-d);text-align:center;min-width:40px}
+#cs .scorecell{display:flex;gap:4px;align-items:center} #cs .scorecell input{width:58px}
+#cs .nabtn{padding:4px 7px;font-size:11px;color:var(--dim)} #cs .nabtn.on{background:var(--dim);color:#141018;border-color:var(--dim)}
+#cs tr.na .it,#cs tr.na .gta,#cs tr.na input[data-f="점수"]{opacity:.3}
+#cs tr.stu.below input[data-f="점수"]{box-shadow:inset 0 0 0 1px #f0b27a}
+@media (hover:hover) and (pointer:fine){#cs .cs-grid tbody tr:hover td{background:rgba(255,255,255,.035)} #cs .cs-grid tbody tr:hover .fz{background:#1b1b26}}
+#cs .kbdhint{font-size:11px;color:var(--dim);margin:0 0 6px}
+#cs .cs-foot{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
+#cs .cs-gtdone{display:inline-flex;gap:8px;align-items:center}
+#cs details.cs-more{margin:6px 0} #cs details.cs-more summary{cursor:pointer;color:var(--tx2);font-size:13px;padding:6px 2px;list-style:none}
+#cs details.cs-more summary::before{content:'▸ '} #cs details.cs-more[open] summary::before{content:'▾ '}
+/* 작업 현황 */
+#cs .jobrow{border-top:1px solid var(--bd);padding:8px 2px;font-size:13px} #cs .jobrow:first-child{border-top:none;padding-top:2px}
+#cs .jstat{font-size:11px;border-radius:8px;padding:2px 7px;color:#fff;vertical-align:1px}
+#cs .jstat.ok{background:var(--ok)} #cs .jstat.bad{background:var(--bad2)} #cs .jstat.run{background:var(--warn)} #cs .jstat.wait{background:#555}
+/* 추가학습 명단 */
+#cs .ctab{width:100%;border-collapse:collapse;font-size:13px}
+#cs .ctab th{font-size:11px;color:var(--dim);font-weight:600;text-align:left;padding:4px;border-bottom:1px solid var(--bd)}
+#cs .ctab td{padding:6px 4px;border-top:1px solid var(--bd);vertical-align:middle}
+#cs .ctab .seg{margin:0} #cs .ctab a{color:var(--key-d)}
+#cs .time{color:var(--dim);font-size:12px}
 
-#cs{ --key:var(--acc); --key-d:#ffd9d9; --bg:transparent; --card:rgba(255,255,255,.03); --ink:var(--tx); --sub:var(--dim); --line:var(--bd); --ok:#2f7d4a; --warn:#9a7413; --bad:#a83c3c; }
-#cs *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-#cs{margin:0;font-family:'Paperlogy','Pretendard',system-ui,-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);padding-bottom:90px;}
-#cs header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;}
-#cs header h1{font-size:17px;margin:0;flex:1;} #cs header h1 b{color:var(--key);}
-#cs .pill{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:99px;padding:4px 10px;background:#fff;}
-#cs main{max-width:640px;margin:0 auto;padding:14px;}
-#cs .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
-#cs .card h2{font-size:14px;margin:0 0 10px;color:var(--sub);font-weight:600;letter-spacing:.02em;}
-#cs button{font-family:inherit;font-size:15px;border:none;border-radius:10px;padding:12px 14px;background:#f1e9e4;color:var(--ink);cursor:pointer;}
-#cs button:active{transform:scale(.97);}
-@media (hover:hover) and (pointer:fine){ #cs button:hover{filter:brightness(.96);} }
-#cs button.key{background:var(--key);color:#fff;font-weight:700;}
-#cs button.ghost{background:transparent;border:1px solid var(--line);}
-#cs input,#cs textarea,#cs select{font-family:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:11px;width:100%;background:#fff;color:var(--ink);}
-#cs input:focus,#cs textarea:focus{outline:2px solid var(--key);border-color:var(--key);}
-#cs .row{display:flex;gap:8px;align-items:center;}
-#cs .grow{flex:1;}
-#cs .classbtns{display:flex;flex-wrap:wrap;gap:8px;}
-#cs .classbtns button{flex:1 1 28%;padding:16px 8px;font-weight:700;font-size:16px;}
-#cs .classbtns button.on{background:var(--key);color:#fff;}
-#cs .stu{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff;}
-#cs .stu .name{font-weight:700;font-size:16px;}
-#cs .stu .school{font-size:12px;color:var(--sub);margin-left:6px;}
-#cs .seg{display:flex;gap:6px;margin:8px 0;}
-#cs .seg button{flex:1;padding:10px 4px;font-size:14px;background:#f6f0ec;}
-#cs .seg button.a1{background:var(--ok);color:#fff;} #cs .seg button.a2{background:var(--warn);color:#fff;} #cs .seg button.a3{background:var(--bad);color:#fff;}
-#cs .minirow{display:flex;gap:6px;margin-top:8px;}
-#cs .minirow input{padding:9px;font-size:14px;}
-#cs .lbl{font-size:11px;color:var(--sub);margin-bottom:3px;display:block;}
-#cs .savemark{font-size:11px;color:var(--ok);float:right;opacity:0;transition:opacity .3s;}
-#cs .savemark.show{opacity:1;}
-#cs .signal{border-left:4px solid var(--key);padding-left:10px;margin-bottom:10px;}
-#cs .signal .why{font-size:13px;color:var(--sub);}
-#cs .todayclass{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#fff;}
-#cs .todayclass:active{background:#f9f1ed;}
-#cs .time{color:var(--sub);font-size:13px;}
-#cs nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 10px calc(6px + env(safe-area-inset-bottom));z-index:10;}
-#cs nav button{flex:1;background:transparent;font-size:13px;color:var(--sub);padding:10px 0;}
-#cs nav button.on{color:var(--key);font-weight:700;}
-/* 학습현황으로 건너가는 링크 — 뷰가 아니라 다른 화면이라 .on 이 붙지 않는다 */
-#cs nav a.xlink{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;
- color:var(--sub);text-decoration:none;padding:10px 0;}
-@media (hover:hover) and (pointer:fine){#cs nav a.xlink:hover{color:var(--key);}}
-#cs .hidden{display:none!important;}
-#cs #login{max-width:380px;margin:12vh auto;padding:0 20px;}
-#cs #login .logo{font-size:26px;font-weight:800;text-align:center;margin-bottom:24px;}
-#cs #login .logo b{color:var(--key);}
-#cs .msg{font-size:13px;color:var(--sub);margin-top:10px;text-align:center;min-height:18px;}
-/* 반 평균 띠 (0814) — 채점하는 동안 화면에 붙어 있어야 판단 기준이 된다.
-   header 가 top:0 에 52px 로 붙어 있으므로 그 아래에 선다. 표 머리(thead)는 이 띠 아래로 밀었다. */
-#cs .avgbar{position:sticky;top:52px;z-index:6;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;
-        background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin-bottom:10px;font-size:13px;}
-#cs .avgbar b{font-size:17px;color:var(--key-d);font-weight:800;}
-#cs .avgbar .t{font-size:11px;font-weight:700;color:#fff;background:var(--key);border-radius:99px;padding:3px 9px;}
-#cs .avgbar .s{color:var(--sub);font-size:12px;}
-#cs .stu.below [data-f="점수"]{background:#FFF6E8;box-shadow:inset 0 0 0 1px #F0C88A;}
-#cs .footbar{position:sticky;bottom:78px;display:flex;gap:8px;margin-top:14px;}
-#cs .footbar button{flex:1;padding:15px;font-size:16px;}
-#cs .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;}
-#cs .toast.show{opacity:.94;}
-#cs textarea{min-height:44px;resize:vertical;}
-#cs .badge{font-size:11px;border-radius:99px;padding:3px 8px;background:#f6e7e7;color:var(--key-d);font-weight:700;}
-#cs .prevhw{font-size:14px;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--ink);white-space:pre-wrap;}
-#cs .items{display:flex;gap:5px;margin-top:8px;align-items:center;}
-#cs .items button{flex:1;padding:10px 0;font-size:14px;font-weight:700;background:#f6f0ec;color:var(--sub);}
-#cs .items button.s2{background:var(--ok);color:#fff;} #cs .items button.s1{background:var(--warn);color:#fff;} #cs .items button.s0{background:var(--bad);color:#fff;}
-#cs .items .sum{flex:0 0 62px;text-align:center;font-weight:800;font-size:16px;color:var(--key-d);}
-#cs .recent{font-size:11px;color:var(--sub);margin-left:8px;}
-#cs .indhw{color:#8a4b1f;font-weight:600;line-height:1.35;max-width:260px;}
-#cs .clinicrow{flex-wrap:wrap;}
-#cs .clinicrow>div{min-width:0;}
-#cs .clinicrow input{min-width:0;max-width:100%;}
-#cs input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;height:44px;background:#fff;}
-/* ── 데스크탑: 시트형 표 ──────────────────────────────────────────────
- * 입력은 전부 PC 에서 한다(0811 유강). 폰은 확인용이다.
- * 그래서 900px 이상에서는 폰 관용구를 걷어낸다:
- *   하단 고정 nav → 헤더 밑 가로 탭 (flex order 로 자리만 바꾼다. DOM 은 그대로)
- *   큼직한 터치 버튼 → 조밀한 버튼 · 화면에 한 반이 다 보이게
- *   표 머리 고정 → 20명을 훑어도 열 이름이 안 사라진다
- */
-@media(min-width:900px){
-  #cs #app{display:flex;flex-direction:column;min-height:100vh;}
-  #cs header{order:0;} #cs nav{order:1;} #cs main{order:2;}
-  #cs{padding-bottom:0;}
-  /* ⚠ flex 컬럼 안에서 margin:0 auto 만 주면 stretch 가 꺼져 내용 너비로 쪼그라든다.
-     width:100% 를 같이 줘야 화면을 채우고 max-width 로 가운데 정렬된다. */
-  #cs main{width:100%;max-width:1560px;padding:18px 24px 40px;}
-  #cs nav{position:static;border-top:none;border-bottom:1px solid var(--line);
-      padding:0 24px;justify-content:flex-start;}
-  #cs nav button,#cs nav a.xlink{flex:0 0 auto;padding:12px 18px;font-size:14px;}
-  #cs nav button.on{box-shadow:inset 0 -2px 0 var(--key);}
-  #cs nav a.xlink{margin-left:auto;}
-  #cs .classbtns button{flex:0 0 auto;padding:10px 20px;font-size:14px;}
-  #cs .footbar{position:static;margin-top:16px;}
-  #cs .footbar button{flex:0 0 auto;padding:12px 30px;font-size:15px;}
-  /* ⚠ 표를 감싼 카드에 overflow-x:auto 가 있으면 그 카드가 스크롤 컨테이너가 되고,
-     thead 의 sticky 가 화면이 아니라 그 카드를 기준으로 붙어 **표 한가운데에 떠서
-     첫 줄을 덮는다**(0811 유강 스크린샷). 데스크탑에선 표가 화면에 다 들어오므로
-     감싼 카드의 overflow 를 풀어 sticky 가 화면 기준으로 동작하게 한다. */
-  #cs #students .card{overflow:visible!important;}
-  /* 출결 3버튼이 잘렸다(0811) — 표가 화면 폭에 맞춰지면서 이 칸부터 줄였다.
-     width:1% + nowrap 이면 auto 레이아웃이 '내용만큼'으로 잡고 남는 폭은 글칸이 가져간다. */
-  #cs .grid td:nth-child(2),#cs .grid th:nth-child(2){width:1%;white-space:nowrap;}
-  #cs .grid .seg{flex-wrap:nowrap;}
-  #cs .grid .seg button{white-space:nowrap;}
-  #cs .grid thead th{position:sticky;top:104px;z-index:5;box-shadow:0 1px 0 var(--line);}   /* 52px 헤더 + 반 평균 띠 */
-  #cs tr.stu:hover td{background:#fdfaf8;}
-  #cs .toast{bottom:28px;}
-  #cs .kbdhint{font-size:11px;color:var(--sub);margin:0 0 8px;}
-}
-@media(max-width:899px){ #cs .kbdhint{display:none;} }
-/* ⚠ display:table 을 명시한다 (0818). 통합 셸의 전역 `.grid{display:grid}` (조회용 유틸)가
-   이 표에도 맞아 표 레이아웃이 해체됐다 — thead·tbody 가 grid item 으로 blockify 되면서
-   헤더와 본문의 열 폭이 따로 놀아 "항목명이 밀려" 보인다. 스코프(#cs) 덕에 이 줄이 이긴다. */
-#cs table.grid{display:table;width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
-#cs .grid th{font-size:12px;color:var(--sub);font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;background:#faf7f5;}
-#cs .grid td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top;}
-#cs tr.stu{border:none;padding:0;margin:0;}
-#cs .grid input,#cs .grid textarea{padding:8px;font-size:13px;}
-#cs .grid .seg{gap:4px;}
-#cs .grid .seg button{flex:none;padding:8px 9px;font-size:12px;}
-#cs .grid .items{gap:4px;margin-top:0;}
-#cs .grid .items button{flex:none;width:30px;padding:8px 0;font-size:12px;}
-#cs .grid textarea{min-height:36px;min-width:180px;}   /* 200이면 최소폭 합이 화면을 4px 넘겼다 */
-#cs .grid input[type=date]{height:36px;}
-#cs .namecell{white-space:nowrap;}
-#cs .grid .savemark{float:none;margin-left:6px;}
-/* 적재 화면 — 미리보기는 '무엇이 들어가는지'를 글로 보여준다(표로 안 만든다: 확인용이지 편집용이 아니다) */
-#cs .loadout{font-size:13px;line-height:1.55;background:#f9f4f1;border:1px dashed var(--line);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--ink);margin-top:10px;max-height:340px;overflow:auto;}
-#cs .loadout b{color:var(--key-d);}
-#cs .loadout .warn{color:#8a4b1f;}
-/* ── 작업 현황 (0813) ── */
-#cs #jobpill{cursor:pointer;}
-#cs #jobpill.busy{border-color:var(--warn);color:var(--warn);font-weight:700;}
-#cs #jobpanel .warn{color:#8a4b1f;}
-#cs .jobrow{border-top:1px solid var(--line);padding:8px 2px;font-size:14px;}
-#cs .jobrow:first-child{border-top:none;padding-top:2px;}
-#cs .jstat{font-size:11px;border-radius:8px;padding:2px 7px;color:#fff;vertical-align:1px;}
-#cs .jstat.ok{background:var(--ok);} #cs .jstat.bad{background:var(--bad);}
-#cs .jstat.run{background:var(--warn);} #cs .jstat.wait{background:#b9aca2;}
-#cs input[type=file]{padding:8px;background:#fff;}
-#cs button:disabled{opacity:.45;cursor:default;}
-/* 추가학습 명단 — 한 사람 한 줄. 출결 칸은 잘리면 못 누르므로 폭을 내용에 맞춘다(0811 함정 ③) */
-#cs .ctab{width:100%;border-collapse:collapse;font-size:13px;}
-#cs .ctab th{font-size:11px;color:var(--sub);font-weight:600;text-align:left;padding:4px;border-bottom:1px solid var(--line);}
-#cs .ctab td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:middle;}
-#cs .ctab .seg{margin:0;gap:4px;}
-#cs .ctab .seg button{flex:none;padding:7px 8px;font-size:12px;}
-#cs .ctab a{color:var(--key-d);}
-/* 미응시 토글 — 점수 칸에 붙는다. 지각·조퇴로 시험을 못 본 학생은 0점이 아니라 '안 봤다'다.
-   0점으로 남기면 반평균과 추이가 내려앉는다(0812 유강: 균영 지각 미응시). */
-#cs .scorecell{display:flex;gap:4px;align-items:center;white-space:nowrap;}
-#cs .nabtn{padding:7px 8px;font-size:12px;background:#f6f0ec;color:var(--sub);border-radius:8px;}
-#cs .nabtn.on{background:var(--sub);color:#fff;}
-#cs .na .items button,#cs .na input[data-f="점수"]{opacity:.35;}
-/* ── 기출테스트 답 입력 (0823) — 정오 탭 대신 학생이 적은 답을 그대로 받는다.
-   더미코드(9/99/444) 채점은 폐기 — 정답 행이 실답이 아니게 되어 데이터 회수가 불가능했다. */
-#cs .gtwrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
-#cs .gtq{display:flex;flex-direction:column;align-items:center;gap:2px;}
-#cs .gtq .ql{font-size:10px;color:var(--sub);white-space:nowrap;}
-#cs input.gta{width:52px;padding:7px 3px;font-size:13px;text-align:center;}
-#cs input.gta.ok{border-color:var(--ok);background:#f2fbf2;}
-#cs input.gta.bad{border-color:var(--bad);background:#fdf3f2;color:var(--bad);font-weight:700;}
-#cs .gtq button{width:52px;padding:8px 0;font-size:12px;font-weight:700;background:#f6f0ec;color:var(--sub);border-radius:8px;}
-#cs .gtq button.s2{background:var(--ok);color:#fff;}#cs .gtq button.s1{background:var(--warn);color:#fff;}#cs .gtq button.s0{background:var(--bad);color:#fff;}
-#cs .gtsum{font-weight:800;font-size:15px;color:var(--key-d);min-width:48px;text-align:center;}
-#cs .na input.gta,#cs .na .gtq button{opacity:.35;}
-#cs .grid input.gta{width:46px;padding:6px 2px;font-size:12px;}
-#cs .grid .gtq button{width:46px;padding:7px 0;font-size:11px;}
-/* 답 입력 전용 행 — 학생 본행 바로 아래, 본행과 한 덩어리로 보이게 경계를 조절한다 */
-#cs .grid tbody.stu tr:first-child td{border-bottom:none;}
-#cs .grid .gtrow td{padding:2px 8px 12px;border-bottom:2px solid var(--line);}
-#cs .grid .gtrow .gtwrap{gap:6px;}
-
-/* 흡수된 수업 콘솔 — 어두운 껍데기에 맞춘 덧칠 (0815 병합)
- *
- * 왜 이 파일이 따로 있나: 콘솔 CSS 의 정본은 `06_자동화/통합_작업실/console.html` 하나다.
- * 빌더가 그 <style> 을 통째로 뽑아 `#cs` 아래로 스코프해 끼우고, 변수 블록만 어두운 값으로
- * 갈아 끼운다. 콘솔은 대부분 변수를 쓰지만 흰 배경을 **박아 둔 자리가 스무 곳쯤** 남아 있다
- * (#fff · #f6f0ec · #faf7f5 …). 그 자리만 여기서 덮는다.
- *
- * ⚠ 규칙: 여기에는 **색과 자리만** 쓴다. 레이아웃·간격을 여기서 고치면 단독 콘솔과
- *   통합 셸이 갈라진다 — 그건 console.html 을 고쳐라.
- * ⚠ 이 파일은 스코프된 콘솔 CSS **뒤에** 들어간다. 같은 특이도면 여기가 이긴다.
- */
-
-/* ── 껍데기 ── */
-#cs main{background:none;color:var(--tx)}
-#cs .card{background:var(--card);border-color:var(--bd)}
-#cs .card h2{color:var(--acc);font-size:13px;letter-spacing:.06em;text-transform:none;margin:0 0 10px}
-#cs .stu,#cs .todayclass{background:var(--card);border-color:var(--bd)}
-#cs .pill{background:transparent;border-color:var(--bd);color:var(--dim)}
-
-/* ── 입력 요소 — 흰 바탕이 남으면 이 화면만 눈이 아프다 ── */
-#cs input,#cs textarea,#cs select{background:rgba(255,255,255,.04);color:var(--tx);border-color:var(--bd)}
-#cs input::placeholder,#cs textarea::placeholder{color:var(--dim)}
-#cs input[type=date]{background:rgba(255,255,255,.04);color:var(--tx)}
-/* 날짜·시간 위젯의 달력 아이콘은 검정 그림이라 어두운 바탕에서 사라진다 */
-#cs input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.55)}
-#cs input[type=file]{background:rgba(255,255,255,.04);color:var(--tx2)}
-#cs input:focus,#cs textarea:focus{outline-color:var(--acc)}
-
-/* ── 버튼 ── */
-#cs button{background:rgba(255,255,255,.07);color:var(--tx)}
-#cs button.key{background:var(--acc);color:#141018;font-weight:800}
-#cs button.ghost{background:transparent;border:1px solid var(--bd);color:var(--tx2)}
-#cs .seg button,#cs .items button{background:rgba(255,255,255,.06);color:var(--tx2)}
-#cs .nabtn{background:rgba(255,255,255,.06);color:var(--dim)}
-#cs .nabtn.on{background:var(--dim);color:#141018}
-/* 출결·문항 점수는 색이 곧 뜻이다 — 어두운 바탕에서도 세 색이 서로 안 헷갈리게 유지한다 */
-#cs .seg button.a1,#cs .items button.s2{background:#2f7d4a;color:#fff}
-#cs .seg button.a2,#cs .items button.s1{background:#9a7413;color:#fff}
-#cs .seg button.a3,#cs .items button.s0{background:#a83c3c;color:#fff}
-
-/* ── 표 ── */
-#cs table.grid{background:none}
-#cs .grid th{background:#12121a;color:var(--dim);border-bottom-color:var(--bd)}
-#cs .grid td{border-bottom-color:var(--bd)}
-#cs .ctab th,#cs .ctab td{border-color:var(--bd)}
-#cs .ctab a{color:var(--acc)}
-@media (hover:hover) and (pointer:fine){#cs tr.stu:hover td{background:rgba(255,255,255,.03)}}
-
-/* ── 강조 조각 ── */
-#cs .avgbar{background:#12121a;border-color:var(--bd)}
-#cs .avgbar b{color:var(--acc)}
-#cs .badge{background:rgba(245,160,160,.14);color:#ffd9d9}
-#cs .items .sum{color:var(--acc)}
-#cs .recent,#cs .lbl,#cs .time,#cs .signal .why{color:var(--dim)}
-#cs .prevhw{background:rgba(255,255,255,.03);border-color:var(--bd);color:var(--tx2)}
-#cs .loadout{background:rgba(255,255,255,.03);border-color:var(--bd);color:var(--tx2)}
-#cs .loadout b{color:var(--acc)}
-#cs .loadout .warn,#cs #jobpanel .warn,#cs .indhw{color:var(--mid)}
-#cs .toast{background:#1c1c26;color:var(--tx);border:1px solid var(--bd)}
-/* 점수가 반 평균 아래인 칸 — 밝은 노랑 대신 같은 뜻의 어두운 강조 */
-#cs .stu.below [data-f="점수"]{background:rgba(252,232,200,.10);box-shadow:inset 0 0 0 1px rgba(252,232,200,.35)}
-
-/* ── 잠금 경고 (0813 사고 화면) — 여기만은 눈에 때려야 한다 ── */
-#cs #loadfail{background:rgba(255,92,138,.10)!important;border-color:var(--bad)!important}
-#cs #loadfail h2{color:var(--bad)!important}
-
-/* ── 자리 — 통합 셸엔 고정 헤더도 하단 nav 도 없다 ──
-   콘솔 단독일 때 이 값들은 헤더 52px·하단 nav 78px 를 피하려던 것이다. 여기선 기준이 다르다. */
-#cs .avgbar{top:0}
-#cs .grid thead th{top:44px}          /* 반 평균 띠 높이 */
-#cs .footbar{position:static;bottom:auto}
-#cs main{padding:0;max-width:none}
-#cs .toast{bottom:28px}
-
-/* 드롭다운 팝업 — 위 app_styles 전역 규칙과 같은 이유. #cs 스코프 특이도 보강 */
-#cs select{color-scheme:dark}
-#cs select option{background-color:#15151c;color:var(--tx)}
-#cs select optgroup{background-color:#15151c;color:var(--dim)}
-
-/* 상단 nav 의 두 묶음을 가르는 세로선 — 입력하러 온 건지 보러 온 건지가 한눈에 갈린다 */
-#nav .sep{width:1px;align-self:stretch;background:var(--bd);margin:2px 7px}
-#nav .grp{color:var(--dim);font-size:10px;letter-spacing:.14em;align-self:center;padding:0 6px 0 0}
+/* 2단 메뉴 (0908) */
+#nav{flex-direction:column;gap:4px;align-items:flex-start}
+#nav .ng{display:flex;gap:4px}
+#nav .ng button{font:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer}
+#nav .ng button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
+#nav .nt{display:flex;gap:2px;flex-wrap:wrap}
+#nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav .nt a[hidden]{display:none}
+@media (hover:hover) and (pointer:fine){#nav .ng button:hover{color:var(--acc)}}
 #state #who{font-size:11px;color:var(--tx2)}
 #state #jobpill{cursor:pointer}
 #state #jobpill.busy{border-color:var(--mid);color:var(--mid);font-weight:700}
@@ -586,220 +467,147 @@ body.cs-on #boot{display:none}
 
 <div id="app" class="hidden">
 <div class="topbar"><span class="brand">수학은유강<small id="hdr-date">학습현황</small></span>
-<!-- ⚠ 두 묶음이다. 앞쪽(cs-)은 **입력**, 뒤쪽은 **조회**.
-     0815 병합 전까지 앞쪽은 /dashboard/console/ 이라는 다른 주소였다. 이제 같은 페이지·같은
-     로그인이다. 콘솔 뷰의 알맹이는 `06_자동화/통합_작업실/console.html` 이 정본이고
-     빌더가 뽑아 온다 — 여기서는 **주소(data-v)만** 준다. -->
+<!-- (0908 대공사) 2단 메뉴 — 위 줄은 묶음 5개, 아래 줄은 그 묶음의 탭만. navSync(app.js)가 맞춘다.
+     cs-* 는 입력(콘솔, console.js·console_body.html), 나머지는 조회(app.js). -->
 <nav id="nav">
-<span class="grp">입력</span>
-<a href="#cs-today" data-v="cs-today">오늘</a><a href="#cs-console" data-v="cs-console">수업</a>
-<a href="#cs-clinic" data-v="cs-clinic">추가학습 지정</a>
-<a href="#cs-load" data-v="cs-load">성적 적재</a>
-<span class="sep"></span><span class="grp">조회</span>
-<a href="#today" data-v="today">현황</a><a href="#class" data-v="class">반별</a>
-<a href="#student" data-v="student">학생</a><a href="#clinic" data-v="clinic">추가학습</a>
-<a href="#loop" data-v="loop">루프</a><a href="#report" data-v="report">리포트</a>
-<a href="#weak" data-v="weak">약점</a>
-<a href="#typemap" data-v="typemap">유형맵</a><a href="#video" data-v="video">영상</a>
-<a href="#gichul" data-v="gichul">기출</a><a href="#exam" data-v="exam">내신</a><a href="#cliniclog" data-v="cliniclog">클리닉</a>
-<a href="#exammeta" data-v="exammeta">시험메타</a>
-<a href="#sched" data-v="sched">시험일정</a></nav>
+<div class="ng" id="nav-g">
+<button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
+</div>
+<div class="nt" id="nav-t">
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
+<a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
+</div></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
 <button onclick="reload()">새로고침</button><button onclick="logout()">로그아웃</button></span></div>
 <div id="boot">데이터를 불러오는 중…</div>
 <div id="views"></div>
-<!-- 수업 콘솔 — 여기 안쪽은 빌더가 console.html 에서 그대로 옮겨 온다. 손으로 고치지 마라. -->
+<!-- 수업 콘솔 — console_body.html 이 여기 들어온다. -->
 <div id="cs" class="view"><main>
+<!-- 수업 콘솔 본문 (0908 대공사) — 데스크톱 전용. 폰 레이아웃은 없다(아무도 폰으로 입력하지 않는다).
+     정본은 이 파일 하나. build_app.py 가 app_shell.html 의 CONSOLE_BODY 자리에 그대로 끼운다.
+     id 는 console.js 가 $('…') 로 집는다 — 이름을 바꾸면 그쪽도 같이. -->
 
-
-  <!-- ── 작업 현황 (0813) — DB(job_queue)가 진실원이라 새로고침·탭 이동해도 안 잃는다.
-       "여기서 멈춤"의 절반은 고장이 아니라 대기였다 — 화면이 상태를 말하게 한다.
-       어느 뷰에서든 헤더의 ⚙ 작업으로 연다. -->
+  <!-- 작업 현황 (0813) — DB(job_queue)가 진실원. 상단바 ⚙ 로 연다. -->
   <div id="jobpanel" class="card hidden">
     <h2>서버 작업 — 최근 24시간</h2>
     <div id="jobrows" class="lbl">불러오는 중…</div>
     <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 못 깨웠으면 1분마다 다시 시도한다(3분 넘게 대기하면 깨우기가 고장 난 것이다).</div>
   </div>
 
-  <section id="view-today">
-    <div class="card">
-      <h2 id="todaylabel">오늘 수업</h2>
-      <div id="todayclasses"></div>
-    </div>
-    <div class="card">
-      <h2>시그널 — 최근 2주 (탭하면 추가학습 지정)</h2>
-      <div id="signals">불러오는 중…</div>
-    </div>
-  </section>
-
-  <section id="view-console" class="hidden">
-    <div class="card">
-      <h2>반 선택</h2>
-      <div class="classbtns" id="classbtns"></div>
+  <section id="view-console">
+    <!-- 반 선택 — 오늘 수업 반이 앞에, 진하게. 나머지는 뒤에 흐리게 -->
+    <div class="cs-classbar"><span class="lbl">반</span><div class="classbtns" id="classbtns"></div>
+      <span class="cs-sp"></span>
+      <label class="lbl">보는 날짜</label><input id="v_date" type="date" onchange="changeViewDay()">
+      <button class="ghost sm" onclick="$('v_date').value=todayStr();changeViewDay()">오늘로</button>
+      <span class="lbl warn" id="v_warn" style="display:none">지난 날짜 — 저장도 이 날짜로 들어간다</span>
     </div>
     <div id="consolebody" class="hidden">
-      <!-- ── 불러오기 실패 잠금 (0813 사고) — 빈 화면을 그리고 그 위에 입력을 받으면
-           그 빈 값이 서버를 덮는다. 못 읽었으면 읽지 못했다고 말하고 손을 묶는다. -->
-      <div id="loadfail" class="card hidden" style="border-color:#c0392b;background:#fdf3f2">
-        <h2 style="color:#c0392b">오늘 입력을 못 불러왔다 — 입력을 잠갔다</h2>
+      <!-- 불러오기 실패 잠금 (0813) -->
+      <div id="loadfail" class="card alert hidden">
+        <h2>오늘 입력을 못 불러왔다 — 입력을 잠갔다</h2>
         <div class="lbl" id="loadfailmsg"></div>
         <div class="lbl" style="margin-top:6px">화면의 빈칸이 서버를 덮는 것을 막으려고 잠근 것이다. <b>이미 저장된 값은 그대로 있다.</b> 새로고침해서 다시 들어와라(로그인이 풀렸으면 코드로 재로그인). 그래도 같으면 세션에 말해라.</div>
         <button class="key" style="margin-top:8px" onclick="location.reload()">새로고침</button>
       </div>
-      <!-- ── 저장 실패 배너 (0817 사고) — 저장이 RLS·세션만료로 튕겨도 토스트 1.8초가
-           전부라 조교는 알아채지 못하고 계속 입력했다. 새로고침하면 DB에서 다시 그리므로
-           "다 사라진" 얼굴이 된다. 실패가 나면 이 줄을 세우고, 다음 저장이 성공할 때까지
-           내리지 않는다. -->
-      <div id="savefail" class="card hidden" style="border-color:#c0392b;background:#fdf3f2">
-        <h2 style="color:#c0392b">저장이 서버에 들어가지 않는다</h2>
+      <!-- 저장 실패 배너 (0817) -->
+      <div id="savefail" class="card alert hidden">
+        <h2>저장이 서버에 들어가지 않는다</h2>
         <div class="lbl" id="savefailmsg"></div>
         <div class="lbl" style="margin-top:6px"><b>지금 화면의 입력은 저장 안 된 상태다 — 새로고침하면 사라진다.</b> 입력을 멈추고 관리자에게 알려라. 이 줄은 저장이 다시 성공하면 스스로 사라진다.</div>
       </div>
-      <div class="card">
-        <h2>수업 정보 <span class="badge" id="sessionstate"></span> <span class="lbl" id="clogmark" style="display:none">저장됨 ✓</span></h2>
-        <!-- 보는 날짜 (0814 신설) — 예전엔 화면이 늘 오늘에 못 박혀 있어서 자정을 넘기면
-             어제 채점·수업기록을 볼 방법이 아예 없었다. 기록은 DB에 멀쩡히 있는데 화면에서만
-             사라진 것처럼 보인다. 날짜를 바꾸면 그 날의 입력을 그대로 불러온다. -->
-        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px">
-          <div style="flex:0 0 156px"><label class="lbl">보는 날짜</label>
-            <input id="v_date" type="date" onchange="changeViewDay()"></div>
-          <button class="ghost" style="padding:8px 12px" onclick="$('v_date').value=todayStr();changeViewDay()">오늘로</button>
-          <span class="lbl" id="v_warn" style="display:none;color:#B26A00">지난 날짜를 보고 있다 — 저장도 이 날짜로 들어간다</span>
+
+      <!-- 수업 정보 — 표 위에 한 띠. 진도·과제·테스트가 한 줄, 기출 정답표는 아래 접힘 -->
+      <div class="card cs-info">
+        <div class="cs-info-head"><h2>수업 정보 <span class="badge" id="sessionstate"></span></h2><span class="lbl ok" id="clogmark" style="display:none">저장됨 ✓</span></div>
+        <div class="cs-info-row">
+          <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
+          <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
+          <div class="f" style="flex:0 0 64px"><label class="lbl">문항</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents();saveClassLog()"></div>
+          <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
         </div>
-        <label class="lbl">진도 (엔터로 여러 줄)</label>
-        <textarea id="c_progress" rows="2" placeholder="예: OPT:04 도형의 이동 파트2&#10;OPT:05 집합의 뜻 파트1" oninput="autoGrow(this);saveClassLog()"></textarea>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">이번 과제 (엔터로 여러 줄)</label><textarea id="c_hw" rows="2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
-        </div>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">테스트 유형</label><select id="c_test" onchange="testChanged()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
-          <div style="flex:0 0 84px"><label class="lbl">문항 수</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents();saveClassLog()"></div>
-        </div>
-        <!-- ── 기출테스트 정답표 (0823) — 반 공통. 시트의 정답·배점 행이 여기로 왔다.
-             정답을 넣으면 학생 표가 답 입력 칸으로 바뀌고, 답=정답이면 배점이 자동으로 붙는다.
-             서술형·증명 등 자동 대조가 안 되는 문항은 정답에 M — 그 칸만 탭 채점(정답/부분/오답). -->
-        <div id="gt_setup" class="hidden" style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-bottom:10px">
-          <div class="minirow">
-            <div class="grow"><label class="lbl">시험지 불러오기 (문항DB 기출 — 고르면 정답·배점이 자동으로 채워진다)</label>
-              <select id="gt_pick" onchange="gtPick()"><option value="">— 직접 입력</option></select></div>
+        <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
+        <!-- 기출테스트 정답표 (0823) -->
+        <div id="gt_setup" class="hidden cs-gt">
+          <div class="cs-info-row">
+            <div class="f" style="flex:1 1 260px"><label class="lbl">시험지 불러오기 (문항DB 기출)</label><select id="gt_pick" onchange="gtPick()"><option value="">— 직접 입력</option></select></div>
+            <div class="f" style="flex:1 1 220px"><label class="lbl">시험지명 (학생 기록·오답 이벤트에 남는다)</label><input id="gt_src" placeholder="예: 흥덕고_고1_1학기기말" onchange="gtKeyUpdate()"></div>
           </div>
-          <div class="minirow">
-            <div class="grow"><label class="lbl">시험지명 (어느 기출인지 — 학생 기록·오답 이벤트에 남는다)</label><input id="gt_src" placeholder="예: 흥덕고_고1_1학기기말" onchange="gtKeyUpdate()"></div>
+          <div class="cs-info-row">
+            <div class="f grow"><label class="lbl">정답 (쉼표 · 실답 그대로 · 수동채점 M · 소문항 20-1=212)</label><textarea id="gt_ans" rows="1" placeholder="3,1,4,212,M" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
+            <div class="f grow"><label class="lbl">배점 (쉼표 · 합 100 검산)</label><textarea id="gt_pts" rows="1" placeholder="3.8,3.9,4,4.1,6.5" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
           </div>
-          <div class="minirow">
-            <div class="grow"><label class="lbl">정답 (쉼표로 · 실답 그대로 — 수동채점은 M, 소문항은 20-1=212 처럼)</label><textarea id="gt_ans" rows="2" placeholder="3,1,4,212,M" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
-          </div>
-          <div class="minirow">
-            <div class="grow"><label class="lbl">배점 (쉼표로 · 정답과 같은 개수 — 합 100 검산이 아래 뜬다)</label><textarea id="gt_pts" rows="1" placeholder="3.8,3.9,4,4.1,6.5" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
-          </div>
-          <div class="lbl" id="gt_stat" style="margin-top:4px">정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.</div>
-          <!-- (0828) 점수입력 완료 — 마감 없이 학생별 과제 PDF만 먼저 만든다(조교 몫).
-               학원 PC hw_watch가 만들어 Storage에 올리면 작업 현황(⚙)에서 받아 출력. -->
-          <div class="minirow" style="margin-top:8px">
+          <div class="cs-info-row" style="align-items:center">
+            <span class="lbl" id="gt_stat">정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.</span>
+            <span class="cs-sp"></span>
             <button class="pill" id="gt_done" onclick="gtDone()">채점데이터 입력 및 갱신 — 개념 진단 보내기</button>
-            <span class="lbl">전원 채점 뒤 누른다. 학생 포털에 개념 진단이 뜨고, 제출한 학생부터 진단 반영 PT가 만들어진다</span>
           </div>
         </div>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">지난 과제 (직전 수업에서 자동 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div>
-        </div>
-        <div class="minirow"><button class="ghost" style="flex:1" onclick="allPresent()">전원 출석</button></div>
       </div>
+
       <div id="clsavg" class="avgbar" style="display:none"></div>
       <div id="students"></div>
-      <div class="footbar" style="bottom:auto;position:static;margin-top:14px">
+
+      <div class="cs-foot">
         <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
+        <span class="cs-sp"></span>
+        <span id="gt_done2row" class="hidden cs-gtdone"><button class="pill" id="gt_done2" onclick="gtDone()">① 채점데이터 입력 및 갱신 — 개념 진단</button><span class="lbl">먼저 이걸, 진단이 나간 뒤 ② 마감</span></span>
+        <button class="key" onclick="closeSession()">② [마감] 수업 종료</button>
       </div>
-      <!-- (0831) 기출 채점을 끝내고 나면 위쪽 gt_setup 패널의 [채점데이터 입력 및 갱신]을
-           다시 찾기 어렵다는 유강 지적. 마감 바로 위에 같은 버튼을 하나 더 둔다.
-           ⚠ 자리 자체가 순서를 말해 준다 — **이걸 먼저, [마감]은 그다음.** 거꾸로 누르면
-           마감의 백스톱이 진단 없이 반 전체 PT를 뽑아 버린다(0831 고1S 사고).
-           동작은 gtDone() 하나를 그대로 부른다 — 로직을 두 벌로 갈라 놓지 않는다. -->
-      <div class="footbar hidden" id="gt_done2row" style="flex-direction:column;gap:4px;align-items:stretch">
-        <button class="pill" id="gt_done2" onclick="gtDone()">채점데이터 입력 및 갱신 — 개념 진단 보내기</button>
-        <span class="lbl">먼저 이걸 누르고, 진단이 나간 뒤에 아래 [마감]</span>
-      </div>
-      <div class="footbar">
-        <button class="key" onclick="closeSession()">[마감] 수업 종료</button>
-      </div>
-      <!-- ── 마감 후 흐름 (0813) — "리포트랑 루프는 어떻게 처리되는거야?"를 두 세션에서
-           물었다. 답이 화면에 없어서다. 마감되면 여기 뜬다. -->
       <div class="card" id="closeguide" style="display:none">
         <h2>마감 후 흐름</h2>
-        <div style="font-size:14px;line-height:1.75">
-          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="/dashboard/">학습현황 ↗</a> 데일리에서 확인<br>
-          <b>재마감</b> — 수정 후 [마감]을 다시 누르면 그날 데이터를 리셋하고 다시 적재·렌더한다 (0818)<br>
-          <b>직접</b> — 복습 루프: 아래 <b>복습 루프</b> 카드에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습] 탭</b><br>
-          <b>주의</b> — 리뷰테스트를 <b>새로 만든</b> 날은 세션에서 유형 매핑(render_now)이 먼저다. 매핑 없이 렌더되면 오답 태그가 빈다<br>
-          진행 상황은 상단 <b>⚙ 작업</b>에서 본다 — 새로고침해도 안 사라진다
-        </div>
-      </div>
-      <!-- ── 루프 관련 카드는 하단 (0819 유강) — 수업 중 입력 동선(수업정보→학생 표→마감)에서
-           안 쓰고, 쓰는 시점도 마감 뒤라서 표 아래로 내렸다. -->
-      <!-- ── 오늘 물을 것 ────────────────────────────────────────────
-       * 0812까지 이 파일(_반_<반>.json)만 제작 세션이 썼다. 문항을 **쓰는 것**은 창작이지만
-       * 오늘 무엇을 **고를지**는 선택이다 — 단원 풀에 있는 것 중에서 고르면 기계가 쓸 수 있다.
-       * 진도(class_log)에 가까운 것을 먼저 체크해 둔다. 바꾸고 확정하면 바로 만들기까지 간다.
-       -->
-      <div class="card">
-        <h2>오늘 물을 것 <span class="badge" id="pl_state"></span></h2>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">문항 풀</label><select id="pl_pool" onchange="planPool()"></select></div>
-          <div style="flex:0 0 148px"><label class="lbl">수업일</label><input id="pl_date" type="date"></div>
-          <div style="flex:0 0 190px"><label class="lbl">마감 (학생 화면 문구)</label><input id="pl_due" placeholder="8월 12일(수) 21시"></div>
-        </div>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">오늘 부제 — 진도에서 자동 (학생이 읽는다)</label><input id="pl_sub" placeholder="8월 12일 · 도함수의 활용(3) 파트2"></div>
-        </div>
-        <div id="pl_list" class="loadout">반을 고르면 그 학년 풀에서 문항을 불러온다. 진도에 가까운 3개가 미리 체크된다.</div>
-        <div class="row" style="margin-top:10px">
-          <button class="key" style="flex:1" id="pl_go" onclick="planJob()">오늘 물을 것 확정 → 만들기</button>
+        <div style="line-height:1.75">
+          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="#report">리포트 탭</a>에서 확인<br>
+          <b>재마감</b> — 수정 후 [마감]을 다시 누르면 그날 데이터를 리셋하고 다시 적재·렌더한다<br>
+          <b>직접</b> — 복습 루프: 아래 <b>복습 루프</b>에서 [루프 만들기]→[보내기] · 추가학습 문제지: <b>[추가학습 지정]</b> 탭<br>
+          진행 상황은 상단 <b>⚙ 작업</b>에서 본다
         </div>
       </div>
 
-      <!-- ── 복습 루프 ──────────────────────────────────────────────
-       * 지금까지 세트는 학원 PC 에서 루프.bat 을 켜야 나왔고, 발송은 세션에 부탁해야 했다.
-       * 버튼은 job_queue 에 요청 한 줄만 쓴다(정적 페이지라 Actions 를 직접 못 깨운다).
-       * 그래서 **즉답이 아니다** — 요청됨 → 만드는 중 → 완료를 화면이 대신 보여 준다.
-       -->
-      <div class="card">
-        <h2>복습 루프 <span class="badge" id="loopfresh"></span></h2>
-        <div class="minirow">
-          <div class="grow"><label class="lbl">문항 풀 (단원)</label><select id="lp_unit"></select></div>
-          <div style="flex:0 0 auto;align-self:flex-end;display:flex;gap:8px">
-            <button class="ghost" id="lp_make" onclick="loopJob('build_sets')">루프 만들기</button>
-            <button class="key" id="lp_send" disabled onclick="loopSend()">보내기</button>
+      <!-- 루프·오늘 물을 것 — 마감 뒤에 쓰는 것이라 접어 둔다 -->
+      <details class="cs-more"><summary>오늘 물을 것 <span class="badge" id="pl_state"></span></summary>
+        <div class="card">
+          <div class="cs-info-row">
+            <div class="f grow"><label class="lbl">문항 풀</label><select id="pl_pool" onchange="planPool()"></select></div>
+            <div class="f" style="flex:0 0 148px"><label class="lbl">수업일</label><input id="pl_date" type="date"></div>
+            <div class="f" style="flex:0 0 190px"><label class="lbl">마감 (학생 화면 문구)</label><input id="pl_due" placeholder="8월 12일(수) 21시"></div>
+            <div class="f grow"><label class="lbl">오늘 부제 (학생이 읽는다)</label><input id="pl_sub" placeholder="8월 12일 · 도함수의 활용(3) 파트2"></div>
           </div>
+          <div id="pl_list" class="loadout">반을 고르면 그 학년 풀에서 문항을 불러온다. 진도에 가까운 3개가 미리 체크된다.</div>
+          <div class="row" style="margin-top:10px"><button class="key" id="pl_go" onclick="planJob()">오늘 물을 것 확정 → 만들기</button></div>
         </div>
-        <div id="lp_out" class="loadout">오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.</div>
-        <!-- 학생 상태 보드(0818)는 조회 [루프] 탭 '발송 현황'으로 이사했다 (0819 유강 —
-             입력 화면이 아니라 조회가 볼 정보). 아래 링크만 남긴다. -->
-        <div class="lbl" style="margin-top:10px">누가 냈고 누가 안 냈나 → <a href="#loop">조회 [루프] 탭 · 발송 현황</a></div>
-      </div>
-
-      <div class="footbar" style="bottom:auto;position:static;margin-top:8px">
-        <button class="ghost" style="color:var(--bad);border-color:var(--bad)" onclick="resetToday()">오늘 입력 전체 리셋</button>
-      </div>
+      </details>
+      <details class="cs-more"><summary>복습 루프 <span class="badge" id="loopfresh"></span></summary>
+        <div class="card">
+          <div class="cs-info-row">
+            <div class="f grow"><label class="lbl">문항 풀 (단원)</label><select id="lp_unit"></select></div>
+            <div class="f" style="flex:0 0 auto;display:flex;gap:8px;align-self:flex-end">
+              <button class="ghost" id="lp_make" onclick="loopJob('build_sets')">루프 만들기</button>
+              <button class="key" id="lp_send" disabled onclick="loopSend()">보내기</button>
+            </div>
+          </div>
+          <div id="lp_out" class="loadout">오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.</div>
+          <div class="lbl" style="margin-top:10px">누가 냈고 누가 안 냈나 → <a href="#loop">루프 탭 · 발송 현황</a></div>
+        </div>
+      </details>
+      <div class="cs-foot" style="justify-content:flex-end"><button class="ghost danger sm" onclick="resetToday()">오늘 입력 전체 리셋</button></div>
     </div>
   </section>
 
-  <!-- ── 성적 적재 ───────────────────────────────────────────────────
-   * 여기 오기 전까지 주간고사·내신 성적은 학원 PC 에서 wkappend.py·내신적재.py 를
-   * 돌려야 DB 에 들어갔다. 규칙 작업인데 사람이 붙어 있었다.
-   * 브라우저가 xlsx 를 직접 읽고 학생마스터로 조인해 DB 에 바로 쓴다 — Actions 를 안 깨운다.
-   * ⚠ 학생ID 는 절대 조합하지 않는다. 마스터에 없으면 미매칭으로 남기고 적재하지 않는다.
-   -->
+  <!-- 성적 적재 -->
   <section id="view-load" class="hidden">
     <div class="card">
       <h2>주간고사 성적 <span class="badge">성적 xlsx + 분석시트</span></h2>
-      <div class="minirow">
-        <div style="flex:0 0 88px"><label class="lbl">회차</label><input id="wk_rd" inputmode="numeric" placeholder="4"></div>
-        <div style="flex:0 0 110px"><label class="lbl">학년</label><select id="wk_grade"><option>고1</option><option>고2</option></select></div>
-        <div class="grow"><label class="lbl">성적 xlsx <span style="opacity:.7">(성적_N주차_고N.xlsx)</span></label><input id="wk_score" type="file" accept=".xlsx,.xlsm"></div>
-      </div>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">분석시트 xlsx <span style="opacity:.7">(주간고사_N회_분석시트.xlsx — 없으면 점수만 적재)</span></label><input id="wk_ana" type="file" accept=".xlsx,.xlsm"></div>
+      <div class="cs-info-row">
+        <div class="f" style="flex:0 0 88px"><label class="lbl">회차</label><input id="wk_rd" inputmode="numeric" placeholder="4"></div>
+        <div class="f" style="flex:0 0 110px"><label class="lbl">학년</label><select id="wk_grade"><option>고1</option><option>고2</option></select></div>
+        <div class="f grow"><label class="lbl">성적 xlsx <span style="opacity:.7">(성적_N주차_고N.xlsx)</span></label><input id="wk_score" type="file" accept=".xlsx,.xlsm"></div>
+        <div class="f grow"><label class="lbl">분석시트 xlsx <span style="opacity:.7">(없으면 점수만 적재)</span></label><input id="wk_ana" type="file" accept=".xlsx,.xlsm"></div>
       </div>
       <div class="row" style="margin-top:10px;gap:8px">
         <button class="ghost" onclick="wkPreview()">미리보기</button>
@@ -807,13 +615,12 @@ body.cs-on #boot{display:none}
       </div>
       <div id="wk_out" class="loadout">성적 xlsx 를 고르면 회차·학년을 파일 이름에서 읽고, 무엇이 들어갈지 먼저 보여준다.</div>
     </div>
-
     <div class="card">
       <h2>내신 성적표 <span class="badge">학교 중간·기말</span></h2>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">성적표 xlsx <span style="opacity:.7">(강사별 시트)</span></label><input id="sc_file" type="file" accept=".xlsx,.xlsm"></div>
-        <div style="flex:0 0 150px"><label class="lbl">시트</label><select id="sc_sheet"></select></div>
-        <div style="flex:0 0 100px"><label class="lbl">기준년</label><input id="sc_base" inputmode="numeric" value="2026"></div>
+      <div class="cs-info-row">
+        <div class="f grow"><label class="lbl">성적표 xlsx <span style="opacity:.7">(강사별 시트)</span></label><input id="sc_file" type="file" accept=".xlsx,.xlsm"></div>
+        <div class="f" style="flex:0 0 150px"><label class="lbl">시트</label><select id="sc_sheet"></select></div>
+        <div class="f" style="flex:0 0 100px"><label class="lbl">기준년</label><input id="sc_base" inputmode="numeric" value="2026"></div>
       </div>
       <div class="row" style="margin-top:10px;gap:8px">
         <button class="ghost" onclick="scPreview()">미리보기</button>
@@ -823,50 +630,35 @@ body.cs-on #boot{display:none}
     </div>
   </section>
 
-  <!-- ── 추가학습 (클리닉) ────────────────────────────────────────────
-   * 루프는 반 전체, 추가학습은 **지목한 학생만**이다. 여기까지가 0811에 남아 있던
-   * 마지막 손잡이 — 지정은 콘솔에서 하는데 출제는 학원 PC 의 루프.bat 이어야 했다.
-   * 판단(누구를·왜·무슨 유형)은 이 화면에 남고, 만들기·주소 올리기는 서버가 한다.
-   -->
+  <!-- 추가학습 지정 -->
   <section id="view-clinic" class="hidden">
     <div class="card">
-      <h2>오늘 부를 학생 <span class="badge" id="cl_fresh"></span></h2>
-      <div class="minirow">
-        <div style="flex:0 0 150px"><label class="lbl">날짜</label><input id="cl_date" type="date" onchange="clinicLoad()"></div>
-        <div style="flex:0 0 84px"><label class="lbl">문항수</label><input id="cl_nq" inputmode="numeric" value="5"></div>
-        <div class="grow" style="align-self:flex-end;display:flex;gap:8px;justify-content:flex-end">
-          <button class="ghost" onclick="clinicLoad()">새로고침</button>
-          <button class="key" id="cl_make" onclick="clinicJob()">문항 만들어 올리기</button>
-        </div>
+      <div class="cs-info-row" style="align-items:flex-end">
+        <div class="f" style="flex:0 0 150px"><label class="lbl">날짜</label><input id="cl_date" type="date" onchange="clinicLoad()"></div>
+        <div class="f" style="flex:0 0 84px"><label class="lbl">문항수</label><input id="cl_nq" inputmode="numeric" value="5"></div>
+        <span class="badge" id="cl_fresh" style="align-self:center"></span>
+        <span class="cs-sp"></span>
+        <button class="ghost" onclick="clinicLoad()">새로고침</button>
+        <button class="key" id="cl_make" onclick="clinicJob()">문항 만들어 올리기</button>
       </div>
       <div id="cl_out" class="loadout">지정해 두면 서버가 학생별로 <b>연습장에 풀고 답만 넣는</b> 세트를 만들어 주소까지 올린다. 짚은 유형이 파트1, 남는 자리는 루프함이 인증 밀린 것부터 채운다.</div>
     </div>
-
     <div class="card">
       <h2>지정</h2>
-      <div class="minirow">
-        <div style="flex:0 0 110px"><label class="lbl">반</label><select id="cl_cls" onchange="clinicStudents()"></select></div>
-        <div class="grow"><label class="lbl">학생</label><select id="cl_stu"></select></div>
-        <div style="flex:0 0 84px"><label class="lbl">시간</label><input id="cl_time" placeholder="18-20"></div>
+      <div class="cs-info-row">
+        <div class="f" style="flex:0 0 110px"><label class="lbl">반</label><select id="cl_cls" onchange="clinicStudents()"></select></div>
+        <div class="f" style="flex:0 0 150px"><label class="lbl">학생</label><select id="cl_stu"></select></div>
+        <div class="f" style="flex:0 0 84px"><label class="lbl">시간</label><input id="cl_time" placeholder="18-20"></div>
+        <div class="f grow"><label class="lbl">사유 (리포트·클리닉 기록에 남는다)</label><input id="cl_why" placeholder="예: 리뷰 40점 · 과제 미흡"></div>
+        <div class="f grow"><label class="lbl">짚을 유형 — 비우면 루프함이 채운다 (여러 개는 · 로)</label><input id="cl_type" list="cl_types" placeholder="목록에서 고를 것"><datalist id="cl_types"></datalist></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" onclick="clinicAssign()">지정</button></div>
       </div>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">사유 (리포트·클리닉 기록에 그대로 남는다)</label><input id="cl_why" placeholder="예: 리뷰 40점 · 과제 미흡"></div>
-      </div>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">짚을 유형 — 비우면 루프함이 채운다 (여러 개는 · 로)</label>
-          <input id="cl_type" list="cl_types" placeholder="목록에서 고를 것 — 글자가 한 자만 달라도 자동 출제가 안 붙는다">
-          <datalist id="cl_types"></datalist>
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px"><button class="key" style="flex:1" onclick="clinicAssign()">지정</button></div>
     </div>
-
     <div class="card">
       <h2>명단 <span class="badge" id="cl_count"></span></h2>
       <div id="cl_list">불러오는 중…</div>
     </div>
   </section>
-
 
 </main><div class="toast" id="toast"></div></div>
 </div>
@@ -1049,6 +841,7 @@ async function boot(session) {
   window.ROLE = prof.role || 'staff';
   if (window.ROLE !== 'admin') {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
+    const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
   }
   /* 0815 병합 — 수업 콘솔을 같은 셸에서 깨운다.
      ⚠ 조회 데이터 로딩(loadAll)보다 **먼저** 부른다. 콘솔은 자기 표만 읽으므로 조회가
@@ -1288,7 +1081,7 @@ function viewToday(st) {
   const cls = st.todayBans.map(b => {
     const cl = st.clsHist[b][st.clsHist[b].length - 1];
     return `<div class="card"><div class="bc-top"><a class="nm" href="#class/${E(b)}"><b>${E(b)}</b></a>`
-      + `<span class="dim">지난 수업 ${dfmt(cl['날짜'])}</span></div>`
+      + `<span class="dim">지난 수업 ${dfmt(cl['날짜'])} · <a class="nm" href="#cs-console/${E(b)}" style="color:var(--acc)">수업 콘솔 열기 →</a></span></div>`
       + `<div class="bc-prog">${E(cl['진도원문'] || '-')}</div>`
       + `<div class="lbl">지난 과제</div><div class="bc-hwv">${E(String(cl['이번과제'] || '-').slice(0, 80))}</div></div>`;
   }).join('') || '<div class="dim">오늘 수업 예정 반 없음</div>';
@@ -1351,8 +1144,77 @@ function banDetail(st, b) {
     + `<h2>이행률 추이</h2><div class="card">${sparkline(st.clsRateTrend[b].slice(-14), 460, 80, 0, 100, '%')}</div></div>`
     + `<div><h2>진도 타임라인 (최근 10회)</h2><div class="card">${tl}</div></div></div>`
     + `<h2>학생 비교</h2><div class="card" style="padding:6px 14px">`
-    + `<div class="crow chead"><span>이름</span><span>점수 추이</span><span>최근</span><span>평균</span><span>이행률</span><span>주간고사</span><span>출결</span></div>${rows}</div></section>`;
+    + `<div class="crow chead"><span>이름</span><span>점수 추이</span><span>최근</span><span>평균</span><span>이행률</span><span>주간고사</span><span>출결</span></div>${rows}</div>`
+    + '<h2>학생 × 유형 히트맵 <span class="dim" style="font-size:12px">칸=그 학생이 그 유형을 틀린 횟수 · 머리글을 누르면 정렬 · 반 합계 상위 25유형</span></h2>'
+    + hmTable(st, b, members) + '</section>';
 }
+/* 반 페이지 히트맵 (0908) — 학생 × 유형 오답 수. hm- 접두사.
+   소스 = st.wrByStu (wrong_answers 를 type_map 으로 정규화한 것. 기출 오답도 시험종류 '기출…'로 같은 표에 실린다.
+   st.gc 의 틀린 문항은 유형이 아니라 문항 라벨이라 여기 못 섞는다).
+   열 = 반 합계 상위 25유형. 순서는 type_system 등장 순(=단원 묶음), 체계에 없는 유형은 뒤에 단원명순.
+   정렬은 모듈 끝 document click 리스너가 tbody 행만 DOM 에서 재배열한다(재렌더 없음, tfoot 반 합계는 고정). */
+function hmTable(st, b, members) {
+  const SYSI = {}, SYSU = {};
+  (st.raw.type_system || []).forEach((r, i) => {
+    const t = (r['유형'] || '').trim();
+    if (t && !(t in SYSI)) { SYSI[t] = i; SYSU[t] = (r['중단원'] || '').trim(); }
+  });
+  const tot = {}, unitOf = {}, per = {};
+  members.forEach(s => {
+    const m = per[s.sid] = {};
+    (st.wrByStu[s.sid] || []).forEach(([tag, unit]) => {
+      m[tag] = (m[tag] || 0) + 1; tot[tag] = (tot[tag] || 0) + 1;
+      if (unit && !unitOf[tag]) unitOf[tag] = unit;
+    });
+  });
+  const cols = Object.keys(tot).sort((x, y) => tot[y] - tot[x] || x.localeCompare(y, 'ko')).slice(0, 25);
+  if (!cols.length) return '<div class="card dim">오답 데이터 없음</div>';
+  const uOf = t => SYSU[t] || unitOf[t] || '';      // 단원 라벨은 유형체계 우선, 없으면 오답 행의 단원
+  cols.sort((x, y) => {
+    const ix = SYSI[x], iy = SYSI[y];
+    if (ix != null && iy != null) return ix - iy;
+    if (ix != null) return -1;
+    if (iy != null) return 1;
+    return uOf(x).localeCompare(uOf(y), 'ko') || tot[y] - tot[x];
+  });
+  const groups = [];
+  cols.forEach(t => {
+    const u = uOf(t), last = groups[groups.length - 1];
+    if (last && last.u === u) last.n++; else groups.push({ u, n: 1 });
+  });
+  const cls = n => n >= 3 ? 'hm-c3' : n === 2 ? 'hm-c2' : n === 1 ? 'hm-c1' : 'hm-c0';
+  const head1 = `<tr><th class="hm-fz hm-nm" rowspan="2" data-hk="name" title="이름순 정렬">이름<i></i></th>`
+    + groups.map(g => `<th class="hm-u" colspan="${g.n}" title="${E(g.u)}">${E(g.u || '—')}</th>`).join('')
+    + '<th class="hm-sum" rowspan="2" data-hk="sum" title="표시된 유형의 합계">합계<i></i></th></tr>';
+  const head2 = '<tr>' + cols.map((t, i) =>
+    `<th class="hm-t" data-hk="${i}" title="${E(t)} · 반 합계 ${tot[t]}회"><span>${E(t)}</span><i></i></th>`).join('') + '</tr>';
+  const body = members.map(s => {
+    const m = per[s.sid], sum = cols.reduce((a, t) => a + (m[t] || 0), 0);
+    return `<tr data-nm="${E(s.name)}"><td class="hm-fz">${slink(s)}</td>`
+      + cols.map(t => { const n = m[t] || 0; return `<td class="hm-c ${cls(n)}" data-v="${n}" title="${E(s.name)} · ${E(t)} · ${n}회">${n || ''}</td>`; }).join('')
+      + `<td class="hm-c hm-sum" data-v="${sum}">${sum}</td></tr>`;
+  }).join('');
+  const total = cols.reduce((a, t) => a + tot[t], 0);
+  const foot = `<tr class="hm-tot"><td class="hm-fz">반 합계</td>${cols.map(t => `<td>${tot[t]}</td>`).join('')}<td>${total}</td></tr>`;
+  return `<div class="hm-wrap"><table class="hm-tbl"><thead>${head1}${head2}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>`;
+}
+/* 히트맵 머리글 정렬 — 재렌더 없이 tbody 행만 옮긴다. 유형 열은 첫 클릭이 내림차순, 이름은 오름차순. 동점은 이름순 */
+document.addEventListener('click', e => {
+  const th = e.target.closest('.hm-tbl th[data-hk]');
+  if (!th) return;
+  const tbl = th.closest('.hm-tbl'), k = th.dataset.hk;
+  const desc = th.classList.contains('hm-on') ? th.dataset.dir !== 'desc' : k !== 'name';
+  tbl.querySelectorAll('th.hm-on').forEach(x => { x.classList.remove('hm-on'); x.dataset.dir = ''; x.querySelector('i').textContent = ''; });
+  th.classList.add('hm-on'); th.dataset.dir = desc ? 'desc' : 'asc'; th.querySelector('i').textContent = desc ? '▼' : '▲';
+  const tb = tbl.tBodies[0], rows = [...tb.rows];
+  const val = tr => k === 'name' ? tr.dataset.nm : k === 'sum' ? +tr.lastElementChild.dataset.v : +tr.children[+k + 1].dataset.v;
+  rows.sort((a, b) => {
+    const x = val(a), y = val(b);
+    const c = typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y;
+    return c ? (desc ? -c : c) : a.dataset.nm.localeCompare(b.dataset.nm, 'ko');
+  });
+  rows.forEach(r => tb.appendChild(r));
+});
 function viewClass(st) {
   return '<section class="view" id="v-class"><h2>반별 현황 <span class="dim" style="font-size:12px">카드를 누르면 상세</span></h2>'
     + `<div class="grid ban-grid">${st.bans.map(b => banCard(st, b)).join('')}</div></section>`
@@ -1414,7 +1276,7 @@ function loopHistBySid(st) {
     || String(y['루프ID'] || '').localeCompare(String(x['루프ID'] || ''))));
   return { sub, by };
 }
-function loopHistRows(st, s) {
+function loopHistRows(st, s, n = 12) {
   const lh = st.loopHist || { sub: {}, by: {} };
   const rows = lh.by[s.sid] || [];
   const row = r => {
@@ -1430,8 +1292,8 @@ function loopHistRows(st, s) {
       + (s2 && s2['제출시각'] ? `<span class="dim">${E(String(s2['제출시각']).slice(5, 16))}</span>` : '')
       + '</div>';
   };
-  const head = rows.slice(0, 12).map(row).join('');
-  const rest = rows.slice(12);
+  const head = rows.slice(0, n).map(row).join('');
+  const rest = rows.slice(n);
   return head + (rest.length
     ? `<details><summary class="dim">지난 이력 ${rest.length}건 더</summary>${rest.map(row).join('')}</details>`
     : '');
@@ -1449,8 +1311,9 @@ function stuDetail(st, s) {
     || '<div class="dim">추가학습 이력 없음</div>';
   // 루프 발송 이력 — loop_status 는 DB 직결판에만 있다(정적판 대조 제외 = dbonly).
   // 이력이 아예 없으면(정적판 포함) 섹션 자체를 접는다.
-  const lp = loopHistRows(st, s);
+  const lp = loopHistRows(st, s, 8);
   const lpN = ((st.loopHist || {}).by || {})[s.sid];
+  const H = st.sh || shIndex(st);
   return `<section class="view" id="v-stu-${sid2id(s.sid)}"><div class="bk"><a href="#student">← 학생 전체</a></div>`
     + `<h1>${E(s.name)} <span class="ban" style="font-size:13px">${E(s.ban)}</span>`
     + `<span class="dim" style="font-size:13px"> ${E(s.school)} · 최근 수업 ${dfmt(s.lastDate)}</span></h1>`
@@ -1459,22 +1322,167 @@ function stuDetail(st, s) {
     + `<div class="kpi"><div class="lbl">평균</div><div class="big na">${py1(s.avg)}<small>점</small></div></div>`
     + `<div class="kpi"><div class="lbl">최근 이행률</div><div class="big ${rateCls(s.lastRate)}">${s.lastRate != null ? pyR0(s.lastRate * 100) : '—'}<small>%</small></div></div>`
     + `<div class="kpi"><div class="lbl">주간고사</div><div class="big ${wkCls(s.wkLast)}">${s.wkLast != null ? g(s.wkLast) : '—'}<small>점</small></div></div></div>`
+    + shBasic(st, s, H)
     + '<div class="two">'
     + `<div><h2>리뷰테스트 이력</h2><div class="card">${sparkline(s.scored.slice(-14), 460, 90)}</div>`
     + `<h2>과제 이행률</h2><div class="card">${sparkline(s.rates.slice(-14).map(([d, rt]) => [d, pyR0(rt * 100)]), 460, 80, 0, 100, '%')}</div>`
-    + `<h2>주간고사</h2><div class="card">${sparkline(s.wk.map(([n, v]) => [`${n}회`, v]), 460, 80, 0, 100)}</div>`
-    + `<div class="dbonly" style="margin-top:8px"><a class="fbtn" href="#gichul/${encodeURIComponent(s.sid)}" style="text-decoration:none">기출테스트 추이 →</a></div></div>`
+    + `<h2>주간고사</h2><div class="card">${sparkline(s.wk.map(([n, v]) => [`${n}회`, v]), 460, 80, 0, 100)}</div></div>`
     + `<div><h2>출결 (최근 10주)</h2><div class="card">${attCalendar(st, s)}</div>`
+    + `<h2>취약유형 TOP 5 <span class="dim" style="font-size:12px">유형맵과 같은 반 정답률 가중 신호</span></h2>${shWeak(st, s)}`
     + `<h2>누적 오답 유형</h2><div class="card">${wr}</div></div></div>`
-    + `<div class="two"><div><h2>추가학습 이력</h2><div class="card">${ex}</div></div>`
+    + `<div class="two"><div><h2>최근 10회 일지</h2>${shJournal(st, s, H)}</div>`
+    + `<div><h2>기출테스트 <span class="dim" style="font-size:12px">등급은 시험메타 컷이 있을 때만, 예상치</span></h2>${shGichul(st, s)}</div></div>`
+    + `<div class="two"><div><h2>추가학습 이력 <span class="dim" style="font-size:12px">지정=clinic_roster · 실시=clinic_log</span></h2>${shClinic(st, s, H)}`
+    + `<h2>추가학습 (데일리 시트)</h2><div class="card">${ex}</div></div>`
+    + `<div class="dbonly"><h2>루프 제출 현황${lpN && lpN.length ? ` <span class="cnt">${lpN.length}</span>` : ''}`
+    + '<span class="dim" style="font-size:12px"> 출제=loop_status · 제출=loop_submit</span></h2>'
+    + `<div class="card">${lpN && lpN.length ? shLoopSum(st, s) + lp : '<div class="dim">기록 없음</div>'}</div></div></div>`
+    + `<div class="two"><div><h2>내신 <span class="dim" style="font-size:12px">원점수만 보면 오독한다. 컷은 예상 추정치</span></h2>${shExam(st, s, H)}</div>`
     + `<div><h2>코멘트 타임라인</h2><div class="card">${cmts}</div></div></div>`
-    + (lpN && lpN.length ? `<div class="dbonly"><h2>루프 발송 이력 <span class="cnt">${lpN.length}</span>`
-      + '<span class="dim" style="font-size:12px"> 출제=loop_status · 제출=loop_submit</span></h2>'
-      + `<div class="card">${lp}</div></div>` : '')
     + '</section>';
+}
+/* ── 학생 허브 (0908) sh- 접두사 — 흩어진 소스를 한 페이지에 모은다. 인덱스는 viewStudent 가 한 번만 만든다 ──
+   일지=st.journal(daily_log), 추가학습=clinic_roster(학생ID·이름)+clinic_log(이름), 내신=school_exam(이름),
+   취약유형=tmBuild 신호(st.tm), 기출=gcBuild(st.gc). 반 평균 대비는 같은 반 활동 학생의 avg·lastRate 평균 */
+function shIndex(st) {
+  const jr = {};
+  st.journal.forEach(r => { if (r['날짜'] <= st.REF) (jr[r['학생ID']] = jr[r['학생ID']] || []).push(r); });
+  Object.values(jr).forEach(a => a.sort((x, y) => String(y['날짜']).localeCompare(String(x['날짜']))));
+  const cl = {};
+  const push = (k, r) => { if (k) (cl[k] = cl[k] || []).push(r); };
+  (st.raw.clinic_roster || []).forEach(r => {
+    if (!String(r['날짜'] || '').startsWith('20')) return;
+    push((r['학생ID'] || '').trim() || ('n:' + (r['이름'] || '').trim()), { r, src: '지정' });
+  });
+  (st.raw.clinic_log || []).forEach(r => {
+    if (!String(r['날짜'] || '').startsWith('20')) return;
+    push((r['학생ID'] || '').trim() || ('n:' + (r['이름'] || '').trim()), { r, src: '실시' });
+  });
+  const ex = {};
+  (st.raw.school_exam || []).forEach(r => {
+    if ((r['상태'] || '확보') !== '확보' || r['점수'] === '' || r['점수'] == null) return;
+    const k = (r['이름'] || '').trim();
+    if (k) (ex[k] = ex[k] || []).push(r);
+  });
+  const ban = {};
+  st.bans.forEach(b => {
+    const ms = st.students.filter(x => x.ban === b);
+    const sc = ms.map(x => x.avg).filter(v => v != null), rt = ms.map(x => x.lastRate).filter(v => v != null);
+    ban[b] = { sc: sc.length ? sc.reduce((a, c) => a + c, 0) / sc.length : null, rt: rt.length ? rt.reduce((a, c) => a + c, 0) / rt.length : null };
+  });
+  st.gc = st.gc || gcBuild(st);
+  st.tm = st.tm || tmBuild(st);
+  return { jr, cl, ex, ban };
+}
+const shSign = v => (v >= 0 ? '+' : '') + r1(v);
+const shEmpty = '<div class="card dim">기록 없음</div>';
+function shBasic(st, s, H) {
+  const att = { 출석: 0, 지각: 0, 결석: 0 };
+  s.atts.forEach(([, a]) => { if (a === '출석') att.출석++; else if (a === '지각' || a === '늦참') att.지각++; else if (a === '결석') att.결석++; });
+  const attN = att.출석 + att.지각 + att.결석;
+  const attR = attN ? Math.round(100 * (att.출석 + att.지각) / attN) : null;
+  const bavg = (H.ban[s.ban] || {});
+  const dSc = s.avg != null && bavg.sc != null ? s.avg - bavg.sc : null;
+  const r5 = s.rates.slice(-5).map(x => x[1]);
+  const rAvg = r5.length ? r5.reduce((a, c) => a + c, 0) / r5.length : null;
+  const dRt = rAvg != null && bavg.rt != null ? (rAvg - bavg.rt) * 100 : null;
+  const wkA = s.wk.length ? s.wk.reduce((a, c) => a + c[1], 0) / s.wk.length : null;
+  const cell = (k, v, note) => `<div class="sh-cell"><div class="lbl">${E(k)}</div><div class="sh-v">${v}</div>${note ? `<div class="dim">${note}</div>` : ''}</div>`;
+  return '<div class="card sh-blk"><div class="lbl sh-h">기본 정보</div><div class="sh-grid">'
+    + cell('학교 · 반', `${E(s.school || '—')} <span class="ban">${E(s.ban)}</span>`, `최근 수업 ${dfmt(s.lastDate)}`)
+    + cell('출석', attN ? `${attR}%` : '—', attN ? `출석 ${att.출석} · 지각 ${att.지각} · 결석 ${att.결석} (${attN}회)` : '')
+    + cell('리뷰테스트', s.avg != null ? `평균 ${py1(s.avg)}점` : '—',
+      s.scored.length ? `${s.scored.length}회 응시${dSc != null ? ` · 반 평균 대비 <b class="${dSc >= 0 ? 'good' : 'bad'}">${shSign(dSc)}</b>` : ''}` : '')
+    + cell('과제 이행률', rAvg != null ? `최근 5회 ${pyR0(rAvg * 100)}%` : '—',
+      dRt != null ? `반 대비 <b class="${dRt >= 0 ? 'good' : 'bad'}">${shSign(dRt)}%p</b>` : '')
+    + cell('주간고사', wkA != null ? `평균 ${r1(wkA)}점` : '—', s.wk.length ? `${s.wk.length}회 · 최근 ${g(s.wkLast)}점` : '')
+    + cell('누적 오답', `${(st.wrByStu[s.sid] || []).length}건`, s.wrRank.length ? `${s.wrRank.length}개 유형` : '')
+    + '</div></div>';
+}
+function shJournal(st, s, H) {
+  const rows = (H.jr[s.sid] || []).slice(0, 10);
+  if (!rows.length) return shEmpty;
+  const tr = r => {
+    const sc = fnum(r['점수']), stt = (r['테스트상태'] || '').trim(), rt = rate100(r['이행률']), a = (r['출결'] || '').trim();
+    const scTxt = sc != null ? `${g(sc)}점` : (stt || '—');
+    return `<tr><td>${dfmt(r['날짜'])}</td><td>${a ? chip(attCls(a), a) : '<span class="dim">—</span>'}</td>`
+      + `<td>${chip(stt === '미응시' ? 'na' : scoreCls(sc), scTxt)}</td>`
+      + `<td>${rt != null ? chip(rateCls(rt), pyR0(rt * 100) + '%') : '<span class="dim">—</span>'}</td>`
+      + `<td class="sh-cm">${E(String(r['코멘트'] || '').split('\n')[0].slice(0, 80))}</td></tr>`;
+  };
+  return '<div class="card sh-blk"><div class="sh-wrap"><table class="sh-tbl"><thead><tr><th>날짜</th><th>출결</th><th>테스트</th><th>이행률</th><th>코멘트</th></tr></thead>'
+    + `<tbody>${rows.map(tr).join('')}</tbody></table></div></div>`;
+}
+function shWeak(st, s) {
+  const tm = (st.tm && st.tm.map[s.sid]) || {};
+  const top = Object.entries(tm).sort((a, b) => b[1].S - a[1].S || b[1].n - a[1].n).slice(0, 5);
+  if (!top.length) return shEmpty;
+  const band = b => b === 3 ? chip('bad', '반복') : b === 2 ? chip('mid', '눈에 띔') : chip('na', '한 번');
+  return '<div class="card sh-blk">' + top.map(([t, v]) =>
+    `<div class="sh-row"><span class="cnt2">${v.n}회</span><b>${E(st.tm.lab[t] || t)}</b>${band(v.b)}`
+    + `<span class="dim">신호 ${v.S} · 반 ${Math.round(v.share * 100)}%도 틀림${v.share < 0.2 ? ' (단독)' : ''}`
+    + `${v.imp ? ` · 루프에서 ${v.imp}회 맞힘 ✓` : ''}${v.last ? ` · 최근 ${E(v.last.slice(5))}` : ''}</span></div>`).join('')
+    + `<div class="dim" style="margin-top:6px"><a class="nm" href="#typemap">유형맵에서 전체 보기 →</a></div></div>`;
+}
+function shGichul(st, s) {
+  const G = st.gc, hist = (G && G.byStu[s.sid]) || [];
+  const link = `<div class="dbonly" style="margin-top:8px"><a class="fbtn" href="#gichul/${encodeURIComponent(s.sid)}" style="text-decoration:none">기출테스트 추이 →</a></div>`;
+  if (!hist.length) return shEmpty + link;
+  const avg = gcMean(hist.map(h => h.t.score)), dAvg = gcMean(hist.map(h => h.t.score - h.p.avg));
+  const g1n = hist.filter(h => h.t.grade === 1).length;
+  const rows = [...hist].reverse().slice(0, 5).map(h => {
+    const d = h.t.score - h.p.avg, same = h.p.takes.filter(x => x.ban === h.t.ban);
+    return `<div class="sh-row"><b>${dfmt(h.t.date, false)}</b><span class="sh-pp">${E(gcPaperLabel(h.p.id))}</span>`
+      + `<b>${E(String(h.t.score))}점</b>${h.t.grade != null ? chip(gradeCls(h.t.grade), h.t.grade + '등급 예상') : ''}`
+      + `<span class="dim">반평균 ${r1(h.p.avg)} (<b class="${d >= 0 ? 'good' : 'bad'}">${shSign(d)}</b>) · ${same.length}명 중 ${same.filter(x => x.score > h.t.score).length + 1}위`
+      + `${h.t.wrong.length ? ` · 오답 ${h.t.wrong.length}문항` : ' · 오답 없음'}</span></div>`;
+  }).join('');
+  return `<div class="card sh-blk"><div class="chips" style="margin:0 0 8px">${chip('acc', `${hist.length}회 · 평균 ${r1(avg)}점`)}`
+    + `${chip(dAvg >= 0 ? 'good' : 'bad', `반평균 대비 ${shSign(dAvg)} (${dAvg >= 0 ? '반보다 위' : '반보다 아래'})`)}${g1n ? chip('good', `1등급권 ${g1n}회`) : ''}</div>`
+    + rows + (hist.length > 5 ? `<div class="dim">${hist.length - 5}회 더 있음 → 기출 탭</div>` : '') + link + '</div>';
+}
+function shClinic(st, s, H) {
+  const rows = (H.cl[s.sid] || []).concat(H.cl['n:' + s.name] || [])
+    .sort((a, b) => (String(b.r['날짜']) + String(b.r['시간'] || '')).localeCompare(String(a.r['날짜']) + String(a.r['시간'] || ''))).slice(0, 8);
+  if (!rows.length) return shEmpty;
+  const row = ({ r, src }) => {
+    const done = src === '실시';
+    const stat = done ? ((r['실시여부'] || '') === '실시' ? chip('good', '실시') : chip('na', r['실시여부'] || '기록만'))
+      : chip(ST_CLS[r['상태']] || 'na', '지정' + (r['상태'] ? ' ' + r['상태'] : '') + (r['문항수'] ? ` ${r['문항수']}문항` : ''));
+    const att = !done && r['출석'] ? chip(r['출석'] === '출석' ? 'good' : r['출석'] === '결석' ? 'bad' : 'mid', r['출석']) : '';
+    return `<div class="sh-row"><b>${dfmt(r['날짜'])}</b><span class="dim">${E(r['시간'] || '—')}시</span>${stat}${att}`
+      + `<span class="dim">${E(r['사유'] || '')}${r['지정유형'] ? ' · ' + E(String(r['지정유형']).slice(0, 40)) : ''}`
+      + `${r['담당'] ? ' · ' + E(r['담당']) : ''}${r['결과'] ? ' · ' + E(String(r['결과']).slice(0, 40)) : ''}</span></div>`;
+  };
+  const n = rows.filter(x => x.src === '실시').length;
+  return `<div class="card sh-blk"><div class="dim" style="margin-bottom:6px">최근 ${rows.length}건 중 실시 ${n}건</div>${rows.map(row).join('')}</div>`;
+}
+function shLoopSum(st, s) {
+  const lh = st.loopHist || { sub: {}, by: {} }, rows = lh.by[s.sid] || [];
+  const ok = rows.filter(r => lh.sub[r['루프ID']]).length;
+  const late = rows.filter(r => !lh.sub[r['루프ID']] && r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now()).length;
+  const pct = rows.length ? Math.round(100 * ok / rows.length) : null;
+  return `<div class="chips" style="margin:0 0 8px">${chip(pct == null ? 'na' : pct >= 80 ? 'good' : pct >= 50 ? 'mid' : 'bad', `제출 ${ok}/${rows.length} (${pct == null ? '—' : pct + '%'})`)}`
+    + `${late ? chip('bad', `미제출 ${late}`) : ''}${rows.length - ok - late ? chip('na', `진행중 ${rows.length - ok - late}`) : ''}</div>`;
+}
+function shExam(st, s, H) {
+  const rows = (H.ex[s.name] || []).slice().sort((a, b) =>
+    [b['시행년'], b['학기'], b['시험구분'] === '중간' ? 0 : 1].join('-').localeCompare([a['시행년'], a['학기'], a['시험구분'] === '중간' ? 0 : 1].join('-')));
+  if (!rows.length) return shEmpty;
+  return '<div class="card sh-blk">' + rows.map(r => {
+    const m = metaFind(st, r), sc = Number(r['점수']), real = String(r['등급'] || '').trim();
+    const gr = real ? Math.round(Number(real)) : metaGrade(sc, m);
+    const c1 = m && mi(m, '등급컷1') != null ? mi(m, '등급컷1') : null;
+    const gap = c1 != null ? Math.round((sc - c1) * 10) / 10 : null;
+    return `<div class="sh-row"><b>${E(r['시행년'])} ${E(r['학기'])}학기 ${E(r['시험구분'])}</b><b>${E(String(sc))}점</b>`
+      + `${gr != null ? chip(gradeCls(gr), `${gr}등급 ${real ? '실측' : '추정'}`) : chip('na', '등급 미상')}`
+      + `<span class="dim">${E(r['학교'] || '')} · ${E(real ? `${gr}등급 (실측${c1 != null ? ' · 예상컷 ' + c1 : ''})` : metaRead(sc, m))}`
+      + `${gap != null ? ` · 1등급컷 <b class="${gap >= 0 ? 'good' : 'bad'}">${gap >= 0 ? '+' : ''}${gap}</b>` : ''}</span></div>`;
+  }).join('') + '</div>';
 }
 function viewStudent(st) {
   st.loopHist = loopHistBySid(st);          // 상세 카드들이 공유 (한 번만 조립)
+  st.sh = shIndex(st);                      // 0908 학생 허브 인덱스 (gc·tm 도 여기서 한 번)
   const fb = st.bans.map(b => `<button class="fbtn" data-f="${E(b)}">${E(b)}</button>`).join('');
   return `<section class="view" id="v-student"><h2>학생 전체 <span class="cnt">${st.students.length}</span>`
     + '<span class="dim" style="font-size:12px"> 행을 누르면 개인 페이지</span></h2>'
@@ -2231,7 +2239,7 @@ function viewTypemap(st) {
 }
 
 function tmWire(st) {
-  const D2 = tmBuild(st);
+  const D2 = st.tm = st.tm || tmBuild(st);   // 0908 학생 허브와 공유
   const byId = {}; D2.students.forEach(s => byId[s.id] = s);
   const L = t => D2.lab[t] || t;
   const classes = [...new Set(D2.students.map(s => s.cls).filter(Boolean))].sort();
@@ -2555,7 +2563,7 @@ function gcBuild(st) {
 }
 
 function viewGichul(st) {
-  const G = st.gc = gcBuild(st);
+  const G = st.gc = st.gc || gcBuild(st);   // 0908 학생 허브가 먼저 만들었으면 재사용
   const takes = G.papers.reduce((s, p) => s + p.takes.length, 0);
   const g1 = G.papers.reduce((s, p) => s + p.takes.filter(t => t.grade === 1).length, 0);
   const cut = G.papers.filter(p => p.meta).length;
@@ -2968,7 +2976,7 @@ function wire(st) {
     if (main === 'student' && sub && document.getElementById('v-stu-' + sid2id(sub))) id = 'v-stu-' + sid2id(sub);
     document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
     (document.getElementById(id) || document.getElementById('v-today')).classList.add('on');
-    document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.v === main));
+    navSync(main);
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -3017,9 +3025,22 @@ function wire(st) {
  * 수업 중에 채점을 못 한다 — 그래서 라우팅을 wire() 밖에 따로 둔다.
  * 뷰 알맹이는 #cs 하나에 다 들어 있고, 그 안에서 어느 section 을 보일지는 콘솔 자신이 정한다.
  */
+/* 2단 메뉴 (0908) — 위 줄 묶음 5개, 아래 줄은 그 묶음의 탭만. 현재 뷰가 속한 묶음이 켜진다.
+   묶음 버튼을 누르면 그 묶음의 첫 탭으로 간다. */
+function navSync(v) {
+  const cur = document.querySelector(`#nav-t a[data-v="${v}"]`);
+  const g = cur ? cur.dataset.g : (document.querySelector('#nav-g button.on') || {}).dataset?.g;
+  document.querySelectorAll('#nav-g button').forEach(b => b.classList.toggle('on', b.dataset.g === g));
+  document.querySelectorAll('#nav-t a').forEach(a => { a.hidden = a.dataset.g !== g; a.classList.toggle('on', a.dataset.v === v); });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('#nav-g button'); if (!b) return;
+  const first = document.querySelector(`#nav-t a[data-g="${b.dataset.g}"]:not(.hidden)`);
+  if (first) location.hash = first.getAttribute('href');
+});
 function csRoute() {
   const m = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-  if (!/^cs-(today|console|clinic|load)$/.test(m)) {
+  if (!/^cs-(console|clinic|load)$/.test(m)) {
     // 콘솔에서 나갈 때는 여기서 접는다. 조회 라우터(route)는 wire() 안에 있어서
     // 조회 로딩이 실패한 날에는 아예 안 돈다 — 그러면 콘솔 화면이 그대로 남아 버린다.
     document.body.classList.remove('cs-on');
@@ -3033,7 +3054,11 @@ function csRoute() {
   el.classList.add('on');
   document.body.classList.add('cs-on');       // 조회가 실패해 남은 #boot 문구를 가린다
   if (window.csShow) window.csShow(m.slice(3));
-  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.v === m));
+  // #cs-console/고1A — 오늘 화면 등에서 반을 실어 오면 그 반을 연다 (같은 반이면 다시 안 읽는다)
+  const sub = decodeURIComponent(location.hash || '').slice(1).split('/')[1];
+  if (m === 'cs-console' && sub && typeof selectClass === 'function' && typeof CLS !== 'undefined' && CLS !== sub
+      && document.querySelector(`#classbtns button[data-cls="${sub}"]`)) selectClass(sub);
+  navSync(m);
   window.scrollTo(0, 0);
   return true;
 }
@@ -3044,13 +3069,12 @@ window.addEventListener('hashchange', csRoute);
    보인다(0815 병합에서 처음 생긴 함정). 콘솔 화면으로 옮긴 뒤에 연다. */
 function csJobs() {
   const cs = document.getElementById('cs');
-  if (!cs || !cs.classList.contains('on')) { location.hash = '#cs-today'; }
+  if (!cs || !cs.classList.contains('on')) { location.hash = '#cs-console'; }
   setTimeout(() => { if (typeof toggleJobs === 'function') toggleJobs(); }, 0);
 }
 
 </script>
-<!-- 수업 콘솔 스크립트 — console.html 에서 공용 블록(클라이언트·로그인·역할판정)을 잘라내고
-     옮겨 온 것이다. app.js 가 먼저 실행돼 sb·$ 를 만들어 두고, 로그인이 끝나면 csBoot(prof) 을 부른다. -->
+<!-- 수업 콘솔 스크립트 — console.js. app.js 가 먼저 실행돼 sb·$ 를 만들어 두고, 로그인이 끝나면 csBoot(prof) 을 부른다. -->
 <script>
 window.CS_ROUTED = true;   // 콘솔의 showView 가 주소(#cs-…)를 거치게 한다
 
@@ -3224,79 +3248,38 @@ async function gtZip(jid,btn){
 
 
 
-/* 콘솔 기동 — **로그인·역할 판정이 끝난 뒤** 부르는 유일한 입구.
-   단독 콘솔에서는 위 boot() 이, 통합 셸(/dashboard/)에서는 app.js 의 boot() 이 부른다.
-   ⚠ 여기 위로는 아무것도 올리지 마라. 위쪽은 통합 빌드가 통째로 잘라낸다. */
+/* 콘솔 기동 — **로그인·역할 판정이 끝난 뒤** 부르는 유일한 입구. app.js 의 boot() 이 부른다. */
 function csBoot(prof){
   ROLE=prof.role;
   const who=$('who'); if(who) who.textContent=(prof['이름']||'')+' · '+(ROLE==='admin'?'관리자':'조교');
   // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
-  const adminOnly=k=>{
-    const b=$('nav-'+k); if(b) b.classList.toggle('hidden',ROLE!=='admin');
-    // 통합 셸에서는 탭이 대시보드 상단 nav 에 있다 (단독 콘솔에선 하나도 안 잡힌다)
-    document.querySelectorAll('[data-v="cs-'+k+'"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
-  };
-  adminOnly('load');   // 리뷰테스트 탭은 0906 제거(0831 영구 중단)
+  document.querySelectorAll('[data-v="cs-load"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
   jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
   setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
-  loadToday();
+  initClassButtons();
 }
 
-/* ── 오늘 ── */
-async function loadToday(){
-  const dow=DAYS[new Date().getDay()];
-  $('todaylabel').textContent='오늘 수업 — '+todayStr()+' ('+dow+')';
-  const {data:tt}=await sb.from('timetable').select('*').eq('요일',dow);
-  const box=$('todayclasses');
-  box.innerHTML='';
-  if(!tt||!tt.length){box.innerHTML='<div class="time">오늘 등록된 수업이 없습니다.</div>';}
-  (tt||[]).sort((a,b)=>(+a['시작'])-(+b['시작'])).forEach(r=>{
-    const d=document.createElement('div');d.className='todayclass';
-    d.innerHTML=`<div><b>${r['반']}</b> <span class="time">${r['시작']}시~${r['끝']}시 · ${r['담당']||''}</span></div><button class="key" style="padding:8px 14px">콘솔 열기</button>`;
-    d.querySelector('button').onclick=()=>{showView('console');selectClass(r['반']);};
-    box.appendChild(d);
-  });
-  loadSignals();
-}
-async function loadSignals(){
-  const since=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
-  const {data:logs}=await sb.from('daily_log').select('학생ID,이름,반,날짜,점수,이행률').gte('날짜',since);
-  const flags={};
-  (logs||[]).forEach(r=>{
-    const sc=parseFloat(r['점수']), ih=parseFloat(r['이행률']);
-    const why=[];
-    if(!isNaN(sc)&&sc<60)why.push(`리뷰 ${sc}점 (${r['날짜'].slice(5)})`);
-    if(!isNaN(ih)&&ih<50)why.push(`이행률 ${ih}% (${r['날짜'].slice(5)})`);
-    if(why.length){ (flags[r['학생ID']]=flags[r['학생ID']]||{name:r['이름'],cls:r['반'],why:[]}).why.push(...why); }
-  });
-  const box=$('signals');box.innerHTML='';
-  const ids=Object.keys(flags);
-  if(!ids.length){box.innerHTML='<div class="time">시그널 없음 — 깨끗합니다.</div>';return;}
-  ids.forEach(id=>{
-    const f=flags[id];
-    const d=document.createElement('div');d.className='signal';
-    d.innerHTML=`<div class="row"><div class="grow"><b>${f.name}</b> <span class="school">${f.cls}</span><div class="why">${f.why.slice(0,3).join(' · ')}</div></div><button>추가학습 부르기</button></div>`;
-    d.querySelector('button').onclick=async ev=>{
-      ev.target.disabled=true;
-      const nx=await nextClinic(f.cls);
-      const {error}=await sb.from('clinic_roster').insert({'학생ID':id,'이름':f.name,'반':f.cls,'사유':f.why.slice(0,3).join(' · '),'날짜':nx?nx.date:null,'시간':nx?nx.time:null,'상태':'지정','지정일':todayStr(),'기록일':todayStr()});
-      if(error){toast('실패: '+error.message);ev.target.disabled=false;}
-      else{ev.target.textContent='지정됨 ✓';toast(f.name+' 추가학습 지정');}
-    };
-    box.appendChild(d);
-  });
-}
-
-/* ── 수업 콘솔 ── */
+/* ── 수업 콘솔 ── 반 버튼. 오늘 수업 반(시간표)이 앞에 서고 테두리가 붙는다 (0908 — 옛 '오늘' 탭의 몫). */
 async function initClassButtons(){
-  const {data:stu}=await sb.from('students').select('학년,반').eq('상태','재원');
-  const set=[...new Set((stu||[]).map(r=>(r['학년']||'')+(r['반']||'')))].sort();
+  const dow=DAYS[new Date().getDay()];
+  const [{data:stu},{data:tt}]=await Promise.all([
+    sb.from('students').select('학년,반').eq('상태','재원'),
+    sb.from('timetable').select('반,시작,끝').eq('요일',dow)]);
+  const today={};(tt||[]).forEach(r=>today[r['반']]=r);
+  const set=[...new Set((stu||[]).map(r=>(r['학년']||'')+(r['반']||'')))]
+    .sort((a,b)=>((b in today)-(a in today))||((today[a]?+today[a]['시작']:0)-(today[b]?+today[b]['시작']:0))||a.localeCompare(b));
   const box=$('classbtns');box.innerHTML='';
   set.forEach(c=>{
-    const b=document.createElement('button');b.textContent=c;b.dataset.cls=c;
+    const b=document.createElement('button');b.dataset.cls=c;
+    b.innerHTML=esc(c)+(today[c]?` <small class="time">${esc(String(today[c]['시작']))}~${esc(String(today[c]['끝']))}시</small>`:'');
+    if(today[c])b.classList.add('today');
+    b.title=today[c]?'오늘 수업':'';
     b.onclick=()=>selectClass(c);
     box.appendChild(b);
   });
+  // 주소에 반이 실려 왔으면(#cs-console/고1A) 바로 연다
+  const m=decodeURIComponent(location.hash||'').match(/^#cs-console\/(.+)$/);
+  if(m&&set.includes(m[1])&&!CLS)selectClass(m[1]);
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (0902 유강) 지난 수업 루프 미제출 = 과제 미흡. 반을 열 때 loop_overdue(schema_v15) 로 받아
@@ -3393,6 +3376,8 @@ async function nextClinic(cls){
 }
 async function selectClass(cls){
   CLS=cls;
+  // 주소에 반을 싣는다(#cs-console/고1A) — 새로고침·뒤로가기가 같은 반을 연다. replaceState 라 라우터는 안 돈다
+  if(window.CS_ROUTED){const h='#cs-console/'+cls;if(location.hash!==h)history.replaceState(null,'',h);}
   if($('v_date')&&!$('v_date').value)$('v_date').value=todayStr();
   if($('v_warn'))$('v_warn').style.display=(vDay()===todayStr())?'none':'';
   document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
@@ -3508,17 +3493,30 @@ function naBtnHtml(log){
   const on=isNA(log);
   return `<button type="button" class="nabtn${on?' on':''}" data-f="미응시" data-on="${on?1:0}" title="지각·조퇴 등으로 시험을 안 본 경우">미응시</button>`;
 }
-function itemBtnsHtml(log,nq){
+/* ── (0908 대공사) 문항 채점 칸은 버튼이 아니라 **입력칸**이다. 2·1·0 을 치면 다음 칸으로 간다.
+   값은 value 와 dataset.s 에 같이 둔다 — 저장·코멘트·마감이 전부 dataset.s 를 읽는다(버튼 시절과 같은 계약). */
+function itemVals(log){
   // "2,1,0" 또는 구형 "1:2;2:1;3:0" 둘 다 지원
   const raw=isNA(log)?'':(log['문항점수']||'');
-  let itemVals=[];
-  if(raw.includes(':')){
-    raw.split(';').forEach(p=>{const[a,b]=p.split(':');if(a&&b!==undefined)itemVals[parseInt(a)-1]=b.trim();});
-  }else itemVals=raw.split(',').map(v=>v.trim());
+  let v=[];
+  if(raw.includes(':')){raw.split(';').forEach(p=>{const[a,b]=p.split(':');if(a&&b!==undefined)v[parseInt(a)-1]=b.trim();});}
+  else v=raw.split(',').map(x=>x.trim());
+  return v;
+}
+function itemCellsHtml(log,nq){
+  const v=itemVals(log);
   return Array.from({length:nq},(_,i)=>{
-    const v=itemVals[i]!==undefined&&itemVals[i]!==''?itemVals[i]:'';
-    return `<button data-i="${i}" data-s="${v}" class="${v!==''?'s'+v:''}">${i+1}</button>`;
+    const s=v[i]!==undefined&&v[i]!==''?v[i]:'';
+    return `<td class="q"><input class="it${s!==''?' s'+s:''}" data-i="${i}" data-s="${s}" value="${s}" maxlength="1" inputmode="numeric" autocomplete="off" title="${i+1}번 · 2 정답 1 부분 0 오답"></td>`;
   }).join('');
+}
+function itemSet(el,s){el.dataset.s=s;el.value=s;el.classList.remove('s0','s1','s2');if(s!=='')el.classList.add('s'+s);}
+function itemSum(d){
+  const vals=[...d.querySelectorAll('.it')].map(x=>x.dataset.s);
+  const any=vals.some(v=>v!=='');
+  const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
+  const sumEl=d.querySelector('.sum');if(sumEl)sumEl.textContent=d.classList.contains('na')?'미응시':(any?sum:'—');
+  if(any){const sc=d.querySelector('[data-f="점수"]');if(sc)sc.value=sum;}
 }
 
 /* ══ 기출테스트 모드 (0823) ═══════════════════════════════════════════════
@@ -3662,17 +3660,18 @@ function gtRestore(cl0){
 }
 /* 학생 한 명분 답 입력 칸 — 자동 문항은 input, M 문항은 탭(정답/부분/오답) */
 function gtItemsHtml(log){
+  /* (0908) 한 문항 = 한 칸(td). 자동 문항은 학생 실답, M(수동) 문항은 2/1/0 을 친다 — 같은 입력칸 계약 */
   const na=isNA(log);
   const ansMap=na?{}:gtDes(log['답안']||'');
   const grMap=na?{}:gtDes(log['문항점수']||'');
-  return '<div class="gtwrap">'+GTKEY.labels.map((l,i)=>{
+  return GTKEY.labels.map((l,i)=>{
     const g=grMap[l]!==undefined?grMap[l]:'';
     if(gtIsManual(GTKEY.ans[i]))
-      return `<div class="gtq"><span class="ql">${esc(l)}·M</span><button type="button" data-gq="${i}" data-s="${g}" class="${g!==''?'s'+g:''}">${g===''?'—':g==='2'?'정답':g==='1'?'부분':'오답'}</button></div>`;
+      return `<td class="q"><input class="gta man it${g!==''?' s'+g:''}" data-gq="${i}" data-s="${g}" value="${g}" maxlength="1" placeholder="M" autocomplete="off" title="${esc(l)}번 수동채점 · 2 정답 1 부분 0 오답"></td>`;
     const v=ansMap[l]!==undefined?ansMap[l]:'';
     const cls=g==='2'?' ok':(g==='0'?' bad':'');
-    return `<div class="gtq"><span class="ql">${esc(l)}</span><input class="gta${cls}" data-gq="${i}" value="${esc(v)}" autocomplete="off"></div>`;
-  }).join('')+`<div class="gtsum">${na?'미응시':(log['점수']||'—')}</div></div>`;
+    return `<td class="q"><input class="gta${cls}" data-gq="${i}" value="${esc(v)}" autocomplete="off" title="${esc(l)}번 · 정답 ${esc(GTKEY.ans[i])}"></td>`;
+  }).join('');
 }
 /* 카드의 답을 다시 채점해 점수·직렬화(dataset)·색을 맞춘다. 저장 직전에 항상 불린다.
  * 답이 하나도 없으면 점수 칸을 건드리지 않는다 — 손으로 총점만 적는 경우를 지우면 안 된다. */
@@ -3682,7 +3681,7 @@ function gtRecalc(card){
   GTKEY.labels.forEach((l,i)=>{
     const el=card.querySelector(`[data-gq="${i}"]`);
     if(!el){grades.push('');answers.push('');return;}
-    if(el.tagName==='BUTTON'){grades.push(el.dataset.s||'');answers.push('');return;}
+    if(el.classList.contains('man')){grades.push(el.dataset.s||'');answers.push('');return;}
     const v=el.value.trim();
     answers.push(v);
     const g=gtGradeOne(v,GTKEY.ans[i])||'';
@@ -3693,7 +3692,7 @@ function gtRecalc(card){
   if(any){
     const total=gtScore(grades,GTKEY.pts);
     const sc=card.querySelector('[data-f="점수"]');if(sc)sc.value=total;
-    const gs=card.querySelector('.gtsum');if(gs)gs.textContent=total;
+    const gs=card.querySelector('.sum');if(gs)gs.textContent=total;
   }
   card.dataset.gtItems=gtSer(GTKEY.labels,grades);
   card.dataset.gtAns=gtSer(GTKEY.labels,answers);
@@ -3714,44 +3713,39 @@ function gtMissing(){
     .filter(x=>x.labels.length&&x.labels.length<GTKEY.labels.length);
 }
 function gtMissText(ms){return ms.map(x=>x.name+' '+x.labels.join(',')+'번').join(' · ');}
+/* ── 행 저장 상태 (0908) — 이름 옆 점 하나. 자동저장은 그대로지만 "들어갔나"가 행마다 보인다.
+   dirty(●) → saving(…) → saved(✓) / failed(✗). failed 는 다음 성공까지 남는다. */
+function rowState(card,st){
+  if(!card)return;
+  card.classList.remove('dirty','saving','saved','failed');card.classList.add(st);
+  const el=card.querySelector('.st');if(el)el.textContent=st==='dirty'?'●':st==='saving'?'…':st==='saved'?'✓':'✗';
+}
 function wireRow(d,id){
   const seg=d.querySelector('.seg');
   seg.querySelectorAll('button').forEach(b=>{
     b.onclick=()=>{
       seg.querySelectorAll('button').forEach(x=>x.className='');
       b.classList.add('a'+([...seg.children].indexOf(b)+1));
-      const ab=d.querySelector('.absent.togglable');
-      if(ab)ab.classList.toggle('hidden',b.dataset.v!=='결석');
       save(id,d);
     };
   });
-  d.querySelectorAll('.items button').forEach(b=>{
-    b.onclick=()=>{
-      if(d.classList.contains('na'))return;   // 미응시 상태에서는 채점을 받지 않는다
-      const cur=b.dataset.s;
-      const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
-      b.dataset.s=next;b.className='s'+next;
-      const vals=[...d.querySelectorAll('.items button')].map(x=>x.dataset.s);
-      const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
-      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent=sum;
-      d.querySelector('[data-f="점수"]').value=sum;
-      save(id,d);
-    };
+  /* 문항 칸(리뷰 .it / 기출 M .man): 2·1·0 만 받는다. 치면 다음 문항으로 넘어간다. Backspace·Delete 는 비운다. */
+  d.querySelectorAll('.it').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{
+      if(d.classList.contains('na')){e.preventDefault();return;}
+      if(e.key==='2'||e.key==='1'||e.key==='0'){
+        e.preventDefault();itemSet(inp,e.key);
+        if(!inp.classList.contains('man'))itemSum(d);
+        save(id,d);
+        const list=[...d.querySelectorAll('.it,.gta')];const nx=list[list.indexOf(inp)+1];
+        if(nx){nx.focus();if(nx.select)nx.select();}
+      }else if(e.key==='Backspace'||e.key==='Delete'){
+        e.preventDefault();itemSet(inp,'');if(!inp.classList.contains('man'))itemSum(d);save(id,d);
+      }else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey){e.preventDefault();}   // 다른 글자는 안 받는다
+    });
+    inp.addEventListener('input',()=>{const v=inp.value.replace(/[^012]/g,'').slice(-1);itemSet(inp,v);if(!inp.classList.contains('man'))itemSum(d);});
   });
-  /* 기출 M(수동채점) 문항 탭 — 정답→부분→오답→정답 사이클. 자동 문항(input)은
-     아래 공용 change/blur 리스너가 save 를 부르고, save 가 gtRecalc 로 채점한다. */
-  d.querySelectorAll('.gtq button').forEach(b=>{
-    b.onclick=()=>{
-      if(d.classList.contains('na'))return;
-      const cur=b.dataset.s;
-      const next=cur===''?'2':cur==='2'?'1':cur==='1'?'0':'2';
-      b.dataset.s=next;b.className='s'+next;
-      b.textContent=next==='2'?'정답':next==='1'?'부분':'오답';
-      save(id,d);
-    };
-  });
-  /* 미응시 토글 — 켜면 점수·문항채점을 **화면에서도** 되돌린다.
-     문항 버튼은 한 번 누르면 빈칸으로 못 돌아가는 사이클이라(0812), 여기가 그 유일한 탈출구다. */
+  /* 미응시 토글 — 켜면 점수·문항채점을 **화면에서도** 되돌린다. */
   const na=d.querySelector('[data-f="미응시"]');
   if(na)na.onclick=()=>{
     const on=na.dataset.on!=='1';
@@ -3761,22 +3755,14 @@ function wireRow(d,id){
     const sc=d.querySelector('[data-f="점수"]');
     if(on){
       if(sc)sc.value='';
-      d.querySelectorAll('.items button').forEach(x=>{x.dataset.s='';x.className='';});
-      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='미응시';
-      // 기출 칸도 되돌린다 — 답·채점·색 전부
-      d.querySelectorAll('input.gta').forEach(x=>{x.value='';x.classList.remove('ok','bad');});
-      d.querySelectorAll('.gtq button').forEach(x=>{x.dataset.s='';x.className='';x.textContent='—';});
+      d.querySelectorAll('.it').forEach(x=>itemSet(x,''));
+      d.querySelectorAll('input.gta:not(.man)').forEach(x=>{x.value='';x.classList.remove('ok','bad');});
       delete d.dataset.gtItems;delete d.dataset.gtAns;d.dataset.gtWrong='0';d.dataset.gtPart='0';
-      const gs=d.querySelector('.gtsum');if(gs)gs.textContent='미응시';
-    }else{
-      const sumEl=d.querySelector('.items .sum');if(sumEl)sumEl.textContent='—';
-      const gs=d.querySelector('.gtsum');if(gs)gs.textContent='—';
-    }
+      const s=d.querySelector('.sum');if(s)s.textContent='미응시';
+    }else{const s=d.querySelector('.sum');if(s)s.textContent='—';}
     save(id,d);
   };
   const rs=d.querySelector('[data-f="추가학습사유"]');
-  /* 그려질 때의 지정 상태를 기억해 둔다 — 이게 없으면 '적혀 있던 사유를 지웠다'를 알아채지 못해
-     명단에서 거두지 못한다. save() 의 clinicSig 비교가 이 값을 기준으로 돈다. */
   {const r0=rs.value.trim();
    d.dataset.clinicSig=r0?[r0,d.querySelector('[data-f="추가학습날짜"]').value||'',d.querySelector('[data-f="추가학습시간"]').value||''].join('|'):'';}
   rs.addEventListener('input',()=>{
@@ -3787,18 +3773,17 @@ function wireRow(d,id){
     }
   });
   d.querySelectorAll('input,textarea').forEach(el=>{
+    el.addEventListener('input',()=>rowState(d,'dirty'));
     el.addEventListener('change',()=>save(id,d));
-    el.addEventListener('blur',()=>save(id,d));
+    el.addEventListener('blur',()=>{if(d.classList.contains('dirty'))save(id,d);});
   });
 }
 function renderStudents(){
   const box=$('students');box.innerHTML='';
   // 상한 30 — 리뷰는 5문항이지만 기출은 20~25문항 (0823)
   const nq=Math.max(0,Math.min(30,parseInt($('c_nq').value)||0));
-  if(window.matchMedia('(min-width:900px)').matches)renderTable(box,nq);
-  else renderCards(box,nq);
-  // 기출 모드는 저장된 답을 정답표로 다시 채점해 색·오답 수(dataset)를 맞춘다
-  // — 정답표를 나중에 고쳐도 화면이 즉시 재채점된 상태가 된다 (저장은 손대야 나간다)
+  renderGrid(box,nq);
+  // 기출 모드는 저장된 답을 정답표로 다시 채점해 색·오답 수(dataset)를 맞춘다 (저장은 손대야 나간다)
   if(isGT()&&GTKEY)csRoot().querySelectorAll('#students .stu').forEach(c=>{
     if(!c.classList.contains('na'))gtRecalc(c);
   });
@@ -3807,10 +3792,7 @@ function renderStudents(){
   updateAvgs();
 }
 /* 반 평균 점수·이행률 — 채점 중에 화면에 떠 있어야 한다(0814 유강).
-   예전엔 평균이 코멘트 자동생성과 마감 자동지정 안에서만 계산돼 눈에 안 보였다.
-   그래서 '이 점수가 반에서 어디쯤인가'를 매번 머리로 세야 했다.
-   ⚠ 계산 규칙은 closeSession 의 자동지정과 **같아야 한다** — 여기서 '반평균 이하'로 센 사람이
-   마감에서 불려 나가는 사람이다. 미응시는 모수에서 빼고(안 본 시험은 평균이 아니다),
+   ⚠ 계산 규칙은 closeSession 의 자동지정과 **같아야 한다**. 미응시는 모수에서 빼고,
    이행률은 미응시와 무관하니 전원 중 적힌 사람만 센다. */
 function updateAvgs(){
   const bar=$('clsavg');if(!bar)return;
@@ -3821,7 +3803,6 @@ function updateAvgs(){
   const scored=live.map(c=>({c,v:num(c,'점수')})).filter(x=>!isNaN(x.v));
   const ihs=cards.map(c=>num(c,'이행률')).filter(v=>!isNaN(v));
   const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  // 만점 = 리뷰는 문항수×2, 기출은 배점 합 (0823)
   const na=cards.length-live.length,
         full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
   const out=['<span class="t">반 평균</span>'];
@@ -3834,27 +3815,28 @@ function updateAvgs(){
       +`<span class="s">${scored.length}명 채점${live.length-scored.length?' · 미입력 '+(live.length-scored.length)+'명':''}${na?' · 미응시 '+na+'명':''}</span>`
       +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b> (마감 시 추가학습 대상)</span>`:''));
   }else out.push(`<span class="s">점수 입력 없음${na?' · 미응시 '+na+'명':''}</span>`);
-  /* (0907) 채점칸 미입력 경고 — 빈칸은 총점만 깎고 문항점수에는 안 남아서 PT가 그 문항을 놓친다.
-     0905 이정후(17·18번)·박시원(14~18번) 실사고. 여기서 보이면 [마감] 전에 채울 수 있다. */
   {
     const ms=gtMissing();
-    if(ms.length)out.push('<span class="s" style="color:#C62828;font-weight:700">'
+    if(ms.length)out.push('<span class="s" style="color:var(--bad);font-weight:700">'
       +`⚠ 채점칸 미입력 ${ms.length}명 — ${esc(gtMissText(ms))} (빈칸은 0점으로만 깎이고 오답으로 안 남는다 → PT에서 빠진다)</span>`);
   }
   if(ihs.length)out.push(`<span>이행률 <b>${Math.round(mean(ihs))}%</b></span>`
     +`<span class="s">${ihs.length}명 입력${cards.length-ihs.length?' · 미입력 '+(cards.length-ihs.length)+'명':''}${ihs.filter(v=>v<100).length?' · 100% 미만 '+ihs.filter(v=>v<100).length+'명':''}</span>`);
   else out.push('<span class="s">이행률 입력 없음</span>');
+  const fails=cards.filter(c=>c.classList.contains('failed')).length;
+  if(fails)out.push(`<span class="s" style="color:var(--bad);font-weight:700">✗ 저장 실패 ${fails}행</span>`);
   bar.innerHTML=out.join('');
   bar.style.display='';
 }
-function renderTable(box,nq){
-  const gtMode=isGT()&&GTKEY;
-  const wrap=document.createElement('div');
-  wrap.className='card';wrap.style.overflowX='auto';wrap.style.padding='0';
-  const t=document.createElement('table');t.className='grid';
-  // 기출 모드: 문항 열 대신 학생마다 아래에 답 입력 전용 행이 붙는다 (0824 유강 —
-  // 답안지 한 장 들고 →·Enter 로 답만 쭉 밀어 넣는 동선)
-  t.innerHTML=`<thead><tr><th>이름</th><th>출결</th><th>결석사유</th>${(nq&&!gtMode)?'<th>문항 채점 (탭: 2→1→0)</th>':''}<th>점수</th><th>이행률%</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+/* ── 학생 그리드 (0908) — 한 표. 행=학생, 열=출결·문항(리뷰 n개 / 기출 정답표 라벨 전부)·점수·이행률·코멘트…
+   첫 열 고정, 가로 스크롤. 폰 레이아웃은 없다. */
+function renderGrid(box,nq){
+  const gtMode=!!(isGT()&&GTKEY);
+  const wrap=document.createElement('div');wrap.className='cs-wrap';
+  const t=document.createElement('table');t.className='cs-grid';
+  const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
+                  :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}<th>합</th><th>점수</th><th>이행률</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -3862,55 +3844,44 @@ function renderTable(box,nq){
     const recent=recentOf(id).slice(0,3).join('·');
     const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
     const tr=document.createElement('tr');
-    if(!gtMode){tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;}
+    tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
+    const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="namecell"><span class="name">${s['이름']}</span> <span class="school">${s['학교']||''}</span><span class="savemark">✓</span>${recent?`<div class="recent" style="margin-left:0">최근 ${recent}</div>`:''}${notes?`<div class="recent" style="margin-left:0">⚑ ${notes}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
-      <td><div class="seg" style="margin:0">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div></td>
-      <td><input class="absent" data-f="결석사유" value="${log['결석사유']||''}" style="min-width:90px"></td>
-      ${(nq&&!gtMode)?`<td><div class="items" style="margin:0">${itemBtnsHtml(log,nq)}</div></td>`:''}
-      <td><div class="scorecell"><input data-f="점수" style="width:56px" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></td>
-      <td><input data-f="이행률" style="width:56px" value="${log['이행률']||''}"></td>
-      <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${log['코멘트']||''}</textarea></td>
-      <td><input data-f="특이사항" value="${log['특이사항']||''}" style="min-width:120px"></td>
-      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></td>
-      <td><input data-f="추가학습사유" value="${log['추가학습사유']||''}" style="min-width:140px"></td>
-      <td><input data-f="추가학습날짜" type="date" style="width:132px" value="${log['추가학습날짜']||''}"></td>
-      <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${log['추가학습시간']||''}"></td>`;
-    if(gtMode){
-      /* 학생 하나 = tbody 하나 (본행 + 답 입력 행). csAll('.stu')·save(card)·미응시 토글이
-         두 행을 한 카드로 본다. 표 안에 tbody 여러 개는 표준이다. */
-      const grp=document.createElement('tbody');
-      grp.className='stu'+(isNA(log)?' na':'');grp.dataset.id=id;
-      const tr2=document.createElement('tr');tr2.className='gtrow';
-      tr2.innerHTML=`<td colspan="11">${gtItemsHtml(log)}</td>`;
-      grp.appendChild(tr);grp.appendChild(tr2);
-      t.appendChild(grp);wireRow(grp,id);
-    }else{tb.appendChild(tr);wireRow(tr,id);}
+      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span><span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
+      <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
+      <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
+      ${cells}
+      <td class="sum">${isNA(log)?'미응시':(log['점수']||'—')}</td>
+      <td><div class="scorecell"><input data-f="점수" value="${isNA(log)?'':esc(log['점수']||'')}">${naBtnHtml(log)}</div></td>
+      <td><input data-f="이행률" style="width:56px" value="${esc(log['이행률']||'')}"></td>
+      <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${esc(log['코멘트']||'')}</textarea></td>
+      <td><input data-f="특이사항" value="${esc(log['특이사항']||'')}" style="min-width:140px"></td>
+      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${esc((log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:'')}</textarea></td>
+      <td><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
+      <td><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
+      <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
+    tb.appendChild(tr);wireRow(tr,id);
   });
-  if(!gtMode)t.appendChild(tb);
+  t.appendChild(tb);
   wrap.appendChild(t);
   const hint=document.createElement('p');hint.className='kbdhint';
   hint.textContent=gtMode
-    ?'답 칸: Enter·→ 다음 문항 (행 끝나면 다음 학생), ← 이전, ↑↓ 같은 문항 학생 이동. 나머지 칸: Enter·↑↓ 세로 이동.'
-    :'Enter · ↑↓ 로 같은 칸을 세로로 옮겨 다닌다. Tab 은 옆 칸.';
+    ?'답 칸: 숫자를 치고 Enter·→ 다음 문항(행 끝이면 다음 학생), ← 이전, ↑↓ 같은 문항 학생 이동. M 칸은 2/1/0. 나머지 칸: Enter·↑↓ 세로 이동, Tab 옆 칸.'
+    :'채점 칸: 2(정답) 1(부분) 0(오답) 을 치면 다음 문항으로 넘어간다. Backspace 로 비운다. Enter·↑↓ 는 같은 열 세로 이동, Tab 은 옆 칸.';
   box.appendChild(hint);box.appendChild(wrap);
   wireGridKeys(t);
 }
-/* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다.
-   Tab 은 옆으로만 가서 매번 한 줄을 가로질러야 했다. */
+/* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다. */
 function wireGridKeys(t){
-  // 기출 답 칸은 포커스가 오면 전체 선택 — 바로 덮어 치고 →·Enter 로 넘어간다
   t.addEventListener('focusin',e=>{
-    if(e.target.matches&&e.target.matches('input.gta')&&e.target.select)e.target.select();
+    if(e.target.matches&&e.target.matches('input.gta,input.it')&&e.target.select)e.target.select();
   });
   t.addEventListener('keydown',e=>{
     const el=e.target;
-    if(!el.matches||!el.matches('input[data-f],textarea[data-f],input.gta'))return;
+    if(!el.matches||!el.matches('input[data-f],textarea[data-f],input.gta,input.it'))return;
     const ta=el.tagName==='TEXTAREA';
-    const gta=el.classList.contains('gta');
-    /* 답안지 입력 동선 (0824): 답 칸에서 Enter·→ = 다음 문항, ← = 이전 문항.
-       행 끝을 넘으면 다음 학생의 1번으로 흐른다(전체 답 칸을 DOM 순서로 잇는다).
-       화살표는 커서가 끝/처음에 있거나 전체선택 상태일 때만 이동 — 답 중간 편집을 안 뺏는다. */
+    const gta=el.classList.contains('gta')||el.classList.contains('it');
+    /* 답안지 입력 동선: 답 칸에서 Enter·→ = 다음 문항, ← = 이전 문항. 행 끝을 넘으면 다음 학생 1번. */
     if(gta&&(e.key==='Enter'||e.key==='ArrowRight'||e.key==='ArrowLeft')){
       const all=el.selectionStart===0&&el.selectionEnd===el.value.length;
       let step=0;
@@ -3918,10 +3889,9 @@ function wireGridKeys(t){
       else if(e.key==='ArrowRight'&&(all||el.selectionStart>=el.value.length))step=1;
       else if(e.key==='ArrowLeft'&&(all||el.selectionEnd<=0))step=-1;
       if(step){
-        const list=[...t.querySelectorAll('input.gta')];
+        const list=[...t.querySelectorAll('input.gta,input.it')];
         const next=list[list.indexOf(el)+step];
-        if(next){e.preventDefault();next.focus();
-          if(next.scrollIntoView)next.scrollIntoView({block:'nearest'});}
+        if(next){e.preventDefault();next.focus();if(next.scrollIntoView)next.scrollIntoView({block:'nearest',inline:'nearest'});}
         return;
       }
     }
@@ -3930,53 +3900,19 @@ function wireGridKeys(t){
     else if(e.key==='ArrowDown'&&(!ta||e.ctrlKey))dir=1;
     else if(e.key==='ArrowUp'&&(!ta||e.ctrlKey))dir=-1;
     if(!dir)return;
-    // 세로 이동 — 같은 항목(점수·이행률…)·같은 문항(data-gq)을 학생 간에 탄다.
-    // ⚠ 기출 모드는 학생이 tbody 로 묶여 형제 tr 순회가 끊긴다 → 표 전체 tr 목록으로 걷는다.
-    const sel=el.dataset.f?`[data-f="${el.dataset.f}"]`:`input[data-gq="${el.dataset.gq}"]`;
-    const rows=[...t.querySelectorAll('tr')];
+    const sel=el.dataset.f?`[data-f="${el.dataset.f}"]`:(el.dataset.gq!==undefined?`input[data-gq="${el.dataset.gq}"]`:`input.it[data-i="${el.dataset.i}"]`);
+    const rows=[...t.querySelectorAll('tbody tr')];
     let ri=rows.indexOf(el.closest('tr'));
     while((ri+=dir)>=0&&ri<rows.length){
       const next=rows[ri].querySelector(sel);
       if(next){e.preventDefault();next.focus();
         if(next.select)next.select();
-        if(next.scrollIntoView)next.scrollIntoView({block:'center',behavior:'smooth'});
+        if(next.scrollIntoView)next.scrollIntoView({block:'center'});
         return;}
     }
   });
 }
-function renderCards(box,nq){
-  const gtMode=isGT()&&GTKEY;
-  STUDENTS.forEach(s=>{
-    const id=s['학생ID'], log=LOGMAP[id]||{};
-    const d=document.createElement('div');d.className='stu'+(isNA(log)?' na':'');d.dataset.id=id;
-    const cur=log['출결'];
-    const recent=recentOf(id).slice(0,3).join(' · ');
-    const notes=(NOTES[id]||[]).slice(0,2);
-    const itemsHtml=nq>0?(gtMode?gtItemsHtml(log)
-      :'<div class="items" data-f="문항채점">'+itemBtnsHtml(log,nq)+'<div class="sum" data-f="합계">'+(isNA(log)?'미응시':(log['점수']||'—'))+'</div></div>'):'';
-    d.innerHTML=`
-      <div><span class="name">${s['이름']}</span><span class="school">${s['학교']||''}</span><span class="recent">${recent?'최근 '+recent:''}</span><span class="savemark">저장됨 ✓</span></div>
-      ${notes.length?`<div class="recent" style="margin:4px 0 0">⚑ ${notes.join(' / ')}</div>`:''}
-      ${prevHwLine(id)}${loopMissLine(id)}
-      <div class="seg" data-f="출결">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}">${v}</button>`).join('')}</div>
-      <input class="absent togglable ${cur==='결석'?'':'hidden'}" data-f="결석사유" placeholder="결석 사유" value="${log['결석사유']||''}">
-      ${itemsHtml}
-      <div class="minirow">
-        <div class="grow"><label class="lbl">${gtMode?'기출 점수 (답을 넣으면 자동)':'리뷰 점수 (문항 탭하면 자동)'}</label><div class="scorecell"><input data-f="점수" inputmode="decimal" value="${isNA(log)?'':(log['점수']||'')}">${naBtnHtml(log)}</div></div>
-        <div class="grow"><label class="lbl">이행률 %</label><input data-f="이행률" inputmode="numeric" value="${log['이행률']||''}"></div>
-      </div>
-      <div class="minirow"><div class="grow"><label class="lbl">코멘트 (리포트에 나감)</label><textarea data-f="코멘트">${log['코멘트']||''}</textarea></div></div>
-      <div class="minirow"><div class="grow"><label class="lbl">특이사항 (내부용 — 검사 이슈)</label><input data-f="특이사항" value="${log['특이사항']||''}"></div></div>
-      <div class="minirow"><div class="grow"><label class="lbl">개별 과제 (비우면 반 공통 과제)</label><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)">${(log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:''}</textarea></div></div>
-      <div class="minirow clinicrow">
-        <div style="flex:1 1 100%"><label class="lbl">추가학습 사유 (입력 시 자동 지정 — 날짜·시간 자동)</label><input data-f="추가학습사유" value="${log['추가학습사유']||''}"></div>
-        <div style="flex:1 1 56%;min-width:0"><label class="lbl">날짜</label><input data-f="추가학습날짜" type="date" value="${log['추가학습날짜']||''}"></div>
-        <div style="flex:1 1 30%;min-width:0"><label class="lbl">시간</label><input data-f="추가학습시간" placeholder="18-20" value="${log['추가학습시간']||''}"></div>
-      </div>`;
-    wireRow(d,id);
-    box.appendChild(d);
-  });
-}
+
 
 /* 저장 실패 배너 (0817) — 원천(daily·clslog·close)별로 실패를 기억하고,
    전부 성공으로 돌아와야 내린다. 토스트는 1.8초, 이건 붙박이다. */
@@ -3998,9 +3934,11 @@ async function save(id,card){
   // 기출 모드는 저장 전에 항상 재채점 — 색·점수·직렬화(dataset)가 이 한 곳에서 맞는다
   if(isGT()&&GTKEY&&card&&!card.classList.contains('na'))gtRecalc(card);
   updateAvgs();          // 문항 버튼·미응시 토글은 input 이벤트가 없다 — 저장 경로에서 같이 갱신
+  rowState(card,'dirty');
   clearTimeout(debounce[id]);
   debounce[id]=setTimeout(async()=>{
     if(LOCKED)return;
+    rowState(card,'saving');
     const s=STUDENTS.find(x=>x['학생ID']===id);
     const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
     /* 빈 칸을 무엇으로 보낼 것인가 — 0813 사고의 뿌리다.
@@ -4022,7 +3960,7 @@ async function save(id,card){
     /* 기출 모드(gt): 문항점수는 "라벨:정오;…" 키 형식, 답안은 학생 실답 "라벨:답;…".
        리뷰 모드: 기존 "2,1,0" 자리 형식 그대로. */
     const gt=!!(isGT()&&GTKEY);
-    const itemBtns=[...card.querySelectorAll('.items button')];
+    const itemBtns=[...card.querySelectorAll('.it:not(.man)')];
     const itemStr=na?null
       :gt?((card.dataset.gtItems||'')||null)
       :(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
@@ -4052,8 +3990,8 @@ async function save(id,card){
        v11 을 아직 안 돌린 DB 에서도 리뷰 저장이 "없는 컬럼" 으로 죽지 않는다. */
     if(row['답안']===null)delete row['답안'];
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
-    if(error){toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
-    saveOk('daily');
+    if(error){rowState(card,'failed');updateAvgs();toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
+    saveOk('daily');rowState(card,'saved');
     /* LOGMAP 을 방금 보낸 값으로 맞춘다. 안 맞추면 '이번 세션에 넣었다가 지운 값'이
        prev 에 없어서 지우기가 먹지 않는다(null 로 나가 옛 값이 살아남는다). */
     {
@@ -4062,7 +4000,6 @@ async function save(id,card){
       if(na){merged['점수']='';merged['문항점수']='';}
       LOGMAP[id]=merged;
     }
-    const mark=card.querySelector('.savemark');mark.classList.add('show');setTimeout(()=>mark.classList.remove('show'),1200);
     // 틀린 문항 → 오답 이벤트 적재 (0점=오답, 1점=부분)
     // ⚠ 미응시로 되돌릴 때도 지워야 한다. 예전엔 itemStr 이 있을 때만 지워서 채점을 취소해도
     //    오답 이벤트가 남았다 — 약점 집계에 유령 오답이 쌓인다(0812).
@@ -4237,8 +4174,8 @@ async function genComments(){
     if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
     if(!isNaN(score)){
       const gtC=isGT()&&GTKEY;   // 기출은 gtRecalc 가 dataset 에 세어 둔다 (렌더 때 일괄 실행)
-      const wrongCnt=gtC?parseInt(card.dataset.gtWrong||'0',10):[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='0').length;
-      const partCnt=gtC?parseInt(card.dataset.gtPart||'0',10):[...card.querySelectorAll('.items button')].filter(b=>b.dataset.s==='1').length;
+      const wrongCnt=gtC?parseInt(card.dataset.gtWrong||'0',10):[...card.querySelectorAll('.it:not(.man)')].filter(b=>b.dataset.s==='0').length;
+      const partCnt=gtC?parseInt(card.dataset.gtPart||'0',10):[...card.querySelectorAll('.it:not(.man)')].filter(b=>b.dataset.s==='1').length;
       // 반평균 (오늘 입력된 점수 기준)
       const allScores=[...csAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
       const avg=allScores.length>=2?allScores.reduce((a,b)=>a+b,0)/allScores.length:null;
@@ -4448,12 +4385,6 @@ async function resetToday(){
   selectClass(CLS);
 }
 
-/* 화면 폭이 카드↔표 경계를 넘으면 다시 그림 */
-let lastWide=window.matchMedia('(min-width:900px)').matches;
-window.addEventListener('resize',()=>{
-  const w=window.matchMedia('(min-width:900px)').matches;
-  if(w!==lastWide){lastWide=w;if(CLS)renderStudents();}
-});
 
 /* ══════════════════════════════════════════════════════════════════════
  * 복습 루프 손잡이 — 버튼은 요청만 쓰고, 크론이 주워 실행한다
@@ -5219,14 +5150,13 @@ function clinicPoll(){
 }
 
 /* ── 뷰 전환 ── */
-const VIEWS={today:'오늘',console:'수업 콘솔',clinic:'추가학습',load:'성적 적재'};
+const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
     const b=$('nav-'+k); if(b) b.classList.toggle('on',k===v);   // 통합 셸엔 콘솔 nav 가 없다
   });
   const vt=$('viewtitle'); if(vt) vt.textContent=VIEWS[v]||v;
-  if(v==='console'&&!$('classbtns').children.length)initClassButtons();
   if(v==='clinic')clinicInit();
   if(v==='load')loadXlsx().catch(()=>{});
 }
