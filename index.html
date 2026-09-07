@@ -557,7 +557,7 @@ body.cs-on #boot{display:none}
 <nav id="nav">
 <span class="grp">입력</span>
 <a href="#cs-today" data-v="cs-today">오늘</a><a href="#cs-console" data-v="cs-console">수업</a>
-<a href="#cs-clinic" data-v="cs-clinic">추가학습 지정</a><a href="#cs-review" data-v="cs-review">리뷰테스트</a>
+<a href="#cs-clinic" data-v="cs-clinic">추가학습 지정</a>
 <a href="#cs-load" data-v="cs-load">성적 적재</a>
 <span class="sep"></span><span class="grp">조회</span>
 <a href="#today" data-v="today">현황</a><a href="#class" data-v="class">반별</a>
@@ -831,23 +831,6 @@ body.cs-on #boot{display:none}
     </div>
   </section>
 
-  <section id="view-review" class="hidden">
-    <div class="card">
-      <h2>리뷰테스트 만들기</h2>
-      <div class="minirow">
-        <div style="flex:0 0 110px"><label class="lbl">반</label><select id="rv_cls"></select></div>
-        <div style="flex:0 0 150px"><label class="lbl">시험일</label><input id="rv_date" type="date"></div>
-        <div class="grow" style="align-self:flex-end;display:flex;gap:8px;justify-content:flex-end">
-          <button class="key" id="rv_make" onclick="reviewJob()">만들기</button>
-        </div>
-      </div>
-      <div class="minirow">
-        <div class="grow"><label class="lbl">배분 (두 단원에 걸친 회차만 — 비우면 자동. 합=5)</label>
-          <input id="rv_alloc" placeholder="예: 도형의이동=3,집합의뜻과표현=2"></div>
-      </div>
-      <div id="rv_out" class="loadout">범위는 묻지 않는다 — 시험일 직전 수업의 <b>이번과제</b>를 서버가 읽는다. 문항은 다른 반이 이미 푼 원문항만 재사용한다(변형·창작 없음). 완성되면 hwpx 내려받기 링크가 여기 뜬다.<br><span style="opacity:.7">⚠ 서버는 PDF 시각검수를 못 한다 — 인쇄물에서 하단 넘침만 한 번 훑을 것. 후보가 부족하면 그 사유가 그대로 뜬다(그 회차는 제작 세션 영역).</span></div>
-    </div>
-  </section>
 
 </main><div class="toast" id="toast"></div></div>
 </div>
@@ -1402,7 +1385,7 @@ function loopHistRows(st, s) {
     const late = !s2 && r['마감ISO'] && Date.parse(r['마감ISO']) <= Date.now();
     const stat = s2 ? ('✓' + (s2['총문항'] ? ' ' + (s2['맞은개수'] || 0) + '/' + s2['총문항'] : '')) : (late ? '미제출' : '진행중');
     const col = s2 ? 'var(--good)' : (late ? 'var(--bad)' : 'var(--dim)');
-    const flags = (r['재촉1차'] ? ' 재촉①' : '') + (r['재촉2차'] ? ' 재촉②' : '') + (r['중단'] ? ' ⏸' : '');
+    const flags = (r['중단'] ? ' ⏸' : '');   // 재촉 배지는 0906 제거(0902부터 재촉 끔)
     return `<div class="cl-row"><b>${E(String(r['수업일'] || '').slice(5))}</b>`
       + ` ${E(r['단원'] || '—')}${r['문항수'] ? `<span class="dim">${E(r['문항수'])}문항</span>` : ''}`
       + ` <b style="color:${col}">${E(stat)}</b>`
@@ -1448,7 +1431,7 @@ function stuDetail(st, s) {
     + `<div class="two"><div><h2>추가학습 이력</h2><div class="card">${ex}</div></div>`
     + `<div><h2>코멘트 타임라인</h2><div class="card">${cmts}</div></div></div>`
     + (lpN && lpN.length ? `<div class="dbonly"><h2>루프 발송 이력 <span class="cnt">${lpN.length}</span>`
-      + '<span class="dim" style="font-size:12px"> 출제·재촉=loop_status · 제출=loop_submit</span></h2>'
+      + '<span class="dim" style="font-size:12px"> 출제=loop_status · 제출=loop_submit</span></h2>'
       + `<div class="card">${lp}</div></div>` : '')
     + '</section>';
 }
@@ -1609,7 +1592,7 @@ function viewLoop(st) {
             + rows.map(r => {
               const s2 = sub[r['루프ID']];
               const score = s2 ? (s2['총문항'] ? ' <b style="color:var(--good)">' + E((s2['맞은개수'] || 0) + '/' + s2['총문항']) + '</b>' : '') : '';
-              const flags = (r['재촉1차'] ? ' 재촉①' : '') + (r['재촉2차'] ? ' 재촉②' : '') + (r['중단'] ? ' ⏸' : '');
+              const flags = (r['중단'] ? ' ⏸' : '');   // 재촉 배지는 0906 제거(0902부터 재촉 끔)
               const nm = st.smap[r['학생ID']] ? slink(st.smap[r['학생ID']]) : E(r['이름'] || '');
               return `<span style="display:inline-block;margin-right:12px;white-space:nowrap">${nm}${score}`
                 + (flags ? `<span class="dim">${E(flags)}</span>` : '') + '</span>';
@@ -1617,8 +1600,7 @@ function viewLoop(st) {
         });
       });
     });
-    sendBoard = '<h2>발송 현황 — 최근 3수업일 '
-      + '<span class="dim" style="font-size:12px">재촉 판정은 수업일+1 11시 · +2 16시</span></h2>'
+    sendBoard = '<h2>발송 현황 — 최근 3수업일</h2>'   // 재촉 판정 안내는 0906 제거(0902부터 재촉 끔)
       + `<div class="card">${H.join('')}</div>`;
   }
 
@@ -2653,7 +2635,7 @@ function wire(st) {
  */
 function csRoute() {
   const m = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-  if (!/^cs-(today|console|clinic|review|load)$/.test(m)) {
+  if (!/^cs-(today|console|clinic|load)$/.test(m)) {
     // 콘솔에서 나갈 때는 여기서 접는다. 조회 라우터(route)는 wire() 안에 있어서
     // 조회 로딩이 실패한 날에는 아예 안 돈다 — 그러면 콘솔 화면이 그대로 남아 버린다.
     document.body.classList.remove('cs-on');
@@ -2726,7 +2708,7 @@ function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');
  * 각 손잡이(루프·추가학습·오늘 물을 것)는 자기 작업만 메모리로 폴링한다 —
  * 새로고침하면 추적을 잃고, 다른 탭의 작업은 아예 안 보였다.
  * 여기는 job_queue 를 직접 읽는다: 새로고침 생존 + 전 종류 한눈에. */
-const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트',진단발송:'개념 진단 발송',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝'};
+const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트'/*UI는 0906 제거, 옛 job_queue 행 표시용*/,진단발송:'개념 진단 발송',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝'};
 function toggleJobs(){const p=$('jobpanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))jobsRefresh();}
 function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항')].filter(Boolean).join(' · ');}
 function jobAge(t){return Math.max(0,Math.round((Date.now()-new Date(t))/60000));}
@@ -2870,7 +2852,7 @@ function csBoot(prof){
     // 통합 셸에서는 탭이 대시보드 상단 nav 에 있다 (단독 콘솔에선 하나도 안 잡힌다)
     document.querySelectorAll('[data-v="cs-'+k+'"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
   };
-  adminOnly('load'); adminOnly('review');
+  adminOnly('load');   // 리뷰테스트 탭은 0906 제거(0831 영구 중단)
   jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
   setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
   loadToday();
@@ -3192,6 +3174,13 @@ async function gtDone(){
   if(!isGT()||!GTKEY){toast('기출테스트 모드에서 정답을 먼저 넣어라');return;}
   const src=$('gt_src').value.trim();
   if(!src){toast('시험지명을 넣어라 — 어느 기출인지 몰라 진단을 못 만든다');return;}
+  /* (0907) 채점칸이 빈 학생이 있으면 여기서 멈춘다 — 빈칸은 문항점수에 안 남아 PT·진단이
+     그 문항을 통째로 놓친다(0905 이정후 17·18번, 박시원 14~18번). */
+  {
+    const ms=gtMissing();
+    if(ms.length&&!confirm('채점칸이 빈 학생이 있다:\n\n'+ms.map(x=>'  '+x.name+' — '+x.labels.join(',')+'번').join('\n')
+      +'\n\n빈칸은 총점에서만 0점으로 깎이고 "오답"으로는 안 남는다.\n이대로 보내면 그 문항이 PT·진단에서 빠진다.\n\n그래도 진행할까?'))return;
+  }
   const today=vDay();
   const {data:pend}=await sb.from('job_queue').select('id,상태').eq('종류','진단발송')
     .in('상태',['요청','처리중','진행']).contains('파라미터',{'반':CLS,'날짜':today});
@@ -3326,7 +3315,21 @@ function gtRecalc(card){
   card.dataset.gtAns=gtSer(GTKEY.labels,answers);
   card.dataset.gtWrong=grades.filter(g=>g==='0').length;
   card.dataset.gtPart=grades.filter(g=>g==='1').length;
+  /* (0907) 빈 칸은 저장되지 않는다 — gtSer 이 항목 자체를 안 만든다. 총점은 0점으로 깎이는데
+     문항점수에는 흔적이 없어서, PT를 뽑는 circuit_hw 가 그 문항을 오답으로 세지 못했다
+     (0905 이정후 17·18번, 박시원 14~18번 실사고). 몇 번이 비었는지 여기서 세어 화면에 띄운다. */
+  card.dataset.gtMiss=GTKEY.labels.filter((l,i)=>grades[i]==='').join(',');
 }
+/* 채점칸이 빈 학생들 — [{name,labels}]. 미응시(na)는 대상이 아니다(안 본 시험엔 빈칸이 당연). */
+function gtMissing(){
+  if(!(isGT()&&GTKEY))return [];
+  return [...csAll('.stu')].filter(c=>!c.classList.contains('na'))
+    .map(c=>({name:((STUDENTS.find(s=>s['학생ID']===c.dataset.id)||{})['이름']||c.dataset.id||''),
+              labels:(c.dataset.gtMiss||'').split(',').filter(Boolean)}))
+    // 전부 빈 학생은 '아직 채점 전'이지 사고가 아니다 — 일부만 빈 사람만 잡는다.
+    .filter(x=>x.labels.length&&x.labels.length<GTKEY.labels.length);
+}
+function gtMissText(ms){return ms.map(x=>x.name+' '+x.labels.join(',')+'번').join(' · ');}
 function wireRow(d,id){
   const seg=d.querySelector('.seg');
   seg.querySelectorAll('button').forEach(b=>{
@@ -3447,6 +3450,13 @@ function updateAvgs(){
       +`<span class="s">${scored.length}명 채점${live.length-scored.length?' · 미입력 '+(live.length-scored.length)+'명':''}${na?' · 미응시 '+na+'명':''}</span>`
       +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b> (마감 시 추가학습 대상)</span>`:''));
   }else out.push(`<span class="s">점수 입력 없음${na?' · 미응시 '+na+'명':''}</span>`);
+  /* (0907) 채점칸 미입력 경고 — 빈칸은 총점만 깎고 문항점수에는 안 남아서 PT가 그 문항을 놓친다.
+     0905 이정후(17·18번)·박시원(14~18번) 실사고. 여기서 보이면 [마감] 전에 채울 수 있다. */
+  {
+    const ms=gtMissing();
+    if(ms.length)out.push('<span class="s" style="color:#C62828;font-weight:700">'
+      +`⚠ 채점칸 미입력 ${ms.length}명 — ${esc(gtMissText(ms))} (빈칸은 0점으로만 깎이고 오답으로 안 남는다 → PT에서 빠진다)</span>`);
+  }
   if(ihs.length)out.push(`<span>이행률 <b>${Math.round(mean(ihs))}%</b></span>`
     +`<span class="s">${ihs.length}명 입력${cards.length-ihs.length?' · 미입력 '+(cards.length-ihs.length)+'명':''}${ihs.filter(v=>v<100).length?' · 100% 미만 '+ihs.filter(v=>v<100).length+'명':''}</span>`);
   else out.push('<span class="s">이행률 입력 없음</span>');
@@ -3888,6 +3898,12 @@ async function genComments(){
 }
 async function closeSession(){
   if(!CLS)return;
+  /* (0907) 마감의 백스톱이 반 전체 PT를 뽑는다 — 채점칸이 비어 있으면 그 문항이 빠진 채로 나간다. */
+  {
+    const ms=gtMissing();
+    if(ms.length&&!confirm('채점칸이 빈 학생이 있다:\n\n'+ms.map(x=>'  '+x.name+' — '+x.labels.join(',')+'번').join('\n')
+      +'\n\n빈칸은 총점에서만 0점으로 깎이고 "오답"으로는 안 남는다.\n이대로 마감하면 그 문항이 PT에서 빠진다.\n\n그래도 마감할까?'))return;
+  }
   const today=vDay();
   const reclose=$('sessionstate').textContent==='마감됨';   // 재마감 = 리셋 후 재적재·재렌더 (0818)
   /* 자동 추가학습 지정 — 두 가지 사유. 이미 사유가 적힌 학생은 손대지 않는다.
@@ -4251,8 +4267,7 @@ function loopPoll(){
     if(st==='실패'){LOOPBUILT=null;return loopSay('<span class="warn">실패 — '+(data['메시지']||'')+'</span>');}
     if(data['종류']==='send_loop'){
       LOOPBUILT=null;
-      return loopSay('<b>발송 완료</b> — '+(r['인원']||0)+'명 · 마감 '+(r['마감']||'')+
-        '\n미제출 재촉은 서버가 알아서 한다 — 1차 수업 다음날 11시, 2차 그 다음날 16시.');
+      return loopSay('<b>발송 완료</b> — '+(r['인원']||0)+'명 · 마감 '+(r['마감']||''));   // 재촉 안내 문구는 0906 제거(0902부터 재촉 끔, 미제출=이행률 0)
     }
     LOOPBUILT={반:r['반'],단원:r['단원'],수업일:r['수업일']||'',마감:r['마감']||'',인원:r['인원']||0};
     $('lp_send').disabled=false;
@@ -4819,74 +4834,8 @@ function clinicPoll(){
   tick();CLTIMER=setInterval(tick,6000);
 }
 
-/* ── 리뷰테스트 (P4-c) — 반 고르면 서버가 선별→조판→검수→링크까지 ── */
-let RVJOB=null,RVTIMER=null;
-function rvSay(html){$('rv_out').innerHTML=html;}
-async function reviewInit(){
-  if(!$('rv_date').value)$('rv_date').value=todayStr();
-  if(!$('rv_cls').children.length){
-    const {data:stu}=await sb.from('students').select('학년,반').eq('상태','재원');
-    const set=[...new Set((stu||[]).map(r=>(r['학년']||'')+(r['반']||'')))].sort();
-    $('rv_cls').innerHTML=set.map(c=>'<option>'+esc(c)+'</option>').join('');
-  }
-  // 마지막 요청이 아직 돌고 있으면 이어서 보여 준다 — 화면을 닫았다 열어도 상태가 남게
-  if(!RVJOB){
-    const {data}=await sb.from('job_queue').select('*').eq('종류','review_build')
-      .order('요청시각',{ascending:false}).limit(1);
-    const j=(data||[])[0];
-    if(j&&(j['상태']==='요청'||j['상태']==='처리중')){RVJOB=j;reviewPoll();}
-    else if(j&&j['상태']==='완료'&&j['결과'])rvRender(j);
-  }
-}
-function rvRender(j){
-  const r=j['결과']||{};
-  const links=(r['링크']||[]).map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+esc(x['이름'])+'</a>').join('\n');
-  const sel=(r['선택']||[]).map((c,i)=>c?('  '+(i+1)+'. '+esc(c['유형']||'유형 미상')+' <span class="time">'+esc(c['상태'])+' · '+esc(c['문항ID'])+'</span>'):('  '+(i+1)+'. <span class="warn">빈 슬롯</span>')).join('\n');
-  rvSay('<b>'+esc(r['반']||'')+' '+esc((r['시험일']||'').slice(5))+' 완성</b>\n'+links+
-    '\n<span style="opacity:.8">범위: '+esc((r['범위']||[]).map(w=>w['단원']+(w['테마']&&w['테마'].length?' THEME '+w['테마'].join(','):'')).join(' · '))+'</span>\n'+sel+
-    '\n<span class="warn">⚠ 인쇄 전 시각검수는 사람 몫 — 하단 넘침·수식 깨짐만 훑을 것</span>');
-}
-async function reviewJob(){
-  const cls=$('rv_cls').value;
-  if(!cls)return rvSay('<span class="warn">반을 고를 것.</span>');
-  $('rv_make').disabled=true;
-  const p={'반':cls,'시험일':$('rv_date').value};
-  const al=$('rv_alloc').value.trim();
-  if(al)p['배분']=al;
-  const {data,error}=await sb.from('job_queue')
-    .insert({'종류':'review_build','파라미터':p,'상태':'요청','요청자':'콘솔'})
-    .select().single();
-  if(error){$('rv_make').disabled=false;return rvSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
-  RVJOB=data;
-  rvSay('요청했다 — <b>'+cls+' '+$('rv_date').value+'</b>\n요청이 들어가는 순간 DB 가 서버를 깨운다(보통 1분 안). 선별→조판→검수→업로드 순서로 돈다.');
-  reviewPoll();
-}
-function reviewPoll(){
-  clearInterval(RVTIMER);
-  let n=0;
-  const tick=async()=>{
-    if(!RVJOB)return;
-    const {data}=await sb.from('job_queue').select('*').eq('id',RVJOB.id).single();
-    if(!data)return;
-    const st=data['상태'];
-    if(st==='요청'||st==='처리중'){
-      rvSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+'.'.repeat(1+(n++%3))+
-        '\n<span style="opacity:.7">'+esc(data['메시지']||'')+'</span>'+stallHint(n,st));
-      return;
-    }
-    clearInterval(RVTIMER);RVJOB=null;$('rv_make').disabled=false;
-    if(st==='실패'){
-      const r=data['결과']||{};
-      const sel=(r['선택']||[]).map((c,i)=>c?('  '+(i+1)+'. '+esc(c['유형']||'유형 미상')+' <span class="time">'+esc(c['상태'])+'</span>'):('  '+(i+1)+'. <span class="warn">빈 슬롯</span>')).join('\n');
-      return rvSay('<span class="warn">실패 — '+esc(data['메시지']||'')+'</span>'+(sel?'\n'+sel:''));
-    }
-    rvRender(data);
-  };
-  tick();RVTIMER=setInterval(tick,6000);
-}
-
 /* ── 뷰 전환 ── */
-const VIEWS={today:'오늘',console:'수업 콘솔',clinic:'추가학습',review:'리뷰테스트',load:'성적 적재'};
+const VIEWS={today:'오늘',console:'수업 콘솔',clinic:'추가학습',load:'성적 적재'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
@@ -4895,7 +4844,6 @@ function showView(v){
   const vt=$('viewtitle'); if(vt) vt.textContent=VIEWS[v]||v;
   if(v==='console'&&!$('classbtns').children.length)initClassButtons();
   if(v==='clinic')clinicInit();
-  if(v==='review')reviewInit();
   if(v==='load')loadXlsx().catch(()=>{});
 }
 /* 통합 셸(/dashboard/)에서는 주소(#cs-console)가 진실원이다 — 콘솔 안에서 부른 showView 도
