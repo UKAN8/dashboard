@@ -4059,6 +4059,9 @@ async function save(id,card){
         const body={'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':cd,'시간':ct,'기록일':todayStr()};
         if(row)await sb.from('clinic_roster').update(body).eq('id',row.id);
         else{await sb.from('clinic_roster').insert({...body,'상태':'지정','지정일':todayStr()});toast(s['이름']+' 추가학습 지정');}
+        /* (0908 유강) 추가학습은 수업당 한 번 — 사유가 달라도 나중 마감이 덮어쓴다. 같은 지정일의 나머지 행(출석 없는 것)은 거둔다. */
+        const extra=(ex||[]).filter(r=>!r['출석']&&(!row||r.id!==row.id)).map(r=>r.id);
+        if(extra.length)await sb.from('clinic_roster').delete().in('id',extra);
       }else if(card.dataset.clinicSig){
         const {data:ex}=await mine();
         const row=(ex||[]).find(r=>!r['출석']);
@@ -4338,6 +4341,8 @@ async function closeSession(){
       const {error:ce}=row?await sb.from('clinic_roster').update(body).eq('id',row.id)
                           :await sb.from('clinic_roster').insert({...body,'상태':'지정','지정일':todayStr()});
       if(ce){toast('추가학습 명단 저장 실패('+s['이름']+'): '+ce.message);continue;}
+      const extra=(ex||[]).filter(r=>!r['출석']&&(!row||r.id!==row.id)).map(r=>r.id);   // 수업당 한 번(0908) — 여분 행 제거
+      if(extra.length)await sb.from('clinic_roster').delete().in('id',extra);
       dates.add(cd);cn++;
     }
     if(dates.size){
