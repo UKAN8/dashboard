@@ -440,7 +440,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #nav .ng button{font:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer}
 #nav .ng button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
 #nav .nt{display:flex;gap:2px;flex-wrap:wrap}
-#nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav .nt a[hidden]{display:none}
+#nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav .nt a[hidden]{display:none} #nav .nt a.ext{color:var(--acc)}
 @media (hover:hover) and (pointer:fine){#nav .ng button:hover{color:var(--acc)}}
 #state #who{font-size:11px;color:var(--tx2)}
 #state #jobpill{cursor:pointer}
@@ -475,7 +475,7 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
