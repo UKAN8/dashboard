@@ -118,7 +118,9 @@ async function show(k) {
   const dl = (u, name) => u ? u + '&download=' + encodeURIComponent(name) : '';
   let html = `<p class="sum"><b>${E(g.반)} ${E(g.날짜)}</b> · PDF <b>${names.length}</b>명` +
     (fails.length ? ` · <span style="color:var(--warn)">없음 ${fails.length}</span>` : '') +
-    (pending.length ? ` · 만드는 중 ${pending.length}` : '') + '</p>';
+    (pending.length ? ` · 만드는 중 ${pending.length}` : '') +
+    (names.length ? ` <button class="pv" id="zipall" style="margin-left:8px">⤓ 전체 받기 (${names.length}명 · zip)</button>`
+      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs">문제+해설</option><option value="all">전체 파일</option></select>` : '') + '</p>';
   html += '<table><tr><th>학생</th><th>파일</th><th></th></tr>';
   for (const n of names) {
     const f = rows[n], u0 = urls[f['키']], u1 = f['문제키'] && urls[f['문제키']], u2 = f['해설키'] && urls[f['해설키']];
@@ -138,7 +140,79 @@ async function show(k) {
     + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다.</div>';
   $('#left').innerHTML = html;
   document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
+  const zb = $('#zipall'); if (zb) zb.onclick = () => zipAll(zb, g, names, rows, urls);
 }
+
+/* ── 전체 받기 (0908 유강) — 서명 URL 로 하나씩 받아 무압축 zip 한 파일로. 파일명=학생이름_문제.pdf.
+   조회(app.js) makeZip 과 같은 store zip. 브라우저 다운로드 한 번에 끝난다. */
+async function zipAll(btn, g, names, rows, urls) {
+  const kind = ($('#zipkind') || {}).value || 'q';
+  const want = [];
+  for (const n of names) {
+    const f = rows[n];
+    const add = (key, suf) => { const u = f[key] && urls[f[key]]; if (u) want.push({ name: n + suf + '.pdf', url: u }); };
+    if (kind === 'q' || kind === 'qs') add('문제키', '_문제');
+    if (kind === 's' || kind === 'qs') add('해설키', '_해설');
+    if (kind === 'all' || (kind !== 'all' && !f['문제키'] && !f['해설키'])) add('키', '');   // 분할 전 잡은 전체 파일로
+  }
+  if (!want.length) { btn.textContent = '받을 파일이 없다'; return; }
+  const orig = btn.textContent; btn.disabled = true;
+  const entries = [], failed = [];
+  for (const w of want) {
+    btn.textContent = `받는 중… ${entries.length + failed.length + 1}/${want.length}`;
+    try { const r = await fetch(w.url); if (!r.ok) throw new Error(r.status); entries.push({ name: w.name, data: new Uint8Array(await r.arrayBuffer()) }); }
+    catch (e) { failed.push(w.name); }
+  }
+  if (entries.length) {
+    btn.textContent = '압축하는 중…'; await new Promise(r => setTimeout(r, 0));
+    try { dropFile(makeZip(entries), `기출과제_${g.반}_${g.날짜.replace(/-/g, '').slice(4)}_${kind}.zip`); }
+    catch (e) { btn.disabled = false; btn.textContent = '압축 실패 — 이름을 눌러 한 명씩'; return; }
+  }
+  btn.disabled = false;
+  btn.textContent = !entries.length ? '하나도 못 받았다 — 링크가 만료됐으면 ↻' : failed.length ? `${entries.length}개 저장 · 실패 ${failed.length}` : `${entries.length}개 zip 저장됨 ✓`;
+  setTimeout(() => { btn.textContent = orig; }, 8000);
+}
+function dropFile(blob, filename) {
+  const u = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 8000);
+}
+const CRC_T = (() => { const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(entries) {                       // [{name, data:Uint8Array}] → Blob
+  const enc = new TextEncoder(), d = new Date();
+  const time = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
+  const date = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  const body = [], cd = []; let off = 0, cdSize = 0;
+  for (const e of entries) {
+    const nm = enc.encode(e.name), crc = crc32(e.data), sz = e.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(8, 0, true);                     // 0 = store (무압축)
+    lh.setUint16(10, time, true); lh.setUint16(12, date, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true);
+    lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    body.push(new Uint8Array(lh.buffer), nm, e.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, time, true); ch.setUint16(14, date, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true);
+    ch.setUint16(28, nm.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true);
+    ch.setUint16(34, 0, true); ch.setUint16(36, 0, true); ch.setUint32(38, 0, true);
+    ch.setUint32(42, off, true);
+    cd.push(new Uint8Array(ch.buffer), nm);
+    off += 30 + nm.length + sz; cdSize += 46 + nm.length;
+  }
+  const eo = new DataView(new ArrayBuffer(22));
+  eo.setUint32(0, 0x06054b50, true); eo.setUint16(4, 0, true); eo.setUint16(6, 0, true);
+  eo.setUint16(8, entries.length, true); eo.setUint16(10, entries.length, true);
+  eo.setUint32(12, cdSize, true); eo.setUint32(16, off, true); eo.setUint16(20, 0, true);
+  return new Blob([...body, ...cd, new Uint8Array(eo.buffer)], { type: 'application/zip' });
+}
+
 
 function preview(b) {
   const u = b.dataset.u; if (!u) return;
