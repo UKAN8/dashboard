@@ -185,31 +185,67 @@ const PR = (() => {
       + '</svg>';
   }
 
-  /* 흐름 카드 — 첫 화면. 지난 내신(앵커) → 지금 흐름(추정등급) */
+  /* 등급 범위 — DB 가 준 [좋은,나쁜]. 한 칸으로 붙으면 z 가 가까운 쪽 경계의 이웃 등급까지 넓힌다(늘 "2~3" 꼴, 0908 유강) */
+  function widen(gr, z, model) {
+    if (!gr || z == null || !model || !(model.경계 || []).length) return gr;
+    if (gr[0] !== gr[1]) return gr;
+    const near = model.경계.slice().sort((a, b) => Math.abs(z - a.z) - Math.abs(z - b.z))[0];
+    return near.나쁜 === gr[0] ? [near.좋은, gr[0]] : near.좋은 === gr[0] ? [gr[0], near.나쁜] : gr;
+  }
+  /* 다음 등급까지 — 객관 지표. z 차이 × 풀 편차 = 점수, ÷ 문항당 배점 = 문제 수 */
+  function nextStep(g) {
+    const F = g.흐름 || {}, gr = F.등급, M = g.모델, R = g.회차 || [];
+    if (!gr || F.현재z == null || !M || !(M.경계 || []).length) return null;
+    const last4 = R.slice(-4);
+    const sd = last4.map(r => num(r.풀편차)).filter(v => v != null);
+    const sdv = sd.length ? sd.reduce((a, b) => a + b, 0) / sd.length : null;
+    const last = R[R.length - 1] || {};
+    const per = last.문항 && last.문항.length && num(last.총점) ? num(last.총점) / last.문항.length : 4.5;
+    if (!sdv) return null;
+    const band = num(M.폭) || 0.25;
+    if (gr[0] === 1 && gr[1] > 1) {                 // 1~2 걸침 → 1등급으로 굳히기
+      const bb = M.경계.find(x => x.좋은 === 1);
+      if (!bb) return null;
+      const pts = ((bb.z + band) - num(F.현재z)) * sdv;
+      return { kind: 'fix', target: 1, pts: Math.max(1, Math.round(pts)), q: Math.max(1, Math.ceil(pts / per)) };
+    }
+    const target = gr[0] - 1;                       // 지금 범위의 좋은 쪽보다 한 등급 위
+    const b = M.경계.find(x => x.나쁜 === gr[0] && x.좋은 === target);
+    if (!b) {                                       // 이미 1등급 흐름 — 여유 폭
+      const bb = M.경계.find(x => x.좋은 === gr[0]);
+      if (!bb) return null;
+      const pts = (num(F.현재z) - (bb.z + band)) * sdv;
+      return pts >= 0 ? { kind: 'keep', pts: Math.round(pts), q: Math.max(0, Math.floor(pts / per)) } : null;
+    }
+    const pts = ((b.z + band) - num(F.현재z)) * sdv;
+    return { kind: 'up', target, pts: Math.max(1, Math.round(pts)), q: Math.max(1, Math.ceil(pts / per)) };
+  }
+
+  /* 흐름 카드 — 첫 화면. 지금 실력 추정 + 다음 등급까지 객관 지표 (지난 내신은 적지 않는다, 0908 유강) */
   function flowCard(g, staff) {
-    const R = g.회차 || [], F = g.흐름 || {}, gr = F.등급, an = F.앵커;
+    const R = g.회차 || [], F = g.흐름 || {}, an = F.앵커;
+    const gr = widen(F.등급, num(F.현재z), g.모델);
     const zs = R.map(r => num(r.z)).filter(v => v != null);
     const why = [];
+    const step = nextStep(g);
+    if (step && step.kind === 'up') why.push(`<b>${step.target}등급</b>까지: 회차마다 지금보다 <b>${step.q}문제(약 ${step.pts}점) 더</b> 맞히기`);
+    if (step && step.kind === 'fix') why.push(`<b>1등급</b>으로 굳히기: 회차마다 지금보다 <b>${step.q}문제(약 ${step.pts}점) 더</b> 맞히기`);
+    if (step && step.kind === 'keep') why.push(`1등급 흐름 유지 중 — 회차당 <b>${step.q}문제(약 ${step.pts}점)</b> 여유`);
     if (zs.length >= 3) {
       const a = zs.slice(0, Math.ceil(zs.length / 2)), b = zs.slice(-Math.floor(zs.length / 2));
       const d = b.reduce((s, x) => s + x, 0) / b.length - a.reduce((s, x) => s + x, 0) / a.length;
       why.push(d > 0.25 ? '최근 회차가 앞선 회차보다 <b class="good">올라가는 흐름</b>이에요'
         : d < -0.25 ? '최근 회차가 앞선 회차보다 <b class="bad">내려가는 흐름</b>이에요' : '최근 회차가 앞선 회차와 <b>비슷한 흐름</b>이에요');
     }
-    if (an && gr) {
-      if (an.등급 < gr[0]) why.push(`${E(an.시험)} 때(${an.등급}등급${an.출처 === '예상' ? ' 예상' : ''})보다 <b class="bad">아래</b>예요`);
-      else if (an.등급 > gr[1]) why.push(`${E(an.시험)} 때(${an.등급}등급${an.출처 === '예상' ? ' 예상' : ''})보다 <b class="good">위</b>예요`);
-      else why.push(`${E(an.시험)} 때(${an.등급}등급${an.출처 === '예상' ? ' 예상' : ''})와 같은 자리예요`);
-    }
     const last = R[R.length - 1];
     if (last && num(last.확신오답수) > 0) why.push(`최근 시험에서 <b>확실하다고 했는데 틀린 문항이 ${last.확신오답수}개</b> — 개념부터 다시 봐야 해요`);
     const band = [1, 2, 3, 4, 5].map(k => `<div class="${gr && k >= gr[0] && k <= gr[1] ? 'on' : ''}">${k}</div>`).join('');
     const head = gr
-      ? `<div class="line">${an ? `<span class="from">${E(an.시험)} ${an.등급}등급${an.출처 === '예상' ? '(예상)' : ''}</span><span class="arrow">→</span>` : ''}`
-        + `<b>${gradeTxt(gr)}</b><span class="dim">지금 흐름 · 추정</span></div><div class="band">${band}</div>`
+      ? `<div class="line"><span class="from">지금 실력은</span><b>${gradeTxt(gr)}</b><span class="dim">으로 예상돼요 · 추정</span></div><div class="band">${band}</div>`
       : `<div class="line"><b style="font-size:20px">${R.length ? '추정 등급 준비 중' : '아직 기록이 없어요'}</b></div>`
         + `<div class="dim">${R.length ? '회차가 더 쌓이면 지금 흐름의 등급이 나와요' : '기출테스트를 보면 여기에 흐름이 쌓여요'}</div>`;
     const staffLine = staff ? `<div class="staff">z 현재 ${F.현재z ?? '—'} · 회차 z ${zs.map(v => v.toFixed(2)).join(' / ') || '—'}`
+      + (an ? ` · 앵커 ${E(an.시험)} ${an.등급}등급(${an.출처})` : ' · 앵커 없음') + (F.등급 ? ` · DB범위 ${F.등급.join('~')}` : '')
       + ` · 모델 ${g.모델 ? `${g.모델.학년} 쌍 ${g.모델.쌍}/풀 ${g.모델.풀} 경계 ${(g.모델.경계 || []).map(b => `${b.좋은}|${b.나쁜}@${b.z}`).join(' ')}${g.모델.유효 ? '' : ' (무효)'}` : '—'}</div>` : '';
     return `<div class="card flow"><div class="h">기출테스트 흐름${R.length ? ` · ${R.length}회` : ''}</div>${head}`
       + (why.length ? `<ul class="why">${why.map(w => `<li>${w}</li>`).join('')}</ul>` : '')
@@ -242,7 +278,7 @@ const PR = (() => {
       + `<div class="r">${it.내답 != null ? `<span>내 답</span>${E(it.내답)}` : ''}${it.정답 && it.정답 !== 'M' ? `<span>정답</span>${E(it.정답)}` : ''}`
       + `${it.확신 ? `<span>자기평가</span>${E(it.확신)}` : ''}${it.단원 ? `<span>단원</span>${E(it.단원)}` : ''}</div>`
       + (num(it.정오) != null && num(it.정오) < 1 && it.확신 === '확실' ? '<div class="r dim">확신했는데 틀린 문항은 개념을 다시 잡아야 해요</div>' : '') + '</div>' : '';
-    const grade = r.등급 ? ` · 이 회차 추정 ${gradeTxt(r.등급)}` : '';
+    const grade = r.등급 ? ` · 이 회차 추정 ${gradeTxt(widen(r.등급, num(r.z), g.모델))}` : '';
     return `<h2>회차별 시험<small>${dfmt(r.날짜)}</small></h2><div class="card">`
       + `<div class="nav"><button type="button" data-pr-nav="-1" ${idx === 0 ? 'disabled' : ''}>‹</button><b>${E(paper(r.시험ID))}</b><button type="button" data-pr-nav="1" ${idx === R.length - 1 ? 'disabled' : ''}>›</button></div>`
       + `<div class="row"><span>점수</span><span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">/ ${r.총점 != null ? fmt(num(r.총점)) : 100}${grade}</span></span></div>`
@@ -277,7 +313,7 @@ const PR = (() => {
     if (R.length < 2) return '';
     return '<h2>회차별</h2><div class="card">'
       + R.map((r, i) => `<div class="row"><span><a href="#" data-pr-go="${R.length - 1 - i}" style="text-decoration:none">${E(paper(r.시험ID))}</a> <span class="dim">${dfmt(r.날짜)}</span></span>`
-        + `<span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">${r.등급 ? gradeTxt(r.등급).replace('등급', '') : '—'}</span></span></div>`).join('')
+        + `<span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">${r.등급 ? gradeTxt(widen(r.등급, num(r.z), g.모델)).replace('등급', '') : '—'}</span></span></div>`).join('')
       + '<div class="note">등급 칸이 비어 있으면 그 회차는 응시 인원이 적어 흐름에 넣지 않은 회차예요</div></div>';
   }
 
