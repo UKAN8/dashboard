@@ -970,9 +970,14 @@ function compute(raw) {
     const rows = byStu[sid];
     if (!withinData(rows[rows.length - 1]['날짜'], 14)) return;   // 활동 학생만
     const last = rows[rows.length - 1];
+    // (0908 유강) 리뷰(10점)와 기출(100점)은 한 통에 못 담는다 — 평균 17.1점 같은 게 나왔다.
+    // scored = 리뷰만, gtScored = 기출만. 기출 판정은 테스트유형 또는 시험지출처.
+    const isGtRow = r => (r['테스트유형'] || '').trim() === '기출테스트' || !!(r['시험지출처'] || '').trim();
     const hist = rows.map(r => [r['날짜'], fnum(r['점수']), (r['테스트상태'] || '').trim(),
-      rate100(r['이행률']), (r['출결'] || '').trim()]);
-    const scored = hist.filter(h => h[1] != null && (h[2] === '응시' || h[2] === '늦참')).map(h => [h[0], h[1]]);
+      rate100(r['이행률']), (r['출결'] || '').trim(), isGtRow(r)]);
+    const taken = h => h[1] != null && (h[2] === '응시' || h[2] === '늦참');
+    const scored = hist.filter(h => taken(h) && !h[5]).map(h => [h[0], h[1]]);
+    const gtScored = hist.filter(h => taken(h) && h[5]).map(h => [h[0], h[1]]);
     const rates = hist.filter(h => h[3] != null).map(h => [h[0], h[3]]);
     const atts = hist.filter(h => h[4]).map(h => [h[0], h[4]]);
     const lastScore = (scored.length && scored[scored.length - 1][0] === last['날짜']) ? scored[scored.length - 1][1] : null;
@@ -1008,7 +1013,9 @@ function compute(raw) {
     students.push({
       sid, name: last['이름'], ban: last['반'],
       school: (sid.split('_').length >= 3) ? sid.split('_').pop() : '',
-      spark: scored.slice(-8), scored, rates, atts, wk,
+      spark: scored.slice(-8), scored, gtScored, rates, atts, wk,
+      gtLast: gtScored.length ? gtScored[gtScored.length - 1][1] : null,
+      gtAvg: gtScored.length ? r1(gtScored.reduce((s, x) => s + x[1], 0) / gtScored.length) : null,
       wkLast: wk.length ? wk[wk.length - 1][1] : null,
       lastDate: last['날짜'], lastScore, lastRate, att, status,
       avg: scored.length ? r1(scored.reduce((s, x) => s + x[1], 0) / scored.length) : null,
@@ -1092,13 +1099,14 @@ function viewToday(st) {
     + `<span class="dim">${E(c.why || '')}</span></div>`).join('')
     || '<div class="dim">오늘 추가학습 예정 없음</div>';
 
+  // (0908 유강) 현장 순서: 오늘 수업 → 오늘 등원 → 주의 학생. 시그널이 먼저 길게 나오면 할 일이 아래로 밀린다.
   return `<section class="view" id="v-today">
-<h2>오늘의 시그널 — 챙겨야 할 학생 <span class="cnt">${st.signal.length}</span></h2>
-<div class="grid sig-grid">${sig}</div>
 <div class="two">
 <div><h2>오늘 수업 반</h2><div class="grid one-grid" id="today-cls">${cls}</div></div>
 <div><h2>오늘 추가학습 등원</h2><div class="card" id="today-clinic">${tc}</div></div>
-</div></section>`;
+</div>
+<h2>오늘의 시그널 — 챙겨야 할 학생 <span class="cnt">${st.signal.length}</span></h2>
+<div class="grid sig-grid">${sig}</div></section>`;
 }
 
 /* 뷰 2: 반별 */
@@ -1319,8 +1327,9 @@ function stuDetail(st, s) {
     + `<h1>${E(s.name)} <span class="ban" style="font-size:13px">${E(s.ban)}</span>`
     + `<span class="dim" style="font-size:13px"> ${E(s.school)} · 최근 수업 ${dfmt(s.lastDate)}</span></h1>`
     + '<div class="kpis">'
-    + `<div class="kpi"><div class="lbl">최근 리뷰테스트</div><div class="big ${scoreCls(s.lastScore)}">${s.lastScore != null ? g(s.lastScore) : '—'}<small>점</small></div></div>`
-    + `<div class="kpi"><div class="lbl">평균</div><div class="big na">${py1(s.avg)}<small>점</small></div></div>`
+    + `<div class="kpi"><div class="lbl">최근 리뷰테스트 <span class="dim">/10점</span></div><div class="big ${scoreCls(s.lastScore)}">${s.lastScore != null ? g(s.lastScore) : '—'}<small>점</small></div></div>`
+    + `<div class="kpi"><div class="lbl">리뷰 평균 <span class="dim">/10점</span></div><div class="big na">${py1(s.avg)}<small>점</small></div></div>`
+    + `<div class="kpi"><div class="lbl">기출테스트 평균 <span class="dim">/100점 · ${s.gtScored.length}회</span></div><div class="big ${s.gtAvg == null ? 'na' : wkCls(s.gtAvg)}">${s.gtAvg != null ? py1(s.gtAvg) : '—'}<small>점</small></div></div>`
     + `<div class="kpi"><div class="lbl">최근 이행률</div><div class="big ${rateCls(s.lastRate)}">${s.lastRate != null ? pyR0(s.lastRate * 100) : '—'}<small>%</small></div></div>`
     + `<div class="kpi"><div class="lbl">주간고사</div><div class="big ${wkCls(s.wkLast)}">${s.wkLast != null ? g(s.wkLast) : '—'}<small>점</small></div></div></div>`
     + shBasic(st, s, H)
@@ -1392,7 +1401,7 @@ function shBasic(st, s, H) {
   return '<div class="card sh-blk"><div class="lbl sh-h">기본 정보</div><div class="sh-grid">'
     + cell('학교 · 반', `${E(s.school || '—')} <span class="ban">${E(s.ban)}</span>`, `최근 수업 ${dfmt(s.lastDate)}`)
     + cell('출석', attN ? `${attR}%` : '—', attN ? `출석 ${att.출석} · 지각 ${att.지각} · 결석 ${att.결석} (${attN}회)` : '')
-    + cell('리뷰테스트', s.avg != null ? `평균 ${py1(s.avg)}점` : '—',
+    + cell('리뷰테스트 (10점 만점)', s.avg != null ? `평균 ${py1(s.avg)}점` : '—',
       s.scored.length ? `${s.scored.length}회 응시${dSc != null ? ` · 반 평균 대비 <b class="${dSc >= 0 ? 'good' : 'bad'}">${shSign(dSc)}</b>` : ''}` : '')
     + cell('과제 이행률', rAvg != null ? `최근 5회 ${pyR0(rAvg * 100)}%` : '—',
       dRt != null ? `반 대비 <b class="${dRt >= 0 ? 'good' : 'bad'}">${shSign(dRt)}%p</b>` : '')
@@ -1405,9 +1414,10 @@ function shJournal(st, s, H) {
   if (!rows.length) return shEmpty;
   const tr = r => {
     const sc = fnum(r['점수']), stt = (r['테스트상태'] || '').trim(), rt = rate100(r['이행률']), a = (r['출결'] || '').trim();
-    const scTxt = sc != null ? `${g(sc)}점` : (stt || '—');
+    const gt = (r['테스트유형'] || '').trim() === '기출테스트' || !!(r['시험지출처'] || '').trim();
+    const scTxt = sc != null ? `${gt ? '기출 ' : '리뷰 '}${g(sc)}/${gt ? 100 : 10}` : (stt ? `${(r['테스트유형'] || '테스트').trim()} ${stt}` : '—');
     return `<tr><td>${dfmt(r['날짜'])}</td><td>${a ? chip(attCls(a), a) : '<span class="dim">—</span>'}</td>`
-      + `<td>${chip(stt === '미응시' ? 'na' : scoreCls(sc), scTxt)}</td>`
+      + `<td>${chip(sc == null ? 'na' : gt ? wkCls(sc) : scoreCls(sc), scTxt)}</td>`
       + `<td>${rt != null ? chip(rateCls(rt), pyR0(rt * 100) + '%') : '<span class="dim">—</span>'}</td>`
       + `<td class="sh-cm">${E(String(r['코멘트'] || '').split('\n')[0].slice(0, 80))}</td></tr>`;
   };
@@ -2575,7 +2585,8 @@ function viewGichul(st) {
     + `<div class="kpi"><div class="lbl">시험지</div><div class="big">${G.papers.length}<small>장</small></div></div>`
     + `<div class="kpi"><div class="lbl">응시 기록</div><div class="big">${takes}<small>건</small></div></div>`
     + `<div class="kpi"><div class="lbl">응시 학생</div><div class="big">${Object.keys(G.byStu).length}<small>명</small></div></div>`
-    + `<div class="kpi"><div class="lbl">1등급권 응시</div><div class="big">${g1}<small>건</small></div></div>`
+    + (cut ? `<div class="kpi"><div class="lbl">1등급권 응시 <span class="dim">컷 있는 ${cut}장 기준</span></div><div class="big">${g1}<small>건</small></div></div>`
+           : `<div class="kpi"><div class="lbl">1등급권 응시</div><div class="big na" style="font-size:15px">산정 불가<small>등급컷 없음</small></div></div>`)
     + `<div class="kpi"><div class="lbl">컷 붙은 시험지</div><div class="big">${cut}<small>/${G.papers.length}</small></div></div></div>`
     + '<div class="gc-bar" id="gc-mode">'
     + '<button class="fbtn on" data-gm="paper">시험지별 답안표</button>'
@@ -2624,7 +2635,7 @@ function gcWire(st) {
     const bySchool = {};                                    // '고1 · 청덕고' → 시험지들 (학년 먼저, 학교 다음)
     ps.forEach(x => { const g = (x.grade || '학년미상') + ' · ' + gcSchool(x.id); (bySchool[g] = bySchool[g] || []).push(x); });
     const groups = Object.keys(bySchool).sort(grpKey).map(g => [g, bySchool[g].map(x =>
-      ({ v: x.id, t: `${gcPaperLabel(x.id).replace(gcSchool(x.id) + ' ', '')} · ${[...x.bans].join('·')} · ${x.takes.length}명` }))]);
+      ({ v: x.id, t: `${gcSchool(x.id)} · ${x.grade || ''} · ${gcPaperLabel(x.id).replace(gcSchool(x.id) + ' ', '')} · ${[...x.bans].join('·')} · ${x.takes.length}명` }))]);
     const idx = ps.findIndex(x => x.id === paper);
     const pick = `<div class="gc-pick"><span class="lbl">시험지</span>${sel('paper', groups, paper)}`
       + `<button class="fbtn" data-gnav="-1"${idx <= 0 ? ' disabled' : ''} title="이전 시험지">‹</button>`
