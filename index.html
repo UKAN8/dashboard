@@ -2133,15 +2133,16 @@ function viewExamMeta(st) {
  * 데이터는 아래 SCHED 하나가 진실원. 학교 시간표가 나오면 math 에 날짜만 채운다.
  *   s/e = 시험기간 (e:null 이면 종료 미정 — 시작일만 표기)
  *   math = 학년별 수학 시험일. 예: math:{ '고1':'2026-10-07', '고2':'2026-10-08' }
+ *   note = 범위 등 한 줄 메모 (선택). 카드 아래에 표시.
  * 캘린더는 조회 데이터(st)를 안 쓴다 — 표가 죽어도 이 탭은 뜬다.
  */
 const SCHED = [
   { school: '포곡고', s: '2026-09-30', e: '2026-10-06', c: '#b39df3', math: {} },
   { school: '삼계고', s: '2026-09-30', e: '2026-10-07', c: '#e88fb0', math: {} },
-  { school: '용인고', s: '2026-10-06', e: '2026-10-14', c: '#7fb3d8', math: {} },
+  { school: '용인고', s: '2026-10-06', e: '2026-10-14', c: '#7fb3d8', math: { '고1': '2026-10-08', '고2': '2026-10-12' } },   // 0909 가정통신문: 고1 공통수학2 10/8(목) 1교시, 고2 미적분I 10/12(월) 1교시
   { school: '태성고', s: '2026-10-07', e: null,         c: '#e0b36a', math: {} },
   { school: '효양고', s: '2026-10-12', e: '2026-10-15', c: '#94cfa4', math: {} },
-  { school: '진덕고', s: '2026-10-12', e: '2026-10-14', c: '#7fcdc8', math: {} },
+  { school: '진덕고', s: '2026-10-12', e: '2026-10-14', c: '#7fcdc8', math: {}, note: '범위: 명제 단원, 증명 전까지 (0909 학생 제보)' },
   { school: '고림고', s: '2026-10-13', e: '2026-10-16', c: '#cf9de0', math: {} },
 ];
 const SCHED_TITLE = '2학기 중간고사';
@@ -2242,7 +2243,8 @@ function viewSched() {
       + `<div><span class="sc-dot" style="background:${ev.c}"></span><b>${ev.school}</b>`
       + `<span class="sc-dday ${k}">${dd}</span></div>`
       + `<div style="margin-top:6px">${scFmt(ev.s)} ~ ${ev.e ? scFmt(ev.e) : '<span class="dim">미정</span>'}</div>`
-      + `<div class="sc-math">${scMathRow(ev, '고1')}${scMathRow(ev, '고2')}</div></div>`;
+      + `<div class="sc-math">${scMathRow(ev, '고1')}${scMathRow(ev, '고2')}</div>`
+      + (ev.note ? `<div class="dim" style="margin-top:4px">${ev.note}</div>` : '') + '</div>';
   }).join('');
   return `<section class="view" id="v-sched">
 <h2>시험일정 — ${SCHED_TITLE} <span class="cnt">${SCHED.length}개교</span></h2>
