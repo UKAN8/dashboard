@@ -137,7 +137,7 @@ async function show(k) {
     fails.map(x => E(x.이름) + ' — ' + E((x.메시지 || '').slice(0, 90)) + ' <span style="opacity:.6">#' + x.잡 + '</span>').join('<br>') + '</div>';
   if (pending.length) html += '<div class="note">만드는 중: ' + pending.map(x => E(x.이름) + '(' + E(x.상태) + ')').join(', ') + ' — 1~2분 뒤 ↻</div>';
   html += '<div class="note">문제 파일과 해설 파일에 빠른정답 장이 둘 다 들어 있다. 파일명은 학생 이름으로 떨어진다. '
-    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. [전체 받기] zip 안의 <b>_전체인쇄.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(SumatraPDF 있으면 조용히, 없으면 Acrobat Reader).</div>';
+    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. [전체 받기] zip 안의 <b>_전체인쇄.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(옆의 _print.ps1 이 본체 — 둘 다 같은 폴더에 풀 것. SumatraPDF 있으면 조용히, 없으면 Acrobat Reader).</div>';
   $('#left').innerHTML = html;
   document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
   const zb = $('#zipall'); if (zb) zb.onclick = () => zipAll(zb, g, names, rows, urls);
@@ -164,7 +164,8 @@ async function zipAll(btn, g, names, rows, urls) {
     catch (e) { failed.push(w.name); }
   }
   if (entries.length) {
-    entries.push({ name: '_전체인쇄.bat', data: new TextEncoder().encode(printBat(entries.length)) });   // (0908 유강) 폴더째 인쇄
+    entries.push({ name: '_전체인쇄.bat', data: new TextEncoder().encode(printBat()) });               // (0908 유강) 폴더째 인쇄 — ASCII 실행기
+    entries.push({ name: '_print.ps1', data: new Uint8Array([0xEF, 0xBB, 0xBF, ...new TextEncoder().encode(printPs1())]) });   // (0909) 본체, UTF-8 BOM
     btn.textContent = '압축하는 중…'; await new Promise(r => setTimeout(r, 0));
     try { dropFile(makeZip(entries), `기출과제_${g.반}_${g.날짜.replace(/-/g, '').slice(4)}_${kind}.zip`); }
     catch (e) { btn.disabled = false; btn.textContent = '압축 실패 — 이름을 눌러 한 명씩'; return; }
@@ -173,28 +174,43 @@ async function zipAll(btn, g, names, rows, urls) {
   btn.textContent = !entries.length ? '하나도 못 받았다 — 링크가 만료됐으면 ↻' : failed.length ? `${entries.length}개 저장 · 실패 ${failed.length}` : `${entries.length}개 zip 저장됨 ✓`;
   setTimeout(() => { btn.textContent = orig; }, 8000);
 }
-/* zip 에 같이 들어가는 인쇄 배치 — 압축 푼 폴더에서 더블클릭하면 그 폴더의 PDF 를 전부 기본 프린터로.
-   SumatraPDF 가 있으면 그것(조용히 순서대로), 없으면 기본 PDF 앱의 인쇄 동사(Acrobat Reader 권장 — Edge 는 창이 뜬다).
-   (0909 실사고) 조교컴 프린터 기본 부수가 5라 학생당 5부씩 나갔다 — Sumatra 는 -print-settings "1x" 로 1부를 강제한다.
-   Acrobat 경로는 부수를 못 고정하니 프린터 기본 부수를 1로 두는 게 정본. */
-function printBat(n) {
+/* zip 에 같이 들어가는 인쇄 배치 — 압축 푼 폴더에서 _전체인쇄.bat 더블클릭 → 그 폴더의 PDF 를 전부 기본 프린터로.
+   SumatraPDF 가 있으면 그것(조용히 순서대로, 부수 1 강제), 없으면 기본 PDF 앱의 인쇄 동사(Acrobat Reader 권장 — Edge 는 창이 뜬다).
+   (0909 실사고 ①) 조교컴에서 학생당 5부 — 사용자 인쇄 기본설정은 1이었다 → 시작 때 실제 적용 부수를 찍고 Sumatra 는 -print-settings "1x".
+   (0909 실사고 ②) bat 에 한글 + chcp 65001 이면 cmd 가 다음 줄 읽기 위치를 틀려 엉뚱한 명령이 된다(Win11 실측) →
+   bat 은 ASCII 실행기만(파일명도 ASCII: _print.ps1), 본체는 PowerShell(UTF-8 BOM). 두 파일이 같은 폴더에 있어야 한다. */
+function printBat() {
   return [
-    '@echo off', 'chcp 65001 >nul', 'setlocal', 'cd /d "%~dp0"',
-    'set N=0', 'for %%f in (*.pdf) do set /a N+=1',
-    'echo.', 'echo  이 폴더의 PDF %N%개를 기본 프린터로 전부 인쇄합니다.',
-    'echo  (기본 프린터·양면·부수 설정을 먼저 확인할 것 - 부수가 1이 아니면 그 수만큼 겹쳐 나온다)', 'echo.',
-    'rem (0909) 실제 적용될 부수를 미리 보여준다 - 사용자 기본설정이 1인데 5부 나온 사고의 진단용',
-    'powershell -NoProfile -Command "$d=(Get-WmiObject Win32_Printer | ? Default).Name; $c=(Get-WmiObject Win32_PrinterConfiguration | ? Name -eq $d).Copies; Write-Host (\'  기본 프린터: \'+$d+\'  /  적용 부수: \'+$c+\'  (1 이 아니면 프린터 속성-고급-인쇄 기본값 확인)\')"',
-    'echo.',
-    'choice /c YN /m "  시작할까요"', 'if errorlevel 2 exit /b',
-    'set SUM=', 'for %%p in ("%LOCALAPPDATA%\\SumatraPDF\\SumatraPDF.exe" "%ProgramFiles%\\SumatraPDF\\SumatraPDF.exe" "%ProgramFiles(x86)%\\SumatraPDF\\SumatraPDF.exe") do if exist %%p set SUM=%%~p',
-    'if defined SUM (',
-    '  for %%f in (*.pdf) do ( echo  인쇄: %%f & "%SUM%" -print-to-default -print-settings "1x" -silent -exit-when-done "%%f" )',
-    ') else (',
-    '  echo  SumatraPDF 없음 - 기본 PDF 앱으로 인쇄합니다 ^(Acrobat Reader 권장^)',
-    '  for %%f in (*.pdf) do ( echo  인쇄: %%f & powershell -NoProfile -Command "Start-Process -FilePath \'%%~ff\' -Verb Print" & timeout /t 3 /nobreak >nul )',
-    ')',
-    'echo.', 'echo  끝. 프린터 대기열을 확인하세요.', 'pause',
+    '@echo off', 'cd /d "%~dp0"',
+    'if not exist "%~dp0_print.ps1" ( echo _print.ps1 missing - unzip ALL files into one folder & pause & exit /b 1 )',
+    'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0_print.ps1"',
+    'pause', ''].join('\r\n');   // ⚠ bat 은 ASCII 만 — 한글 파일명·메시지 금지(chcp 없이 cp949 로 읽힌다)
+}
+function printPs1() {
+  return [
+    '# _print.ps1 — 이 폴더의 PDF 를 기본 프린터로 전부 인쇄 (_전체인쇄.bat 이 호출한다)',
+    'Set-Location -LiteralPath $PSScriptRoot',
+    '$pdfs = Get-ChildItem -LiteralPath . -Filter *.pdf | Sort-Object Name',
+    'if (-not $pdfs) { Write-Host "  이 폴더에 PDF 가 없다. zip 을 전부 풀었는지 확인."; exit 1 }',
+    '$d = (Get-CimInstance Win32_Printer | Where-Object Default).Name',
+    '$c = (Get-CimInstance Win32_PrinterConfiguration | Where-Object Name -eq $d).Copies',
+    'Write-Host ""',
+    'Write-Host ("  이 폴더의 PDF {0}개를 기본 프린터로 전부 인쇄합니다." -f $pdfs.Count)',
+    'Write-Host ("  기본 프린터: {0}   /   적용 부수: {1}" -f $d, $c)',
+    'if ($c -and [int]$c -ne 1) { Write-Host "  !! 부수가 1이 아니다 — 프린터 속성 > 고급 > 인쇄 기본값도 확인할 것 (Sumatra 경로는 1부로 강제한다)" }',
+    'Write-Host "  (양면 설정도 먼저 확인)"',
+    'Write-Host ""',
+    '$a = Read-Host "  시작할까요 (Y/N)"',
+    'if ($a -notmatch "^[yY]") { exit }',
+    '$sum = @("$env:LOCALAPPDATA\\SumatraPDF\\SumatraPDF.exe", "$env:ProgramFiles\\SumatraPDF\\SumatraPDF.exe", "${env:ProgramFiles(x86)}\\SumatraPDF\\SumatraPDF.exe") | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
+    'foreach ($f in $pdfs) {',
+    '  Write-Host ("  인쇄: {0}" -f $f.Name)',
+    '  if ($sum) { & $sum -print-to-default -print-settings "1x" -silent -exit-when-done $f.FullName | Out-Null }',
+    '  else { Start-Process -FilePath $f.FullName -Verb Print; Start-Sleep -Seconds 3 }',
+    '}',
+    'if (-not $sum) { Write-Host "  SumatraPDF 없음 - 기본 PDF 앱으로 보냈다 (Acrobat Reader 권장)" }',
+    'Write-Host ""',
+    'Write-Host "  끝. 프린터 대기열을 확인하세요."',
     ''].join('\r\n');
 }
 function dropFile(blob, filename) {
