@@ -475,7 +475,7 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
@@ -628,6 +628,24 @@ body.cs-on #boot{display:none}
         <button class="key" id="sc_go" disabled onclick="scCommit()">적재</button>
       </div>
       <div id="sc_out" class="loadout">시행년 = 기준년 − (현재학년 − 시험학년). 등급·석차·과목평균·수강자수는 손으로 채운 값을 덮지 않는다.</div>
+    </div>
+  </section>
+
+  <!-- 조교 관리 (0909, schema_v20) — 관리자만. 이메일 넣으면 명단(staff_list)에 오르고, 본인이 로그인하는 순간 권한이 붙는다. -->
+  <section id="view-staff" class="hidden">
+    <div class="card">
+      <h2>조교 추가 <span class="badge">이메일만 넣으면 된다</span></h2>
+      <div class="cs-info-row" style="align-items:flex-end">
+        <div class="f grow"><label class="lbl">이메일</label><input id="st_email" type="email" placeholder="assistant@gmail.com" onkeydown="if(event.key==='Enter')staffAdd()"></div>
+        <div class="f" style="flex:0 0 140px"><label class="lbl">이름 (선택)</label><input id="st_name" placeholder="김조교" onkeydown="if(event.key==='Enter')staffAdd()"></div>
+        <div class="f" style="flex:0 0 110px"><label class="lbl">역할</label><select id="st_role"><option value="staff">조교</option><option value="admin">관리자</option></select></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" id="st_go" onclick="staffAdd()">추가</button></div>
+      </div>
+      <div id="st_out" class="loadout">추가하면 그 사람은 <b>바로</b> 로그인 화면에서 이메일 → 6자리 코드로 들어올 수 있다. 초대 메일·CSV·Actions 는 없다. 이미 로그인한 적 있는 이메일이면 그 자리에서 권한이 붙는다.</div>
+    </div>
+    <div class="card">
+      <h2>명단 <span class="badge" id="st_count"></span> <button class="ghost" style="margin-left:8px" onclick="staffLoad()">새로고침</button></h2>
+      <div id="st_list">불러오는 중…</div>
     </div>
   </section>
 
@@ -1008,7 +1026,12 @@ function sparkline(pts, w = 150, h = 36, lo = 0, hi = 10, unit = '점') {
 async function sendOtp() {
   const email = $('email').value.trim(); if (!email) return;
   $('loginmsg').textContent = '코드 발송 중…';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  /* 0909 — 아무나 계정을 못 만들게 shouldCreateUser:false 가 기본. 단 관리자가 콘솔 '조교 관리'에
+     올린 이메일(staff_list, schema_v20)은 첫 로그인에서 계정이 생겨야 하므로 명단에 있는지 먼저 묻는다.
+     RPC 가 없거나 실패하면(옛 스키마) 예전처럼 false. */
+  let allowed = false;
+  try { const r = await sb.rpc('staff_allowed', { p_email: email }); allowed = r.data === true; } catch (e) {}
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: allowed } });
   if (error) { $('loginmsg').textContent = '실패: ' + error.message; return; }
   $('step1').classList.add('hidden'); $('step2').classList.remove('hidden');
   $('loginmsg').textContent = '메일함에서 6자리 코드를 확인하세요.';
@@ -1067,6 +1090,7 @@ async function boot(session) {
   if (window.ROLE !== 'admin') {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
+    const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
   /* 0815 병합 — 수업 콘솔을 같은 셸에서 깨운다.
      ⚠ 조회 데이터 로딩(loadAll)보다 **먼저** 부른다. 콘솔은 자기 표만 읽으므로 조회가
@@ -3306,7 +3330,7 @@ document.addEventListener('click', e => {
 });
 function csRoute() {
   const m = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-  if (!/^cs-(console|clinic|load)$/.test(m)) {
+  if (!/^cs-(console|clinic|load|staff)$/.test(m)) {
     // 콘솔에서 나갈 때는 여기서 접는다. 조회 라우터(route)는 wire() 안에 있어서
     // 조회 로딩이 실패한 날에는 아예 안 돈다 — 그러면 콘솔 화면이 그대로 남아 버린다.
     document.body.classList.remove('cs-on');
@@ -3519,7 +3543,7 @@ function csBoot(prof){
   ROLE=prof.role;
   const who=$('who'); if(who) who.textContent=(prof['이름']||'')+' · '+(ROLE==='admin'?'관리자':'조교');
   // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
-  document.querySelectorAll('[data-v="cs-load"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
+  document.querySelectorAll('[data-v="cs-load"],[data-v="cs-staff"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
   jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
   setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
   initClassButtons();
@@ -5425,8 +5449,44 @@ function clinicPoll(){
   tick();CLTIMER=setInterval(tick,6000);
 }
 
+
+/* ── 조교 관리 (0909, schema_v20) ── 관리자만. RPC 세 개 — staff_overview / staff_set / staff_remove.
+   서비스 키 없이 되는 이유: 함수가 security definer 라 auth.users 를 DB 안에서 본다.
+   등록한 이메일은 첫 로그인 때 트리거(staff_attach)가 profiles 를 만든다 → 초대 메일 불필요. */
+async function staffLoad(){
+  const box=$('st_list'); if(!box)return;
+  const {data,error}=await sb.rpc('staff_overview');
+  if(error){box.innerHTML='<span class="miss">명단을 못 읽었다: '+esc(error.message)+'</span>'+(/staff_overview/.test(error.message)?' — schema_v20_staff_admin.sql 을 SQL Editor 에서 먼저 돌려야 한다.':'');return;}
+  const rows=data||[]; $('st_count').textContent=rows.length+'명';
+  if(!rows.length){box.textContent='명단이 비어 있다.';return;}
+  const when=t=>{if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+  box.innerHTML='<div class="cs-wrap"><table class="cs-grid"><thead><tr><th>이메일</th><th>이름</th><th>역할</th><th>상태</th><th>마지막 로그인</th><th></th></tr></thead><tbody>'
+    +rows.map(r=>`<tr><td><b>${esc(r.email)}</b>${r['본인']?' <span class="badge">나</span>':''}</td><td>${esc(r['이름']||'')}</td>`
+      +`<td>${r.role==='admin'?'관리자':'조교'}</td>`
+      +`<td>${r['계정']?'<span class="jstat ok">사용 중</span>':'<span class="jstat wait">로그인 대기</span> <small style="color:var(--dim)">본인이 한 번 로그인하면 붙는다</small>'}</td>`
+      +`<td>${esc(when(r['마지막로그인']))}</td>`
+      +`<td>${r['본인']?'':`<button class="ghost" onclick="staffRemove('${esc(r.email)}')">빼기</button>`}</td></tr>`).join('')
+    +'</tbody></table></div>';
+}
+async function staffAdd(){
+  const email=($('st_email').value||'').trim().toLowerCase(), name=($('st_name').value||'').trim(), role=$('st_role').value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('st_out').textContent='이메일 형식이 아니다: '+email;return;}
+  $('st_go').disabled=true;
+  const {data,error}=await sb.rpc('staff_set',{p_email:email,p_name:name||null,p_role:role});
+  $('st_go').disabled=false;
+  if(error){$('st_out').textContent='실패: '+error.message;toast('실패');return;}
+  $('st_out').innerHTML=`<b>${esc(email)}</b> → ${role==='admin'?'관리자':'조교'} 등록. `+(data&&data.attached?'이미 계정이 있어 <b>지금부터</b> 쓸 수 있다.':'본인이 로그인 화면에서 이메일 → 코드로 들어오면 <b>그 즉시</b> 권한이 붙는다.');
+  $('st_email').value='';$('st_name').value='';toast('등록');staffLoad();
+}
+async function staffRemove(email){
+  if(!confirm(email+' 권한을 뺄까? 명단·역할이 지워지고 그 사람은 콘솔에 못 들어온다.'))return;
+  const {error}=await sb.rpc('staff_remove',{p_email:email});
+  if(error){toast('실패');$('st_out').textContent='실패: '+error.message;return;}
+  toast('뺐다');staffLoad();
+}
+
 /* ── 뷰 전환 ── */
-const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재'};
+const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
@@ -5435,6 +5495,7 @@ function showView(v){
   const vt=$('viewtitle'); if(vt) vt.textContent=VIEWS[v]||v;
   if(v==='clinic')clinicInit();
   if(v==='load')loadXlsx().catch(()=>{});
+  if(v==='staff')staffLoad();
 }
 /* 통합 셸(/dashboard/)에서는 주소(#cs-console)가 진실원이다 — 콘솔 안에서 부른 showView 도
    해시를 거쳐 돌아오게 해서 뒤로가기·새로고침이 같은 화면을 연다. 단독 콘솔에선 그대로 동작. */
