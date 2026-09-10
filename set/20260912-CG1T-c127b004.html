@@ -29,6 +29,26 @@ h1{margin:6px 0 2px;font-size:21px;font-weight:800;letter-spacing:-.01em}
 .tag.warn{background:var(--warnbg);color:var(--warn)}
 .tag.pct{background:#EDEDED;color:#6E6E6E}
 .stem{font-size:15.5px;margin:0 0 4px}
+/* (0908) 학교프린트 원문 조각 — hwpx2html 산출을 그대로 담는다 */
+.print{font-size:15px;line-height:1.7}
+.print p{margin:0 0 2px}
+.print .lead,.print .box{background:var(--soft);border-left:3px solid #555;padding:6px 10px;margin:8px 0}
+.print .bogi{border:1px solid #444;padding:12px 10px 6px;margin:12px 2px 8px;position:relative}
+.print .bogi .lbl{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;padding:0 6px;font-weight:700;font-size:13px}
+.print .bl{margin:0 0 2px}
+.print .fig{text-align:center;margin:8px 0}
+.print img{max-width:100%;height:auto}
+.print .fl{float:right;margin:0 0 4px 8px;max-width:48%}
+.print .fl.left{float:left;margin:0 8px 4px 0}
+.print .pcs{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;margin-top:10px;clear:both}
+.print .pcs.c1{grid-template-columns:1fr}
+.print .pch{display:flex;gap:4px;align-items:baseline}
+.print .pcn{color:var(--mute);flex-shrink:0}
+.print .tbl{border-collapse:collapse;margin:4px auto;font-size:14px}
+.print .tbl td{border:1px solid #444;padding:2px 6px;text-align:center}
+.print .tbl.grid td{border:none}
+.print .tab{display:inline-block;width:14px}
+.print .missing{color:var(--no)}
 .disp{margin:14px 0;text-align:center;font-size:17px;overflow-x:auto}
 .field{margin-top:16px}
 .flabel{font-size:13px;color:var(--mute);margin-bottom:6px;display:block}
@@ -100,6 +120,16 @@ pre{background:#2E2E2E;color:#E8E8E8;padding:14px;border-radius:10px;overflow-x:
  background:var(--ink);color:#fff;font-weight:700}
 .flag .sent{font-size:12.5px;color:var(--ok);font-weight:700}
 .foot{text-align:center;padding:22px;color:#B5B5B5;font-size:11.5px}
+/* 제출 상태 바 (0907) — 학생이 '냈다'고 믿는 것과 서버에 남은 것이 어긋나던 사고.
+   전송 성공·실패·남은 문항을 화면 아래에 항상 띄운다. */
+.sbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:center;
+ gap:10px;padding:11px 16px;font-size:13.5px;font-weight:700;line-height:1.45;
+ background:#2E2E2E;color:#fff;box-shadow:0 -2px 10px rgba(0,0,0,.14)}
+.sbar.ok{background:var(--ok)}
+.sbar.no{background:var(--no)}
+.sbar .st{flex:1}
+.sbar button{padding:8px 14px;font:inherit;font-size:13px;border:none;border-radius:9px;
+ background:#fff;color:var(--ink);font-weight:800;cursor:pointer;white-space:nowrap}
 .card{margin:2px 20px 6px;padding:18px 18px 16px;background:var(--tint);border-radius:14px}
 .card .cl{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--deep)}
 .card .ct{font-size:17.5px;font-weight:800;margin:4px 0 12px;color:var(--ink);letter-spacing:-.01em}
@@ -120,7 +150,7 @@ pre{background:#2E2E2E;color:#E8E8E8;padding:14px;border-radius:10px;overflow-x:
 math{font-family:'Cambria Math','STIX Two Math','Latin Modern Math','Times New Roman',serif;font-size:1.06em}
 .disp math{font-size:1.18em}
 .stem math,.ch math,.sk math,.sol math{vertical-align:-0.1em}
-</style></head><body><div class="wrap"><header><div class="brand">수학은유강 · 추가학습</div><h1>한종혁 추가학습</h1><div class="meta">고1T · 오늘 클리닉 시간까지 · 2문항 · 12분</div><div class="bar" id="bar"><i></i><i></i></div></header><div class="guide"><b>연습장에 풀고 답만 적는다</b>암산으로 찍지 마라. 식을 다 쓰고 나온 값을 그대로 넣으면 된다. 확인을 누르면 풀이가 열린다. 틀린 문항은 다음에 또 나온다.</div><div class="part"><div class="pl">인증</div><div class="pt">인증이 밀린 유형</div><div class="pd">인증도가 70% 밑으로 내려간 것들이다</div></div><section class="q" data-i="0"><div class="qhead"><span class="qno">1</span><span class="tag">두 원의 교점을 지나는 직선(서술)</span><span class="tag grey">단답</span><span class="tag pct">인증도 50%</span></div><p class="stem">두 원 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>10</mn></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x02212;</mo><mn>4</mn><mi>x</mi><mo>&#x0002B;</mo><mn>2</mn><mi>y</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> 의 두 교점을 지나는 직선의 방정식이 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>y</mi><mo>&#x0003D;</mo><mi>a</mi><mi>x</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 일 때 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>a</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 의 값을 구하여라.</p><div class="field"><label class="flabel">답</label><div class="row"><input type="text" id="q0a0" placeholder="답 입력"><button class="btn" onclick="grade(0)">확인</button></div></div><div class="verdict" id="v0"></div><div class="flag" id="fb0"><button class="fl" onclick="flagOpen(0)">이 문제 이상해요</button></div></section><section class="q" data-i="1"><div class="qhead"><span class="qno">2</span><span class="tag">원 밖의 점에서 그은 두 접선의 수직 조건</span><span class="tag grey">단답</span><span class="tag pct">인증도 55%</span></div><p class="stem">점 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mi>a</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mn>0</mn><mo stretchy="false">&#x00029;</mo></mrow></math> 에서 원 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>8</mn></mrow></math> 에 그은 두 접선이 서로 수직일 때 양수 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>a</mi></mrow></math> 의 값을 구하여라.</p><div class="field"><label class="flabel">답</label><div class="row"><input type="text" id="q1a0" placeholder="답 입력"><button class="btn" onclick="grade(1)">확인</button></div></div><div class="verdict" id="v1"></div><div class="flag" id="fb1"><button class="fl" onclick="flagOpen(1)">이 문제 이상해요</button></div></section><section class="result" id="result"><div class="score"><div class="n" id="sc"></div><div class="l" id="scl"></div></div><div class="rsec"><div class="rh">인증이 밀린 유형</div><div class="rlist" id="r1"></div></div><div class="next" id="nextbox"></div></section><details class="dev"><summary>제출 데이터 (선생님용)</summary><pre id="payload">아직 제출 전</pre></details><div class="foot">수학은유강 · 추가학습</div></div><script>
+</style></head><body><div class="wrap"><header><div class="brand">수학은유강 · 추가학습</div><h1>한종혁 추가학습</h1><div class="meta">고1T · 오늘 클리닉 시간까지 · 2문항 · 12분</div><div class="bar" id="bar"><i></i><i></i></div></header><div class="guide"><b>연습장에 풀고 답만 적는다</b>암산으로 찍지 마라. 식을 다 쓰고 나온 값을 그대로 넣으면 된다. 확인을 누르면 풀이가 열린다. 틀린 문항은 다음에 또 나온다.</div><div class="part"><div class="pl">인증</div><div class="pt">인증이 밀린 유형</div><div class="pd">인증도가 70% 밑으로 내려간 것들이다</div></div><section class="q" data-i="0"><div class="qhead"><span class="qno">1</span><span class="tag">두 원의 교점을 지나는 직선(서술)</span><span class="tag grey">단답</span><span class="tag pct">인증도 50%</span></div><p class="stem">두 원 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>10</mn></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x02212;</mo><mn>4</mn><mi>x</mi><mo>&#x0002B;</mo><mn>2</mn><mi>y</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> 의 두 교점을 지나는 직선의 방정식이 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>y</mi><mo>&#x0003D;</mo><mi>a</mi><mi>x</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 일 때 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>a</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 의 값을 구하여라.</p><div class="field"><label class="flabel">답</label><div class="row"><input type="text" id="q0a0" placeholder="답 입력"><button class="btn" onclick="grade(0)">확인</button></div></div><div class="verdict" id="v0"></div><div class="flag" id="fb0"><button class="fl" onclick="flagOpen(0)">이 문제 이상해요</button></div></section><section class="q" data-i="1"><div class="qhead"><span class="qno">2</span><span class="tag">원 밖의 점에서 그은 두 접선의 수직 조건</span><span class="tag grey">단답</span><span class="tag pct">인증도 55%</span></div><p class="stem">점 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mi>a</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mn>0</mn><mo stretchy="false">&#x00029;</mo></mrow></math> 에서 원 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>8</mn></mrow></math> 에 그은 두 접선이 서로 수직일 때 양수 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>a</mi></mrow></math> 의 값을 구하여라.</p><div class="field"><label class="flabel">답</label><div class="row"><input type="text" id="q1a0" placeholder="답 입력"><button class="btn" onclick="grade(1)">확인</button></div></div><div class="verdict" id="v1"></div><div class="flag" id="fb1"><button class="fl" onclick="flagOpen(1)">이 문제 이상해요</button></div></section><section class="result" id="result"><div class="score"><div class="n" id="sc"></div><div class="l" id="scl"></div></div><div class="rsec"><div class="rh">인증이 밀린 유형</div><div class="rlist" id="r1"></div></div><div class="next" id="nextbox"></div></section><details class="dev"><summary>제출 데이터 (선생님용)</summary><pre id="payload">아직 제출 전</pre></details><div class="sbar" id="sbar"><span class="st" id="sbt">아직 제출 전</span><button id="sbb" style="display:none" onclick="report(1)">다시 보내기</button></div><div class="foot">수학은유강 · 추가학습</div></div><script>
 const META={"루프ID": "20260912-CG1T-c127b004", "학생": {"학생ID": "한종혁_고1T_태성", "이름": "한종혁", "반": "고1T"}, "말": {"다맞음": "짚은 건 잡았다", "거의": "짚은 건 거의 잡았다", "미흡": "짚은 것부터 다시 보자", "파트1": "오늘 짚은 것", "다음": "아직 {n}개 남았다. 다음 클리닉에 또 나온다", "끝": "다 인증했다. 이 유형들은 당분간 안 나온다", "종류": "추가학습"}, "과정": "", "답안함URL": "https://script.google.com/macros/s/AKfycbwVJn85PNsD9bs4hpljvT2eGC-M2s6hEG1jEcVLGWMdCg3ovVgXR7CoEOg1u-MPsLwq/exec"};
 const ITEMS=[{"유형": "두 원의 교점을 지나는 직선(서술)", "형식": "단답", "단원": "원의 방정식", "난이도": "중", "발문": "두 원 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>10</mn></mrow></math>, <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x02212;</mo><mn>4</mn><mi>x</mi><mo>&#x0002B;</mo><mn>2</mn><mi>y</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> 의 두 교점을 지나는 직선의 방정식이 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>y</mi><mo>&#x0003D;</mo><mi>a</mi><mi>x</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 일 때 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>a</mi><mo>&#x0002B;</mo><mi>b</mi></mrow></math> 의 값을 구하여라.", "정답": ["-3"], "풀이": ["두 원의 방정식을 변끼리 빼면 이차항이 사라진다. 남는 일차식이 두 교점을 지나는 직선이다.", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mo stretchy=\"false\">&#x00028;</mo><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x02212;</mo><mn>10</mn><mo stretchy=\"false\">&#x00029;</mo><mo>&#x02212;</mo><mo stretchy=\"false\">&#x00028;</mo><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x02212;</mo><mn>4</mn><mi>x</mi><mo>&#x0002B;</mo><mn>2</mn><mi>y</mi><mo stretchy=\"false\">&#x00029;</mo><mo>&#x0003D;</mo><mn>4</mn><mi>x</mi><mo>&#x02212;</mo><mn>2</mn><mi>y</mi><mo>&#x02212;</mo><mn>10</mn><mo>&#x0003D;</mo><mn>0</mn></mrow></math> 이므로 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>y</mi><mo>&#x0003D;</mo><mn>2</mn><mi>x</mi><mo>&#x02212;</mo><mn>5</mn></mrow></math> 이다.", "따라서 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>a</mi><mo>&#x0002B;</mo><mi>b</mi><mo>&#x0003D;</mo><mn>2</mn><mo>&#x0002B;</mo><mo stretchy=\"false\">&#x00028;</mo><mo>&#x02212;</mo><mn>5</mn><mo stretchy=\"false\">&#x00029;</mo><mo>&#x0003D;</mo><mo>&#x02212;</mo><mn>3</mn></mrow></math> 이다."], "파트": 1, "출처": "추가학습", "원태그": "두 원의 교점을 지나는 직선(서술)", "인증도": 50}, {"유형": "원 밖의 점에서 그은 두 접선의 수직 조건", "형식": "단답", "단원": "원의 방정식", "난이도": "상", "발문": "점 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mo stretchy=\"false\">&#x00028;</mo><mi>a</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mn>0</mn><mo stretchy=\"false\">&#x00029;</mo></mrow></math> 에서 원 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>&#x0002B;</mo><msup><mi>y</mi><mn>2</mn></msup><mo>&#x0003D;</mo><mn>8</mn></mrow></math> 에 그은 두 접선이 서로 수직일 때 양수 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>a</mi></mrow></math> 의 값을 구하여라.", "정답": ["4"], "풀이": ["원의 중심은 원점이고 반지름은 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mn>2</mn><msqrt><mrow><mn>2</mn></mrow></msqrt></mrow></math> 이다.", "두 접선이 수직이면 중심과 두 접점, 그 점이 이루는 도형은 한 변의 길이가 반지름인 정사각형이다. 그러므로 중심에서 그 점까지의 거리는 반지름의 <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msqrt><mrow><mn>2</mn></mrow></msqrt></mrow></math> 배다.", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>a</mi><mo>&#x0003D;</mo><mn>2</mn><msqrt><mrow><mn>2</mn></mrow></msqrt><mo>&#x000D7;</mo><msqrt><mrow><mn>2</mn></mrow></msqrt><mo>&#x0003D;</mo><mn>4</mn></mrow></math> 이다."], "파트": 1, "출처": "추가학습", "원태그": "원 밖의 점에서 그은 두 접선의 수직 조건", "인증도": 55}];
 
@@ -133,6 +163,7 @@ function norm(s){return (s||'').toString().trim().replace(/\s+/g,'')
 
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify({state:state, picks:picks})); }catch(e){}
+  try{ paint(); }catch(e){}
 }
 function restore(){
   let d=null;
@@ -242,7 +273,7 @@ function finish(silent){
   document.getElementById('sc').textContent=n+' / '+ITEMS.length;
   document.getElementById('scl').textContent=
     p1===i1.length ? W.다맞음 : (p1>=i1.length-1 ? W.거의 : W.미흡);
-  rowsOf(1,'r1'); rowsOf(2,'r2');
+  rowsOf(1,'r1'); rowsOf(2,'r2'); rowsOf(3,'r3');
 
   const rot=i2.map(i=>{
     const ok=state[i].ok, was=(ITEMS[i].인증도||0);
@@ -328,7 +359,7 @@ function gspost(obj){
       body:JSON.stringify(obj)});
   }catch(e){}
 }
-function post(obj, done){
+function post(obj, done, fail){
   // done 은 **DB가 받았다고 답한 경우에만** 호출된다. gs 폴백은 no-cors 라
   // 성공을 알 수 없으므로 done 을 부르지 않는다 → 다음 방문 때 한 번 더 간다(멱등).
   try{
@@ -336,9 +367,9 @@ function post(obj, done){
       headers:{'Content-Type':'application/json','apikey':DB.anon,
                'Authorization':'Bearer '+DB.anon,'Prefer':'return=minimal'},
       body:JSON.stringify({'원본':obj})})
-    .then(function(r){ if(r.ok){ if(done) done(); } else gspost(obj); })
-    .catch(function(){ gspost(obj); });
-  }catch(e){ gspost(obj); }
+    .then(function(r){ if(r.ok){ if(done) done(); } else { gspost(obj); if(fail) fail(); } })
+    .catch(function(){ gspost(obj); if(fail) fail(); });
+  }catch(e){ gspost(obj); if(fail) fail(); }
 }
 
 // 제출 결과를 선생님에게 보낸다. 실패해도 학생 화면은 아무 일 없다.
@@ -348,17 +379,45 @@ function post(obj, done){
 //   서버 쪽이 학생ID+루프ID 로 멱등이라 여러 번 가도 무해하다.
 //   (열쇠를 :sent→:ok 로 바꾼 것도 의도다 — 옛 페이지에서 거짓 도장이 찍힌 제출이
 //    새 페이지를 열면 한 번 더 나가 스스로 복구된다.)
-function report(){
+let SENT=false, SENDING=false;
+/* 제출 상태를 화면 아래에 항상 보여 준다 (0907).
+   그전에는 전송이 실패해도 학생 화면에 아무 표시가 없었다 — 채점 결과만 보고
+   '냈다'고 믿는데 서버엔 한 줄도 없는 사고(고1A 0907). 폴백(답안함)도 꺼져 있어
+   조용히 사라졌다. 이제 ①남은 문항 ②전송 중 ③제출 완료 ④실패+다시보내기 를 말한다. */
+function paint(){
+  const bar=document.getElementById('sbar'), t=document.getElementById('sbt'),
+        b=document.getElementById('sbb');
+  if(!bar) return;
+  const left=state.filter(s=>s===null).length;
+  bar.classList.remove('ok','no'); b.style.display='none';
+  if(SENT){ bar.classList.add('ok'); t.textContent='제출 완료 — 선생님한테 갔다'; return; }
+  if(left>0){ t.textContent='아직 '+left+'문항 남았다 · 끝까지 풀어야 제출된다'; return; }
+  if(SENDING){ t.textContent='보내는 중…'; return; }
+  bar.classList.add('no');
+  t.textContent='전송 실패 — 아직 안 갔다';
+  b.style.display='';
+}
+function report(manual){
   let ok=false;
   try{ ok = localStorage.getItem(KEY+':ok')==='1'; }catch(e){}
-  if(ok) return;
+  // 손으로 '다시 보내기'를 누르면 도장이 있어도 한 번 더 보낸다 —
+  // 서버가 학생ID+루프ID 로 멱등이라 무해하고, 거짓 도장이 유일한 사각지대였다.
+  if(ok && !manual){ SENT=true; paint(); return; }
+  if(state.some(s=>s===null)){ paint(); return; }
+  SENDING=true; paint();
   try{
     post(JSON.parse(document.getElementById('payload').textContent), function(){
       try{ localStorage.setItem(KEY+':ok','1'); }catch(e){}
-    });
-  }catch(e){}
+      SENT=true; SENDING=false; paint();
+    }, function(){ SENDING=false; paint(); });
+  }catch(e){ SENDING=false; paint(); }
 }
+// 실패한 제출은 스스로 다시 간다 — 지하철에서 끊긴 채 탭만 열어 둔 경우가 많다.
+window.addEventListener('online', function(){ if(!SENT) report(); });
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden && !SENT && !SENDING) report();
+});
 
-document.addEventListener('DOMContentLoaded', restore);
+document.addEventListener('DOMContentLoaded', function(){ restore(); paint(); });
 
 </script></body></html>
