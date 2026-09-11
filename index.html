@@ -3926,10 +3926,18 @@ async function gtDone(){
 let GTBANK=null;
 async function gtBank(){
   if(GTBANK)return GTBANK;
-  const {data,error}=await sb.from('item_index')
-    .select('자료명,문항번호,배점,정답,정답값').eq('자료종류','기출');
-  if(error){toast('기출 목록을 못 읽었다: '+error.message);return {};}
-  const by={};(data||[]).forEach(r=>{(by[r['자료명']]=by[r['자료명']]||[]).push(r);});
+  /* 0911: 기출 행이 1,326행이 되자 Supabase 기본 상한(1,000행)에 잘려 뒤쪽 학교(초당고 등)가
+     드롭다운에서 사라졌다 → app.js fetchAll 처럼 1,000행씩 range 로 끝까지 읽는다. */
+  const data=[];const page=1000;
+  for(let from=0;;from+=page){
+    const {data:d,error}=await sb.from('item_index')
+      .select('자료명,문항번호,배점,정답,정답값').eq('자료종류','기출')
+      .order('자료명').order('문항번호').range(from,from+page-1);
+    if(error){toast('기출 목록을 못 읽었다: '+error.message);return {};}
+    data.push(...(d||[]));
+    if(!d||d.length<page)break;
+  }
+  const by={};data.forEach(r=>{(by[r['자료명']]=by[r['자료명']]||[]).push(r);});
   Object.values(by).forEach(a=>a.sort((x,y)=>parseFloat(x['문항번호'])-parseFloat(y['문항번호'])));
   GTBANK=by;
   return by;
