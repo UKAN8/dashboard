@@ -309,6 +309,6 @@ async function send(){
   $('msg').style.display='none'; $('app').style.display=''; $('bar').style.display='';
   draw(); drawPast(); loadPE();
   $('send').onclick=send;
-  if(data.제출함 && !Object.keys(load()).length) 완료(true);
+  if(data.제출함 && data.제출시각 && !Object.keys(load()).length) 완료(true);   // (0911) 제출시각까지 확인 — v22 gt_eval_open 의 found 오염 방어
 })();
 </script></body></html>
