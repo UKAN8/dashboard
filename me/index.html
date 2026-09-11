@@ -282,6 +282,8 @@ const PR = (() => {
     return `<h2>회차별 시험<small>${dfmt(r.날짜)}</small></h2><div class="card">`
       + `<div class="nav"><button type="button" data-pr-nav="-1" ${idx === 0 ? 'disabled' : ''}>‹</button><b>${E(paper(r.시험ID))}</b><button type="button" data-pr-nav="1" ${idx === R.length - 1 ? 'disabled' : ''}>›</button></div>`
       + `<div class="row"><span>점수</span><span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">/ ${r.총점 != null ? fmt(num(r.총점)) : 100}${grade}</span></span></div>`
+      /* 지각응시(0910) — 수업일에 못 보고 나중에 본 회차. 학생이 보는 화면이라 '늦게'가 아니라 '보충'으로 쓴다. */
+      + (r.지각 ? `<div class="row"><span>보충 응시</span><span class="n mid">${dfmt(r.응시일)}</span></div>` : '')
       + (items.length ? `<div class="strip">${items.map(cell).join('')}</div>`
         + '<div class="legend"><span class="good">■ 맞음</span><span class="mid">■ 부분</span><span class="bad">■ 틀림</span><span>! 확실하다고 했는데 틀림</span></div>' + det
         : '<div class="none">문항별 기록이 없는 회차예요</div>')
@@ -312,7 +314,7 @@ const PR = (() => {
     const R = (g.회차 || []).slice().reverse();
     if (R.length < 2) return '';
     return '<h2>회차별</h2><div class="card">'
-      + R.map((r, i) => `<div class="row"><span><a href="#" data-pr-go="${R.length - 1 - i}" style="text-decoration:none">${E(paper(r.시험ID))}</a> <span class="dim">${dfmt(r.날짜)}</span></span>`
+      + R.map((r, i) => `<div class="row"><span><a href="#" data-pr-go="${R.length - 1 - i}" style="text-decoration:none">${E(paper(r.시험ID))}</a> <span class="dim">${dfmt(r.날짜)}${r.지각 ? ' · 보충' : ''}</span></span>`
         + `<span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">${r.등급 ? gradeTxt(widen(r.등급, num(r.z), g.모델)).replace('등급', '') : '—'}</span></span></div>`).join('')
       + '<div class="note">등급 칸이 비어 있으면 그 회차는 응시 인원이 적어 흐름에 넣지 않은 회차예요</div></div>';
   }
@@ -407,7 +409,7 @@ function render(d){
   const open=!!(G && !G.없음);
   if(open){
     const url=`https://ukan8.github.io/dashboard/eval/?t=${encodeURIComponent(d.토큰||'')}`;
-    if(G.제출함)
+    if(G.제출함 && G.제출시각)   // (0911) 제출시각까지 확인 — v22 gt_eval_open 의 found 오염 방어(eval.html 과 동일)
       H.push(`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">오늘 기출테스트 자기평가 <b class="good">제출 완료</b></span>`
         +`<a class="n dim" href="${E(url)}" style="text-decoration:none">고치기</a></div></div>`);
     else
