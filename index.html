@@ -145,6 +145,10 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 .gc-hd{font-size:12px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.05);border-left:3px solid var(--dim)}
 .gc-hd.bad{border-color:var(--bad)} .gc-hd.mid{border-color:var(--mid)} .gc-hd.good{border-color:var(--good)}
 .gc-hd i{font-style:normal;color:var(--dim);margin-left:6px}
+/* 지각응시(0910) — 보충 응시한 학생. 회차 평균·정답률에서 뺐다는 표시. */
+.gc-late{display:inline-block;margin-left:5px;padding:0 6px;border-radius:8px;font-size:10px;font-weight:700;
+  color:#14141c;background:#e8b23a;vertical-align:middle;white-space:nowrap}
+tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .gc-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 6px}
 .gc-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
 .gc-tbl{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;min-width:100%}
@@ -390,6 +394,10 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .cs-grid th.fz{z-index:5}
 #cs .cs-grid .name{font-weight:700;font-size:14px} #cs .cs-grid .school{font-size:11px;color:var(--dim);margin-left:5px}
 #cs .cs-grid .recent{font-size:11px;color:var(--dim);line-height:1.3}
+/* 지각응시(0910) — 회차 날짜에 못 보고 나중에 본 학생. 클릭하면 응시일을 고친다. */
+#cs .cs-grid .late{display:inline-block;margin-left:5px;padding:0 5px;border-radius:8px;font-size:10px;font-weight:700;
+  color:#0e0e14;background:#e8b23a;cursor:pointer;vertical-align:middle}
+#cs .cs-grid .late:hover{background:#f5cc63}
 #cs .cs-grid .indhw{color:#f0b27a} #cs .cs-grid .miss{color:var(--bad)}
 #cs .cs-grid input,#cs .cs-grid textarea{padding:5px 7px;font-size:13px}
 #cs .cs-grid textarea{min-height:30px;min-width:200px;resize:both}
@@ -887,6 +895,8 @@ const PR = (() => {
     return `<h2>회차별 시험<small>${dfmt(r.날짜)}</small></h2><div class="card">`
       + `<div class="nav"><button type="button" data-pr-nav="-1" ${idx === 0 ? 'disabled' : ''}>‹</button><b>${E(paper(r.시험ID))}</b><button type="button" data-pr-nav="1" ${idx === R.length - 1 ? 'disabled' : ''}>›</button></div>`
       + `<div class="row"><span>점수</span><span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">/ ${r.총점 != null ? fmt(num(r.총점)) : 100}${grade}</span></span></div>`
+      /* 지각응시(0910) — 수업일에 못 보고 나중에 본 회차. 학생이 보는 화면이라 '늦게'가 아니라 '보충'으로 쓴다. */
+      + (r.지각 ? `<div class="row"><span>보충 응시</span><span class="n mid">${dfmt(r.응시일)}</span></div>` : '')
       + (items.length ? `<div class="strip">${items.map(cell).join('')}</div>`
         + '<div class="legend"><span class="good">■ 맞음</span><span class="mid">■ 부분</span><span class="bad">■ 틀림</span><span>! 확실하다고 했는데 틀림</span></div>' + det
         : '<div class="none">문항별 기록이 없는 회차예요</div>')
@@ -917,7 +927,7 @@ const PR = (() => {
     const R = (g.회차 || []).slice().reverse();
     if (R.length < 2) return '';
     return '<h2>회차별</h2><div class="card">'
-      + R.map((r, i) => `<div class="row"><span><a href="#" data-pr-go="${R.length - 1 - i}" style="text-decoration:none">${E(paper(r.시험ID))}</a> <span class="dim">${dfmt(r.날짜)}</span></span>`
+      + R.map((r, i) => `<div class="row"><span><a href="#" data-pr-go="${R.length - 1 - i}" style="text-decoration:none">${E(paper(r.시험ID))}</a> <span class="dim">${dfmt(r.날짜)}${r.지각 ? ' · 보충' : ''}</span></span>`
         + `<span class="n"><b>${fmt(num(r.점수))}</b> <span class="dim">${r.등급 ? gradeTxt(widen(r.등급, num(r.z), g.모델)).replace('등급', '') : '—'}</span></span></div>`).join('')
       + '<div class="note">등급 칸이 비어 있으면 그 회차는 응시 인원이 적어 흐름에 넣지 않은 회차예요</div></div>';
   }
@@ -1050,7 +1060,21 @@ function reload() { location.reload(); }
    락이 안 풀려 세션 저장·복구가 멈춘다 → 로그인은 되는데 **새로고침하면 다시 로그인 화면**.
    (우리가 코드를 안 고쳐도 CDN 이 새 2.x 를 물어오면 그날 터진다. 그래서 버전도 박았다.)
    → setTimeout 0 으로 콜백 밖으로 빼서 부른다. 공식 문서가 시키는 방식이다. */
-sb.auth.onAuthStateChange((ev, session) => { if (session) setTimeout(() => boot(session), 0); });
+/* ⚠ 0910 사고 — **알트탭만 해도 화면이 스스로 바뀐다**.
+   supabase-js 는 탭이 다시 보이면 세션을 되살리며 이 콜백을 또 부른다(SIGNED_IN·TOKEN_REFRESHED).
+   옛 코드는 그때마다 boot() 을 다시 돌렸다 → loadAll·render·wire 가 통째로 다시 돌아
+   ①기출 [반별 평균] 이 기본값 [시험지별 답안지] 로 튀고 ②학생 검색어·정렬·연 details 가 풀리고
+   ③document 리스너가 겹쳐 클릭 한 번이 여러 번 처리되고 ④20초 폴링 타이머가 늘어났다.
+   → 한 번만 켠다. 켜는 중·켜진 뒤의 세션 이벤트는 무시한다(토큰은 supabase 가 알아서 쓴다).
+     실패해서 예외로 끝난 경우만 0 으로 되돌려 다음 이벤트가 다시 시도하게 둔다.
+   재현·회귀: refocus_test.js */
+let BOOTED = 0;                                   // 0=아직 1=켜는 중 2=켜짐
+sb.auth.onAuthStateChange((ev, session) => {
+  if (!session) { BOOTED = 0; return; }           // 로그아웃 — 다시 로그인하면 처음부터
+  if (BOOTED) return;
+  BOOTED = 1;
+  setTimeout(() => boot(session).then(() => { BOOTED = 2; }, () => { BOOTED = 0; }), 0);
+});
 
 /* 초대·매직링크가 실패해 돌아오면 주소 끝에 #error=... 가 붙는다. 그대로 두면 아무 말 없이
    로그인 화면이 떠서 "링크를 눌렀는데 안 된다"가 된다(0811 조교 계정에서 실제로 겪음).
@@ -2760,6 +2784,14 @@ const gcPaperLabel = p => {        // '청덕고_고1_2025_2_중간' → '청덕
   return m ? `${m[1]} ${m[3].slice(2)}년 ${m[4]}학기 ${m[5]}` : String(p);
 };
 const gcSchool = p => (String(p).split('_')[0] || '');
+/* 지각응시(0910) — daily_log.응시일 이 회차 날짜보다 뒤면 '보충 응시'다.
+   다른 학생 답·해설을 본 뒤일 수 있어 회차 평균·문항 정답률에서 뺀다(gt_pool 과 같은 규칙).
+   본인 점수·등급·추이는 그대로 그린다. 정본: 지시서_지각응시_처리_0910.md */
+const gcLateN = (late, date) => {
+  const a = Date.parse(String(late || '').slice(0, 10)), b = Date.parse(String(date || '').slice(0, 10));
+  return (isFinite(a) && isFinite(b) && a > b) ? Math.round((a - b) / 864e5) : 0;
+};
+const gcLateBadge = t => `<span class="gc-late" title="보충 응시 — ${E(t.late)} (+${t.lateN}일). 회차 평균·정답률에서 뺐다">늦 +${t.lateN}</span>`;
 
 /* 집계 — 한 번만 만들어 세 화면이 나눠 쓴다 */
 function gcBuild(st) {
@@ -2789,7 +2821,8 @@ function gcBuild(st) {
     p.dates.add(r['날짜']); p.bans.add(r['반']);
     if (k.key) { Object.assign(p.key, k.key); Object.assign(p.pts, k.pts); }
     const stu = st.smap[r['학생ID']] || st.byName[r['이름']];
-    const base = { sid: r['학생ID'], name: r['이름'], ban: r['반'], date: r['날짜'], stu, paper: pid };
+    const base = { sid: r['학생ID'], name: r['이름'], ban: r['반'], date: r['날짜'], stu, paper: pid,
+                   late: String(r['응시일'] || '').trim().slice(0, 10) };
     if ((r['테스트상태'] || '').trim() !== '응시' || fnum(r['점수']) == null) { p.miss.push(base); return; }
     p.takes.push({ ...base, score: fnum(r['점수']), marks: gcParseMarks(r['문항점수']), ans: gcParseMarks(r['답안']) });
   });
@@ -2810,9 +2843,14 @@ function gcBuild(st) {
       t.wrong = p.labels.filter(l => t.ok[l] != null && t.ok[l] < 1);
       t.grade = metaGrade(t.score, p.meta);
     });
-    p.rate = {};                                            // 문항별 정답률(부분=0.5)
-    p.labels.forEach(l => { const v = p.takes.map(t => t.ok[l]).filter(x => x != null); p.rate[l] = gcMean(v); });
-    p.avg = gcMean(p.takes.map(t => t.score));
+    p.takes.forEach(t => { t.lateN = gcLateN(t.late, t.date); });
+    p.lateTakes = p.takes.filter(t => t.lateN);
+    p.ontime = p.takes.filter(t => !t.lateN);
+    // 전원이 보충 응시인 회차(있을 리 없지만)엔 기준선이 없다 — 화면이 통째로 비지 않게 전체로 되돌린다.
+    p.baseTakes = p.ontime.length ? p.ontime : p.takes;
+    p.rate = {};                                            // 문항별 정답률(부분=0.5) — 정시 응시자만
+    p.labels.forEach(l => { const v = p.baseTakes.map(t => t.ok[l]).filter(x => x != null); p.rate[l] = gcMean(v); });
+    p.avg = gcMean(p.baseTakes.map(t => t.score));
     p.first = [...p.dates].sort()[0];
     p.grade = [...p.bans].map(gcGrade).find(Boolean) || '';
     p.takes.sort((a, b) => a.ban === b.ban ? b.score - a.score : (a.ban < b.ban ? -1 : 1));
@@ -2904,7 +2942,8 @@ function gcWire(st) {
       + `<div class="chips">${chip('acc', `응시 ${p.takes.length}명`)}${p.miss.length ? chip('bad', `미응시 ${p.miss.length}명`) : ''}`
       + `${chip('na', `평균 ${p.avg == null ? '—' : r1(p.avg)}점`)}${scores.length ? chip('good', `최고 ${Math.max(...scores)}`) + chip('mid', `최저 ${Math.min(...scores)}`) : ''}`
       + `${c1 != null ? chip('na', `1등급컷 ${c1} (예상)`) : chip('na', '컷 미확보')}${p.meta && p.meta['전체난이도'] ? chip('na', '난이도 ' + p.meta['전체난이도']) : ''}`
-      + `${p.hasKey ? '' : chip('mid', '정답표 없음 — 채점칸 기준')}</div>`
+      + `${p.hasKey ? '' : chip('mid', '정답표 없음 — 채점칸 기준')}`
+      + `${p.lateTakes.length ? chip('mid', `보충 응시 ${p.lateTakes.length}명 — 평균·정답률에서 제외`) : ''}</div>`
       + (hard.length ? `<div class="lbl" style="margin-top:8px">가장 많이 틀린 문항</div><div class="gc-hard">${hard.map(l =>
         `<span class="gc-hd ${gcCls(p.rate[l])}"><b>${E(l)}</b> ${gcPct(p.rate[l])}${p.topic[l] ? `<i>${E(p.topic[l])}</i>` : ''}</span>`).join('')}</div>` : '')
       + (p.miss.length ? `<div class="lbl" style="margin-top:8px">미응시</div><div class="dim">${p.miss.map(m => E(m.name) + '(' + E(m.ban) + ')').join(', ')}</div>` : '')
@@ -2921,7 +2960,7 @@ function gcWire(st) {
       `<td>${p.pts[l] != null ? E(String(p.pts[l])) : ''}</td>`).join('')}</tr>` : '';
     const rateRow = `<tr class="gc-rate"><td class="gc-fz">정답률</td><td></td><td></td>${p.labels.map(l =>
       `<td class="${gcCls(p.rate[l])}"><span class="gc-bar1" style="height:${Math.round((p.rate[l] || 0) * 22)}px"></span>${p.rate[l] == null ? '' : Math.round(p.rate[l] * 100)}</td>`).join('')}</tr>`;
-    const body = takes.map(t => `<tr class="gc-row" data-ban="${E(t.ban)}"><td class="gc-fz">${nm(t)} <span class="ban">${E(t.ban)}</span></td>`
+    const body = takes.map(t => `<tr class="gc-row${t.lateN ? ' gc-lt' : ''}" data-ban="${E(t.ban)}"><td class="gc-fz">${nm(t)} <span class="ban">${E(t.ban)}</span>${t.lateN ? gcLateBadge(t) : ''}</td>`
       + `<td class="gc-sc"><b>${E(String(t.score))}</b></td>`
       + `<td class="gc-gr">${t.grade != null ? chip(gradeCls(t.grade), t.grade + '등급') : '<span class="dim">—</span>'}</td>`
       + p.labels.map(l => okCell(t.ok[l], l, t)).join('') + '</tr>').join('');
@@ -2974,7 +3013,8 @@ function gcWire(st) {
         + `<a class="nm" href="#gichul" data-gp="${E(h.p.id)}">${E(gcPaperLabel(h.p.id))}</a>`
         + `<span class="gc-sc"><b>${E(String(h.t.score))}</b>점</span>`
         + `${h.t.grade != null ? chip(gradeCls(h.t.grade), h.t.grade + '등급 예상') : ''}`
-        + `<span class="dim">반평균 ${r1(h.p.avg)} (${d >= 0 ? '+' : ''}${r1(d)}) · ${h.p.takes.filter(x => x.ban === h.t.ban).length}명 중 ${h.p.takes.filter(x => x.ban === h.t.ban && x.score > h.t.score).length + 1}위</span>`
+        + `<span class="dim">반평균 ${r1(h.p.avg)} (${d >= 0 ? '+' : ''}${r1(d)}) · ${h.p.baseTakes.filter(x => x.ban === h.t.ban).length}명 중 ${h.p.baseTakes.filter(x => x.ban === h.t.ban && x.score > h.t.score).length + 1}위</span>`
+        + `${h.t.lateN ? gcLateBadge(h.t) : ''}`
         + `<span class="gc-wl">${wr || '<span class="dim">오답 없음</span>'}</span></div>`;
     }).join('');
     return pick + head + `<div class="card"><div class="lbl">회차별 (최근순) · 틀린 문항 번호</div>${rows}</div>`;
@@ -2983,23 +3023,24 @@ function gcWire(st) {
   /* ③ 반별 — 반 × 시험지 평균·응시율, 반별 추이 */
   function drawBan() {
     const bans = G.bans.filter(b => grade === '*' || gcGrade(b) === grade);
-    const s = sort.ban, banAvg = (p, b) => gcMean(p.takes.filter(t => t.ban === b).map(t => t.score));
+    const s = sort.ban, banAvg = (p, b) => gcMean(p.baseTakes.filter(t => t.ban === b).map(t => t.score));
     const keyF = s.k === 'paper' ? p => gcPaperLabel(p.id) : s.k === 'first' ? p => p.first : s.k === 'cut' ? p => mi(p.meta, '등급컷1')
       : s.k === 'avg' ? p => p.avg : s.k.startsWith('b:') ? p => banAvg(p, s.k.slice(2)) : p => p.first;
     const ps = sortRows(papers(), keyF, s);
     if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
     const cell = (p, b) => {
-      const tk = p.takes.filter(t => t.ban === b), ms = p.miss.filter(t => t.ban === b);
-      if (!tk.length && !ms.length) return '<td class="gc-c na"></td>';
+      const tk = p.baseTakes.filter(t => t.ban === b), ms = p.miss.filter(t => t.ban === b);
+      const lt = p.lateTakes.filter(t => t.ban === b);
+      if (!tk.length && !ms.length && !lt.length) return '<td class="gc-c na"></td>';
       const a = gcMean(tk.map(t => t.score));
       const c1 = mi(p.meta, '등급컷1');
-      return `<td class="gc-c gc-avg ${a == null ? 'na' : c1 != null ? (a >= c1 ? 'good' : a >= c1 - 15 ? 'mid' : 'bad') : ''}" title="${E(b)} · ${tk.length}명 응시${ms.length ? ' · 미응시 ' + ms.length : ''}">`
-        + `<b>${a == null ? '—' : r1(a)}</b><small>${tk.length}명${ms.length ? '+' + ms.length : ''}</small></td>`;
+      return `<td class="gc-c gc-avg ${a == null ? 'na' : c1 != null ? (a >= c1 ? 'good' : a >= c1 - 15 ? 'mid' : 'bad') : ''}" title="${E(b)} · ${tk.length}명 응시${lt.length ? ' · 보충 ' + lt.length + '명(평균 제외)' : ''}${ms.length ? ' · 미응시 ' + ms.length : ''}">`
+        + `<b>${a == null ? '—' : r1(a)}</b><small>${tk.length}명${lt.length ? '+늦' + lt.length : ''}${ms.length ? '+' + ms.length : ''}</small></td>`;
     };
     const tbl = `<div class="gc-wrap"><table class="gc-tbl gc-ban"><thead><tr>${th('ban', 'paper', '시험지', 'gc-fz')}${th('ban', 'first', '시행')}${th('ban', 'cut', '1등급컷')}${bans.map(b => th('ban', 'b:' + b, E(b))).join('')}${th('ban', 'avg', '전체')}</tr></thead><tbody>`
       + ps.map(p => `<tr><td class="gc-fz"><a class="nm" href="#gichul" data-gp="${E(p.id)}">${E(gcPaperLabel(p.id))}</a></td>`
         + `<td class="dim">${dfmt(p.first, false)}</td><td class="dim">${mi(p.meta, '등급컷1') ?? '—'}</td>`
-        + bans.map(b => cell(p, b)).join('') + `<td class="gc-c gc-avg"><b>${r1(p.avg)}</b><small>${p.takes.length}명</small></td></tr>`).join('')
+        + bans.map(b => cell(p, b)).join('') + `<td class="gc-c gc-avg"><b>${r1(p.avg)}</b><small>${p.baseTakes.length}명${p.lateTakes.length ? '+늦' + p.lateTakes.length : ''}</small></td></tr>`).join('')
       + '</tbody></table></div>';
     const cards = bans.map(b => {
       const seq = ps.filter(p => p.takes.some(t => t.ban === b)).map(p => [p.first, gcMean(p.takes.filter(t => t.ban === b).map(t => t.score))]);
@@ -3538,6 +3579,7 @@ async function gtZip(jid,btn){
 
 
 
+let JOBTIMER=null;
 /* 콘솔 기동 — **로그인·역할 판정이 끝난 뒤** 부르는 유일한 입구. app.js 의 boot() 이 부른다. */
 function csBoot(prof){
   ROLE=prof.role;
@@ -3545,7 +3587,9 @@ function csBoot(prof){
   // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
   document.querySelectorAll('[data-v="cs-load"],[data-v="cs-staff"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
   jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
-  setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
+  // 두 번 기동해도 폴링이 겹치지 않게(0910) — app.js 의 boot 이 한 번만 돌지만 여기서도 눌러 둔다
+  if(JOBTIMER)clearInterval(JOBTIMER);
+  JOBTIMER=setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
   initClassButtons();
 }
 
@@ -3777,6 +3821,20 @@ function allPresent(){
   });
 }
 function isNA(log){return (log['테스트상태']||'')==='미응시';}
+/* ── 지각응시 (0910) ─────────────────────────────────────────────────────
+   회차 수업일에 못 본 학생(결석·학교 시험 일정)이 나중에 같은 시험지를 본다.
+   class_log 의 시험지명·기출정답은 반×날짜에 하나뿐이라 채점은 회차 날짜로 넣을 수밖에 없다.
+   실제 본 날은 daily_log.응시일(schema_v21)에 남긴다 — 출결은 실제대로 둔다(결석은 결석).
+   통계에서는 gt_pool 이 지각자를 회차 평균·편차에서 뺀다. 정본: 지시서_지각응시_처리_0910.md */
+function lateDays(log){
+  const d=log&&log['응시일'];if(!d)return 0;
+  const n=(Date.parse(String(d).slice(0,10))-Date.parse(vDay()))/864e5;
+  return (isFinite(n)&&n>0)?Math.round(n):0;
+}
+function lateBadge(log){
+  const n=lateDays(log);if(!n)return '';
+  return `<span class="late" title="보충 응시 — ${esc(String(log['응시일']).slice(0,10))} (+${n}일). 눌러서 고치거나 지운다">늦 +${n}</span>`;
+}
 /* 점수 칸에 붙는 토글. 미응시는 '0점'이 아니다 — 점수·문항점수를 비우고 상태만 남긴다.
    gen10 은 점수가 없으면 '미응시'로 그리고, 반평균 계산에서도 빠진다. */
 function naBtnHtml(log){
@@ -4137,7 +4195,7 @@ function renderGrid(box,nq){
     tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span><span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
+      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
@@ -4163,6 +4221,22 @@ function renderGrid(box,nq){
 }
 /* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다. */
 function wireGridKeys(t){
+  /* '늦' 배지 클릭 = 응시일 직접 수정. 비우면 정시 응시로 되돌린다('' = 가드의 명시 삭제). */
+  t.addEventListener('click',async e=>{
+    const b=e.target.closest&&e.target.closest('.late');if(!b)return;
+    const tr=b.closest('tr.stu');if(!tr)return;
+    const id=tr.dataset.id,log=LOGMAP[id]||{};
+    const cur=String(log['응시일']||'').slice(0,10);
+    const v=prompt('실제로 시험을 본 날 (YYYY-MM-DD). 비우면 정시 응시로 되돌린다.',cur);
+    if(v===null)return;
+    const nv=v.trim();
+    if(nv&&!/^\d{4}-\d{2}-\d{2}$/.test(nv)){toast('날짜 형식이 아니다: '+nv);return;}
+    const {error}=await sb.from('daily_log').update({'응시일':nv||''}).eq('학생ID',id).eq('날짜',vDay());
+    if(error){toast('응시일 저장 실패: '+error.message);return;}
+    LOGMAP[id]=Object.assign({},log,{'응시일':nv});
+    b.outerHTML=lateBadge(LOGMAP[id]);
+    toast(nv?('응시일 '+nv):'정시 응시로 되돌렸다');
+  });
   t.addEventListener('focusin',e=>{
     if(e.target.matches&&e.target.matches('input.gta,input.it')&&e.target.select)e.target.select();
   });
@@ -4255,6 +4329,14 @@ async function save(id,card){
       :gt?((card.dataset.gtItems||'')||null)
       :(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
     const gtAnsStr=(!gt||na)?null:((card.dataset.gtAns||'')||null);
+    /* 지각응시(0910) — 보는 날짜가 오늘이 아닌데 **지금 처음** 기출 채점을 넣으면 실제로 본 날은 오늘이다.
+       ⚠ 이미 채점돼 있던 행은 건드리면 안 된다. 옛 날짜를 열어 코멘트만 고쳐도 전원에게 응시일이
+          찍혀 버린다 — 그래서 '이전에 채점이 없었는데 지금 있다'일 때만 찍는다.
+       ⚠ 첫 응시일이 정본이다(재채점·정답 정정에도 안 바뀐다). 미응시로 되돌리면 ''(명시 삭제).
+       손으로 고치는 건 이름 옆 '늦' 배지 클릭. */
+    const lateDay=gtLateStamp(prev,{gt,na,
+      graded:((card.dataset.gtItems||'')!=='')||score!=='',
+      viewDay:vDay(),today:todayStr()});
     const row={
       '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':vDay(),'요일':DAYS[new Date(vDay()+'T00:00:00').getDay()],
       '출결':att?att.dataset.v:null,'결석사유':clr(get('결석사유'),'결석사유'),
@@ -4270,6 +4352,7 @@ async function save(id,card){
       // 미응시·비기출은 clr — 이전 답이 있으면 ''(명시 삭제), 없으면 null(아래서 키 생략)
       '답안':(gt&&!na)?(gtAnsStr!==null?gtAnsStr:clr('','답안')):clr('','답안'),
       '시험지출처':gt?($('gt_src').value.trim()||clr('','시험지출처')):clr('','시험지출처'),
+      '응시일':lateDay,
       '이행률':clr(rateNum(get('이행률')),'이행률'),
       '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
       '추가학습사유':clr(get('추가학습사유'),'추가학습사유'),
@@ -4279,6 +4362,7 @@ async function save(id,card){
     /* 신규 컬럼(답안 — schema_v11)은 null 이면 키를 아예 뺀다. 뜻이 같고(미변경 = 가드가 지킴),
        v11 을 아직 안 돌린 DB 에서도 리뷰 저장이 "없는 컬럼" 으로 죽지 않는다. */
     if(row['답안']===null)delete row['답안'];
+    if(row['응시일']===null)delete row['응시일'];   // schema_v21 미적용 DB 에서도 저장이 안 죽는다
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){rowState(card,'failed');updateAvgs();toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
     saveOk('daily');rowState(card,'saved');
@@ -5082,6 +5166,21 @@ function gtSer(labels,arr){
 function gtDes(str){
   const m={};String(str||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i>0)m[p.slice(0,i)]=p.slice(i+1);});
   return m;
+}
+/* 지각응시(0910) — 이 행의 '응시일'에 무엇을 쓸 것인가.
+     null  = 손대지 않는다(저장 때 키를 통째로 뺀다 → 가드가 옛 값을 지킨다)
+     ''    = 명시 삭제(가드가 null 로 바꾼다)
+     날짜   = 그 날 본 것으로 기록
+   ⚠ 이미 채점돼 있던 행은 절대 찍지 않는다. 옛 날짜를 열어 코멘트만 고쳐도 반 전원에게
+      응시일이 박힌다 — '이전엔 채점이 없었는데 지금 있다' 일 때만 찍는 이유. */
+function gtLateStamp(prev, o){
+  prev = prev || {};
+  const had = (prev['응시일']||'') !== '';
+  if(o.na) return had ? '' : null;                 // 미응시로 되돌리면 같이 비운다
+  if(!o.gt) return null;                           // 리뷰테스트는 상관없다
+  if(had) return prev['응시일'];                    // 첫 응시일이 정본(재채점·정답 정정에도 안 바뀐다)
+  const wasGraded = ((prev['문항점수']||'') !== '') || ((prev['점수']||'') !== '');
+  return (!wasGraded && o.graded && o.viewDay !== o.today) ? o.today : null;
 }
 /*PARSE>>*/
 
