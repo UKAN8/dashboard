@@ -67,6 +67,28 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
 .legend{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px;color:var(--tx2);
  background:var(--card);border:1px solid var(--bd);border-radius:11px;padding:9px 12px;margin-bottom:12px}
 .legend b{color:var(--tx)}
+/* (0911) 지난 시험 재확신 — 오늘 문항 아래, 3문항. 발문은 /set/pe_<키>.json(루프 되짚기 발문)에서 */
+.past{margin-top:22px;padding-top:14px;border-top:1px solid var(--bd)}
+.past .ph{font-weight:800;font-size:15px;margin-bottom:3px}
+.past .ph b{color:var(--acc)}
+.past .pn{color:var(--dim);font-size:12.5px;line-height:1.55;margin-bottom:10px}
+.q .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--tx2);font-size:12.5px;margin:-2px 0 7px}
+.q .meta b{color:var(--tx);font-weight:700}
+.pb{background:rgba(255,255,255,.05);border-radius:9px;padding:9px 11px;margin:0 0 8px;font-size:14px;line-height:1.6;color:var(--tx)}
+.pb p{margin:0 0 3px}
+.pb .pcs{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 10px;margin-top:6px}
+.pb .pcs.c1{grid-template-columns:1fr}
+.pb .pch{display:flex;gap:4px;align-items:baseline}
+.pb .pcn{color:var(--dim);flex-shrink:0}
+.pb .box,.pb .lead{border-left:2px solid var(--dim);padding:4px 8px;margin:6px 0}
+.pb .bogi{border:1px solid var(--dim);padding:10px 8px 4px;margin:10px 2px 6px;position:relative}
+.pb .bogi .lbl{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 6px;font-size:12px}
+.pb .tbl{border-collapse:collapse;margin:4px auto;font-size:13px}
+.pb .tbl td{border:1px solid var(--dim);padding:1px 6px;text-align:center}
+.pb .tab{display:inline-block;width:14px}
+.pb .missing{color:var(--acc)}
+.pb math{font-size:1.05em}
+.row.pc .b.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.55);color:#ffe9e9}
 </style></head>
 <body><main>
 <div id="msg" class="msg">불러오는 중…</div>
@@ -83,6 +105,7 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
     <b>안 품</b><span>시간이 없었거나 손도 못 댔다</span>
   </div>
   <div id="qs"></div>
+  <div id="past"></div>
   <div class="foot" id="foot"></div>
 </div>
 <div id="bar" class="bar" style="display:none"><div class="in">
@@ -119,6 +142,47 @@ const CV_R=Object.fromEntries(Object.entries(CV).map(([k,v])=>[v,k]));
 const CIRC=['①','②','③','④','⑤'];
 
 let TOK='', DAY='', DATA=null, ITEMS=[], ANS={}, T0=Date.now();
+
+/* (0911 유강) 지난 시험 재확신 — gt_eval_open 의 `지난` {날짜, 시험지명, 키, 문항[{라벨,유형,내답,정답,확신}]}.
+ * 지난 회차 오답 중 확실+오답 우선 3문항. 풀지 않는다 — "지금 다시 풀면?" 확실/애매/모르겠다만.
+ * 답은 ANS['_지난'] = {날짜, 항목:{라벨:c}} 로 같이 나간다(서버 5분류는 `_` 키를 건너뛴다).
+ * 발문은 그날 루프가 같이 올린 /set/pe_<키>.json 에서 — 없으면 번호·유형·내 답·정답만 보인다.
+ * 한 문항의 궤적: 시험 확신 → 강의 후 상태(루프 되짚기) → PT 정오 → 여기(1주 뒤 재확신). */
+let PAST=null, PE={};
+const PCONF=[['확실','지금 풀면 맞힌다'],['애매','될 것 같은데 긴가민가'],['모르겠다','다시 봐도 모르겠다']];
+const PA=()=>(ANS['_지난']&&ANS['_지난'].항목)||{};
+function pastDone(it){ return !!PA()[it.라벨]; }
+const circ=v=>{ v=String(v==null?'':v).trim(); return /^[1-5]$/.test(v)?'①②③④⑤'[+v-1]:(v.toUpperCase()==='M'?'서술형':v); };
+function drawPast(){
+  const box=$('past'); if(!box) return;
+  if(!PAST||!(PAST.문항||[]).length){ box.innerHTML=''; return; }
+  const H=[`<div class="past"><div class="ph"><b>지난 시험</b> 다시 보기 · ${PAST.문항.length}문항</div>
+    <div class="pn">${E((PAST.시험지명||'지난 기출테스트').replace(/_/g,' '))} (${E(PAST.날짜||'')})에서 틀린 문제예요.
+    풀지 말고, <b style="color:var(--tx2)">지금 다시 풀면 어떨지</b>만 골라주세요.</div>`];
+  PAST.문항.forEach(it=>{
+    const c=PA()[it.라벨]||'';
+    const pe=(PE.문항||{})[it.라벨];
+    H.push(`<div class="q${c?' ok':''}" id="p_${E(it.라벨)}">
+      <div class="hd"><span class="no">${E(it.라벨)}번</span><span class="pt">${E(it.유형||'')}</span></div>
+      <div class="meta"><span>내 답 <b>${E(circ(it.내답)||'—')}</b></span><span>정답 <b>${E(circ(it.정답)||'—')}</b></span>${it.확신?`<span>그때 <b>${E(it.확신)}</b></span>`:''}</div>
+      ${pe&&pe.발문?`<div class="pb">${pe.발문}</div>`:''}
+      <div class="row cf pc">`+PCONF.map(([v,t])=>`<button class="b${c===v?' on':''}" data-p="${E(it.라벨)}" data-c="${v}">${v}<br><small style="font-weight:400;font-size:11px;color:var(--dim)">${t}</small></button>`).join('')+`</div>
+    </div>`);
+  });
+  H.push('</div>');
+  box.innerHTML=H.join('');
+  box.querySelectorAll('button.b').forEach(b=>b.onclick=()=>{
+    const z=ANS['_지난']||(ANS['_지난']={날짜:PAST.날짜,항목:{}}); z.날짜=PAST.날짜; z.항목=z.항목||{};
+    z.항목[b.dataset.p] = (z.항목[b.dataset.p]===b.dataset.c?'':b.dataset.c);
+    if(!z.항목[b.dataset.p]) delete z.항목[b.dataset.p];
+    save(); drawPast(); gauge();
+  });
+}
+async function loadPE(){
+  if(!PAST||!PAST.키||typeof fetch!=='function') return;
+  try{ const r=await fetch('../set/pe_'+encodeURIComponent(PAST.키)+'.json',{cache:'no-store'});
+       if(r&&r.ok){ PE=await r.json()||{}; drawPast(); } }catch(e){}
+}
 
 /* 문항 하나가 '끝났다' = 확신이 있고, (안 품이 아니면) 답도 있다 */
 function doneQ(it){
@@ -180,7 +244,8 @@ function advance(k){
 }
 
 function gauge(){
-  const got=ITEMS.filter(doneQ).length, need=ITEMS.length;
+  const pitems=(PAST&&PAST.문항)||[];
+  const got=ITEMS.filter(doneQ).length+pitems.filter(pastDone).length, need=ITEMS.length+pitems.length;
   $('pg').style.width=Math.round(got/Math.max(need,1)*100)+'%';
   const b=$('send');
   b.disabled = got<need;
@@ -201,7 +266,7 @@ function 완료(수정){
     <p>오늘 개인 과제를 여기에 맞춰 만들어요.<br>잘못 누른 게 있으면 고쳐서 다시 내도 돼요.</p>
     <button class="again" id="again">답 고치기</button>`;
   $('again').onclick=()=>{ $('msg').style.display='none'; $('msg').className='msg';
-    $('app').style.display=''; $('bar').style.display=''; draw(); };
+    $('app').style.display=''; $('bar').style.display=''; draw(); drawPast(); };
 }
 
 async function send(){
@@ -209,6 +274,11 @@ async function send(){
   const 낼것={};
   ITEMS.forEach(it=>{ const a=ANS[it.라벨]; if(a&&a.c) 낼것[it.라벨]={a:(a.c==='안품'?'':String(a.a||'').trim()), c:a.c}; });
   낼것['_초']=Math.round((Date.now()-T0)/1000);
+  if(PAST&&(PAST.문항||[]).length){
+    const z={날짜:PAST.날짜||'',항목:{}};
+    PAST.문항.forEach(it=>{ const c=PA()[it.라벨]; if(c) z.항목[it.라벨]=c; });
+    낼것['_지난']=z;
+  }
   let data,err;
   try{ ({data,error:err}=await sb.rpc('gt_eval_submit',{tok:TOK,ans:낼것,day:DAY})); }
   catch(e){ err=e; }
@@ -234,8 +304,10 @@ async function send(){
   $('foot').innerHTML=`이 주소는 ${E(data.이름||'')} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>
     여기 답은 쌤만 봅니다. 성적과 무관하고, 오늘 과제를 맞추는 데만 써요.`;
   ANS=Object.assign({}, data.지난답||{}, load()); delete ANS['_초'];
+  PAST=(data.지난&&Array.isArray(data.지난.문항)&&data.지난.문항.length)?data.지난:null;
+  if(!PAST||(ANS['_지난']&&ANS['_지난'].날짜!==PAST.날짜)) delete ANS['_지난'];   // 다른 회차 것은 버린다
   $('msg').style.display='none'; $('app').style.display=''; $('bar').style.display='';
-  draw();
+  draw(); drawPast(); loadPE();
   $('send').onclick=send;
   if(data.제출함 && !Object.keys(load()).length) 완료(true);
 })();
