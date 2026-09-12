@@ -4762,9 +4762,10 @@ async function closeSession(){
     if(src){
       // (0828) 조교가 이미 만들었으면 재적재 금지. (0831) 진단트리거의 **학생별** 잡은
       // 반 전체 백스톱을 막지 않는다 — 대신 그 학생들은 '제외'로 넘겨 진단 반영본을 지킨다.
-      const {data:gp}=await sb.from('job_queue').select('id,상태,파라미터').eq('종류','기출과제')
+      const {data:gp}=await sb.from('job_queue').select('id,상태,파라미터,결과').eq('종류','기출과제')
         .in('상태',['요청','처리중','진행','완료']).contains('파라미터',{'반':CLS,'날짜':today});
-      const classJobs=(gp||[]).filter(j=>!(j['파라미터']||{})['학생']);
+      // (0912) '대상 없음'으로 완료된 백스톱(결과.학생 비어 있음)은 막지 않는다 — 뒤늦게 본 학생이 생기면 다시 돌아야 한다.
+      const classJobs=(gp||[]).filter(j=>!(j['파라미터']||{})['학생']&&!(j['상태']==='완료'&&!((j['결과']||{})['학생']||[]).length));
       const perStu=[...new Set((gp||[]).map(j=>(j['파라미터']||{})['학생']).filter(Boolean))];
       if(classJobs.length){
         toast('기출과제는 이미 '+(classJobs.some(x=>x['상태']==='완료')?'생성됨':'만드는 중')+' — 작업 현황(⚙)에서 PDF');
