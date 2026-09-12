@@ -44,6 +44,7 @@ main{max-width:560px;margin:0 auto}
 @media (hover:hover) and (pointer:fine){ .b:hover{border-color:rgba(245,160,160,.35);color:var(--tx)} }
 input.num{flex:1 1 0;min-width:0;font:inherit;font-size:16px;color:var(--tx);
  background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:9px;padding:8px 10px}
+button.b.neg{flex:0 0 auto;min-width:40px;font-size:18px;padding:0 10px}
 input.num:focus{outline:none;border-color:rgba(245,160,160,.55)}
 input.num::placeholder{color:var(--dim);font-size:13px}
 .lab{color:var(--dim);font-size:11px;letter-spacing:.06em;margin:0 0 4px 2px}
@@ -201,7 +202,8 @@ function draw(){
     if(it.종류==='객관식'){
       ansRow=`<div class="row an">`+CIRC.map((c,i)=>`<button class="b${String(a.a)===String(i+1)?' on':''}${skip?' dis':''}" data-k="${E(it.라벨)}" data-a="${i+1}">${c}</button>`).join('')+`</div>`;
     }else if(it.종류==='단답'){
-      ansRow=`<div class="row an"><input class="num" inputmode="decimal" enterkeyhint="next" placeholder="내가 적은 답 (숫자)" data-k="${E(it.라벨)}" value="${E(a.a||'')}"></div>`;
+      // (0912) 휴대폰 숫자 키보드엔 - 가 없다 → ± 버튼으로 부호를 붙인다(용인삼계고 18번 -6 사고)
+      ansRow=`<div class="row an"><button class="b neg${String(a.a||'').startsWith('-')?' on':''}" data-k="${E(it.라벨)}" data-neg="1" title="음수">−</button><input class="num" inputmode="decimal" enterkeyhint="next" placeholder="내가 적은 답 (숫자)" data-k="${E(it.라벨)}" value="${E(a.a||'')}"></div>`;
     }else if(it.종류==='보임'){
       ansRow=`<div class="row an">`+[['O','이렇게 적었다'],['X','다르게 적었다']].map(([v,t])=>
         `<button class="b${a.a===v?' on':''}" data-k="${E(it.라벨)}" data-a="${v}">${t}</button>`).join('')+`</div>`;
@@ -219,6 +221,7 @@ function draw(){
   $('qs').innerHTML=H.join('');
   $('qs').querySelectorAll('button.b').forEach(b=>b.onclick=()=>{
     const k=b.dataset.k; const cur=ANS[k]||(ANS[k]={});
+    if(b.dataset.neg){ const v=String(cur.a||''); cur.a = v.startsWith('-') ? v.slice(1) : ('-'+v); if(cur.a==='-') cur.a='-'; save(); draw(); const ip=$('qs').querySelector(`input.num[data-k="${k}"]`); if(ip) ip.focus(); return; }
     if(b.dataset.a!=null){ cur.a = (cur.a===b.dataset.a?'':b.dataset.a); if(cur.a&&cur.c==='안품') cur.c=''; }
     else { cur.c = (cur.c===b.dataset.c?'':b.dataset.c); if(cur.c==='안품') cur.a=''; }
     save(); draw(); advance(k);
