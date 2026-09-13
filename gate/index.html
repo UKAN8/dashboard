@@ -1,0 +1,275 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>수학은유강 리포트 검수 게이트</title></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F5F7F4; --surface:#FFFFFF; --surface2:#EDF1EC; --ink:#1B2230; --ink2:#5B6674; --line:#D6DDD5;
+  --accent:#0F6E6E; --accent-ink:#FFFFFF; --accent-soft:#DDEDEC;
+  --pass:#2E7D4F; --warn:#B7791F; --fatal:#B23A48; --info:#3B6EA8;
+  --pass-bg:#E3F1E7; --warn-bg:#FBF0DA; --fatal-bg:#F8E1E4; --info-bg:#E2EAF5;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171C; --surface:#1A2128; --surface2:#222B33; --ink:#E6EAEE; --ink2:#98A4B0; --line:#2E3942;
+  --accent:#4FB3B3; --accent-ink:#0B1416; --accent-soft:#1E3436;
+  --pass:#6FCF97; --warn:#E5B35A; --fatal:#F08A97; --info:#7FAEE8;
+  --pass-bg:#1B3226; --warn-bg:#3A2E16; --fatal-bg:#40222A; --info-bg:#1E2E44;}}
+:root[data-theme="dark"]{
+  --bg:#12171C; --surface:#1A2128; --surface2:#222B33; --ink:#E6EAEE; --ink2:#98A4B0; --line:#2E3942;
+  --accent:#4FB3B3; --accent-ink:#0B1416; --accent-soft:#1E3436;
+  --pass:#6FCF97; --warn:#E5B35A; --fatal:#F08A97; --info:#7FAEE8;
+  --pass-bg:#1B3226; --warn-bg:#3A2E16; --fatal-bg:#40222A; --info-bg:#1E2E44;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+h1{font-size:30px;font-weight:700;margin:4px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--ink2);max-width:62ch;margin:6px 0 0}
+.meta{font-family:var(--mono);font-size:12px;color:var(--ink2);text-align:right;line-height:1.7}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0 0 26px}
+.flow div{background:var(--surface2);border:1px solid var(--line);padding:10px 12px;font-size:13px;position:relative}
+.flow div b{display:block;font-size:14px}
+.flow div.hot{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.flow div.hot small{color:var(--accent-ink);opacity:.85}
+.flow small{color:var(--ink2);display:block;line-height:1.4;margin-top:2px}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:22px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.flow{grid-template-columns:repeat(2,1fr)}.meta{text-align:left}}
+section.panel{background:var(--surface);border:1px solid var(--line)}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ph h2{font-size:15px;margin:0;font-weight:700}
+.ph .hint{font-size:12px;color:var(--ink2)}
+.tabs{display:flex;gap:4px;padding:10px 16px 0;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.notice{margin:8px 16px 0;padding:8px 12px;font-size:12.5px;background:var(--warn-bg);color:var(--warn);border-left:3px solid var(--warn)}
+.notice.ok{background:var(--pass-bg);color:var(--pass);border-color:var(--pass)}
+.tabs button:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+form{padding:12px 16px 16px;display:grid;gap:10px}
+.row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}
+.row label{font-size:13px;color:var(--ink2)}
+input,textarea,select{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:7px 9px}
+textarea{min-height:76px;resize:vertical}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.q{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.q input{text-align:center;font-family:var(--mono)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px}
+.btn{border:1px solid var(--ink);background:var(--surface);color:var(--ink);padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.quiet{border-color:var(--line);color:var(--ink2)}
+.verdict{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px}
+.pill{font-family:var(--mono);font-size:12px;font-weight:500;padding:3px 9px;border:1px solid currentColor}
+.pill.PASS{color:var(--pass);background:var(--pass-bg)}.pill.WARN{color:var(--warn);background:var(--warn-bg)}.pill.FAIL{color:var(--fatal);background:var(--fatal-bg)}
+.log{font-family:var(--mono);font-size:12.5px;line-height:1.55;padding:12px 16px;margin:0;white-space:pre-wrap;word-break:break-word;min-height:120px}
+.log .FATAL{color:var(--fatal)}.log .WARN{color:var(--warn)}.log .INFO{color:var(--info)}.log .ok{color:var(--pass)}
+.log .who{color:var(--ink2)}
+.rules{padding:0 16px 14px;font-size:13px;color:var(--ink2);border-top:1px solid var(--line)}
+.rules summary{cursor:pointer;padding:10px 0;color:var(--ink);font-weight:500}
+.rules table{border-collapse:collapse;width:100%;font-size:12.5px}
+.rules td{padding:4px 6px;border-top:1px solid var(--line);vertical-align:top}
+.rules td:first-child{font-family:var(--mono);white-space:nowrap;color:var(--ink)}
+/* 리포트 */
+.reports{margin-top:26px}
+.rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.rep-head h2{font-size:18px;margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);padding:0;break-inside:avoid;page-break-inside:avoid}
+.card .ch{background:var(--ink);color:var(--bg);padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline}
+.card .ch b{font-size:18px}.card .ch span{font-family:var(--mono);font-size:12px;opacity:.8}
+.card .cb{padding:12px 16px;display:grid;gap:10px}
+.kv{display:grid;grid-template-columns:82px 1fr;gap:8px;font-size:13.5px}
+.kv dt{color:var(--ink2)}.kv dd{margin:0}
+.score{display:flex;align-items:baseline;gap:8px}
+.score b{font-size:26px;font-variant-numeric:tabular-nums}
+.score .avg{font-size:12px;color:var(--ink2)}
+.pills{display:flex;gap:4px;flex-wrap:wrap}
+.pills i{font-style:normal;font-family:var(--mono);font-size:11px;padding:2px 7px;border:1px solid var(--line);background:var(--surface2)}
+.pills i.x{background:var(--fatal-bg);color:var(--fatal);border-color:transparent}
+.bar{height:8px;background:var(--surface2);position:relative}
+.bar b{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.cmt{border-left:3px solid var(--accent);padding:8px 12px;background:var(--surface2);font-size:13.5px}
+.cmt.none{color:var(--ink2);font-style:italic}
+.dim{color:var(--ink2)}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2);display:grid;gap:8px;max-width:78ch}
+.foot code{font-family:var(--mono);font-size:12px;color:var(--ink)}
+@media print{body{background:#fff;color:#000}.wrap{padding:0}.flow,.grid,header.top,.foot,.rep-head .btn{display:none}.card{border:1px solid #999;page-break-after:always}.card .ch{background:#000;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media (prefers-reduced-motion:no-preference){.pill{transition:background .2s}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <div class="eyebrow">초강스 에듀테크 LAB · 주간미션 4단계 · 가상 학생만 사용</div>
+    <h1>수학은유강 리포트 검수 게이트</h1>
+    <p class="sub">수업 마감 버튼 한 번으로 학부모 리포트가 자동 생성되는 실제 파이프라인에 <b>검수자</b> 단계를 끼워 넣었습니다. 아래에서 직접 입력을 고쳐 보면 검수기가 같은 규칙으로 즉시 다시 판정합니다.</p>
+  </div>
+  <div class="meta">담당 유강 · 필탑학원 고등수학<br>규칙 14개 = 지난 두 달 사고 기록<br>경고만 · 발송은 사람이 결정</div>
+</header>
+
+<div class="flow" aria-label="파이프라인">
+  <div><b>① 입력</b><small>수업 콘솔 [마감]</small></div>
+  <div><b>② 어댑터</b><small>DB → 시트형 xlsx</small></div>
+  <div class="hot"><b>③ 검수</b><small>verify_daily.py · D1~D7 · T1~T7</small></div>
+  <div><b>④ 제작</b><small>gen10 렌더 → JPG</small></div>
+  <div><b>⑤ 저장</b><small>Storage + manifest verified</small></div>
+</div>
+
+<div class="grid">
+  <section class="panel" aria-label="입력">
+    <div class="ph"><h2>① 수업 기록 입력</h2><span class="hint">가상 학생 3명 · 고1A · 2026-09-12</span></div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <p class="notice" id="notice"></p>
+    <form id="f" onsubmit="return false">
+      <div class="row"><label>출결</label><select id="att"><option>출석</option><option>지각</option><option>결석</option></select></div>
+      <div class="row"><label>진도</label><input id="prog"></div>
+      <div class="row"><label>이번 과제</label><input id="hw"></div>
+      <div class="row"><label>채점 (2점×5)</label><div class="q"><input id="q1"><input id="q2"><input id="q3"><input id="q4"><input id="q5"></div></div>
+      <div class="row"><label>총점</label><input id="score" placeholder="비우면 미응시"></div>
+      <div class="row"><label>과제 이행률</label><input id="rate" placeholder="0~100"></div>
+      <div class="row"><label>코멘트</label><textarea id="cmt" placeholder="관찰한 사실만. 약속·내부 용어 금지"></textarea></div>
+    </form>
+    <div class="tools">
+      <button class="btn" id="bad">① 오류를 심은 예시</button>
+      <button class="btn primary" id="good">② 검수 뒤 고친 예시</button>
+      <button class="btn quiet" id="reset">초기화</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="검수">
+    <div class="ph"><h2>③ 검수 결과 <span class="dim">— 입력할 때마다 다시 판정</span></h2><span class="hint">verify_&lt;날짜&gt;.txt 와 같은 형식</span></div>
+    <div class="verdict"><span class="pill" id="pill">PASS</span><span id="sum"></span></div>
+    <pre class="log" id="log"></pre>
+    <details class="rules"><summary>검수 규칙 14개 (rules.md 요약)</summary>
+      <table>
+        <tr><td>D1</td><td>당일 행 0건 → 마감 전 렌더 또는 빈 산출</td></tr>
+        <tr><td>D2</td><td>유형 매핑 (반,날짜) 없음 → '보완 유형' 섹션 통째 소실</td></tr>
+        <tr><td>D3</td><td>총점 ≠ 문항합 → 채점칸 누락 또는 총점 오타</td></tr>
+        <tr><td>D4</td><td>이행률 단위 혼재 (0~1 / 0~100 / '85%')</td></tr>
+        <tr><td>D5</td><td>결석인데 점수 / 출석인데 전부 공란</td></tr>
+        <tr><td>D6</td><td>코멘트 공란 → '특이사항 없음'으로 나감</td></tr>
+        <tr><td>D7</td><td>채점 컬럼 ≠ 매핑 문항</td></tr>
+        <tr><td>T1</td><td>시스템 용어 노출 (콘솔·매핑·적재·배포 …). 교재 이름은 허용</td></tr>
+        <tr><td>T2</td><td>액션 약속 문구 (~하겠습니다) — 관찰만 쓴다</td></tr>
+        <tr><td>T3</td><td>과장·부정 단정 (완벽·최고·불성실·포기 …)</td></tr>
+        <tr><td>T4</td><td>반말 의심</td></tr>
+        <tr><td>T5</td><td>다른 학생 이름 노출</td></tr>
+        <tr><td>T6</td><td>미완성 표시 (TODO·???) / 400자 초과</td></tr>
+        <tr><td>T7</td><td>이행률 &gt; 100</td></tr>
+      </table>
+    </details>
+  </section>
+</div>
+
+<div class="reports">
+  <div class="rep-head"><h2>④ 학부모 리포트 (검수 통과분 그대로 렌더)</h2><button class="btn" onclick="window.print()">인쇄 · PDF 저장</button></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<div class="foot">
+  <div><b>실제 시스템에서는</b> 이 검수기가 GitHub Actions 안에서 <code>render_daily.py</code> 2-b 단계로 돌고, 결과를 <code>render/verify_&lt;날짜&gt;.txt</code>와 manifest의 <code>verified</code> 필드에 남깁니다. 경고가 있으면 콘솔에서 해당 칸을 고치고 [마감]을 다시 누르면 서버가 재렌더합니다.</div>
+  <div><b>배운 것.</b> 첫 실행에서 경고 48건이 전부 오탐이었습니다. "써킷", "R0", "OPT"를 내부 용어로 등록했더니 진도·과제 칸의 교재 이름까지 잡은 겁니다. 학부모가 아는 이름과 진짜 내부 용어의 경계는 현장 사람만 그을 수 있습니다.</div>
+  <div>이 페이지의 이름·점수·코멘트는 전부 가상입니다. 입력은 브라우저 안에서만 처리되고 어디로도 전송되지 않습니다.</div>
+</div>
+</div>
+
+<script>
+// ── 데이터 (가상) ─────────────────────────────────────────────
+const BASE={date:'2026-09-12',ban:'고1A',unit:'도형의 이동',qmap:['4-1','4-2','4-3','4-5','4-7']};
+const BAD=[
+ {name:'김초강',att:'출석',prog:'OPT:04 도형의 이동 파트1',hw:'도형의 이동 R0+R1 THEME 1~10',q:['2','2','2','2','0'],score:'8',rate:'95',cmt:'그래프의 변화를 빠르게 파악합니다. 계산 과정에서 부호 실수가 두 번 있었습니다.'},
+ {name:'이가온',att:'출석',prog:'OPT:04 도형의 이동 파트1',hw:'도형의 이동 R0+R1 THEME 1~10',q:['2','0','2','2','0'],score:'6',rate:'70%',cmt:'김초강이랑 같이 풀었는데 콘솔 매핑이 안 됐다. 다음엔 꼭 보충하겠습니다.'},
+ {name:'박서준',att:'결석',prog:'OPT:04 도형의 이동 파트1',hw:'도형의 이동 R0+R1 THEME 1~10',q:['2','2','2','2','1'],score:'9',rate:'',cmt:''},
+];
+const GOOD=[
+ {...BAD[0]},
+ {...BAD[1],rate:'70',cmt:'대칭이동 문제에서 좌표 부호를 바꾸는 단계를 두 번 놓쳤습니다. 풀이 뒤 검산하는 습관을 함께 연습하고 있습니다.'},
+ {...BAD[2],score:'',q:['','','','',''],cmt:'가정 사정으로 결석했습니다. 다음 수업에서 오늘 범위 테스트를 먼저 봅니다.'},
+];
+let S=JSON.parse(JSON.stringify(BAD)), cur=0;
+
+// ── 규칙 (verify_daily.py 이식) ──────────────────────────────
+const INTERNAL=['메타루프','hwmap','클리닉DB','콘솔','잡큐','job_queue','hwpx','gen10','어댑터','적재','매핑','스냅샷','배포','deploy','supabase','Supabase','RLS','유령행','inbox'];
+const PROMISE=/(하겠습니다|해\s?드리겠|드리겠습니다|예정입니다|할\s?예정|하도록\s?하겠|챙기겠|지도하겠|보충하겠)/;
+const EXAG=['최악','형편없','실망','완벽','천재','최고의','전혀','절대','항상 틀','매번 틀','게을','불성실','태도가 나쁘','못 하','못하는','포기'];
+const INC=['TODO','???','…….','(수정)','(확인)','xx','○○'];
+const num=v=>{if(v==null)return null;const s=String(v).replace('점','').replace('%','').trim();if(s==='')return null;const n=Number(s);return isNaN(n)?null:n};
+const scale=v=>{if(v==null||String(v).trim()==='')return null;if(String(v).includes('%'))return 'str%';const n=num(v);if(n==null)return 'bad';if(n>=0&&n<=1)return 'frac';if(n<=100)return 'pct';return 'over'};
+const banmal=t=>{for(const s0 of t.split(/[.!?\n]/)){const s=s0.trim();if(!s)continue;if(/다$/.test(s)&&!/(니다|입니다)$/.test(s))return s.slice(-20)}return null};
+
+function verify(rows){
+  const I=[];const add=(level,code,who,msg)=>I.push({level,code,who:who||'-',msg});
+  if(!rows.length){add('FATAL','D1',null,`${BASE.date} 행이 0건`);}
+  const names=rows.map(r=>r.name), scales={}, empty=[];
+  // D2: 이 데모는 (고1A,2026-09-12) 매핑이 있다고 가정 → 통과. 매핑이 없으면 여기서 WARN.
+  for(const r of rows){
+    const score=num(r.score); const qs=r.q.map(num); const has=qs.some(v=>v!=null);
+    const qsum=has?qs.reduce((a,b)=>a+(b||0),0):null;
+    if(score!=null&&qsum!=null&&Math.abs(score-qsum)>0.01)add('WARN','D3',r.name,`총점 ${score} ≠ 문항합 ${qsum} — 채점칸 누락(빈칸=0점 규칙) 또는 총점 오타`);
+    const sc=scale(r.rate); if(sc)(scales[sc]=scales[sc]||[]).push(r.name);
+    if(sc==='bad')add('WARN','D4',r.name,`이행률 값 해석 불가: '${r.rate}'`);
+    if(sc==='over')add('WARN','T7',r.name,`이행률 ${r.rate} > 100`);
+    if(r.att==='결석'&&score!=null)add('WARN','D5',r.name,`결석인데 점수 ${score} 있음`);
+    if(r.att!=='결석'&&score==null&&!String(r.rate).trim())add('INFO','D5',r.name,'출석인데 점수·이행률 전부 비어 있음 (미응시로 나감)');
+    const cmt=(r.cmt||'').trim(); if(!cmt)empty.push(r.name);
+    const texts={'코멘트':cmt,'진도':r.prog||'','이번 과제':r.hw||''};
+    for(const [f,t] of Object.entries(texts)){
+      if(!t.trim())continue;
+      const h=INTERNAL.filter(w=>t.includes(w)); if(h.length)add('WARN','T1',r.name,`[${f}] 내부 용어 노출: ${JSON.stringify(h)}`);
+      const m=t.match(PROMISE); if(m&&f==='코멘트')add('WARN','T2',r.name,`[${f}] 액션 약속 문구 '${m[0]}' — 관찰만, 약속 금지`);
+      const e=EXAG.filter(w=>t.includes(w)); if(e.length)add('WARN','T3',r.name,`[${f}] 과장·부정 표현: ${JSON.stringify(e)}`);
+      const c=INC.filter(w=>t.includes(w)); if(c.length)add('WARN','T6',r.name,`[${f}] 미완성 표시: ${JSON.stringify(c)}`);
+      if(f==='코멘트'){
+        const b=banmal(t); if(b)add('INFO','T4',r.name,`[코멘트] 반말 의심: '…${b}'`);
+        if(t.length>400)add('INFO','T6',r.name,`[코멘트] ${t.length}자 — 400자 초과`);
+        const o=names.filter(n=>n!==r.name&&t.includes(n)); if(o.length)add('WARN','T5',r.name,`[코멘트] 다른 학생 이름 노출: ${JSON.stringify(o)}`);
+      }
+    }
+  }
+  const kinds=Object.keys(scales).filter(k=>['frac','pct','str%'].includes(k));
+  if(kinds.length>1)add('WARN','D4','-','이행률 스케일 혼재: '+Object.entries(scales).map(([k,v])=>`${k}=${v.length}명`).join(', '));
+  if(rows.length&&empty.length)add(empty.length>rows.length/2?'WARN':'INFO','D6','-',`코멘트 공란 ${empty.length}/${rows.length}명 → '특이사항 없음'으로 나감: ${JSON.stringify(empty)}`);
+  const nf=I.filter(i=>i.level==='FATAL').length,nw=I.filter(i=>i.level==='WARN').length,ni=I.filter(i=>i.level==='INFO').length;
+  return {issues:I,verdict:nf?'FAIL':nw?'WARN':'PASS',nf,nw,ni};
+}
+
+// ── 렌더 ─────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function drawTabs(){$('tabs').innerHTML=S.map((r,i)=>`<button role="tab" aria-selected="${i===cur}" data-i="${i}">${esc(r.name)}</button>`).join('');}
+function load(){const r=S[cur];$('att').value=r.att;$('prog').value=r.prog;$('hw').value=r.hw;for(let i=0;i<5;i++)$('q'+(i+1)).value=r.q[i];$('score').value=r.score;$('rate').value=r.rate;$('cmt').value=r.cmt;}
+function save(){const r=S[cur];r.att=$('att').value;r.prog=$('prog').value;r.hw=$('hw').value;r.q=[1,2,3,4,5].map(i=>$('q'+i).value);r.score=$('score').value;r.rate=$('rate').value;r.cmt=$('cmt').value;}
+function run(){
+  const v=verify(S);
+  $('pill').className='pill '+v.verdict;$('pill').textContent=v.verdict;
+  $('sum').textContent=`${BASE.date} 반=${BASE.ban} 학생=${S.length}명 · 치명 ${v.nf} · 경고 ${v.nw} · 참고 ${v.ni}`;
+  $('log').innerHTML=v.issues.length?v.issues.map(i=>`<span class="${i.level}">${i.level.padEnd(5)}</span> ${i.code} <span class="who">${esc(i.who).padEnd(4)}</span> ${esc(i.msg)}`).join('\n'):'<span class="ok">문제 없음 — 이대로 렌더·업로드됩니다.</span>';
+  drawCards();
+}
+function drawCards(){
+  const scored=S.map(r=>num(r.score)).filter(v=>v!=null); const avg=scored.length?(scored.reduce((a,b)=>a+b,0)/scored.length):null;
+  $('cards').innerHTML=S.map(r=>{
+    const sc=num(r.score), rt=num(r.rate), qs=r.q.map(num);
+    const pills=sc==null?'':`<div class="pills">${BASE.qmap.map((t,i)=>`<i class="${qs[i]===0?'x':''}">${t}</i>`).join('')}</div>`;
+    return `<article class="card">
+      <div class="ch"><b>${esc(r.name)}</b><span>${BASE.ban} · ${BASE.date}</span></div>
+      <div class="cb">
+        <dl class="kv"><dt>출결</dt><dd>${esc(r.att)}</dd><dt>진도</dt><dd>${esc(r.prog||'—')}</dd><dt>이번 과제</dt><dd>${esc(r.hw||'—')}</dd></dl>
+        <div><div class="dim" style="font-size:12px">복습테스트 · ${BASE.unit}</div>
+          ${sc==null?`<div class="score"><b class="dim">미응시</b></div>`:`<div class="score"><b>${sc}</b><span class="dim">/ 10</span><span class="avg">반 평균 ${avg.toFixed(1)}</span></div>`}${pills}</div>
+        <div><div class="dim" style="font-size:12px">과제 이행률 ${rt==null?'—':rt+'%'}</div><div class="bar"><b style="width:${Math.min(100,rt||0)}%"></b></div></div>
+        ${r.cmt.trim()?`<div class="cmt">${esc(r.cmt)}</div>`:`<div class="cmt none">특이사항 없음</div>`}
+      </div></article>`;
+  }).join('');
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;save();cur=+b.dataset.i;drawTabs();load();});
+$('f').addEventListener('input',()=>{save();run();});
+const NOTE={bad:['','① 이 3명은 <b>일부러 오류를 심은 예시</b>입니다 — 조교가 실수로 적을 법한 내부 용어·약속 문구·다른 학생 이름·결석인데 점수 등. 오른쪽에서 검수기가 전부 잡는지 보세요.'],
+            good:['ok','② 검수 경고를 보고 사람이 고친 상태입니다. 학부모에게 나가는 건 이쪽입니다.'],
+            own:['','직접 고치는 중 — 입력할 때마다 오른쪽이 다시 판정됩니다.']};
+function note(k){const n=$('notice');n.className='notice '+NOTE[k][0];n.innerHTML=NOTE[k][1];}
+$('bad').onclick=()=>{S=JSON.parse(JSON.stringify(BAD));cur=0;drawTabs();load();note('bad');run();};
+$('good').onclick=()=>{S=JSON.parse(JSON.stringify(GOOD));cur=0;drawTabs();load();note('good');run();};
+$('reset').onclick=()=>{S=S.map(r=>({...r,att:'출석',prog:'',hw:'',q:['','','','',''],score:'',rate:'',cmt:''}));drawTabs();load();note('own');run();};
+$('f').addEventListener('input',()=>note('own'),{once:false});
+drawTabs();load();note('bad');run();
+</script>
+</body></html>
