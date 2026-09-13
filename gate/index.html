@@ -89,6 +89,11 @@ textarea{min-height:76px;resize:vertical}
 .cmt{border-left:3px solid var(--accent);padding:8px 12px;background:var(--surface2);font-size:13.5px}
 .cmt.none{color:var(--ink2);font-style:italic}
 .dim{color:var(--ink2)}
+.card.hold{border-color:var(--warn)}
+.card.hold .ch{background:var(--warn-bg);color:var(--ink)}
+.hold-box{border:1px dashed var(--warn);padding:10px 12px;font-size:13px;color:var(--ink2)}
+.hold-box b{color:var(--warn);display:block;margin-bottom:4px}
+.hold-box code{font-family:var(--mono);font-size:12px;color:var(--ink)}
 .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2);display:grid;gap:8px;max-width:78ch}
 .foot code{font-family:var(--mono);font-size:12px;color:var(--ink)}
 @media print{body{background:#fff;color:#000}.wrap{padding:0}.flow,.grid,header.top,.foot,.rep-head .btn{display:none}.card{border:1px solid #999;page-break-after:always}.card .ch{background:#000;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -160,7 +165,7 @@ textarea{min-height:76px;resize:vertical}
 </div>
 
 <div class="reports">
-  <div class="rep-head"><h2>④ 학부모 리포트 (검수 통과분 그대로 렌더)</h2><button class="btn" onclick="window.print()">인쇄 · PDF 저장</button></div>
+  <div class="rep-head"><h2>④ 학부모 리포트 <span class="dim">— 통과한 학생만 렌더, 경고 학생은 보류</span></h2><button class="btn" onclick="window.print()">인쇄 · PDF 저장</button></div>
   <div class="cards" id="cards"></div>
 </div>
 
@@ -242,13 +247,18 @@ function run(){
   $('pill').className='pill '+v.verdict;$('pill').textContent=v.verdict;
   $('sum').textContent=`${BASE.date} 반=${BASE.ban} 학생=${S.length}명 · 치명 ${v.nf} · 경고 ${v.nw} · 참고 ${v.ni}`;
   $('log').innerHTML=v.issues.length?v.issues.map(i=>`<span class="${i.level}">${i.level.padEnd(5)}</span> ${i.code} <span class="who">${esc(i.who).padEnd(4)}</span> ${esc(i.msg)}`).join('\n'):'<span class="ok">문제 없음 — 이대로 렌더·업로드됩니다.</span>';
-  drawCards();
+  const hold={};v.issues.filter(i=>i.level!=='INFO'&&i.who!=='-').forEach(i=>(hold[i.who]=hold[i.who]||[]).push(i.code+' '+i.msg.replace(/^\[[^\]]+\]\s*/,'')));
+  drawCards(hold);
 }
-function drawCards(){
+function drawCards(hold={}){
   const scored=S.map(r=>num(r.score)).filter(v=>v!=null); const avg=scored.length?(scored.reduce((a,b)=>a+b,0)/scored.length):null;
   $('cards').innerHTML=S.map(r=>{
     const sc=num(r.score), rt=num(r.rate), qs=r.q.map(num);
     const pills=sc==null?'':`<div class="pills">${BASE.qmap.map((t,i)=>`<i class="${qs[i]===0?'x':''}">${t}</i>`).join('')}</div>`;
+    const h=hold[r.name];
+    if(h) return `<article class="card hold">
+      <div class="ch"><b>${esc(r.name)}</b><span class="pill WARN">검수 보류</span></div>
+      <div class="cb"><div class="hold-box"><b>이 학생 리포트는 아직 나가지 않습니다</b>콘솔에서 아래를 고치고 [마감]을 다시 누르면 렌더됩니다.<br>${h.map(x=>'<code>'+esc(x)+'</code>').join('<br>')}</div></div></article>`;
     return `<article class="card">
       <div class="ch"><b>${esc(r.name)}</b><span>${BASE.ban} · ${BASE.date}</span></div>
       <div class="cb">
