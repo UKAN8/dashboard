@@ -504,7 +504,7 @@ body.cs-on #boot{display:none}
   <div id="jobpanel" class="card hidden">
     <h2>서버 작업 — 최근 24시간</h2>
     <div id="jobrows" class="lbl">불러오는 중…</div>
-    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 못 깨웠으면 1분마다 다시 시도한다(3분 넘게 대기하면 깨우기가 고장 난 것이다).</div>
+    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 못 깨웠으면 1분마다 다시 시도한다(3분 넘게 대기하면 깨우기가 고장 난 것이다). 기출 퍼스널트레이닝만 예외 — 한 번에 하나만 돌고 2명씩 5분이라 줄이 길면 오래 걸린다.</div>
   </div>
 
   <section id="view-console">
@@ -3472,7 +3472,22 @@ async function jobsRefresh(){
               :(st==='처리중'||st==='진행')?'<span class="jstat run">만드는 중</span>'
               :'<span class="jstat wait">대기</span>';
     let line2='';
-    if(st==='요청'||st==='처리중'||st==='진행'){
+    if(j['종류']==='기출과제'&&(st==='요청'||st==='처리중'||st==='진행')){
+      /* (0913) PT 는 pt.yml 이 한 번에 하나만 돌고 런당 2명·약 5분이다. 반 전체를 한꺼번에 펼치면
+         뒤쪽은 10~20분을 기다리는 게 정상 — '3분 넘으면 고장' 문구가 거짓 경보를 냈다. 줄 순서로 말한다. */
+      const m=jobAge(j['시작시각']||j['요청시각']);
+      const ptq=(data||[]).filter(x=>x['종류']==='기출과제'&&x['상태']==='요청')
+        .sort((a,b)=>new Date(a['요청시각'])-new Date(b['요청시각']));
+      const running=(data||[]).filter(x=>x['종류']==='기출과제'&&(x['상태']==='처리중'||x['상태']==='진행')).length;
+      if(st==='요청'){
+        const k=ptq.findIndex(x=>x.id===j.id)+1;
+        const eta=Math.ceil((k+running)/2)*5;
+        line2=m+'분 경과 · PT 는 2명씩 5분 — 지금 '+k+'번째 줄, 약 '+eta+'분 남음'
+          +(m>Math.max(eta,5)+10?' <span class="warn">— 예상보다 많이 늦다. 세션에 알릴 것</span>':'');
+      }else{
+        line2=m+'분째 만드는 중 · 한 명에 1~2분'+(m>=30?' <span class="warn">— 30분 넘으면 실패로 자동 회수된다</span>':'');
+      }
+    }else if(st==='요청'||st==='처리중'||st==='진행'){
       const m=jobAge(j['시작시각']||j['요청시각']);
       line2=m>=3
         ?'<span class="warn">'+m+'분째 '+(st==='요청'
