@@ -73,6 +73,29 @@ h2 small{color:var(--dim);letter-spacing:0;font-size:12px;margin-left:8px;text-t
 #msg .big{font-size:16px;color:var(--tx);margin-bottom:8px}
 @media (hover:hover) and (pointer:fine){.rp a:hover{border-color:var(--acc)}}
 svg.spark{display:block;margin-top:6px}
+/* ── 오류 신고 (0913) ── */
+.rpt-btn{display:block;width:100%;margin-top:6px;background:rgba(245,160,160,.10);border:1px solid rgba(245,160,160,.35);
+ color:#ffd9d9;border-radius:13px;padding:11px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left}
+.rpt-btn small{display:block;font-weight:400;color:var(--dim);font-size:12px;margin-top:2px}
+#rpt-form{display:none;margin-top:10px}
+#rpt-form.open{display:block}
+#rpt-form label{display:block;color:var(--dim);font-size:11.5px;letter-spacing:.04em;margin:10px 0 4px}
+#rpt-form select,#rpt-form input,#rpt-form textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bd);
+ color:var(--tx);border-radius:9px;padding:9px 11px;font:inherit;font-size:14px}
+#rpt-form select{color-scheme:dark}
+#rpt-form textarea{min-height:90px;resize:vertical}
+#rpt-form .acts{display:flex;gap:8px;margin-top:12px}
+#rpt-form .acts button{flex:1;border-radius:10px;padding:10px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:none;color:var(--tx2)}
+#rpt-form .acts button.go{background:var(--acc);color:#1a0d0d;border-color:var(--acc)}
+#rpt-form .acts button:disabled{opacity:.5;cursor:default}
+#rpt-msg{font-size:13px;margin-top:8px;min-height:1.2em}
+.rpt-item{padding:9px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.rpt-item:last-child{border-bottom:none}
+.rpt-item .hd{display:flex;justify-content:space-between;gap:8px;color:var(--dim);font-size:11.5px}
+.rpt-item .st{white-space:nowrap;font-weight:700}
+.st.s접수{color:var(--mid)} .st.s처리완료{color:var(--good)} .st.s확인중{color:#c9d6ff} .st.s해당없음{color:var(--dim)}
+.rpt-item .bd{margin-top:2px;overflow-wrap:anywhere}
+.rpt-item .re{margin-top:4px;padding-left:10px;border-left:2px solid rgba(200,240,218,.35);color:var(--good);overflow-wrap:anywhere}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -422,13 +445,67 @@ function render(d){
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
   H.push(`<div id="pr-host"></div>`);
   H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+  // ② 오류 신고 (0913) — 루프·PT·기출테스트 등 받은 자료에 문제가 있으면 여기서 바로 적는다.
+  //    저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
+  H.push(`<h2>오류 신고</h2>`
+    +`<div class="card" id="rpt-card">`
+    +`<button class="rpt-btn" id="rpt-open" type="button">받은 자료에 문제가 있나요? 여기서 알려 주세요<small>정답이 틀림 · 그림이 깨짐 · 링크가 안 열림 · 해설이 잘림 · 같은 문제가 두 번 … 밤에 확인해서 고칩니다</small></button>`
+    +`<form id="rpt-form" autocomplete="off">`
+    +`<label>어떤 자료인가요</label><select name="자료종류">`
+    +['루프','PT(퍼스널트레이닝)','기출테스트','수업 리포트','포털 화면','기타'].map(k=>`<option>${k}</option>`).join('')+`</select>`
+    +`<label>어느 것 (날짜·제목·링크 등)</label><input name="자료식별" maxlength="200" placeholder="예: 9월 12일 루프 / 0910 PT">`
+    +`<label>문항 번호 (있으면)</label><input name="문항번호" maxlength="40" placeholder="예: 7번">`
+    +`<label>무엇이 이상한가요</label><textarea name="내용" maxlength="2000" placeholder="예: 7번 정답이 ③인데 ⑤로 채점돼요" required></textarea>`
+    +`<div class="acts"><button type="button" id="rpt-cancel">닫기</button><button type="submit" class="go" id="rpt-go">보내기</button></div>`
+    +`<div id="rpt-msg"></div>`
+    +`</form>`
+    +`<div id="rpt-list"></div>`
+    +`</div>`);
   H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.</div>`);
   $('app').innerHTML=H.join('');
+  wireReport(d.토큰||new URLSearchParams(location.search).get('t')||'');
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
   catch(e){ $('pr-host').innerHTML='<div class="none">기출테스트 기록을 그리지 못했습니다. 잠시 뒤 다시 열어 주세요.</div>'; }
   $('msg').style.display='none'; $('app').style.display='';
   document.title=`${d.학생.이름} · 수학은유강`;
+}
+
+/* ── 오류 신고 (0913) ── */
+function drawReports(list){
+  const box=$('rpt-list'); if(!box) return;
+  if(!Array.isArray(list)||!list.length){ box.innerHTML=''; return; }
+  const ST={'접수':'접수됨 · 밤에 확인','처리완료':'처리 완료','확인중':'확인 중','해당없음':'이상 없음'};
+  box.innerHTML=`<div class="dim" style="margin-top:14px;font-size:11.5px;letter-spacing:.07em">내 신고</div>`
+    +list.map(r=>`<div class="rpt-item"><div class="hd"><span>${E(r.날짜)} · ${E(r.자료종류)}${r.자료식별?' · '+E(r.자료식별):''}${r.문항번호?' · '+E(r.문항번호):''}</span>`
+      +`<span class="st s${E(r.상태)}">${E(ST[r.상태]||r.상태)}</span></div>`
+      +`<div class="bd">${E(r.내용)}</div>`
+      +(r.처리메모?`<div class="re">${E(r.처리메모)}${r.처리일?` <span class="dim">(${E(r.처리일)})</span>`:''}</div>`:'')
+      +`</div>`).join('');
+}
+function wireReport(tok){
+  const form=$('rpt-form'), msg=$('rpt-msg'); if(!form) return;
+  $('rpt-open').onclick=()=>{ form.classList.toggle('open'); if(form.classList.contains('open')) form.querySelector('textarea').focus(); };
+  $('rpt-cancel').onclick=()=>{ form.classList.remove('open'); msg.textContent=''; };
+  form.onsubmit=async ev=>{
+    ev.preventDefault();
+    const fd=new FormData(form), p={};
+    for(const [k,v] of fd.entries()) p[k]=String(v).trim();
+    if(p.내용.length<2){ msg.className='bad'; msg.textContent='무엇이 이상한지 적어 주세요.'; return; }
+    p.페이지url=location.href.replace(/([?&]t=)[^&]*/,'$1…');   // 토큰은 남기지 않는다
+    const go=$('rpt-go'); go.disabled=true; msg.className='dim'; msg.textContent='보내는 중…';
+    try{
+      const {data,error}=await sb.rpc('portal_report',{tok,p});
+      if(error) throw error;
+      if(data&&data.오류){ msg.className='bad'; msg.textContent=data.오류; go.disabled=false; return; }
+      form.reset(); form.classList.remove('open'); msg.textContent='';
+      drawReports(data);
+      const box=$('rpt-list'); if(box) box.insertAdjacentHTML('afterbegin',`<div class="good" style="font-size:13px;margin-top:10px">접수됐어요. 밤에 확인하고 결과를 여기에 적어 둘게요.</div>`);
+    }catch(e){ msg.className='bad'; msg.textContent='지금은 보낼 수 없어요. 잠시 뒤 다시 시도해 주세요.'; }
+    go.disabled=false;
+  };
+  // 내 신고 목록 — 함수가 아직 없으면(DB 미적용) 조용히 넘어간다
+  sb.rpc('portal_report',{tok,p:null}).then(r=>{ if(r&&Array.isArray(r.data)) drawReports(r.data); }).catch(()=>{});
 }
 
 (async()=>{
