@@ -805,13 +805,16 @@ const PR = (() => {
     const near = model.경계.slice().sort((a, b) => Math.abs(z - a.z) - Math.abs(z - b.z))[0];
     return near.나쁜 === gr[0] ? [near.좋은, gr[0]] : near.좋은 === gr[0] ? [gr[0], near.나쁜] : gr;
   }
-  /* 다음 등급까지 — 객관 지표. z 차이 × 풀 편차 = 점수, ÷ 문항당 배점 = 문제 수 */
+  /* 다음 등급까지 — 객관 지표. z 차이 × 풀 편차 = 점수, ÷ 문항당 배점 = 문제 수
+     ⚠ v25 부터 z 는 주간고사 척도로 보정된 값이다(z_cal = m + s·z_기출). 기출 원점수로
+     되돌리려면 s 로 나눠야 한다 — 안 나누면 고2(s≈0.29)에서 필요 점수가 1/3로 찍힌다. */
   function nextStep(g) {
     const F = g.흐름 || {}, gr = F.등급, M = g.모델, R = g.회차 || [];
     if (!gr || F.현재z == null || !M || !(M.경계 || []).length) return null;
     const last4 = R.slice(-4);
     const sd = last4.map(r => num(r.풀편차)).filter(v => v != null);
-    const sdv = sd.length ? sd.reduce((a, b) => a + b, 0) / sd.length : null;
+    const s = num((M.척도 || {}).s) || 1;
+    const sdv = sd.length ? (sd.reduce((a, b) => a + b, 0) / sd.length) / s : null;
     const last = R[R.length - 1] || {};
     const per = last.문항 && last.문항.length && num(last.총점) ? num(last.총점) / last.문항.length : 4.5;
     if (!sdv) return null;
