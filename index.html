@@ -141,6 +141,15 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 .gc-tbl th.sort{cursor:pointer;user-select:none} .gc-tbl th.sort.on{color:var(--tx)} .gc-tbl th.sort i{font-style:normal;font-size:9px;margin-left:2px;color:var(--acc)}
 @media (hover:hover) and (pointer:fine){ .gc-tbl th.sort:hover{color:var(--tx2)} }
 .gc-head{margin-bottom:12px} .gc-stu2{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:8px}
+/* 실력 추이 (0915) — 한 줄 진단 + 순위·컷대비·쉬운문항 그래프 3장 */
+.gc-diag{margin:2px 0 0;font-size:14px;line-height:1.55;color:var(--tx)}
+.gc-charts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin-top:12px}
+.gc-ch{min-width:0} .gc-ch svg{display:block;margin-top:2px;overflow:visible}
+.gc-two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.gc-ax{fill:var(--dim);font-size:9px;font-family:inherit}
+.gc-gl{stroke:rgba(255,255,255,.07);stroke-width:1}
+.gc-bl{stroke:var(--dim);stroke-width:1;stroke-dasharray:3 3;opacity:.75}
+.gc-bg{stroke:var(--dim);stroke-width:1.5;stroke-dasharray:4 3;opacity:.45;stroke-linejoin:round}
 .gc-hard{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .gc-hd{font-size:12px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.05);border-left:3px solid var(--dim)}
 .gc-hd.bad{border-color:var(--bad)} .gc-hd.mid{border-color:var(--mid)} .gc-hd.good{border-color:var(--good)}
@@ -2796,6 +2805,73 @@ const gcLateN = (late, date) => {
 };
 const gcLateBadge = t => `<span class="gc-late" title="보충 응시 — ${E(t.late)} (+${t.lateN}일). 회차 평균·정답률에서 뺐다">늦 +${t.lateN}</span>`;
 
+/* 회차 추이 선그래프 (0915) — sparkline 보다 크고 축·기준선이 있고 빈 회차에서 선이 끊긴다.
+   pts: [{x:'2026-09-01', y:숫자|null, tip:'말풍선'}]
+   opt: {lo, hi, up:'high'|'low', base, baseLab, ticks:[[값,라벨]…]}
+   ⚠ up:'low' = 작은 값이 위 (순위·놓침처럼 낮을수록 좋은 값). 기출 화면 세 그래프는 전부
+     '위로 가면 좋아진 것'으로 맞춰 놨다 — 하나만 뒤집으면 한눈에 읽다가 거꾸로 읽는다. */
+function gcChart(pts, opt) {
+  const o = Object.assign({ lo: 0, hi: 100, up: 'high', base: null, baseLab: '', ticks: null, h: 140 }, opt || {});
+  if (!pts || !pts.some(p => p.y != null)) return '<div class="dim">그릴 기록이 없다.</div>';
+  const W = 560, H = o.h, L = 44, R = 12, T = 14, B = 22;
+  const span = (o.hi - o.lo) || 1;
+  const X = i => L + (W - L - R) * (pts.length > 1 ? i / (pts.length - 1) : 0.5);
+  const Y = v => {
+    const f = (Math.max(o.lo, Math.min(o.hi, v)) - o.lo) / span;
+    return o.up === 'low' ? T + (H - T - B) * f : H - B - (H - T - B) * f;
+  };
+  const ticks = o.ticks || [[o.lo, String(r1(o.lo))], [(o.lo + o.hi) / 2, String(r1((o.lo + o.hi) / 2))], [o.hi, String(r1(o.hi))]];
+  const grid = ticks.map(([v, lb]) => `<line class="gc-gl" x1="${L}" y1="${f1(Y(v))}" x2="${W - R}" y2="${f1(Y(v))}"/>`
+    + `<text class="gc-ax" x="${L - 6}" y="${f1(Y(v) + 3.5)}" text-anchor="end">${E(lb)}</text>`).join('');
+  const bl = o.base == null ? '' : `<line class="gc-bl" x1="${L}" y1="${f1(Y(o.base))}" x2="${W - R}" y2="${f1(Y(o.base))}"/>`
+    + (o.baseLab ? `<text class="gc-ax" x="${W - R}" y="${f1(Y(o.base) - 5)}" text-anchor="end">${E(o.baseLab)}</text>` : '');
+  /* 바닥선(opt.bg) — 순위 그래프에서 '그 회차 응시 인원(꼴찌 자리)'. 회차마다 인원이 달라서
+     이게 없으면 8명 중 4위와 5명 중 4위가 같은 높이로 보인다. */
+  let bgd = '', bgp = false;
+  (o.bg || []).forEach((v, i) => {
+    if (v == null) { bgp = false; return; }
+    bgd += `${bgp ? 'L' : 'M'}${f1(X(i))},${f1(Y(v))} `; bgp = true;
+  });
+  const bg = bgd ? `<path class="gc-bg" d="${bgd.trim()}" fill="none"/>`
+    + (o.bgLab ? `<text class="gc-ax" x="${W - R}" y="${f1(Y(o.bg[o.bg.length - 1]) + 11)}" text-anchor="end">${E(o.bgLab)}</text>` : '') : '';
+  let d = '', pen = false;
+  pts.forEach((p, i) => {
+    if (p.y == null) { pen = false; return; }
+    d += `${pen ? 'L' : 'M'}${f1(X(i))},${f1(Y(p.y))} `; pen = true;
+  });
+  const dots = pts.map((p, i) => p.y == null ? ''
+    : `<circle class="sp" data-tip="${E(p.tip || '')}" cx="${f1(X(i))}" cy="${f1(Y(p.y))}" `
+      + `r="${i === pts.length - 1 ? 4.5 : 3.5}" fill="${ACC}" stroke="#0a0a0f" stroke-width="2"/>`).join('');
+  const every = Math.max(1, Math.ceil(pts.length / 6));
+  const xl = pts.map((p, i) => (i % every && i !== pts.length - 1) ? ''
+    : `<text class="gc-ax" x="${f1(X(i))}" y="${H - 6}" text-anchor="middle">${E(String(p.x).slice(5).replace('-', '/'))}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" style="width:100%;height:auto">${grid}${bl}${bg}`
+    + `<path d="${d.trim()}" fill="none" stroke="${ACC}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `${dots}${xl}</svg>`;
+}
+
+/* 맨 위 한 줄 진단 (0831 유강 "표현이 내가 이해하는 것도 힘드네" → 숫자 나열 말고 문장부터).
+   최근 k회와 그 직전 k회의 '상위 %' 평균을 견준다. 점수가 아니라 자리라서 난이도를 타지 않는다. */
+function gcDiag(hist) {
+  const n = hist.length;
+  if (n < 2) return '기출테스트가 1회뿐이라 아직 오름세·내림세를 말할 수 없다.';
+  const k = Math.max(1, Math.min(3, Math.floor(n / 2)));
+  const recent = hist.slice(-k), prev = hist.slice(-2 * k, -k);
+  const pAvg = a => gcMean(a.map(h => h.t.pct).filter(x => x != null));
+  const eAvg = a => gcMean(a.map(h => h.t.easyN ? h.t.easyMiss : null).filter(x => x != null));
+  const rp = pAvg(recent), pp = pAvg(prev), say = [];
+  if (rp == null || pp == null) say.push(`같은 시험지를 본 학년 전체 안에서 최근 ${k}회 평균 자리는 상위 ${Math.round(rp || 0)}% 다.`);
+  else {
+    const d = pp - rp;                                        // + 면 위로 올라간 것
+    const dir = d >= 8 ? '올라섰다 — 오름세' : d <= -8 ? '내려갔다 — 내림세' : '거의 그대로다';
+    say.push(`같은 시험지를 본 학년 전체 안에서 최근 ${k}회가 그 전 ${k}회보다 상위 ${Math.round(pp)}% → ${Math.round(rp)}% 로 ${dir}.`);
+  }
+  const re = eAvg(recent), pe = eAvg(prev);
+  if (re != null) say.push(pe == null ? `다들 맞힌 쉬운 문항은 회차당 ${r1(re)}개 놓친다.`
+    : `다들 맞힌 쉬운 문항 놓침은 회차당 ${r1(pe)}개 → ${r1(re)}개.`);
+  return say.join(' ');
+}
+
 /* 집계 — 한 번만 만들어 세 화면이 나눠 쓴다 */
 function gcBuild(st) {
   const rows = st.raw.daily_log.filter(r => (r['테스트유형'] || '').trim() === '기출테스트'
@@ -2854,6 +2930,24 @@ function gcBuild(st) {
     p.rate = {};                                            // 문항별 정답률(부분=0.5) — 정시 응시자만
     p.labels.forEach(l => { const v = p.baseTakes.map(t => t.ok[l]).filter(x => x != null); p.rate[l] = gcMean(v); });
     p.avg = gcMean(p.baseTakes.map(t => t.score));
+    /* 0915 유강 "점수 추이만으론 실력이 느는지 가늠이 안 된다" — 시험지마다 난이도가 달라서다.
+       그래서 회차끼리 비교되는 값 세 개를 응시 한 건마다 미리 박아둔다.
+       ① 순위/상위% = 같은 시험지를 본 학년 전체 안에서의 자리 (유강 0915 선택: 반 안이 아니라 학년 전체)
+       ② 컷대비 = 1등급컷까지 남은 점수 (컷 있는 시험지만)
+       ③ 쉬운문항 놓침 = 다들 맞힌 문항(정답률 70%↑) 중 틀린 개수 — 기본기·실수 구멍 */
+    p.easy = p.labels.filter(l => p.rate[l] != null && p.rate[l] >= 0.7);
+    const baseSc = p.baseTakes.map(t => t.score);
+    const cut1 = mi(p.meta, '등급컷1');
+    p.takes.forEach(t => {
+      // 보충 응시자는 기준선(평균·정답률)에서 빠져 있다. 본인 순위는 봐야 하니 자기 점수만 풀에 끼워 센다.
+      const pool = t.lateN ? [...baseSc, t.score] : baseSc;
+      t.rankN = pool.length;
+      t.rank = pool.filter(s => s > t.score).length + 1;                 // 동점은 같은 등수
+      t.pct = t.rankN ? (t.rank - 0.5) / t.rankN * 100 : null;           // 상위 몇 % — 인원이 달라도 비교된다
+      t.margin = cut1 != null ? t.score - cut1 : null;
+      t.easyN = p.easy.length;
+      t.easyMiss = p.easy.filter(l => t.ok[l] != null && t.ok[l] < 1).length;
+    });
     p.first = [...p.dates].sort()[0];
     p.grade = [...p.bans].map(gcGrade).find(Boolean) || '';
     p.takes.sort((a, b) => a.ban === b.ban ? b.score - a.score : (a.ban < b.ban ? -1 : 1));
@@ -3009,6 +3103,66 @@ function gcWire(st) {
       + (topics.length ? `<div class="lbl" style="margin-top:8px">자주 틀린 주제 <span class="dim">(시험출처 메모 기준)</span></div><div class="chips">${topics.map(([k, v]) =>
         chip(v >= 2 ? 'bad' : 'mid', `${k} ${v}`)).join('')}</div>` : '')
       + '</div>';
+
+    /* ── 실력 추이 (0915) — 점수는 시험지 난이도를 타서 향상을 못 본다. 자리·컷대비·쉬운문항으로 본다 ── */
+    const lab = d => String(d).slice(5).replace('-', '/');
+    /* ① 순위 — 0915 유강 "순위 그래프도 필요함". 축을 상위%가 아니라 **등수 그대로** 쓴다.
+       대신 회차마다 응시 인원이 다르니 바닥선(그 회차 꼴찌 자리)을 같이 깔아 준다. */
+    const maxN = Math.max(2, ...hist.map(h => h.t.rankN));
+    const rTicks = [[1, '1위']];
+    if (maxN >= 5) rTicks.push([Math.round(maxN / 2), Math.round(maxN / 2) + '위']);
+    rTicks.push([maxN, maxN + '위']);
+    const cRank = gcChart(hist.map(h => ({ x: h.t.date, y: h.t.rank,
+      tip: `${lab(h.t.date)} · ${gcPaperLabel(h.p.id)} · ${h.t.rankN}명 중 ${h.t.rank}위 (상위 ${Math.round(h.t.pct)}%)` })),
+      { lo: 1, hi: maxN, up: 'low', ticks: rTicks,
+        bg: hist.map(h => h.t.rankN), bgLab: '그 회차 응시 인원' });
+    const mg = hist.map(h => h.t.margin).filter(x => x != null);
+    const cCut = mg.length ? gcChart(hist.map(h => ({ x: h.t.date, y: h.t.margin,
+      tip: h.t.margin == null ? `${lab(h.t.date)} · 등급컷 없는 시험지`
+        : `${lab(h.t.date)} · ${h.t.score}점 · 1등급컷까지 ${h.t.margin >= 0 ? '넘김 +' + r1(h.t.margin) : r1(-h.t.margin) + '점 모자람'}` })),
+      { lo: Math.min(-20, Math.floor(Math.min(...mg) / 5) * 5), hi: Math.max(10, Math.ceil(Math.max(...mg) / 5) * 5),
+        base: 0, baseLab: '1등급컷' })
+      : '<div class="dim">등급컷이 붙은 시험지가 아직 없다 — 시험메타에 컷을 넣으면 자동으로 그려진다.</div>';
+    const eN = hist.filter(h => h.t.easyN);
+    const cEasy = eN.length ? gcChart(hist.map(h => ({ x: h.t.date, y: h.t.easyN ? h.t.easyMiss : null,
+      tip: `${lab(h.t.date)} · 쉬운 문항 ${h.t.easyN}개 중 ${h.t.easyMiss}개 놓침` })),
+      { lo: 0, hi: Math.max(3, ...eN.map(h => h.t.easyMiss)), up: 'low',
+        ticks: [[0, '0개'], [Math.max(3, ...eN.map(h => h.t.easyMiss)), Math.max(3, ...eN.map(h => h.t.easyMiss)) + '개']] })
+      : '<div class="dim">정답률을 낼 회차가 아직 없다.</div>';
+    const trend = '<div class="card gc-head"><div class="lbl">실력 추이 <span class="dim">'
+      + '세 그래프 모두 위로 갈수록 좋아진 것. 점수는 시험지 난이도를 타서 따로 본다</span></div>'
+      + `<p class="gc-diag">${E(gcDiag(hist))}</p>`
+      + '<div class="gc-charts">'
+      + `<div class="gc-ch"><div class="lbl">순위 <span class="dim">(그 시험지를 본 학년 전체 중 · 점선은 응시 인원)</span></div>${cRank}</div>`
+      + `<div class="gc-ch"><div class="lbl">1등급컷까지 남은 점수 <span class="dim">(컷 있는 시험지만 · 예상)</span></div>${cCut}</div>`
+      + `<div class="gc-ch"><div class="lbl">쉬운 문항 놓침 <span class="dim">(반 정답률 70% 이상 문항 중)</span></div>${cEasy}</div>`
+      + '</div></div>';
+
+    /* 주제별 — 회차를 앞·뒤 반으로 갈라 '요즘은 맞는 것'과 '아직도 틀리는 것'을 나눈다 */
+    const cut = Math.floor(hist.length / 2);
+    const ts = {};
+    hist.forEach((h, i) => {
+      const side = i < cut ? 'o' : 'n';
+      h.p.labels.forEach(l => {
+        const k = h.p.topic[l]; if (!k || h.t.ok[l] == null) return;
+        const s = ts[k] = ts[k] || { oN: 0, oW: 0, nN: 0, nW: 0 };
+        s[side + 'N']++; if (h.t.ok[l] < 1) s[side + 'W']++;
+      });
+    });
+    const won = Object.entries(ts).filter(([, s]) => s.oW > 0 && s.nN > 0 && s.nW === 0)
+      .sort((a, b) => b[1].oW - a[1].oW);
+    const stuck = Object.entries(ts).filter(([, s]) => s.nW > 0)
+      .sort((a, b) => b[1].nW - a[1].nW || b[1].nN - a[1].nN);
+    const topicCard = (cut >= 1 && (won.length || stuck.length)) ? '<div class="card" style="margin-top:12px">'
+      + `<div class="lbl">주제별 — 앞 ${cut}회와 최근 ${hist.length - cut}회를 견줬다 <span class="dim">(시험출처 메모가 있는 문항만)</span></div>`
+      + '<div class="gc-two" style="margin-top:6px">'
+      + `<div><div class="lbl">요즘은 맞는 주제</div><div class="chips">${won.length ? won.map(([k, s]) =>
+          chip('good', `${k} · 최근 ${s.nN}문항 다 맞음`)).join('') : '<span class="dim">아직 없다</span>'}</div></div>`
+      + `<div><div class="lbl">아직도 틀리는 주제</div><div class="chips">${stuck.length ? stuck.map(([k, s]) =>
+          chip(s.oW ? 'bad' : 'mid', `${k} · 최근 ${s.nN}문항 중 ${s.nW}개 틀림${s.oW ? '' : ' (새로 생김)'}`)).join('')
+          : '<span class="dim">없다</span>'}</div></div>`
+      + '</div></div>' : '';
+
     const rows = [...hist].reverse().map(h => {
       const d = h.t.score - h.p.avg;
       const wr = h.t.wrong.map(l => `<span class="gc-w ${h.t.ok[l] === 0.5 ? 'mid' : 'bad'}" title="${E(h.p.topic[l] || '')}">${E(l)}</span>`).join('');
@@ -3016,11 +3170,13 @@ function gcWire(st) {
         + `<a class="nm" href="#gichul" data-gp="${E(h.p.id)}">${E(gcPaperLabel(h.p.id))}</a>`
         + `<span class="gc-sc"><b>${E(String(h.t.score))}</b>점</span>`
         + `${h.t.grade != null ? chip(gradeCls(h.t.grade), h.t.grade + '등급 예상') : ''}`
-        + `<span class="dim">반평균 ${r1(h.p.avg)} (${d >= 0 ? '+' : ''}${r1(d)}) · ${h.p.baseTakes.filter(x => x.ban === h.t.ban).length}명 중 ${h.p.baseTakes.filter(x => x.ban === h.t.ban && x.score > h.t.score).length + 1}위</span>`
+        + `<span class="dim">평균 ${r1(h.p.avg)} (${d >= 0 ? '+' : ''}${r1(d)}) · ${h.t.rankN}명 중 ${h.t.rank}위 (상위 ${Math.round(h.t.pct)}%)`
+        + `${h.t.easyN ? ` · 쉬운 문항 ${h.t.easyMiss}/${h.t.easyN} 놓침` : ''}</span>`
         + `${h.t.lateN ? gcLateBadge(h.t) : ''}`
         + `<span class="gc-wl">${wr || '<span class="dim">오답 없음</span>'}</span></div>`;
     }).join('');
-    return pick + head + `<div class="card"><div class="lbl">회차별 (최근순) · 틀린 문항 번호</div>${rows}</div>`;
+    return pick + head + trend + topicCard
+      + `<div class="card" style="margin-top:12px"><div class="lbl">회차별 (최근순) · 틀린 문항 번호</div>${rows}</div>`;
   }
 
   /* ③ 반별 — 반 × 시험지 평균·응시율, 반별 추이 */
