@@ -89,6 +89,20 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
 .pb .tab{display:inline-block;width:14px}
 .pb .missing{color:var(--acc)}
 .pb math{font-size:1.05em}
+/* (0913 유강) 본문 그림 — make_learn 이 base64 로 넣어 준다. hwpx 는 mm 폭이라 폭 상한만 건다 */
+.pb img{max-width:100%;height:auto;background:#fff;border-radius:4px}
+.pb .fig{text-align:center;margin:7px 0}
+.pb .fl{float:right;margin:0 0 4px 8px;max-width:48%}
+.pb .fl.left{float:left;margin:0 8px 4px 0}
+/* (0913 유강) 문제 자세히보기 — 어떤 문제였는지 모르는 애들이 있다. 기본은 접힘 */
+.peek{margin:0 0 8px}
+.peek>summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;list-style:none;
+ font-size:12.5px;font-weight:700;color:var(--tx2);border:1px solid var(--bd);border-radius:9px;
+ padding:6px 11px;user-select:none}
+.peek>summary::-webkit-details-marker{display:none}
+.peek>summary::before{content:'＋';font-weight:400}
+.peek[open]>summary::before{content:'－'}
+.peek[open]>summary{margin-bottom:7px}
 .row.pc .b.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.55);color:#ffe9e9}
 </style></head>
 <body><main>
@@ -97,7 +111,11 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
   <div class="brand">수학은유강</div>
   <div class="who"><b id="nm"></b><span class="ban" id="cl"></span></div>
   <div class="lead" id="lead"></div>
-  <div class="note">문제지에 적어 둔 <b>내 답</b>과, 풀 때 <b>얼마나 확신했는지</b>만 골라주세요.
+  <!-- (0915 유강) 같은 문항을 시점 셋으로 묻는다 — 지금이 어느 시점인지 먼저 알려준다.
+       ①여기(시험 직후·강의 전) → ②저녁 루프 되짚기(강의 들은 뒤) → ③다음 자평(며칠 뒤 재확신) -->
+  <div class="note"><b>① 지금은 시험 직후, 강의 듣기 전이에요.</b> <b>방금 풀 때</b> 어땠는지로 답해주세요.
+    문제지에 적어 둔 <b>내 답</b>과, 풀 때 <b>얼마나 확신했는지</b>만 고르면 돼요.
+    같은 문제를 <b>강의 들은 뒤 저녁 루프</b>에서 한 번 더 물어요(그땐 '이제 혼자 풀 수 있는지').
     점수랑은 상관없어요 — 오늘 받을 <b>개인 과제</b>를 여기에 맞춰 만들어요. 솔직할수록 과제가 딱 맞아요~</div>
   <div class="legend">
     <b>확실</b><span>풀이가 자신 있었다</span>
@@ -148,30 +166,42 @@ let TOK='', DAY='', DATA=null, ITEMS=[], ANS={}, T0=Date.now();
  * 지난 회차 오답 중 확실+오답 우선 3문항. 풀지 않는다 — "지금 다시 풀면?" 확실/애매/모르겠다만.
  * 답은 ANS['_지난'] = {날짜, 항목:{라벨:c}} 로 같이 나간다(서버 5분류는 `_` 키를 건너뛴다).
  * 발문은 그날 루프가 같이 올린 /set/pe_<키>.json 에서 — 없으면 번호·유형·내 답·정답만 보인다.
+ * (0913) 발문은 '문제 자세히보기'로 접어 둔다. 선지는 make_learn 이 빼고, 본문 그림은 살린다.
  * 한 문항의 궤적: 시험 확신 → 강의 후 상태(루프 되짚기) → PT 정오 → 여기(1주 뒤 재확신). */
-let PAST=null, PE={};
+let PAST=null, PE={}, POP={};   // POP = '문제 자세히보기' 펼침 상태(라벨별) — drawPast 가 다시 그려도 살아 있어야 한다
 const PCONF=[['확실','지금 풀면 맞힌다'],['애매','될 것 같은데 긴가민가'],['모르겠다','다시 봐도 모르겠다']];
 const PA=()=>(ANS['_지난']&&ANS['_지난'].항목)||{};
+/* (0915 유강) '1주 뒤'는 고정값이 아니다 — 시험 날짜에서 실제 경과일을 계산해 보여준다.
+   학생이 "언제 기준으로 답하는 건지" 알아야 ①시험 때 확신과 ③지금 확신을 구분해 답한다. */
+function ago(d){
+  const t=Date.parse((d||'')+'T00:00:00');
+  if(isNaN(t)) return {n:null, 글:'지난 시험'};
+  const dt=new Date(t), md=(dt.getMonth()+1)+'/'+dt.getDate();
+  const n=Math.max(0, Math.round((new Date(new Date().toDateString())-new Date(dt.toDateString()))/864e5));
+  return {n:n, 글:(n===0?'오늘':n===1?'어제('+md+')':n+'일 전('+md+')')};
+}
 function pastDone(it){ return !!PA()[it.라벨]; }
 const circ=v=>{ v=String(v==null?'':v).trim(); return /^[1-5]$/.test(v)?'①②③④⑤'[+v-1]:(v.toUpperCase()==='M'?'서술형':v); };
 function drawPast(){
   const box=$('past'); if(!box) return;
   if(!PAST||!(PAST.문항||[]).length){ box.innerHTML=''; return; }
-  const H=[`<div class="past"><div class="ph"><b>지난 시험</b> 다시 보기 · ${PAST.문항.length}문항</div>
-    <div class="pn">${E((PAST.시험지명||'지난 기출테스트').replace(/_/g,' '))} (${E(PAST.날짜||'')})에서 틀린 문제예요.
-    풀지 말고, <b style="color:var(--tx2)">지금 다시 풀면 어떨지</b>만 골라주세요.</div>`];
+  const A0=ago(PAST.날짜);
+  const H=[`<div class="past"><div class="ph"><b>${E(A0.글)} 시험</b> 다시 보기 · ${PAST.문항.length}문항</div>
+    <div class="pn"><b>③ ${E(A0.글)}</b> 본 ${E((PAST.시험지명||'지난 기출테스트').replace(/_/g,' '))} 에서 틀린 문제예요.
+    그때는 강의를 듣기 전이었죠. 풀지 말고, <b style="color:var(--tx2)">${A0.n===null?'지금':A0.n+'일 지난 지금'} 다시 풀면 어떨지</b>만 골라주세요.</div>`];
   PAST.문항.forEach(it=>{
     const c=PA()[it.라벨]||'';
     const pe=(PE.문항||{})[it.라벨];
     H.push(`<div class="q${c?' ok':''}" id="p_${E(it.라벨)}">
       <div class="hd"><span class="no">${E(it.라벨)}번</span><span class="pt">${E(it.유형||'')}</span></div>
       <div class="meta"><span>내 답 <b>${E(circ(it.내답)||'—')}</b></span><span>정답 <b>${E(circ(it.정답)||'—')}</b></span>${it.확신?`<span>그때 <b>${E(it.확신)}</b></span>`:''}</div>
-      ${pe&&pe.발문?`<div class="pb">${pe.발문}</div>`:''}
+      ${pe&&pe.발문?`<details class="peek" data-l="${E(it.라벨)}"${POP[it.라벨]?' open':''}><summary>문제 자세히보기</summary><div class="pb">${pe.발문}</div></details>`:''}
       <div class="row cf pc">`+PCONF.map(([v,t])=>`<button class="b${c===v?' on':''}" data-p="${E(it.라벨)}" data-c="${v}">${v}<br><small style="font-weight:400;font-size:11px;color:var(--dim)">${t}</small></button>`).join('')+`</div>
     </div>`);
   });
   H.push('</div>');
   box.innerHTML=H.join('');
+  box.querySelectorAll('details.peek').forEach(d=>d.ontoggle=()=>{ POP[d.dataset.l]=d.open; });
   box.querySelectorAll('button.b').forEach(b=>b.onclick=()=>{
     const z=ANS['_지난']||(ANS['_지난']={날짜:PAST.날짜,항목:{}}); z.날짜=PAST.날짜; z.항목=z.항목||{};
     z.항목[b.dataset.p] = (z.항목[b.dataset.p]===b.dataset.c?'':b.dataset.c);
