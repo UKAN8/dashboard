@@ -106,6 +106,32 @@ select{color-scheme:dark}
 select option{background-color:#15151c;color:var(--tx)}
 select optgroup{background-color:#15151c;color:var(--dim)}
 
+/* ── 커스텀 드롭다운 목록 (0916, ui_select.js) ──
+   위 두 줄은 OS 가 그리는 팝업이 **읽히게** 만든 것이고, 여기는 그 팝업을 아예
+   우리가 그리는 쪽이다. 이유는 휠 속도 — OS 목록은 한 칸에 7~8행이 스친다.
+   ⚠ .uisel-o 의 height 30px 는 ui_select.js 의 ROW 와 한 몸이다(휠 한 칸 = ROW×rows).
+     여기를 고치면 거기도 같이 고친다.
+   ⚠ 클래스는 전부 uisel- 접두. 이 시트는 전역이라 #cs 콘솔까지 먹는다. */
+.uisel{position:fixed;z-index:9999;background:#15151c;border:1px solid var(--bd);border-radius:11px;
+ box-shadow:0 14px 40px rgba(0,0,0,.55);padding:5px;overflow:hidden}
+.uisel-q{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--tx);
+ border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;margin-bottom:4px}
+.uisel-q::placeholder{color:var(--dim)}
+.uisel-q:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+.uisel-list{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.uisel-list::-webkit-scrollbar{width:9px}
+.uisel-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:9px}
+.uisel-o{height:30px;line-height:19px;padding:5px 10px;border-radius:7px;font-size:13px;color:var(--tx);
+ cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uisel-o.on{background:rgba(245,160,160,.16);color:#ffd9d9}
+.uisel-o.cur{font-weight:700}
+.uisel-o.cur::after{content:' ✓';color:var(--acc)}
+.uisel-o.dis{color:var(--dim);cursor:default}
+.uisel-g{color:var(--dim);font-size:10.5px;letter-spacing:.09em;padding:7px 10px 3px;
+ position:sticky;top:0;background:#15151c;z-index:1}
+.uisel-none{color:var(--dim);font-size:12.5px;padding:10px}
+.uisel-tip{color:var(--dim);font-size:10.5px;padding:5px 10px 2px;border-top:1px solid var(--bd);margin-top:4px}
+
 /* ── 시험일정 탭 (0828, sc- 접두 — 흔한 이름 충돌 방지) ── */
 .sc-cards{grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}
 .sc-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
@@ -700,6 +726,269 @@ body.cs-on #boot{display:none}
 </div>
 <div id="tip"></div>
 <script>
+/* ── 커스텀 드롭다운 (0916) — "목록 열고 휠 굴리면 확 지나감" ────────────────
+   Why: 네이티브 <select> 의 **열린 목록은 OS 가 그린다**(0824 흰 바탕·흰 글씨와
+   같은 뿌리). 크롬/윈도는 휠 한 칸에 100~120px = 7~8행을 밀어서, 기출 시험지처럼
+   수백 줄짜리 목록은 한 칸에 화면이 통째로 스친다. 이걸 CSS·JS 로 늦출 방법이 없다.
+   → 닫힌 상자는 그대로 두고 **목록만 우리가 그린다.**
+
+   계약(중요): <select> 는 DOM 에 그대로 산다. 지우거나 바꿔치지 않는다.
+   그래서 값·option 을 읽고 쓰는 기존 코드가 전부 그대로 돈다 —
+   gtPick()/planPool()/clinicStudents() 의 onchange, gc-sel 의 option 순회
+   (app.js 화살표 이동), 런타임 innerHTML 재주입(pl_pool·cl_stu·sc_sheet·gt_pick).
+   우리가 가로채는 것은 **팝업을 여는 순간뿐**이고, 고를 때마다 진짜 select 의
+   value 를 바꾼 뒤 네이티브와 똑같이 change 를 쏜다(값이 바뀐 때만 — 네이티브 동작).
+
+   위임 한 곳만 산다. select 마다 상태를 붙이지 않는 이유: 콘솔이 목록을 통째로
+   다시 그리는 자리가 여럿이라(반 바꾸기·날짜 바꾸기) 붙여 둔 상태는 반드시 갈라진다.
+   열 때 그 자리에서 현재 option 을 읽는다 = 항상 최신.
+
+   끄기 / 조절 (배포 없이, 브라우저 콘솔에서):
+     UISel.rows = 1     // 휠 한 칸 = 1행 (기본 2). localStorage 에 남아 다음에도 유지
+     UISel.off()        // 이 브라우저에서 네이티브로 되돌림
+     UISel.on()
+   개별 select 만 네이티브로: <select data-native>
+   폰·태블릿(pointer:coarse)은 건드리지 않는다 — 거기선 OS 목록이 더 낫다. */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined' || !window.document) return;
+
+  var doc = document, LSK = 'uisel';
+  var CF = {
+    rows: 2,     // 휠 한 칸에 넘길 행 수 — 이 요청의 알맹이
+    fine: 0.45,  // 트랙패드 잔 델타 감속 배율
+    max: 12,     // 목록에 한 번에 보일 최대 행 수
+    find: 8,     // 항목이 이보다 많으면 검색칸을 띄운다
+    off: false
+  };
+  try {
+    var saved = JSON.parse(localStorage.getItem(LSK) || '{}');
+    for (var k in saved) if (k in CF) CF[k] = saved[k];
+  } catch (e) {}
+  function save() {
+    try { localStorage.setItem(LSK, JSON.stringify({ rows: CF.rows, fine: CF.fine, off: CF.off })); } catch (e) {}
+  }
+
+  var ROW = 30;                       // .uisel-o 높이. CSS 와 한 몸 — 휠 계산의 기준자
+  var pop = null, sel = null, rows = [], act = -1, qbox = null, list = null;
+
+  function coarse() {
+    return !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
+  }
+  function eligible(el) {
+    return el && el.tagName === 'SELECT' && !CF.off && !el.multiple && !el.disabled
+      && (el.size || 1) <= 1 && !el.hasAttribute('data-native') && !coarse();
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  // 검색은 공백을 무시한다 — "용인 백현고" 라 쳐도 "용인백현고" 가 걸리게
+  function norm(s) { return String(s || '').toLowerCase().replace(/\s+/g, ''); }
+
+  function close(refocus) {
+    if (!pop) return;
+    if (pop.parentNode) pop.parentNode.removeChild(pop);
+    var s = sel;
+    pop = null; sel = null; rows = []; act = -1; qbox = null; list = null;
+    doc.removeEventListener('mousedown', onDocDown, true);
+    doc.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', onBlurAway, true);
+    window.removeEventListener('scroll', onBlurAway, true);
+    if (refocus && s && s.focus) { try { s.focus(); } catch (e) {} }
+  }
+  // ⚠ window 에 capture 로 단 scroll 은 **우리 목록 안의 스크롤까지** 잡는다
+  //   (scroll 은 버블은 안 해도 캡처 단계는 탄다). 그냥 닫으면 휠 한 번에 목록이 사라진다.
+  //   (target 이 window 면 Node 가 아니라 contains 가 던진다 — nodeType 으로 먼저 거른다)
+  function onBlurAway(e) {
+    var t = e && e.target;
+    if (pop && t && t.nodeType === 1 && pop.contains(t)) return;
+    close(false);
+  }
+  function onDocDown(e) { if (pop && !pop.contains(e.target) && e.target !== sel) close(false); }
+
+  /* 화면에 그릴 줄 목록을 만든다. optgroup 은 헤더 줄로. */
+  function build(filter) {
+    var f = norm(filter), html = '', grp = null, n = 0;
+    rows = [];
+    var opts = sel.options;
+    for (var i = 0; i < opts.length; i++) {
+      var o = opts[i];
+      var g = o.parentNode && o.parentNode.tagName === 'OPTGROUP' ? o.parentNode.label : null;
+      var txt = o.textContent || '';
+      if (f && norm(txt).indexOf(f) < 0 && norm(g).indexOf(f) < 0) continue;
+      if (g !== grp) { grp = g; if (g) html += '<div class="uisel-g">' + esc(g) + '</div>'; }
+      html += '<div class="uisel-o' + (o.disabled ? ' dis' : '') + (o.selected ? ' cur' : '') +
+        '" data-i="' + i + '" role="option"' + (o.selected ? ' aria-selected="true"' : '') + '>' +
+        esc(txt) + '</div>';
+      rows.push(i); n++;
+    }
+    if (!n) html = '<div class="uisel-none">해당 항목 없음</div>';
+    list.innerHTML = html;
+    act = -1;
+    // 현재 값이 보이면 거기서 시작한다
+    var cur = list.querySelector('.uisel-o.cur');
+    if (cur) {
+      act = rows.indexOf(+cur.dataset.i);
+      cur.classList.add('on');
+      list.scrollTop = Math.max(0, cur.offsetTop - list.clientHeight / 2 + ROW / 2);
+    }
+    return n;
+  }
+
+  function mark(i) {
+    var el = list.querySelector('.uisel-o.on');
+    if (el) el.classList.remove('on');
+    act = i;
+    if (i < 0 || i >= rows.length) return;
+    var t = list.querySelector('.uisel-o[data-i="' + rows[i] + '"]');
+    if (!t) return;
+    t.classList.add('on');
+    // scrollIntoView 대신 직접 — 부드러운 스크롤이 끼면 또 "휙" 이 된다
+    if (t.offsetTop < list.scrollTop) list.scrollTop = t.offsetTop;
+    else if (t.offsetTop + t.offsetHeight > list.scrollTop + list.clientHeight)
+      list.scrollTop = t.offsetTop + t.offsetHeight - list.clientHeight;
+  }
+  function step(d) {
+    if (!rows.length) return;
+    var i = act < 0 ? (d > 0 ? 0 : rows.length - 1) : act + d;
+    // 비활성 항목은 건너뛴다
+    while (i >= 0 && i < rows.length && sel.options[rows[i]].disabled) i += d > 0 ? 1 : -1;
+    mark(Math.max(0, Math.min(rows.length - 1, i)));
+  }
+
+  function pick(i) {
+    if (i == null || i < 0) return;
+    var o = sel.options[i];
+    if (!o || o.disabled) return;
+    var changed = sel.selectedIndex !== i;
+    sel.selectedIndex = i;
+    var s = sel;
+    close(true);
+    if (changed) {                      // 네이티브와 같게 — 같은 걸 다시 골랐으면 안 쏜다
+      s.dispatchEvent(new Event('input', { bubbles: true }));
+      s.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  /* ★ 이 요청의 알맹이 — 휠 한 칸을 '몇 행' 으로 고정한다.
+     휠(deltaMode 0, 한 칸 100~120px)은 행 수로 죽이고,
+     트랙패드의 잔 델타(수 px 씩 연속)는 비례 감속해 부드러움을 남긴다.
+     순수 함수로 뺀 이유: jsdom 엔 레이아웃이 없어 scrollTop 으로는 회귀를 못 본다. */
+  function wheelStep(dy, mode, viewH) {
+    var d = dy;
+    if (mode === 1) d *= ROW;                        // 라인 단위로 오는 브라우저
+    else if (mode === 2) d *= (viewH || ROW * CF.max);
+    if (!d) return 0;
+    // 45px 이 경계다. 그 위는 '휠 한 칸' 으로 보고 행 수로 고정, 아래는 트랙패드로 보고 비례.
+    return Math.abs(d) >= 45 ? (d > 0 ? 1 : -1) * ROW * CF.rows : d * CF.fine;
+  }
+  function onWheel(e) {
+    e.preventDefault();
+    list.scrollTop += wheelStep(e.deltaY, e.deltaMode, list.clientHeight);
+  }
+
+  function onKey(e) {
+    if (!pop) return;
+    var k = e.key;
+    if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
+    if (k === 'Enter') { e.preventDefault(); e.stopPropagation(); pick(act >= 0 ? rows[act] : -1); return; }
+    if (k === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); step(1); return; }
+    if (k === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); step(-1); return; }
+    if (k === 'PageDown') { e.preventDefault(); e.stopPropagation(); step(CF.max - 1); return; }
+    if (k === 'PageUp') { e.preventDefault(); e.stopPropagation(); step(-(CF.max - 1)); return; }
+    if (k === 'Home') { e.preventDefault(); e.stopPropagation(); mark(0); return; }
+    if (k === 'End') { e.preventDefault(); e.stopPropagation(); mark(rows.length - 1); return; }
+    if (k === 'Tab') { close(false); }
+  }
+
+  function place() {
+    var r = sel.getBoundingClientRect();
+    var w = Math.max(r.width, 240);
+    var vw = doc.documentElement.clientWidth, vh = doc.documentElement.clientHeight;
+    pop.style.width = Math.min(w, vw - 16) + 'px';
+    pop.style.left = Math.round(Math.max(8, Math.min(r.left, vw - w - 8))) + 'px';
+    var h = pop.offsetHeight;
+    var below = vh - r.bottom - 8;
+    // 아래가 좁고 위가 더 넓으면 위로 편다
+    pop.style.top = (h <= below || r.top - 8 < h) ? Math.round(r.bottom + 4) + 'px'
+                                                  : Math.round(r.top - h - 4) + 'px';
+  }
+
+  function open(target) {
+    close(false);
+    sel = target;
+    pop = doc.createElement('div');
+    pop.className = 'uisel';
+    pop.setAttribute('role', 'listbox');
+    var many = sel.options.length > CF.find;
+    pop.innerHTML = (many ? '<input class="uisel-q" type="text" placeholder="검색" autocomplete="off" spellcheck="false">' : '') +
+      '<div class="uisel-list"></div>' +
+      (many ? '<div class="uisel-tip">↑↓ 이동 · Enter 선택 · Esc 닫기</div>' : '');
+    doc.body.appendChild(pop);
+    list = pop.querySelector('.uisel-list');
+    qbox = pop.querySelector('.uisel-q');
+    list.style.maxHeight = (ROW * CF.max) + 'px';
+
+    build('');
+    place();
+
+    // 휠은 목록이 아니라 팝업 전체에 건다 — 검색칸·안내줄 위에서 굴려도 페이지가 밀리지 않게
+    pop.addEventListener('wheel', onWheel, { passive: false });
+    list.addEventListener('mousedown', function (e) { e.preventDefault(); });  // 검색칸 포커스 유지
+    list.addEventListener('click', function (e) {
+      var r = e.target.closest ? e.target.closest('.uisel-o') : null;
+      if (r && !r.classList.contains('dis')) pick(+r.dataset.i);
+    });
+    list.addEventListener('mousemove', function (e) {
+      var r = e.target.closest ? e.target.closest('.uisel-o') : null;
+      if (r) { var i = rows.indexOf(+r.dataset.i); if (i >= 0 && i !== act) mark(i); }
+    });
+    if (qbox) {
+      qbox.addEventListener('input', function () { build(qbox.value); place(); });
+      setTimeout(function () { try { qbox.focus(); } catch (e) {} }, 0);
+    }
+    doc.addEventListener('mousedown', onDocDown, true);
+    doc.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', onBlurAway, true);
+    window.addEventListener('scroll', onBlurAway, true);   // 페이지가 움직이면 닫는다(따라다니면 더 산만하다)
+  }
+
+  /* 여는 순간만 가로챈다 — mousedown 의 기본동작이 OS 팝업이다 */
+  doc.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    var t = e.target;
+    if (!eligible(t)) return;
+    e.preventDefault();
+    if (pop && sel === t) { close(true); return; }   // 한 번 더 누르면 닫힘
+    try { t.focus(); } catch (err) {}                 // preventDefault 가 포커스까지 막는다
+    open(t);
+  }, true);
+
+  // 키보드로 여는 길(Alt+↓ · Space). 닫힌 상태의 ↑↓ 로 값 넘기기는 네이티브 그대로 둔다.
+  doc.addEventListener('keydown', function (e) {
+    if (pop) return;
+    var t = e.target;
+    if (!eligible(t)) return;
+    if ((e.altKey && e.key === 'ArrowDown') || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault(); open(t);
+    }
+  }, true);
+
+  window.UISel = {
+    get rows() { return CF.rows; },
+    set rows(v) { CF.rows = Math.max(0.5, +v || 1); save(); },      // 휠 한 칸 = 몇 행
+    get fine() { return CF.fine; },
+    set fine(v) { CF.fine = Math.max(0.05, +v || 0.45); save(); },  // 트랙패드 감속
+    get max() { return CF.max; },
+    set max(v) { CF.max = Math.max(4, +v || 12); },                 // 보이는 행 수
+    off: function () { CF.off = true; save(); close(false); },
+    on: function () { CF.off = false; save(); },
+    _open: open, _close: close, _cf: CF, _rowpx: ROW, _wheelStep: wheelStep
+  };
+})();
+
 /* 시험 점수를 해석하는 규칙 — 대시보드(app.js)와 학생 포털(portal)이 같이 쓴다.
  *
  * ⚠ **단일 진실원은 `01_운영/시험DB/시험메타조회.py`** 다. 이 파일은 그 이식본이고,
