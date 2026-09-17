@@ -160,6 +160,9 @@ select optgroup{background-color:#15151c;color:var(--dim)}
 
 /* ── 기출 (0907) — gc- 접두사. 답안표는 가로로 길다: 첫 열 고정 + 가로 스크롤 ── */
 .gc-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0} .gc-sp{flex:1}
+/* 학년 버튼과 반 버튼 사이 칸막이 (0917) — 둘이 붙어 있으면 한 묶음으로 읽힌다 */
+.gc-dv{width:1px;align-self:stretch;min-height:22px;background:var(--bd);margin:0 3px}
+.gc-bb{font-size:12px}
 .gc-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px} .gc-pick .lbl{margin:0}
 .gc-sel,.gc-q{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 10px;font-size:13px}
 .gc-sel{min-width:260px;max-width:100%} .gc-q{width:110px}
@@ -3161,6 +3164,9 @@ const gcMean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
 const gcPct = v => v == null ? '—' : Math.round(v * 100) + '%';
 const gcCls = v => v == null ? 'na' : (v >= 0.8 ? 'good' : v >= 0.5 ? 'mid' : 'bad');
 const gcGrade = b => (String(b || '').match(/^고\d/) || [''])[0];        // '고1A' → '고1'
+/* 0917 유강 "반별로도 답안표" — 필터가 학년(고1·고2) + 반(고2A…) 2단이 됐다.
+   반 이름이 '고N' 으로 안 시작하는 옛 반은 '기타' 로 묶는다(안 그러면 어느 버튼으로도 안 보인다). */
+const gcGrp = b => gcGrade(b) || '기타';
 const gcPaperLabel = p => {        // '청덕고_고1_2025_2_중간' → '청덕고 25년 2학기 중간'
   const m = String(p).match(/^(.+?)_(고\d)_(\d{4})_(\d)_(중간|기말)$/);
   return m ? `${m[1]} ${m[3].slice(2)}년 ${m[4]}학기 ${m[5]}` : String(p);
@@ -3351,17 +3357,45 @@ function viewGichul(st) {
     + '<button class="fbtn" data-gm="stu">학생별 추이</button>'
     + '<button class="fbtn" data-gm="ban">반별 평균</button>'
     + '<span class="gc-sp"></span>'
-    + '<button class="fbtn on" data-gg="*">전체</button><button class="fbtn" data-gg="고1">고1</button><button class="fbtn" data-gg="고2">고2</button>'
+    /* 0917 유강 — 학년 버튼 + 그 학년의 반 버튼. '전체(고1+고2)' 는 뺐다: 학년이 섞이면
+       시험지도 학생도 못 견준다(유강 "전체는 필요없긴함"). 반 버튼은 draw() 가 지금 학년 것만 보인다.
+       버튼 자체는 여기서 한 번만 그린다 — gcWire 가 #gc-mode 안을 다시 그리지 않는다. */
+    + [...new Set(G.bans.map(gcGrp))].sort().map(g =>
+        `<button class="fbtn" data-gg="${E(g)}">${E(g)}</button>`).join('')
+    + '<span class="gc-dv"></span>'
+    + '<button class="fbtn on" data-gb="*">반 전체</button>'
+    + G.bans.map(b => `<button class="fbtn gc-bb" data-gb="${E(b)}" data-gbg="${E(gcGrp(b))}">${E(b)}</button>`).join('')
     + '</div><div id="gc-body"></div></section>';
 }
 
 function gcWire(st) {
   const G = st.gc || gcBuild(st);
-  let mode = 'paper', grade = '*', paper = null, sid = null, showAns = false, q = '';
+  /* 필터는 2단이다(0917): grade = 고1|고2|기타 (전체 없음) · ban = '*'(그 학년 전부) 또는 반 이름.
+     첫 화면은 **가장 최근 시행 시험지의 학년** — G.papers 는 시행일 내림차순이라 [0] 이 그거다. */
+  const grades = [...new Set(G.bans.map(gcGrp))].sort();
+  let mode = 'paper', paper = null, sid = null, showAns = false, q = '';
+  let grade = (G.papers[0] && [...G.papers[0].bans].map(gcGrp)[0]) || grades[0] || '고1';
+  let ban = '*';
   // 정렬 상태 — 표마다 따로. 머리글을 누르면 같은 열은 방향만 뒤집는다. (0907 유강: 정렬은 필수)
   const sort = { paper: { k: 'score', d: -1 }, ban: { k: 'first', d: -1 } };
-  const inG = p => grade === '*' || p.grade === grade || [...p.bans].some(b => gcGrade(b) === grade);
+  const banOK = b => gcGrp(b) === grade && (ban === '*' || b === ban);      // 이 반을 지금 보고 있나
+  const inG = p => [...p.bans].some(banOK);
   const papers = () => G.papers.filter(inG);
+  /* 반으로 좁히면 그 반만으로 정답률·평균·최다오답을 다시 낸다(0917 유강 확정).
+     안 그러면 '우리 반이 17번을 많이 틀렸다' 를 딴 반 숫자로 읽게 된다.
+     ⚠ 순위(t.rank·t.pct)·등급은 손대지 않는다 — 0915 확정대로 **학년 전체** 안의 자리다. */
+  const banView = p => {
+    if (ban === '*') return p;
+    const takes = p.takes.filter(t => t.ban === ban);
+    const ontime = takes.filter(t => !t.lateN);
+    const baseTakes = ontime.length ? ontime : takes;
+    const rate = {};
+    p.labels.forEach(l => { const v = baseTakes.map(t => t.ok[l]).filter(x => x != null); rate[l] = gcMean(v); });
+    return Object.assign({}, p, { takes, baseTakes, rate, lateTakes: takes.filter(t => t.lateN),
+      miss: p.miss.filter(m => m.ban === ban), bans: new Set([ban]),
+      dates: new Set([...takes, ...p.miss.filter(m => m.ban === ban)].map(t => t.date)),
+      avg: gcMean(baseTakes.map(t => t.score)) });
+  };
   const nm = t => t.stu ? slink(t.stu) : `<span class="nm">${E(t.name)}</span>`;
   const cmp = (a, b) => a == null && b == null ? 0 : a == null ? 1 : b == null ? -1
     : typeof a === 'string' ? a.localeCompare(b, 'ko') : a - b;         // null 은 방향과 무관하게 맨 뒤
@@ -3387,13 +3421,14 @@ function gcWire(st) {
   /* ① 시험지별 — 모든 학생 × 모든 문항 */
   function drawPaper() {
     const ps = papers();
-    if (!ps.length) return '<div class="dim">기출테스트 기록이 없다.</div>';
+    if (!ps.length) return '<div class="dim">' + (ban === '*' ? '기출테스트 기록이 없다.' : `${E(ban)} 의 기출테스트 기록이 없다.`) + '</div>';
     if (!paper || !ps.find(p => p.id === paper)) paper = ps[0].id;
-    const p = ps.find(x => x.id === paper);
+    const p = banView(ps.find(x => x.id === paper));         // 반을 골랐으면 그 반만으로 다시 낸 시험지
     const bySchool = {};                                    // '고1 · 청덕고' → 시험지들 (학년 먼저, 학교 다음)
     ps.forEach(x => { const g = (x.grade || '학년미상') + ' · ' + gcSchool(x.id); (bySchool[g] = bySchool[g] || []).push(x); });
+    const nTake = x => ban === '*' ? x.takes.length : x.takes.filter(t => t.ban === ban).length;
     const groups = Object.keys(bySchool).sort(grpKey).map(g => [g, bySchool[g].map(x =>
-      ({ v: x.id, t: `${gcSchool(x.id)} · ${x.grade || ''} · ${gcPaperLabel(x.id).replace(gcSchool(x.id) + ' ', '')} · ${[...x.bans].join('·')} · ${x.takes.length}명` }))]);
+      ({ v: x.id, t: `${gcSchool(x.id)} · ${x.grade || ''} · ${gcPaperLabel(x.id).replace(gcSchool(x.id) + ' ', '')} · ${ban === '*' ? [...x.bans].join('·') : ban} · ${nTake(x)}명` }))]);
     const idx = ps.findIndex(x => x.id === paper);
     const pick = `<div class="gc-pick"><span class="lbl">시험지</span>${sel('paper', groups, paper)}`
       + `<button class="fbtn" data-gnav="-1"${idx <= 0 ? ' disabled' : ''} title="이전 시험지">‹</button>`
@@ -3410,8 +3445,9 @@ function gcWire(st) {
       + `${chip('na', `평균 ${p.avg == null ? '—' : r1(p.avg)}점`)}${scores.length ? chip('good', `최고 ${Math.max(...scores)}`) + chip('mid', `최저 ${Math.min(...scores)}`) : ''}`
       + `${c1 != null ? chip('na', `1등급컷 ${c1} (예상)`) : chip('na', '컷 미확보')}${p.meta && p.meta['전체난이도'] ? chip('na', '난이도 ' + p.meta['전체난이도']) : ''}`
       + `${p.hasKey ? '' : chip('mid', '정답표 없음 — 채점칸 기준')}`
-      + `${p.lateTakes.length ? chip('mid', `보충 응시 ${p.lateTakes.length}명 — 평균·정답률에서 제외`) : ''}</div>`
-      + (hard.length ? `<div class="lbl" style="margin-top:8px">가장 많이 틀린 문항</div><div class="gc-hard">${hard.map(l =>
+      + `${p.lateTakes.length ? chip('mid', `보충 응시 ${p.lateTakes.length}명 — 평균·정답률에서 제외`) : ''}`
+      + `${ban === '*' ? '' : chip('acc', `${ban} 만 — 평균·정답률은 이 반 기준`)}</div>`
+      + (hard.length ? `<div class="lbl" style="margin-top:8px">가장 많이 틀린 문항${ban === '*' ? '' : ` <span class="dim">(${E(ban)} 기준)</span>`}</div><div class="gc-hard">${hard.map(l =>
         `<span class="gc-hd ${gcCls(p.rate[l])}"><b>${E(l)}</b> ${gcPct(p.rate[l])}${p.topic[l] ? `<i>${E(p.topic[l])}</i>` : ''}</span>`).join('')}</div>` : '')
       + (p.miss.length ? `<div class="lbl" style="margin-top:8px">미응시</div><div class="dim">${p.miss.map(m => E(m.name) + '(' + E(m.ban) + ')').join(', ')}</div>` : '')
       + '</div>';
@@ -3441,7 +3477,7 @@ function gcWire(st) {
 
   /* ② 학생별 — 회차별 점수·등급·반평균 대비·오답 문항 */
   function drawStu() {
-    const sids = Object.keys(G.byStu).filter(s => grade === '*' || gcGrade(G.byStu[s][0].t.ban) === grade)
+    const sids = Object.keys(G.byStu).filter(s => banOK(G.byStu[s][0].t.ban))
       .sort((a, b) => { const x = G.byStu[a][0].t, y = G.byStu[b][0].t; return x.ban === y.ban ? x.name.localeCompare(y.name, 'ko') : x.ban.localeCompare(y.ban); });
     if (!sids.length) return '<div class="dim">응시 학생이 없다.</div>';
     if (!sid || !sids.includes(sid)) sid = sids[0];
@@ -3551,7 +3587,7 @@ function gcWire(st) {
 
   /* ③ 반별 — 반 × 시험지 평균·응시율, 반별 추이 */
   function drawBan() {
-    const bans = G.bans.filter(b => grade === '*' || gcGrade(b) === grade);
+    const bans = G.bans.filter(banOK);
     const s = sort.ban, banAvg = (p, b) => gcMean(p.baseTakes.filter(t => t.ban === b).map(t => t.score));
     const keyF = s.k === 'paper' ? p => gcPaperLabel(p.id) : s.k === 'first' ? p => p.first : s.k === 'cut' ? p => mi(p.meta, '등급컷1')
       : s.k === 'avg' ? p => p.avg : s.k.startsWith('b:') ? p => banAvg(p, s.k.slice(2)) : p => p.first;
@@ -3593,6 +3629,11 @@ function gcWire(st) {
   function draw() {
     document.querySelectorAll('#gc-mode [data-gm]').forEach(b => b.classList.toggle('on', b.dataset.gm === mode));
     document.querySelectorAll('#gc-mode [data-gg]').forEach(b => b.classList.toggle('on', b.dataset.gg === grade));
+    // 반 버튼은 지금 학년 것만 보인다 — 고1·고2 반이 한 줄에 다 깔리면 눈으로 못 고른다(0907 버튼 벽과 같은 실수)
+    document.querySelectorAll('#gc-mode [data-gb]').forEach(b => {
+      if (b.dataset.gbg) b.style.display = b.dataset.gbg === grade ? '' : 'none';
+      b.classList.toggle('on', b.dataset.gb === ban);
+    });
     $('gc-body').innerHTML = mode === 'paper' ? drawPaper() : mode === 'stu' ? drawStu() : drawBan();
     /* (0908 유강 "학생 선택하면 고2A로 고정") 주소 #gichul/<학생ID> 는 route() 가 hashchange·재부팅(토큰 갱신 → boot → wire)
        때마다 gcOpen 으로 다시 먹인다. 학생을 바꿔도 주소는 옛 학생 그대로라 화면이 그 학생으로 되돌아갔다.
@@ -3608,11 +3649,12 @@ function gcWire(st) {
     else { const o = [...document.querySelectorAll('#v-gichul [data-gsel="stu"] option')].map(x => x.value), i = o.indexOf(sid) + d; if (o[i]) sid = o[i]; }
   };
   document.addEventListener('click', e => {
-    const el = e.target.closest('#v-gichul [data-gm],#v-gichul [data-gg],#v-gichul [data-gp],#v-gichul [data-gs],#v-gichul [data-ga],#v-gichul [data-sk],#v-gichul [data-gnav]');
+    const el = e.target.closest('#v-gichul [data-gm],#v-gichul [data-gg],#v-gichul [data-gb],#v-gichul [data-gp],#v-gichul [data-gs],#v-gichul [data-ga],#v-gichul [data-sk],#v-gichul [data-gnav]');
     if (!el) return;
     if (el.dataset.gp) { paper = el.dataset.gp; mode = 'paper'; e.preventDefault(); }
     else if (el.dataset.gm) mode = el.dataset.gm;
-    if (el.dataset.gg) grade = el.dataset.gg;
+    if (el.dataset.gg) { grade = el.dataset.gg; ban = '*'; }   // 학년을 바꾸면 반 선택은 풀린다(딴 학년 반이 남으면 화면이 빈다)
+    if (el.dataset.gb) ban = el.dataset.gb;
     if (el.dataset.gs) sid = el.dataset.gs;
     if (el.dataset.ga) showAns = !showAns;
     if (el.dataset.gnav) step(+el.dataset.gnav);
@@ -3630,14 +3672,22 @@ function gcWire(st) {
   document.addEventListener('input', e => {
     const el = e.target.closest('#v-gichul [data-gq]'); if (!el) return;
     q = el.value.trim();
-    const all = Object.keys(G.byStu).filter(s => grade === '*' || gcGrade(G.byStu[s][0].t.ban) === grade);
+    const all = Object.keys(G.byStu).filter(s => banOK(G.byStu[s][0].t.ban));
     const first = q && (all.find(s => G.byStu[s][0].t.name.startsWith(q)) || all.find(s => G.byStu[s][0].t.name.includes(q)));
     if (first) sid = first;
     const pos = el.selectionStart; draw();
     const nel = document.querySelector('#v-gichul [data-gq]'); if (nel) { nel.focus(); nel.setSelectionRange(pos, pos); }
   });
   // 주소 #gichul/<학생ID> 로 들어오면 그 학생의 추이로 연다 (학생 페이지에서 링크)
-  window.gcOpen = s => { if (s && G.byStu[s]) { sid = s; mode = 'stu'; opened = true; draw(); } };
+  /* 주소 #gichul/<학생ID> — 학생 페이지에서 건너온다. 필터가 학년+반 2단이 된 뒤로는(0917)
+     그 학생의 반으로 필터를 맞춰 줘야 한다. 안 그러면 drawStu 가 "명단에 없는 학생" 이라며
+     딴 학생으로 되돌린다. */
+  window.gcOpen = s => {
+    if (!s || !G.byStu[s]) return;
+    const b = G.byStu[s][0].t.ban;
+    grade = gcGrp(b); if (ban !== '*' && ban !== b) ban = '*';
+    sid = s; mode = 'stu'; opened = true; draw();
+  };
   draw();
 }
 
