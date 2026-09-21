@@ -261,7 +261,7 @@ function applyResult(i){
   const K=ITEMS[i], st=state[i], detail=st.detail, ok=st.ok;
   const sec=document.querySelector('.q[data-i="'+i+'"]');
   sec.querySelectorAll('input[type=text]').forEach(e=>e.disabled=true);
-  sec.querySelectorAll('button').forEach(e=>e.disabled=true);
+  sec.querySelectorAll('button').forEach(e=>{ if(!e.closest('.flag')) e.disabled=true; });
   // (0911) 되짚기는 정답이 없다 — 고른 것만 남기고 진행 막대는 '했음'으로
   if(K.형식==='사후'){ document.querySelectorAll('#bar i')[i].className='done'; return; }
   const mark=(gid,right)=>{
