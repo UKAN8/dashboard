@@ -479,6 +479,36 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .ctab td{padding:6px 4px;border-top:1px solid var(--bd);vertical-align:middle}
 #cs .ctab .seg{margin:0} #cs .ctab a{color:var(--key-d)}
 #cs .time{color:var(--dim);font-size:12px}
+/* ── 커스텀 트레이닝 (0924 P6) ── */
+#cs .ct-course{font-size:14px;font-weight:700;padding:7px 0;color:var(--key-d)}
+#cs .ct-mode{display:inline-flex;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+#cs .ct-mode button{border:0;border-radius:0;background:transparent;padding:7px 14px}
+#cs .ct-mode button.on{background:var(--acc);color:#141018;font-weight:800}
+#cs .ct-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);padding:7px 0;white-space:nowrap}
+#cs .ct-chk input,#cs .ct-row input[type=checkbox]{width:auto;margin:0}
+#cs .ct-units{max-height:460px;overflow:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#cs .ct-unit>summary{cursor:pointer;padding:9px 12px;font-weight:700;font-size:13px;border-bottom:1px solid var(--bd);list-style:none;display:flex;gap:8px;align-items:center}
+#cs .ct-unit>summary::-webkit-details-marker{display:none}
+#cs .ct-unit>summary .dim{color:var(--dim);font-weight:400;font-size:12px}
+#cs .ct-row{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:6px 12px 6px 18px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;cursor:pointer}
+#cs .ct-row.on{background:rgba(245,160,160,.08)}
+#cs .ct-row .k{color:var(--dim);font-size:11px;margin-left:6px}
+#cs .ct-av{display:flex;gap:4px;font-variant-numeric:tabular-nums}
+#cs .ct-av span{min-width:30px;text-align:center;font-size:11px;border-radius:6px;padding:2px 4px;background:rgba(255,255,255,.05);color:var(--tx2)}
+#cs .ct-av span.z{opacity:.35}
+#cs .ct-sel table{width:100%;border-collapse:collapse}
+#cs .ct-sel th{font-size:11px;color:var(--dim);font-weight:600;text-align:left;padding:5px 6px;border-bottom:1px solid var(--bd)}
+#cs .ct-sel td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;vertical-align:middle}
+#cs .ct-sel td.nm{font-weight:700} #cs .ct-sel td.nm small{display:block;font-weight:400;color:var(--dim);font-size:11px}
+#cs .ct-sel input[type=number]{width:64px;padding:5px 6px} #cs .ct-sel select{width:auto;padding:5px 6px}
+#cs .ct-sel .why{font-size:11px;color:var(--dim)}
+#cs .ct-sel .short{color:var(--bad);font-size:12px}
+#cs .ct-sel .empty{color:var(--dim);font-size:13px;padding:10px 2px}
+#cs .ct-g{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:4px}
+#cs .ct-g.G1{background:#a83c3c;color:#fff} #cs .ct-g.G2{background:#9a7413;color:#fff} #cs .ct-g.G3{background:#3b5f8a;color:#fff} #cs .ct-g.G4{background:#2f7d4a;color:#fff}
+#cs .ct-job{padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+#cs .ct-job .lbl{margin:3px 0 0}
+#cs .short{color:var(--bad)}
 
 /* 2단 메뉴 (0908) */
 #nav{flex-direction:column;gap:4px;align-items:flex-start}
@@ -521,7 +551,7 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
@@ -694,6 +724,61 @@ body.cs-on #boot{display:none}
     <div class="card">
       <h2>명단 <span class="badge" id="st_count"></span> <button class="ghost" style="margin-left:8px" onclick="staffLoad()">새로고침</button></h2>
       <div id="st_list">불러오는 중…</div>
+    </div>
+  </section>
+
+  <!-- 커스텀 트레이닝 (0924 P6 0단계) — 조교·유강 시험판. 학생에겐 아직 안 연다.
+       유형(써킷 유형명)·문항수·난이도를 골라 job_queue(종류=커스텀트레이닝)에 넣으면 pt.yml 이 문제·해설 PDF 를 굽는다.
+       입력은 학생을 바꿔도 남는다 — 여러 학생을 연달아 만드는 자리. 정본 console.js 의 ct* 함수. -->
+  <section id="view-ct" class="hidden">
+    <div class="card">
+      <h2>누구에게 <span class="badge">시험판 · 학생 비공개</span></h2>
+      <div class="cs-info-row" style="align-items:flex-end">
+        <div class="f" style="flex:0 0 110px"><label class="lbl">반</label><select id="ct_cls" onchange="ctStudents()"></select></div>
+        <div class="f" style="flex:0 0 150px"><label class="lbl">학생</label><select id="ct_stu" onchange="ctStuChanged()"></select></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">과목</label><div id="ct_course" class="ct-course">—</div></div>
+        <span class="cs-sp"></span>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label>
+          <div class="ct-mode"><button type="button" id="ct_m_auto" class="on" onclick="ctMode('auto')">자동 추천</button><button type="button" id="ct_m_pick" onclick="ctMode('pick')">직접 고르기</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" id="ct_auto">
+      <h2>자동 추천 — 지난 PT 에서 약한 유형부터</h2>
+      <div class="cs-info-row" style="align-items:flex-end">
+        <div class="f" style="flex:0 0 110px"><label class="lbl">유형 수</label><select id="ct_a_n"><option>3</option><option selected>5</option><option>7</option></select></div>
+        <div class="f" style="flex:0 0 150px"><label class="lbl">난이도</label><select id="ct_a_lv"><option value="grade" selected>등급에 맞춤</option><option value="기본">기본 (하)</option><option value="표준">표준 (중)</option><option value="심화">심화 (상)</option></select></div>
+        <div class="f" style="flex:0 0 110px"><label class="lbl">분량</label><select id="ct_a_min"><option value="40">40분</option><option value="60" selected>60분</option><option value="90">90분</option></select></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" type="button" onclick="ctAuto()">추천 채우기</button></div>
+      </div>
+      <div id="ct_a_out" class="loadout">학생을 고르면 지난 90일 PT 의 유형 등급(G1 개념붕괴 → G4 숙달)과 출제 횟수를 읽어 약한 유형부터 채운다. 채운 뒤 아래 목록에서 얼마든지 고칠 수 있다.</div>
+    </div>
+
+    <div class="card hidden" id="ct_pick">
+      <h2>직접 고르기 <span class="badge" id="ct_p_cnt"></span></h2>
+      <div class="cs-info-row" style="align-items:flex-end;margin-bottom:8px">
+        <div class="f grow"><label class="lbl">찾기 — 유형 이름 일부</label><input id="ct_q" placeholder="예: 미분가능성, 접선, 평행이동" oninput="ctRenderPick()"></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><label class="ct-chk"><input type="checkbox" id="ct_only" onchange="ctRenderPick()"> 문항 10개 이상만</label></div>
+      </div>
+      <div class="lbl" style="margin:0 0 6px">숫자 = 꺼낼 수 있는 문항 수 <b>하 · 중 · 중상 · 상</b> (써킷 원본+변형+문제집). 이 학생에게 이미 나간 문항은 만들 때 빠지므로 조금 줄 수 있다.</div>
+      <div id="ct_units" class="ct-units">불러오는 중…</div>
+    </div>
+
+    <div class="card">
+      <h2>이번에 만들 것 <span class="badge" id="ct_sum"></span></h2>
+      <div id="ct_sel" class="ct-sel"></div>
+      <div class="cs-info-row" style="align-items:flex-end;margin-top:10px">
+        <div class="f" style="flex:0 0 190px"><label class="lbl">표지 라벨</label><input id="ct_label" value="커스텀 트레이닝" maxlength="20"></div>
+        <span class="cs-sp"></span>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost" type="button" onclick="ctClear()">비우기</button></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" type="button" id="ct_go" onclick="ctSubmit()">이 학생 것 만들기</button></div>
+      </div>
+      <div id="ct_out" class="loadout">만들기를 누르면 서버가 문제·해설 PDF 두 개를 굽는다(보통 3~5분). 입력은 그대로 남으니 <b>학생만 바꿔 다시 누르면</b> 같은 구성으로 다음 학생 것이 나간다. 고른 난이도에 문항이 모자라면 채우지 않고 모자란 대로 낸다.</div>
+    </div>
+
+    <div class="card">
+      <h2>여기서 낸 작업 — 최근 14일 <button class="ghost" style="margin-left:8px" onclick="ctJobs()">새로고침</button></h2>
+      <div id="ct_jobs">불러오는 중…</div>
     </div>
   </section>
 
@@ -3950,7 +4035,7 @@ document.addEventListener('click', e => {
 });
 function csRoute() {
   const m = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-  if (!/^cs-(console|clinic|load|staff)$/.test(m)) {
+  if (!/^cs-(console|clinic|load|staff|ct)$/.test(m)) {
     // 콘솔에서 나갈 때는 여기서 접는다. 조회 라우터(route)는 wire() 안에 있어서
     // 조회 로딩이 실패한 날에는 아예 안 돈다 — 그러면 콘솔 화면이 그대로 남아 버린다.
     document.body.classList.remove('cs-on');
@@ -4026,9 +4111,10 @@ function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');
  * 각 손잡이(루프·추가학습·오늘 물을 것)는 자기 작업만 메모리로 폴링한다 —
  * 새로고침하면 추적을 잃고, 다른 탭의 작업은 아예 안 보였다.
  * 여기는 job_queue 를 직접 읽는다: 새로고침 생존 + 전 종류 한눈에. */
-const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트'/*UI는 0906 제거, 옛 job_queue 행 표시용*/,진단발송:'채점 확정 → PT 펼치기',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝'};
+const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트'/*UI는 0906 제거, 옛 job_queue 행 표시용*/,진단발송:'채점 확정 → PT 펼치기',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝',커스텀트레이닝:'커스텀 트레이닝'};
 function toggleJobs(){const p=$('jobpanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))jobsRefresh();}
-function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항')].filter(Boolean).join(' · ');}
+function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['학생']&&j['종류']==='커스텀트레이닝'?p['학생']:'',p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항'),Array.isArray(p['유형'])&&('유형 '+p['유형'].length+'개')].filter(Boolean).join(' · ');}
+const isPT=k=>k==='기출과제'||k==='커스텀트레이닝';   /* (0924) 둘 다 pt.yml 이 한 줄로 집는다 */
 function jobAge(t){return Math.max(0,Math.round((Date.now()-new Date(t))/60000));}
 function jobWhen(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 async function jobsRefresh(){
@@ -4051,7 +4137,7 @@ async function jobsRefresh(){
               :(st==='처리중'||st==='진행')?'<span class="jstat run">만드는 중</span>'
               :'<span class="jstat wait">대기</span>';
     let line2='';
-    if(j['종류']==='기출과제'&&(st==='요청'||st==='처리중'||st==='진행')){
+    if(isPT(j['종류'])&&(st==='요청'||st==='처리중'||st==='진행')){
       /* (0913) PT 는 pt.yml 이 한 번에 하나만 돈다. 반 전체를 한꺼번에 펼치면 뒤쪽은 기다리는 게 정상 —
          '3분 넘으면 고장' 문구가 거짓 경보를 냈다. 줄 순서로 말한다.
          (0923 실측 정정) "2명씩 5분 · 한 명에 1~2분" 은 거짓이었다 — 서버에서 **한 명 약 3분**(0923 속도 개선 뒤;
@@ -4059,9 +4145,9 @@ async function jobsRefresh(){
          멈춘 잡 자동 회수는 pt_worker STALE_MIN = 60분이다(30분이 아니었다). */
       const PT_MIN=3;
       const m=jobAge(j['시작시각']||j['요청시각']);
-      const ptq=(data||[]).filter(x=>x['종류']==='기출과제'&&x['상태']==='요청')
+      const ptq=(data||[]).filter(x=>isPT(x['종류'])&&x['상태']==='요청')
         .sort((a,b)=>new Date(a['요청시각'])-new Date(b['요청시각']));
-      const running=(data||[]).filter(x=>x['종류']==='기출과제'&&(x['상태']==='처리중'||x['상태']==='진행')).length;
+      const running=(data||[]).filter(x=>isPT(x['종류'])&&(x['상태']==='처리중'||x['상태']==='진행')).length;
       if(st==='요청'){
         const k=ptq.findIndex(x=>x.id===j.id)+1;
         const eta=(k+running)*PT_MIN+2;
@@ -4090,7 +4176,7 @@ async function jobsRefresh(){
       pdfline='<div class="lbl" style="margin:3px 0 0">'
         +dg.map(x=>'<a href="'+esc(x.url)+'" target="_blank">'+esc(x.이름)+'('+esc(String(x.문항수))+')</a>').join(' · ')
         +' <button type="button" class="pill dgsend-btn" data-j="'+j.id+'">진단 알림톡 보내기 ('+dg.length+')</button></div>';
-    const up=(j['종류']==='기출과제'&&st==='완료'&&j['결과']&&j['결과']['업로드'])||null;
+    const up=(isPT(j['종류'])&&st==='완료'&&j['결과']&&j['결과']['업로드'])||null;
     if(up&&up.length)
       pdfline='<div class="lbl gtpdf" data-j="'+j.id+'" style="margin:3px 0 0">'
         +(GTPDF[j.id]?GTPDF[j.id].html:'<button type="button" class="pill gtpdf-btn" data-j="'+j.id+'">학생별 PDF 받기 ('+up.length+')</button>')
@@ -6250,8 +6336,257 @@ async function staffRemove(email){
   toast('뺐다');staffLoad();
 }
 
+/* ── 커스텀 트레이닝 (0924 P6 0단계) ─────────────────────────────────────
+ * 조교·유강 시험판. 유형(써킷 유형명)·문항수·난이도를 골라 job_queue(종류=커스텀트레이닝)에 넣는다.
+ * pt.yml(pt_worker.handle_ct → scripts/ct_build.py → build_pt2)이 문제·해설 PDF 를 굽는다. 결과 계약은 기출과제와 같다.
+ * 카탈로그 = dashboard 저장소 ct/types.json (ct_build.py --catalog, build_app --deploy 가 같이 올린다)
+ *   {과목:{공통수학2:[{코드,이름,유형:[{키:'03-T08',이름,n:[하,중,중상,상]}]}]}, 분:{하:1,…}}
+ * 자동 추천 = 지난 90일 기출과제 결과의 유형 그레이드(G1~G4, 0922 판정 기록) + 그 유형이 PT 에 나온 횟수. 써킷 축이라 변환이 없다. */
+const CT_LV=['하','중','중상','상'];
+let CTCAT=null, CTIDX={}, CTSTU=[], CTSEL=[], CTMODE='auto', CTTIMER=null;
+const ctCourse=cls=>String(cls||'').startsWith('고2')?'미적분1':'공통수학2';
+const ctMin=lv=>((CTCAT&&CTCAT['분'])||{하:1,중:2,중상:3,상:5})[lv]||2;
+function ctAvail(key,lv){
+  const t=CTIDX[key]; if(!t)return 0;
+  return lv==='섞음'?t.n.reduce((a,b)=>a+b,0):(t.n[CT_LV.indexOf(lv)]||0);
+}
+function ctItemMin(s){                       // 섞음은 쉬운 것부터 고르게 → 레벨 평균으로 친다
+  if(s['난이도']!=='섞음')return ctMin(s['난이도'])*s['문항수'];
+  const t=CTIDX[ctK(s['키'],s['과목'])]; if(!t)return 2*s['문항수'];
+  const lv=CT_LV.filter((_,i)=>t.n[i]>0); if(!lv.length)return 0;
+  return lv.reduce((a,l)=>a+ctMin(l),0)/lv.length*s['문항수'];
+}
+async function ctInit(){
+  if(!CTSTU.length){
+    const {data}=await sb.from('students').select('학생ID,이름,학년,반').eq('상태','재원');
+    CTSTU=(data||[]).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+    const sel=$('ct_cls');sel.innerHTML='';
+    [...new Set(CTSTU.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{
+      const o=document.createElement('option');o.textContent=c;sel.appendChild(o);
+    });
+    if(CLS&&[...sel.options].some(o=>o.value===CLS))sel.value=CLS;   // 수업 콘솔에서 연 반이 있으면 그 반
+    ctStudents();
+  }
+  if(!CTCAT){
+    try{
+      const r=await fetch('ct/types.json',{cache:'no-store'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      CTCAT=await r.json();
+      CTIDX={};
+      for(const [c,units] of Object.entries(CTCAT['과목']||{}))
+        for(const u of units)for(const t of u['유형'])
+          CTIDX[t['키']+'@'+c]=CTIDX[t['키']+'@'+c]||{...t,단원:u['이름'],과목:c};
+    }catch(e){
+      $('ct_units').innerHTML='<span class="warn">유형 목록(ct/types.json)을 못 읽었다: '+esc(e.message)+'</span> — 세션에서 build_app.py --deploy 로 올려야 한다.';
+    }
+  }
+  ctRenderPick();ctRenderSel();ctJobs();
+}
+/* 과목마다 단원코드·유형번호가 겹친다 — 내부 키는 '03-T08@미적분1' */
+const ctK=(key,c)=>key+'@'+(c||ctCourse($('ct_cls').value));
+function ctStudents(){
+  const cls=$('ct_cls').value, sel=$('ct_stu'), keep=sel.value;
+  sel.innerHTML='';
+  CTSTU.filter(r=>((r['학년']||'')+(r['반']||''))===cls).forEach(r=>{
+    const o=document.createElement('option');o.value=r['학생ID'];o.textContent=r['이름'];sel.appendChild(o);
+  });
+  if([...sel.options].some(o=>o.value===keep))sel.value=keep;
+  const c=ctCourse(cls);
+  $('ct_course').textContent=c;
+  const other=CTSEL.filter(s=>s['과목']!==c);
+  if(other.length){
+    CTSEL=CTSEL.filter(s=>s['과목']===c);
+    toast('과목이 달라 고른 유형 '+other.length+'개를 비웠다');
+  }
+  ctRenderPick();ctRenderSel();ctStuChanged();
+}
+function ctStuChanged(){
+  const b=$('ct_go'),o=$('ct_stu').selectedOptions[0];
+  if(b)b.textContent=o?(o.textContent+' 것 만들기'):'이 학생 것 만들기';
+}
+function ctMode(m){
+  CTMODE=m;
+  $('ct_m_auto').classList.toggle('on',m==='auto');$('ct_m_pick').classList.toggle('on',m==='pick');
+  $('ct_auto').classList.toggle('hidden',m!=='auto');$('ct_pick').classList.toggle('hidden',m!=='pick');
+  if(m==='pick')ctRenderPick();
+}
+function ctBestLevel(k,want,need){
+  /* 원하는 난이도에 need 개가 없으면 가까운 난이도 중 가장 많은 곳으로 */
+  if(ctAvail(k,want)>=need)return want;
+  let i=CT_LV.indexOf(want); if(i<0)i=1;
+  const order=CT_LV.map((l,j)=>[l,Math.abs(j-i),j]).sort((a,b)=>a[1]-b[1]||b[2]-a[2]);
+  for(const [l] of order)if(ctAvail(k,l)>=need)return l;
+  return order.map(([l])=>l).sort((a,b)=>ctAvail(k,b)-ctAvail(k,a))[0];
+}
+function ctAdd(k,why){
+  const t=CTIDX[k]; if(!t||CTSEL.some(s=>ctK(s['키'],s['과목'])===k))return;
+  const lv=ctBestLevel(k,'중',5);
+  CTSEL.push({키:t['키'],유형명:t['이름'],단원:t['단원'],과목:t['과목'],문항수:Math.max(1,Math.min(5,ctAvail(k,lv))),난이도:lv,why:why||''});
+}
+function ctRenderPick(){
+  const box=$('ct_units'); if(!box||!CTCAT)return;
+  const c=ctCourse($('ct_cls').value), q=($('ct_q').value||'').trim(), only=$('ct_only').checked;
+  const units=(CTCAT['과목']||{})[c]||[];
+  const on=new Set(CTSEL.map(s=>ctK(s['키'],s['과목'])));
+  let shown=0;
+  box.innerHTML=units.map(u=>{
+    const rows=u['유형'].filter(t=>(!q||t['이름'].includes(q))&&(!only||t.n.reduce((a,b)=>a+b,0)>=10));
+    if(!rows.length)return '';
+    shown+=rows.length;
+    const nOn=rows.filter(t=>on.has(t['키']+'@'+c)).length;
+    return '<details class="ct-unit"'+(q||nOn?' open':'')+'><summary>'+esc(u['코드'])+' '+esc(u['이름'])
+      +' <span class="dim">유형 '+rows.length+(nOn?' · 고름 '+nOn:'')+'</span></summary>'
+      +rows.map(t=>{const k=t['키']+'@'+c;return '<div class="ct-row'+(on.has(k)?' on':'')+'" data-k="'+esc(k)+'">'
+        +'<input type="checkbox"'+(on.has(k)?' checked':'')+' tabindex="-1">'
+        +'<div>'+esc(t['이름'])+'<span class="k">'+esc(t['키'])+'</span></div>'
+        +'<div class="ct-av">'+t.n.map((v,i)=>'<span class="'+(v?'':'z')+'" title="'+CT_LV[i]+'">'+v+'</span>').join('')+'</div></div>';}).join('')
+      +'</details>';
+  }).join('')||'<div class="empty" style="padding:12px">맞는 유형이 없다.</div>';
+  $('ct_p_cnt').textContent=c+' · 유형 '+shown;
+  box.querySelectorAll('.ct-row').forEach(r=>r.onclick=()=>{
+    const k=r.dataset.k;
+    if(CTSEL.some(s=>ctK(s['키'],s['과목'])===k))CTSEL=CTSEL.filter(s=>ctK(s['키'],s['과목'])!==k);
+    else ctAdd(k,'직접');
+    const inp=r.querySelector('input');const now=CTSEL.some(s=>ctK(s['키'],s['과목'])===k);
+    inp.checked=now;r.classList.toggle('on',now);
+    ctRenderSel();
+  });
+}
+function ctRenderSel(){
+  const box=$('ct_sel'); if(!box)return;
+  if(!CTSEL.length){
+    box.innerHTML='<div class="empty">아직 고른 유형이 없다 — 위에서 <b>추천 채우기</b>를 누르거나 <b>직접 고르기</b>에서 체크한다.</div>';
+    $('ct_sum').textContent='';return;
+  }
+  let N=0,M=0;
+  box.innerHTML='<table><thead><tr><th>유형</th><th>난이도 (꺼낼 수 있는 수)</th><th>문항 수</th><th>예상</th><th></th></tr></thead><tbody>'
+    +CTSEL.map((s,i)=>{
+      const k=ctK(s['키'],s['과목']), av=ctAvail(k,s['난이도']), n=+s['문항수']||0, m=ctItemMin(s);
+      N+=Math.min(n,av);M+=m*(av<n&&n?av/n:1);
+      const g=/^G[1-4]/.exec(s.why||'');
+      return '<tr><td class="nm">'+esc(s['유형명'])+'<small>'+esc(s['단원']||'')+' · '+esc(s['키'])
+        +(s.why?' · <span class="why">'+(g?'<span class="ct-g '+g[0]+'">'+g[0]+'</span>'+esc(s.why.slice(2)):esc(s.why))+'</span>':'')+'</small></td>'
+        +'<td><select data-i="'+i+'" class="ct-lv">'+CT_LV.concat(['섞음']).map(l=>'<option value="'+l+'"'+(l===s['난이도']?' selected':'')+'>'+l+' ('+ctAvail(k,l)+')</option>').join('')+'</select></td>'
+        +'<td><input type="number" min="1" max="20" value="'+n+'" data-i="'+i+'" class="ct-n">'
+        +(av<n?' <span class="short">→ '+av+'개만 나온다</span>':'')+'</td>'
+        +'<td>약 '+Math.round(m*(av<n&&n?av/n:1))+'분</td>'
+        +'<td><button type="button" class="ghost sm" data-i="'+i+'">빼기</button></td></tr>';
+    }).join('')+'</tbody></table>';
+  const warn=[];
+  if(CTSEL.length>8)warn.push('유형 8개 초과 — 목차가 넘친다');
+  if(M>90)warn.push('90분 초과');
+  else if(M<40)warn.push('40분 미만(짧다)');
+  $('ct_sum').textContent='유형 '+CTSEL.length+' · 문항 '+N+' · 약 '+Math.round(M)+'분'+(warn.length?' · ⚠ '+warn.join(' · '):'');
+  box.querySelectorAll('.ct-lv').forEach(e=>e.onchange=()=>{CTSEL[+e.dataset.i]['난이도']=e.value;ctRenderSel();});
+  box.querySelectorAll('.ct-n').forEach(e=>e.onchange=()=>{CTSEL[+e.dataset.i]['문항수']=Math.max(1,Math.min(20,parseInt(e.value)||1));ctRenderSel();});
+  box.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{CTSEL.splice(+b.dataset.i,1);ctRenderSel();ctRenderPick();});
+}
+function ctClear(){CTSEL=[];ctRenderSel();ctRenderPick();}
+const CT_GW={G1:4,G2:3,G3:2,G4:0.5}, CT_GLV={G1:'하',G2:'중',G3:'중상',G4:'상'}, CT_GNM={G1:'개념붕괴',G2:'불안정',G3:'적용부족',G4:'숙달'};
+async function ctAuto(){
+  const out=$('ct_a_out'), sid=$('ct_stu').value, o=$('ct_stu').selectedOptions[0];
+  if(!sid||!o){out.textContent='학생을 먼저 고른다.';return;}
+  if(!CTCAT){out.textContent='유형 목록을 아직 못 읽었다.';return;}
+  const name=o.textContent, cls=$('ct_cls').value, c=ctCourse(cls);
+  out.textContent=name+' 지난 PT 읽는 중…';
+  const since=new Date(Date.now()-90*86400000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('id,결과,완료시각').in('종류',['기출과제','커스텀트레이닝'])
+    .eq('상태','완료').gte('요청시각',since).contains('파라미터',{'반':cls}).order('id',{ascending:false}).limit(300);
+  if(error){out.textContent='못 읽었다: '+error.message;return;}
+  const grade={}, freq={};
+  const byName={};                                           // 단원코드+유형명 → 카탈로그 키 (문항 기록엔 이름만 있다)
+  for(const u of (CTCAT['과목'][c]||[]))for(const t of u['유형']){const kk=u['코드']+'|'+t['이름'];if(!byName[kk])byName[kk]=t['키'];}
+  let seen=0;
+  for(const j of (data||[])){
+    const ent=(((j['결과']||{})['업로드'])||[]).find(e=>e['이름']===name);
+    if(!ent)continue; seen++;
+    const d=j['완료시각']?(new Date(j['완료시각']).getMonth()+1)+'/'+new Date(j['완료시각']).getDate():'';
+    for(const [key,v] of Object.entries(ent['그레이드']||{}))
+      if(!grade[key]&&v&&v['등급'])grade[key]={g:v['등급'],d};
+    for(const it of (ent['문항']||[])){
+      const u=String(it.id||'').split('-')[0].replace(/v$/,'').split('x')[0];
+      const nm=String(it.t||'').split(' + ')[0].trim();
+      const key=byName[u+'|'+nm]; if(key)freq[key]=(freq[key]||0)+1;
+    }
+  }
+  const keys=[...new Set([...Object.keys(grade),...Object.keys(freq)])].filter(k=>CTIDX[k+'@'+c]);
+  if(!keys.length){
+    out.innerHTML=esc(name)+': 지난 90일 PT 기록'+(seen?'은 '+seen+'부 있지만 유형을 못 맞췄다':'이 없다')+' — <b>직접 고르기</b>로 고른다.';
+    return;
+  }
+  const score=k=>(grade[k]?CT_GW[grade[k].g]||1.5:1.5)+0.25*Math.min(freq[k]||0,8);
+  keys.sort((a,b)=>score(b)-score(a)||(freq[b]||0)-(freq[a]||0));
+  const n=+$('ct_a_n').value, mode=$('ct_a_lv').value, total=+$('ct_a_min').value;
+  const pick=keys.slice(0,n);
+  CTSEL=pick.map(key=>{
+    const k=key+'@'+c, t=CTIDX[k], g=grade[key]&&grade[key].g;
+    const want=mode==='grade'?(CT_GLV[g]||'중'):({기본:'하',표준:'중',심화:'상'})[mode];
+    const lv=ctBestLevel(k,want,2);
+    const cnt=Math.max(1,Math.min(20,ctAvail(k,lv),Math.round(total/pick.length/ctMin(lv))));
+    const why=g?(g+' '+(CT_GNM[g]||'')+(grade[key].d?' · '+grade[key].d+' PT':'')):('PT '+(freq[key]||0)+'회 출제');
+    return {키:key,유형명:t['이름'],단원:t['단원'],과목:c,문항수:cnt,난이도:lv,why:why+(lv!==want?' · '+want+' 부족→'+lv:'')};
+  });
+  out.innerHTML=esc(name)+': 지난 PT '+seen+'부에서 유형 '+keys.length+'개를 읽고 약한 순으로 '+CTSEL.length+'개를 채웠다. 아래에서 고쳐도 된다.';
+  ctRenderSel();ctRenderPick();
+}
+async function ctSubmit(){
+  const sid=$('ct_stu').value, o=$('ct_stu').selectedOptions[0], cls=$('ct_cls').value, out=$('ct_out');
+  if(!sid||!o){out.textContent='학생을 고른다.';return;}
+  if(!CTSEL.length){out.textContent='유형을 하나 이상 고른다.';return;}
+  const name=o.textContent, c=ctCourse(cls);
+  const 유형=CTSEL.map(s=>({키:s['키'],유형명:s['유형명'],문항수:+s['문항수'],난이도:s['난이도']}));
+  const {data:pend}=await sb.from('job_queue').select('id,파라미터').eq('종류','커스텀트레이닝')
+    .in('상태',['요청','처리중']).contains('파라미터',{'학생ID':sid});
+  if((pend||[]).some(j=>JSON.stringify((j['파라미터']||{})['유형'])===JSON.stringify(유형))
+     &&!confirm(name+' 에게 같은 구성이 이미 만들어지는 중이다. 한 부 더 만들까?'))return;
+  $('ct_go').disabled=true;
+  const {error}=await sb.from('job_queue').insert({'종류':'커스텀트레이닝','상태':'요청','요청자':'콘솔커스텀',
+    '파라미터':{'학생':name,'학생ID':sid,'반':cls,'과목':c,'날짜':todayStr(),'라벨':($('ct_label').value||'커스텀 트레이닝').trim(),'유형':유형}});
+  $('ct_go').disabled=false;
+  if(error){out.innerHTML='<span class="warn">요청 실패: '+esc(error.message)+'</span>';toast('실패');return;}
+  out.innerHTML='<b>'+esc(name)+'</b> 요청 넣음 — 서버가 집으면 3~5분. 입력은 남겨 뒀다: 학생만 바꿔 다시 누르면 같은 구성으로 나간다.';
+  toast(name+' 요청');ctJobs();jobsRefresh();
+}
+async function ctJobs(){
+  const box=$('ct_jobs'); if(!box)return;
+  if(CTTIMER){clearTimeout(CTTIMER);CTTIMER=null;}
+  const since=new Date(Date.now()-14*86400000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('id,상태,파라미터,결과,메시지,요청시각,시작시각,완료시각')
+    .eq('종류','커스텀트레이닝').gte('요청시각',since).order('id',{ascending:false}).limit(40);
+  if(error){box.innerHTML='<span class="warn">못 읽었다: '+esc(error.message)+'</span>';return;}
+  if(!(data||[]).length){box.textContent='아직 없다.';return;}
+  let active=0;
+  box.innerHTML=data.map(j=>{
+    const p=j['파라미터']||{}, st=j['상태'], r=j['결과']||{};
+    const run=st==='요청'||st==='처리중';active+=run;
+    const badge=st==='완료'?'<span class="jstat ok">완료</span>':st==='실패'?'<span class="jstat bad">실패</span>'
+      :st==='처리중'?'<span class="jstat run">만드는 중</span>':'<span class="jstat wait">대기</span>';
+    const 구성=(p['유형']||[]).map(t=>t['유형명']+' '+t['문항수']+(t['난이도']?'·'+t['난이도']:'')).join(' / ');
+    const 부족=(r['부족']||[]).length?'<div class="lbl short">모자람: '+r['부족'].map(b=>esc(b['유형명']||'')+' '+b['나옴']+'/'+b['요청']).join(' · ')+'</div>':'';
+    const up=st==='완료'&&(r['업로드']||[]).length;
+    return '<div class="ct-job"><b>'+esc(p['학생']||'?')+'</b> <span class="lbl" style="display:inline">'+esc(p['반']||'')+' · '+jobWhen(j['요청시각'])+'</span> '+badge
+      +' <button type="button" class="ghost sm ct-reuse" data-j="'+j.id+'">이 구성 불러오기</button>'
+      +'<div class="lbl">'+esc(구성)+'</div>'
+      +(run?'<div class="lbl">'+jobAge(j['시작시각']||j['요청시각'])+'분 경과 — PT 와 같은 줄에 선다(한 명 약 3분)</div>':'<div class="lbl">'+esc(j['메시지']||'')+'</div>')
+      +부족
+      +(up?'<div class="lbl gtpdf" data-j="'+j.id+'">'+(GTPDF[j.id]?GTPDF[j.id].html:'<button type="button" class="pill ct-pdf" data-j="'+j.id+'">문제·해설 PDF</button>')+'</div>':'')
+      +'</div>';
+  }).join('');
+  box.querySelectorAll('.ct-pdf').forEach(b=>b.onclick=()=>{const j=data.find(x=>String(x.id)===b.dataset.j);if(j)gtJobLinks(j,b.parentElement);});
+  box.querySelectorAll('.gtzip').forEach(b=>b.onclick=()=>gtZip(b.closest('.gtpdf').dataset.j,b));
+  box.querySelectorAll('.ct-reuse').forEach(b=>b.onclick=()=>{
+    const j=data.find(x=>String(x.id)===b.dataset.j); if(!j)return;
+    const p=j['파라미터']||{}, c=p['과목']||ctCourse(p['반']);
+    if(c!==ctCourse($('ct_cls').value)){toast('과목이 다르다 — 먼저 '+c+' 반을 고른다');return;}
+    CTSEL=(p['유형']||[]).filter(t=>CTIDX[t['키']+'@'+c]).map(t=>({키:t['키'],유형명:t['유형명'],단원:CTIDX[t['키']+'@'+c]['단원'],과목:c,
+      문항수:t['문항수'],난이도:t['난이도'],why:'#'+j.id+' 구성'}));
+    ctRenderSel();ctRenderPick();toast('구성 불러옴 — 학생을 고르고 만들기');
+  });
+  if(active&&!$('view-ct').classList.contains('hidden'))CTTIMER=setTimeout(()=>{if(document.visibilityState==='visible')ctJobs();else CTTIMER=setTimeout(ctJobs,10000);},10000);
+}
+
 /* ── 뷰 전환 ── */
-const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리'};
+const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리',ct:'커스텀 트레이닝'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
@@ -6261,6 +6596,7 @@ function showView(v){
   if(v==='clinic')clinicInit();
   if(v==='load')loadXlsx().catch(()=>{});
   if(v==='staff')staffLoad();
+  if(v==='ct')ctInit();
 }
 /* 통합 셸(/dashboard/)에서는 주소(#cs-console)가 진실원이다 — 콘솔 안에서 부른 showView 도
    해시를 거쳐 돌아오게 해서 뒤로가기·새로고침이 같은 화면을 연다. 단독 콘솔에선 그대로 동작. */
