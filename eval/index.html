@@ -94,15 +94,17 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
 .pb .fig{text-align:center;margin:7px 0}
 .pb .fl{float:right;margin:0 0 4px 8px;max-width:48%}
 .pb .fl.left{float:left;margin:0 8px 4px 0}
-/* (0913 유강) 문제 자세히보기 — 어떤 문제였는지 모르는 애들이 있다. 기본은 접힘 */
+/* (0913 유강) 문제 자세히보기 — 어떤 문제였는지 모르는 애들이 있다. 기본은 접힘
+   (0926) <details>/<summary> 를 버리고 버튼+클래스로 — 일부 폰 브라우저에서 summary 탭이 안 먹힌다는 신고. 버튼은 어디서나 먹는다 */
 .peek{margin:0 0 8px}
-.peek>summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;list-style:none;
- font-size:12.5px;font-weight:700;color:var(--tx2);border:1px solid var(--bd);border-radius:9px;
- padding:6px 11px;user-select:none}
-.peek>summary::-webkit-details-marker{display:none}
-.peek>summary::before{content:'＋';font-weight:400}
-.peek[open]>summary::before{content:'－'}
-.peek[open]>summary{margin-bottom:7px}
+.peek>.pk{display:inline-flex;align-items:center;gap:5px;cursor:pointer;background:transparent;
+ font-size:12.5px;font-weight:700;font-family:inherit;line-height:1.3;color:var(--tx2);border:1px solid var(--bd);border-radius:9px;
+ padding:6px 11px;user-select:none;-webkit-appearance:none;appearance:none}
+.peek>.pk::before{content:'＋';font-weight:400}
+.peek.open>.pk::before{content:'－'}
+.peek.open>.pk{margin-bottom:7px}
+.peek>.pb{display:none}
+.peek.open>.pb{display:block}
 .row.pc .b.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.55);color:#ffe9e9}
 </style></head>
 <body><main>
@@ -168,7 +170,7 @@ let TOK='', DAY='', DATA=null, ITEMS=[], ANS={}, T0=Date.now();
  * 발문은 그날 루프가 같이 올린 /set/pe_<키>.json 에서 — 없으면 번호·유형·내 답·정답만 보인다.
  * (0913) 발문은 '문제 자세히보기'로 접어 둔다. 선지는 make_learn 이 빼고, 본문 그림은 살린다.
  * 한 문항의 궤적: 시험 확신 → 강의 후 상태(루프 되짚기) → PT 정오 → 여기(1주 뒤 재확신). */
-let PAST=null, PE={}, POP={};   // POP = '문제 자세히보기' 펼침 상태(라벨별) — drawPast 가 다시 그려도 살아 있어야 한다
+let PAST=null, PE={}, POP={};   // POP = '문제 자세히보기' 펼침 상태(라벨별) — drawPast 가 다시 그려도 살아 있어야 한다 (0926: details→버튼, 클래스 open)
 const PCONF=[['확실','지금 풀면 맞힌다'],['애매','될 것 같은데 긴가민가'],['모르겠다','다시 봐도 모르겠다']];
 const PA=()=>(ANS['_지난']&&ANS['_지난'].항목)||{};
 /* (0915 유강) '1주 뒤'는 고정값이 아니다 — 시험 날짜에서 실제 경과일을 계산해 보여준다.
@@ -195,13 +197,13 @@ function drawPast(){
     H.push(`<div class="q${c?' ok':''}" id="p_${E(it.라벨)}">
       <div class="hd"><span class="no">${E(it.라벨)}번</span><span class="pt">${E(it.유형||'')}</span></div>
       <div class="meta"><span>내 답 <b>${E(circ(it.내답)||'—')}</b></span><span>정답 <b>${E(circ(it.정답)||'—')}</b></span>${it.확신?`<span>그때 <b>${E(it.확신)}</b></span>`:''}</div>
-      ${pe&&pe.발문?`<details class="peek" data-l="${E(it.라벨)}"${POP[it.라벨]?' open':''}><summary>문제 자세히보기</summary><div class="pb">${pe.발문}</div></details>`:''}
+      ${pe&&pe.발문?`<div class="peek${POP[it.라벨]?' open':''}" data-l="${E(it.라벨)}"><button type="button" class="pk">문제 자세히보기</button><div class="pb">${pe.발문}</div></div>`:''}
       <div class="row cf pc">`+PCONF.map(([v,t])=>`<button class="b${c===v?' on':''}" data-p="${E(it.라벨)}" data-c="${v}">${v}<br><small style="font-weight:400;font-size:11px;color:var(--dim)">${t}</small></button>`).join('')+`</div>
     </div>`);
   });
   H.push('</div>');
   box.innerHTML=H.join('');
-  box.querySelectorAll('details.peek').forEach(d=>d.ontoggle=()=>{ POP[d.dataset.l]=d.open; });
+  box.querySelectorAll('.peek>.pk').forEach(k=>k.onclick=()=>{ const d=k.parentNode; d.classList.toggle('open'); POP[d.dataset.l]=d.classList.contains('open'); });
   box.querySelectorAll('button.b').forEach(b=>b.onclick=()=>{
     const z=ANS['_지난']||(ANS['_지난']={날짜:PAST.날짜,항목:{}}); z.날짜=PAST.날짜; z.항목=z.항목||{};
     z.항목[b.dataset.p] = (z.항목[b.dataset.p]===b.dataset.c?'':b.dataset.c);
