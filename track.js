@@ -17,6 +17,13 @@
 (function () {
   try {
     if (location.protocol === 'file:' || /^(localhost|127\.)/.test(location.hostname)) return;
+    // 유강·조교 기기는 안 센다: 아무 페이지 주소 끝에 #nocount 를 붙여 한 번 열면 그 기기는 영구 제외
+    // (GoatCounter 의 skipgc 도 같이 켜서 홈페이지·lab 도 안 센다). 되돌리기: #count
+    try {
+      if (location.hash === '#nocount') { localStorage.setItem('mt_skip', '1'); localStorage.setItem('skipgc', 't'); }
+      if (location.hash === '#count') { localStorage.removeItem('mt_skip'); localStorage.removeItem('skipgc'); }
+      if (localStorage.getItem('mt_skip')) return;
+    } catch (e) {}
     var S = document.currentScript || document.querySelector('script[src*="track.js"]');
     var PAGE = (S && S.getAttribute('data-page')) || 'etc';
     var SB = 'https://bkgerndnwukvuuqdgnxt.supabase.co';
@@ -25,7 +32,7 @@
     var HASH = /-[0-9a-f]{8}(\.html)?$/;
 
     function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
-    function clean(p) { return (p || '/').replace(/\/index\.html$/, '/').replace(HASH, ''); }
+    function clean(p) { try { p = decodeURIComponent(p); } catch (e) {} return (p || '/').replace(/\/index\.html$/, '/').replace(HASH, ''); }
 
     var dev = ls('mt_dev');
     if (!dev) { dev = (Math.random().toString(36).slice(2) + Date.now().toString(36)).slice(0, 16); ls('mt_dev', dev); }
