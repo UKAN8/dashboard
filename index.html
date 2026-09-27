@@ -244,6 +244,16 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .sh-tbl td{padding:4px 8px 4px 0;border-top:1px solid var(--bd);vertical-align:middle}
 .sh-tbl td .chip{margin:0} .sh-tbl .sh-cm{white-space:normal;min-width:160px;color:var(--tx2);font-size:12px}
 
+/* 학생별 루프 (0928) */
+.ls-card{margin-bottom:10px}
+.ls-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+.ls-h .nm,.ls-h>b{font-size:15px;font-weight:800}
+.ls-last{margin-left:auto;font-size:13px}
+.ls-r{display:grid;grid-template-columns:48px minmax(0,1fr) 150px 90px 92px 60px;gap:10px;align-items:baseline;padding:4px 0;font-size:13px}
+.ls-r>*{min-width:0} .ls-u{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .ls-a{text-align:right}
+#ls-q{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 12px;width:150px;font-size:13px}
+@media(max-width:700px){.ls-r{grid-template-columns:44px 1fr 70px 56px} .ls-r>.dim{display:none}}
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -554,7 +564,7 @@ body.cs-on #boot{display:none}
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
-<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
+<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
 </div></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
@@ -1810,7 +1820,7 @@ function compute(raw) {
 function render(st) {
   $('views').innerHTML = [
     viewToday(st), viewClass(st), viewStudent(st), viewClinic(st),
-    viewLoop(st), viewReport(st), viewWeak(st),
+    viewLoop(st), viewLoopStu(st), viewReport(st), viewWeak(st),
     viewExam(st), viewClinicLog(st), viewExamMeta(st),   // 0811 신설
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewTypemap(st), viewVideo(st),                      // 0811 병합
@@ -2041,6 +2051,7 @@ function loopHistRows(st, s, n = 12) {
       + ` <b style="color:${col}">${E(stat)}</b>`
       + (flags ? `<span class="dim">${E(flags)}</span>` : '')
       + (s2 && s2['제출시각'] ? `<span class="dim">${E(String(s2['제출시각']).slice(5, 16))}</span>` : '')
+      + ` ${loopA(r)}`
       + '</div>';
   };
   const head = rows.slice(0, n).map(row).join('');
@@ -2417,6 +2428,108 @@ function viewLoop(st) {
     + '<h2>최근 제출</h2>'
     + (cards.length ? `<div class="card">${cards.join('')}</div>` : '<div class="dim">제출 기록 없음</div>')
     + '</section>';
+}
+
+/* 뷰: 학생별 루프 (0928 유강 "학생별 루프를 확인할 수 있는 페이지 — 루프 링크가 있어야 함")
+   출제 = loop_status(루프ID = 학생별 세트 HTML 파일명), 제출 = loop_submit(루프ID 조인).
+   링크는 따로 저장돼 있지 않다 — 발송 주소와 같은 규칙으로 조립한다
+   (make_learn: pages_base()/<루프ID>.html, remind.loop_id 가 그 역함수).
+   ⚠ 링크를 열면 학생 화면 그대로다: 서버 진행분(loop_progress)이 복원돼 학생이 고른 답이 보이고,
+     거기서 답을 누르면 **그 학생 기록으로 들어간다** — 보기만. */
+const LOOP_BASE = 'https://ukan8.github.io/dashboard/set/';
+const loopUrl = r => r && r['루프ID'] ? LOOP_BASE + encodeURIComponent(r['루프ID']) + '.html' : '';
+const loopA = (r, t = '열기 ↗') => loopUrl(r)
+  ? `<a class="nm" href="${E(loopUrl(r))}" target="_blank" rel="noopener" title="${E(r['루프ID'])}">${E(t)}</a>` : '';
+function viewLoopStu(st) {
+  const lh = st.loopHist || loopHistBySid(st);
+  const sub = lh.sub;
+  const now = Date.now();
+  const by = {};
+  (st.raw.loop_status || []).forEach(r => {
+    const k = r['학생ID'] || ('n:' + (r['이름'] || '?') + '|' + (r['반'] || ''));
+    (by[k] = by[k] || []).push(r);
+  });
+  const stateOf = r => {
+    const s2 = sub[r['루프ID']];
+    if (s2) return 2;
+    return r['마감ISO'] && Date.parse(r['마감ISO']) <= now ? 0 : 1;
+  };
+  const dueTxt = iso => {
+    if (!iso) return '—';
+    const t = new Date(iso); if (isNaN(t)) return E(iso);
+    return `${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')}(${DOW[t.getDay()]}) `
+      + `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+  };
+  const SL = [['미제출', 'var(--bad)'], ['진행중', 'var(--dim)'], ['제출', 'var(--good)']];
+  const row = r => {
+    const k = stateOf(r), s2 = sub[r['루프ID']];
+    const stat = k === 2 ? ('✓ ' + (s2['총문항'] ? (s2['맞은개수'] || 0) + '/' + s2['총문항'] : '제출')) : SL[k][0];
+    return `<div class="ls-r"><b>${E(String(r['수업일'] || '').slice(5).replace('-', '/'))}</b>`
+      + `<span class="ls-u">${E(r['단원'] || '—')}${r['문항수'] ? ` <span class="dim">${E(r['문항수'])}문항</span>` : ''}</span>`
+      + `<span class="dim">마감 ${dueTxt(r['마감ISO'])}</span>`
+      + `<b style="color:${SL[k][1]}">${E(stat)}${r['중단'] ? ' ⏸' : ''}</b>`
+      + `<span class="dim">${s2 && s2['제출시각'] ? E(String(s2['제출시각']).slice(5, 16).replace('T', ' ')) : ''}</span>`
+      + `<span class="ls-a">${loopA(r)}</span></div>`;
+  };
+  const cards = Object.keys(by).map(k => {
+    const rows = by[k].sort((x, y) => String(y['수업일'] || '').localeCompare(String(x['수업일'] || ''))
+      || String(y['루프ID'] || '').localeCompare(String(x['루프ID'] || '')));
+    const s = st.smap[k];
+    const name = s ? s.name : (rows[0]['이름'] || '?'), ban = s ? s.ban : (rows[0]['반'] || '');
+    const cnt = [0, 0, 0]; rows.forEach(r => cnt[stateOf(r)]++);
+    return { k, s, name, ban, rows, cnt };
+  }).sort((a, b) => String(a.ban).localeCompare(String(b.ban)) || a.name.localeCompare(b.name, 'ko'));
+  const bans = [...new Set(cards.map(c => c.ban).filter(Boolean))].sort();
+  const N = 5;
+  const card = c => {
+    const pct = Math.round(100 * c.cnt[2] / c.rows.length);
+    const head = c.rows.slice(0, N).map(row).join(''), rest = c.rows.slice(N);
+    return `<div class="card ls-card" data-ban="${E(c.ban)}" data-name="${E(c.name)}" data-late="${c.cnt[0]}" data-open="${c.cnt[1]}">`
+      + `<div class="ls-h">${c.s ? slink(c.s) : `<b>${E(c.name)}</b>`} <span class="ban">${E(c.ban)}</span>`
+      + chip(pct >= 80 ? 'good' : pct >= 50 ? 'mid' : 'bad', `제출 ${c.cnt[2]}/${c.rows.length}`)
+      + (c.cnt[0] ? chip('bad', `미제출 ${c.cnt[0]}`) : '') + (c.cnt[1] ? chip('na', `진행중 ${c.cnt[1]}`) : '')
+      + (c.rows[0] ? `<span class="ls-last">최근 ${loopA(c.rows[0], '루프 열기 ↗')}</span>` : '') + '</div>'
+      + head
+      + (rest.length ? `<details><summary class="dim">지난 루프 ${rest.length}건 더</summary>${rest.map(row).join('')}</details>` : '')
+      + '</div>';
+  };
+  const tot = cards.reduce((a, c) => [a[0] + c.cnt[0], a[1] + c.cnt[1], a[2] + c.cnt[2]], [0, 0, 0]);
+  return '<section class="view" id="v-loopstu"><h2>학생별 루프 <span class="cnt">' + cards.length + '명</span>'
+    + '<span class="dim" style="font-size:12px"> 출제=loop_status · 제출=loop_submit · 링크는 학생이 받은 주소 그대로</span></h2>'
+    + (cards.length ? '<div class="kpis">'
+      + `<div class="kpi"><div class="lbl">발송한 루프</div><div class="big">${tot[0] + tot[1] + tot[2]}<small>건</small></div></div>`
+      + `<div class="kpi"><div class="lbl">제출</div><div class="big good">${tot[2]}<small>건</small></div></div>`
+      + `<div class="kpi"><div class="lbl">진행중(마감 전)</div><div class="big na">${tot[1]}<small>건</small></div></div>`
+      + `<div class="kpi"><div class="lbl">마감 지나 미제출</div><div class="big bad">${tot[0]}<small>건</small></div></div></div>` : '')
+    + '<div class="dim" style="margin:-4px 0 10px;font-size:12px">⚠ 링크는 학생 화면 그대로 열린다 — 학생이 고른 답이 복원돼 보인다. 거기서 답을 누르면 그 학생 기록으로 저장되니 보기만 할 것.</div>'
+    + `<div class="toolbar" id="ls-bar"><button class="fbtn on" data-f="*">전체</button>`
+    + bans.map(b => `<button class="fbtn" data-f="${E(b)}">${E(b)}</button>`).join('')
+    + '<span style="width:10px"></span><button class="fbtn ls-st on" data-s="*">모두</button>'
+    + '<button class="fbtn ls-st" data-s="late">미제출 있는 학생</button><button class="fbtn ls-st" data-s="open">진행중 있는 학생</button>'
+    + '<input id="ls-q" placeholder="이름 검색" autocomplete="off"></div>'
+    + (cards.length ? `<div id="ls-list">${cards.map(card).join('')}</div>`
+      : '<div class="dim">loop_status 기록이 없다 — DB 직결판(로그인)에서만 보인다</div>')
+    + '</section>';
+}
+function wireLoopStu() {
+  const bar = document.getElementById('ls-bar'); if (!bar) return;
+  let ban = '*', stt = '*';
+  const q = document.getElementById('ls-q');
+  const apply = () => {
+    const s = q.value.trim();
+    document.querySelectorAll('#ls-list .ls-card').forEach(el => {
+      const ok = (ban === '*' || el.dataset.ban === ban) && (!s || el.dataset.name.includes(s))
+        && (stt === '*' || (stt === 'late' ? +el.dataset.late > 0 : +el.dataset.open > 0));
+      el.style.display = ok ? '' : 'none';
+    });
+  };
+  bar.querySelectorAll('.fbtn:not(.ls-st)').forEach(b => b.onclick = () => {
+    bar.querySelectorAll('.fbtn:not(.ls-st)').forEach(x => x.classList.remove('on')); b.classList.add('on'); ban = b.dataset.f; apply();
+  });
+  bar.querySelectorAll('.ls-st').forEach(b => b.onclick = () => {
+    bar.querySelectorAll('.ls-st').forEach(x => x.classList.remove('on')); b.classList.add('on'); stt = b.dataset.s; apply();
+  });
+  q.addEventListener('input', apply);
 }
 
 /* 뷰 6: 리포트 */
@@ -3960,7 +4073,7 @@ function wire(st) {
     let [main, sub] = h.split('/');
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
-    if (!['today', 'class', 'student', 'clinic', 'loop', 'report', 'weak',
+    if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
       'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul'].includes(main)) main = 'today';
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
     let id = 'v-' + main;
@@ -3988,6 +4101,7 @@ function wire(st) {
     b.classList.add('on'); ban = b.dataset.f; apply();
   });
   q.addEventListener('input', apply);
+  wireLoopStu();                        // 0928 학생별 루프
 
   const rowsEl = $('rows'); let sk = null, dir = 1;
   document.querySelectorAll('.sort').forEach(h => h.onclick = () => {
