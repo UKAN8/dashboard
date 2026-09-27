@@ -253,6 +253,15 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .ls-r>*{min-width:0} .ls-u{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .ls-a{text-align:right}
 #ls-q{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 12px;width:150px;font-size:13px}
 @media(max-width:700px){.ls-r{grid-template-columns:44px 1fr 70px 56px} .ls-r>.dim{display:none}}
+/* 방문 기록 (0928) */
+.vs-wrap{padding:0;overflow-x:auto}
+.vs-tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.vs-tbl th{position:sticky;top:0;background:var(--card);color:var(--dim);font-weight:600;font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)}
+.vs-tbl td{padding:7px 10px;border-bottom:1px solid var(--bd)}
+.vs-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.vs-tbl tr.vs-none td{opacity:.6}
+.vs-tbl a{color:var(--tx)}
+.vs-p{color:var(--acc)} .vs-s{color:var(--good)}
 
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
@@ -562,7 +571,7 @@ body.cs-on #boot{display:none}
 </div>
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
-<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
@@ -1591,6 +1600,8 @@ async function boot(session) {
   $('login').classList.add('hidden'); $('app').classList.remove('hidden');
   /* 0816 — 조교(staff)는 영상탭 비노출. 탭만 지우면 주소로 들어올 수 있어 route()도 같이 막는다. */
   window.ROLE = prof.role || 'staff';
+  window.VS_OK = session.user.id === VS_OWNER;       // 0928 방문 기록 — 역할이 아니라 계정으로
+  if (!window.VS_OK) { const vv = document.querySelector('#nav a[data-v="visits"]'); if (vv) vv.remove(); }
   if (window.ROLE !== 'admin') {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
@@ -1824,7 +1835,8 @@ function render(st) {
     viewExam(st), viewClinicLog(st), viewExamMeta(st),   // 0811 신설
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewTypemap(st), viewVideo(st),                      // 0811 병합
-    viewGichul(st)                                       // 0907 기출테스트 결과
+    viewGichul(st),                                      // 0907 기출테스트 결과
+    viewVisits(st)                                       // 0928 방문 기록 (유강만)
   ].join('');
 }
 
@@ -4074,7 +4086,8 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits'].includes(main)) main = 'today';
+    if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
     let id = 'v-' + main;
     if (main === 'gichul' && sub && window.gcOpen) window.gcOpen(sub);   // #gichul/<학생ID> → 그 학생 추이
@@ -4085,6 +4098,7 @@ function wire(st) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
     (document.getElementById(id) || document.getElementById('v-today')).classList.add('on');
     navSync(main);
+    if (main === 'visits') vsLoad();
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -4180,6 +4194,104 @@ function csJobs() {
   const cs = document.getElementById('cs');
   if (!cs || !cs.classList.contains('on')) { location.hash = '#cs-console'; }
   setTimeout(() => { if (typeof toggleJobs === 'function') toggleJobs(); }, 0);
+}
+
+/* ───────── 방문 기록 (0928, schema_v29 page_visit) ─────────
+ * 학생·학부모가 포털·루프·자평·자료실을 얼마나 여는지. 데이터는 page_visit_v(보기)를 탭을 열 때 한 번 읽는다.
+ * ⚠ 열람은 유강 계정 하나만 — DB 정책(page_visit_owner_read)이 계정 id 로 막고, 화면은 VS_OWNER 로 탭을 숨긴다.
+ *   관리자를 더 만들어도 이 탭·데이터는 안 열린다. 바꾸려면 정책과 VS_OWNER 를 같이 고친다.
+ * 학생/학부모 구분: 포털이 기기마다 한 번 묻는 답. '학생(추정)' = 그 기기로 루프·자평을 푼 적 있음.
+ */
+const VS_OWNER = '16946a0d-0ffb-4e17-87ae-a593a5eac8fc';
+const VS_PAGE = { me: '포털', set: '루프', eval: '자평', survey: '설문', step: '단계해설', 'lib-pdf': '자료 PDF', 'lib-video': '수업영상', lib: '자료실' };
+let VS = { rows: null, days: 7, ban: '*', mode: 'stu', stu: [] };
+
+function viewVisits(st) {
+  VS.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  return `<section class="view" id="v-visits">
+<h2>방문 기록 <span class="cnt" id="vs-cnt"></span></h2>
+<div class="toolbar" id="vs-bar"></div>
+<div id="vs-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<div class="dim" style="margin-top:14px;line-height:1.6">학생/학부모 = 포털에서 기기마다 한 번 묻는 답 · <b>학생(추정)</b> = 그 기기로 루프·자평을 푼 적 있음 · 같은 기기가 5분 안에 다시 연 건 한 번으로 셉니다 · 유강 기기(#nocount)는 안 셉니다.
+ 페이지별 전체 방문(홈페이지·초강스 lab 포함)은 <a href="https://ukan8.goatcounter.com/" target="_blank" rel="noopener">GoatCounter ↗</a></div>
+</section>`;
+}
+
+async function vsLoad(force) {
+  const body = $('vs-body'); if (!body) return;
+  if (VS.rows && !force) { vsDraw(); return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  const since = new Date(Date.now() + 9 * 3600e3 - 90 * 864e5).toISOString().slice(0, 19);
+  const rows = [];
+  try {
+    for (let i = 0; i < 50000; i += 1000) {
+      const { data, error } = await sb.from('page_visit_v')
+        .select('시각,학생ID,이름,반,보는사람,페이지,세부,기기,브라우저')
+        .gte('시각', since).order('시각', { ascending: false }).range(i, i + 999);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < 1000) break;
+    }
+  } catch (e) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(e.message || e)}</div>`; return; }
+  VS.rows = rows; vsDraw();
+}
+
+function vsDraw() {
+  const bar = $('vs-bar'), body = $('vs-body'); if (!bar || !body || !VS.rows) return;
+  const cut = new Date(Date.now() + 9 * 3600e3 - VS.days * 864e5).toISOString().slice(0, 19);
+  const bans = [...new Set(VS.stu.map(s => s.ban).filter(Boolean))].sort();
+  const inBan = b => VS.ban === '*' || b === VS.ban;
+  const rows = VS.rows.filter(r => r.시각 >= cut && (VS.ban === '*' || inBan(r.반)));
+  const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
+  bar.innerHTML = [[7, '7일'], [30, '30일'], [90, '90일']].map(([v, l]) => fb('vd', String(v), l, String(VS.days))).join('')
+    + '<span class="dim" style="margin:0 4px">│</span>' + fb('vb', '*', '반 전체', VS.ban) + bans.map(b => fb('vb', b, b, VS.ban)).join('')
+    + '<span class="dim" style="margin:0 4px">│</span>' + fb('vm', 'stu', '학생별', VS.mode) + fb('vm', 'log', '최근 기록', VS.mode)
+    + `<button class="fbtn" id="vs-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-vd]').forEach(b => b.onclick = () => { VS.days = +b.dataset.vd; vsDraw(); });
+  bar.querySelectorAll('[data-vb]').forEach(b => b.onclick = () => { VS.ban = b.dataset.vb; vsDraw(); });
+  bar.querySelectorAll('[data-vm]').forEach(b => b.onclick = () => { VS.mode = b.dataset.vm; vsDraw(); });
+  $('vs-re').onclick = () => vsLoad(true);
+  $('vs-cnt').textContent = `최근 ${VS.days}일 · ${rows.length}건`;
+
+  const isStu = w => (w || '').startsWith('학생'), isPar = w => w === '학부모';
+  const roster = VS.stu.filter(s => inBan(s.ban));
+  const by = {};
+  rows.forEach(r => {
+    if (!r.학생ID) return;
+    const o = by[r.학생ID] || (by[r.학생ID] = { s: 0, p: 0, u: 0, pg: {}, ls: '', lp: '', name: r.이름, ban: r.반 });
+    if (isStu(r.보는사람)) { o.s++; if (r.시각 > o.ls) o.ls = r.시각; }
+    else if (isPar(r.보는사람)) { o.p++; if (r.시각 > o.lp) o.lp = r.시각; }
+    else o.u++;
+    const k = r.페이지.startsWith('lib') ? 'lib' : r.페이지; o.pg[k] = (o.pg[k] || 0) + 1;
+  });
+  const nS = rows.filter(r => isStu(r.보는사람)).length, nP = rows.filter(r => isPar(r.보는사람)).length;
+  const seen = roster.filter(s => by[s.sid]).length, seenP = roster.filter(s => by[s.sid] && by[s.sid].p).length;
+  const nLib = rows.filter(r => r.페이지.startsWith('lib')).length;
+  const kpi = (l, v, sub) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let html = `<div class="kpis">${kpi('학생 방문', nS, '건')}${kpi('학부모 방문', nP, '건')}${kpi('미확인', rows.length - nS - nP, '건')}`
+    + `${kpi('한 번이라도 본 학생', seen, ' / ' + roster.length + '명')}${kpi('학부모가 본 학생', seenP, '명')}${kpi('자료실 클릭', nLib, '건')}</div>`;
+  const t = s => s ? s.slice(5, 16).replace('T', ' ') : '<span class="dim">—</span>';
+
+  if (VS.mode === 'stu') {
+    const list = roster.map(s => ({ ...s, o: by[s.sid] }))
+      .concat(Object.keys(by).filter(id => !roster.some(s => s.sid === id) && inBan(by[id].ban)).map(id => ({ sid: id, name: by[id].name || id, ban: by[id].ban, o: by[id] })))
+      .sort((a, b) => ((b.o ? b.o.s + b.o.p + b.o.u : -1) - (a.o ? a.o.s + a.o.p + a.o.u : -1)) || String(a.name).localeCompare(String(b.name), 'ko'));
+    const n = v => v ? v : '<span class="dim">0</span>';
+    html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학생</th><th>학부모</th><th>미확인</th><th>포털</th><th>루프</th><th>자평</th><th>자료실</th><th>학생 마지막</th><th>학부모 마지막</th></tr></thead><tbody>`
+      + list.map(({ sid, name, ban, o }) => o
+        ? `<tr><td><a href="#student/${encodeURIComponent(sid)}">${E(name)}</a></td><td>${E(ban || '')}</td><td class="n">${n(o.s)}</td><td class="n">${n(o.p)}</td><td class="n">${n(o.u)}</td>`
+          + `<td class="n">${n(o.pg.me)}</td><td class="n">${n(o.pg.set)}</td><td class="n">${n(o.pg.eval)}</td><td class="n">${n(o.pg.lib)}</td><td>${t(o.ls)}</td><td>${t(o.lp)}</td></tr>`
+        : `<tr class="vs-none"><td><a href="#student/${encodeURIComponent(sid)}">${E(name)}</a></td><td>${E(ban || '')}</td><td colspan="9" class="dim">방문 없음</td></tr>`).join('')
+      + '</tbody></table></div>';
+  } else {
+    const who = w => isPar(w) ? '<span class="vs-p">학부모</span>' : isStu(w) ? `<span class="vs-s">${E(w)}</span>` : '<span class="dim">미확인</span>';
+    html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>시각</th><th>학생</th><th>반</th><th>누가</th><th>페이지</th><th>세부</th><th>기기</th></tr></thead><tbody>`
+      + rows.slice(0, 300).map(r => `<tr><td>${t(r.시각)}</td><td>${r.학생ID ? `<a href="#student/${encodeURIComponent(r.학생ID)}">${E(r.이름 || r.학생ID)}</a>` : '<span class="dim">모름</span>'}</td>`
+        + `<td>${E(r.반 || '')}</td><td>${who(r.보는사람)}</td><td>${E(VS_PAGE[r.페이지] || r.페이지)}</td><td class="dim">${E(r.세부 || '')}</td><td class="dim">${E(r.브라우저 || '')} · ${E((r.기기 || '').slice(0, 4))}</td></tr>`).join('')
+      + '</tbody></table>' + (rows.length > 300 ? `<div class="dim" style="padding:8px">최근 300건만 표시 (전체 ${rows.length}건)</div>` : '') + '</div>';
+  }
+  if (!VS.rows.length) html += '<div class="dim" style="margin-top:10px">아직 기록이 없습니다 — 0928 새벽부터 쌓입니다.</div>';
+  body.innerHTML = html;
 }
 
 </script>
