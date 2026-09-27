@@ -119,6 +119,8 @@ svg.spark{display:block;margin-top:6px}
 .grow .h span{color:var(--dim);font-size:11.5px;white-space:nowrap}
 .grow .rp{margin-top:7px}
 .grow .rp a.no{opacity:.35;pointer-events:none}
+.grow .rp a.vid{background:rgba(255,92,138,.10);border-color:rgba(255,92,138,.3)}
+.grow .rp a.vid small{color:var(--dim);font-size:11px;margin-left:3px}
 .lib-more{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
 </style></head>
 <body>
@@ -631,19 +633,23 @@ function drawLib(host){
         +`<a class="go" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 보기</a></div>`).join(''));
       if(V.length>n) H.push(`<button type="button" class="lib-more" data-more="v">더 보기 (${V.length-n}개 남음)</button>`);
     }
-    H.push(`<div class="note">영상은 유튜브 '일부공개'라 이 링크로만 열립니다. 공유하지 마세요.</div>`);
+    H.push(`<div class="note">기출테스트 수업 녹화만 올라옵니다. 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   }else{
     if(!G.length) H.push(`<div class="none">${LIB.q?'찾는 시험지가 없어요.':(mine?'아직 내 반에서 본 기출테스트가 없어요.':'기출테스트 자료가 없어요.')}</div>`);
     else{
       const n=Math.min(G.length,LIB.showN.g);
       H.push(G.slice(0,n).map(g=>{
         const when=g._my.length?`${g._my.map(x=>md(x.날짜)).join('·')} ${E(ban)}`:`${md(g.최근)} ${E((g.시행||[]).map(x=>x.반).filter((x,i,a)=>a.indexOf(x)===i).join('·'))}`;
+        // 해설 영상 — 내 반 것만(전체 보기면 반 표시). 같은 반 영상이 여럿이면 날짜로 구분
+        const vs=(g.영상||[]).filter(v=>!mine||(v.반||[]).includes(ban));
+        const vbtn=vs.map(v=>{const lab=[(!mine||vs.length>1)&&(v.반||[]).length?(v.반.length>1?'고1 A·S':v.반.join('·')):'',vs.length>1?md(v.날짜):''].filter(Boolean).join(' ');
+          return `<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 해설 영상${lab?' <small>'+E(lab)+'</small>':''}</a>`;}).join('');
         return `<div class="grow"><div class="h"><b>${E(g.학교)} ${E(g.학년)} ${E(g.종류)}</b><span>${E(g.과목)} · ${when}</span></div>`
           +`<div class="rp"><a class="${g.시험?'':'no'}" href="${g.시험?LIB_URL+g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
-          +`<a class="${g.해설?'':'no'}" href="${g.해설?LIB_URL+g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a></div></div>`;}).join(''));
+          +`<a class="${g.해설?'':'no'}" href="${g.해설?LIB_URL+g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
       if(G.length>n) H.push(`<button type="button" class="lib-more" data-more="g">더 보기 (${G.length-n}개 남음)</button>`);
     }
-    H.push(`<div class="note">시험지 PDF 뒤쪽에 활자 해설이, 손풀이 해설 PDF 에 손글씨 풀이가 있습니다. 수업에서 본 기출테스트만 올라옵니다.</div>`);
+    H.push(`<div class="note">시험지 PDF 뒤쪽에 활자 해설, 손풀이 해설 PDF 에 손글씨 풀이, 해설 영상은 그날 수업 녹화입니다. 수업에서 본 기출테스트만 올라옵니다.</div>`);
   }
   host.innerHTML=H.join('');
   host.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{LIB.tab=b.dataset.tab; LIB.q=''; drawLib(host);});
