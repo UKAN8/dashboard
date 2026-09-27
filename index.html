@@ -258,7 +258,7 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .vs-tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
 .vs-tbl th{position:sticky;top:0;background:var(--card);color:var(--dim);font-weight:600;font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)}
 .vs-tbl td{padding:7px 10px;border-bottom:1px solid var(--bd)}
-.vs-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.vs-tbl th.n,.vs-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
 .vs-tbl tr.vs-none td{opacity:.6}
 .vs-tbl a{color:var(--tx)}
 .vs-p{color:var(--acc)} .vs-s{color:var(--good)}
@@ -4277,7 +4277,7 @@ function vsDraw() {
       .concat(Object.keys(by).filter(id => !roster.some(s => s.sid === id) && inBan(by[id].ban)).map(id => ({ sid: id, name: by[id].name || id, ban: by[id].ban, o: by[id] })))
       .sort((a, b) => ((b.o ? b.o.s + b.o.p + b.o.u : -1) - (a.o ? a.o.s + a.o.p + a.o.u : -1)) || String(a.name).localeCompare(String(b.name), 'ko'));
     const n = v => v ? v : '<span class="dim">0</span>';
-    html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학생</th><th>학부모</th><th>미확인</th><th>포털</th><th>루프</th><th>자평</th><th>자료실</th><th>학생 마지막</th><th>학부모 마지막</th></tr></thead><tbody>`
+    html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th class="n">학생</th><th class="n">학부모</th><th class="n">미확인</th><th class="n">포털</th><th class="n">루프</th><th class="n">자평</th><th class="n">자료실</th><th>학생 마지막</th><th>학부모 마지막</th></tr></thead><tbody>`
       + list.map(({ sid, name, ban, o }) => o
         ? `<tr><td><a href="#student/${encodeURIComponent(sid)}">${E(name)}</a></td><td>${E(ban || '')}</td><td class="n">${n(o.s)}</td><td class="n">${n(o.p)}</td><td class="n">${n(o.u)}</td>`
           + `<td class="n">${n(o.pg.me)}</td><td class="n">${n(o.pg.set)}</td><td class="n">${n(o.pg.eval)}</td><td class="n">${n(o.pg.lib)}</td><td>${t(o.ls)}</td><td>${t(o.lp)}</td></tr>`
