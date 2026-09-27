@@ -708,4 +708,4 @@ function wireReport(tok){
   try{ const r=await sb.rpc('gt_eval_open',{tok}); if(r&&r.data&&(r.data.문항||r.data.없음)){ data.자평=r.data; data.토큰=tok; } }catch(e){}
   render(data);
 })();
-</script></body></html>
+</script><script src="/dashboard/track.js" data-page="me" defer></script></body></html>
