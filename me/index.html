@@ -590,7 +590,7 @@ function render(d){
  * lib.json = { 영상:[{id,제목,반:[..],종류,날짜,단원,길이}], 기출:[{키,학교,학년,과목,종류,시행:[{반,날짜}],시험,해설}] }
  * 영상은 youtu.be 링크(일부공개), PDF 는 mathis-lib 저장소(GitHub Pages). 둘 다 새 탭. */
 const LIB_URL='https://ukan8.github.io/mathis-lib/';
-const LIB={data:null,tab:'v',all:false,q:'',showN:{v:15,g:12}};
+const LIB={data:null,tab:'v',q:'',showN:{v:15,g:12}};   // (0928) 전체 보기 제거 — 자기 반 것만
 const mmss=s=>{s=Number(s)||0; return s>=3600?`${Math.floor(s/3600)}시간 ${Math.round(s%3600/60)}분`:`${Math.round(s/60)}분`;};
 const md=s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${+m[2]}/${+m[3]}`:'';};
 async function mountLib(host,ban){
@@ -613,7 +613,7 @@ function drawLib(host){
   const gs=(D.기출||[]).map(g=>{const my=(g.시행||[]).filter(x=>x.반===ban);
     return {...g,_mine:my.length>0,_my:my,_txt:[g.학교,g.학년,g.과목,g.종류].join(' ').toLowerCase()};});
   const mineV=vids.filter(v=>v._mine).length, mineG=gs.filter(g=>g._mine).length;
-  const mine=!LIB.all&&!!ban;
+  const mine=true;   // (0928) 항상 내 반만. 반 정보가 없으면 빈 목록
   const V=libFilter(vids,mine), G=libFilter(gs,mine);
   G.sort((a,b)=>String(b._my.length?b._my[b._my.length-1].날짜:b.최근).localeCompare(String(a._my.length?a._my[a._my.length-1].날짜:a.최근)));
   const H=[];
@@ -621,11 +621,10 @@ function drawLib(host){
     +`<button type="button" data-tab="v" class="${LIB.tab==='v'?'on':''}">수업 영상 <span class="dim">${mine?mineV:vids.length}</span></button>`
     +`<button type="button" data-tab="g" class="${LIB.tab==='g'?'on':''}">기출 손풀이 <span class="dim">${mine?mineG:gs.length}</span></button>`
     +`</div>`);
-  if(ban) H.push(`<div class="seg sm"><button type="button" data-all="0" class="${!LIB.all?'on':''}">${E(ban)} 것만</button><button type="button" data-all="1" class="${LIB.all?'on':''}">전체 보기</button>`
-    +`<span class="sp"></span><span class="dim" style="font-size:11.5px;align-self:center">${LIB.tab==='v'?'최근 영상부터':'최근에 본 시험부터'}</span></div>`);
+  if(ban) H.push(`<div class="seg sm"><span class="dim" style="font-size:11.5px;align-self:center">${E(ban)} 수업 · ${LIB.tab==='v'?'최근 영상부터':'최근에 본 시험부터'}</span></div>`);
   H.push(`<input class="lib-q" id="lib-q" type="search" placeholder="${LIB.tab==='v'?'단원·제목으로 찾기 (예: 원의 방정식)':'학교 이름으로 찾기 (예: 조원고)'}" value="${E(LIB.q)}">`);
   if(LIB.tab==='v'){
-    if(!V.length) H.push(`<div class="none">${LIB.q?'찾는 영상이 없어요.':(mine?'아직 내 반 영상이 없어요. [전체]를 눌러 보세요.':'영상이 없어요.')}</div>`);
+    if(!V.length) H.push(`<div class="none">${LIB.q?'찾는 영상이 없어요.':(ban?'아직 내 반 영상이 없어요.':'반 정보가 없어 자료를 보여 줄 수 없어요.')}</div>`);
     else{
       const n=Math.min(V.length,LIB.showN.v);
       H.push(V.slice(0,n).map(v=>`<div class="vrow"><span class="d">${md(v.날짜)}</span>`
@@ -635,7 +634,7 @@ function drawLib(host){
     }
     H.push(`<div class="note">기출테스트 수업 녹화만 올라옵니다. 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   }else{
-    if(!G.length) H.push(`<div class="none">${LIB.q?'찾는 시험지가 없어요.':(mine?'아직 내 반에서 본 기출테스트가 없어요.':'기출테스트 자료가 없어요.')}</div>`);
+    if(!G.length) H.push(`<div class="none">${LIB.q?'찾는 시험지가 없어요.':(ban?'아직 내 반에서 본 기출테스트가 없어요.':'반 정보가 없어 자료를 보여 줄 수 없어요.')}</div>`);
     else{
       const n=Math.min(G.length,LIB.showN.g);
       H.push(G.slice(0,n).map(g=>{
@@ -653,7 +652,6 @@ function drawLib(host){
   }
   host.innerHTML=H.join('');
   host.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{LIB.tab=b.dataset.tab; LIB.q=''; drawLib(host);});
-  host.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{LIB.all=b.dataset.all==='1'; drawLib(host);});
   host.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{LIB.showN[b.dataset.more]+=30; drawLib(host);});
   const q=host.querySelector('#lib-q');
   q.oninput=()=>{LIB.q=q.value; const pos=q.selectionStart; drawLib(host); const q2=host.querySelector('#lib-q'); q2.focus(); try{q2.setSelectionRange(pos,pos);}catch(e){}};
