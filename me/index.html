@@ -121,6 +121,7 @@ svg.spark{display:block;margin-top:6px}
 .grow .rp a.no{opacity:.35;pointer-events:none}
 .grow .rp a.vid{background:rgba(255,92,138,.10);border-color:rgba(255,92,138,.3)}
 .grow .rp a.vid small{color:var(--dim);font-size:11px;margin-left:3px}
+.grow .ld{color:var(--acc);font-size:12.5px;font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
 .lib-more{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
 </style></head>
 <body>
@@ -556,8 +557,8 @@ function render(d){
   H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
   // ③ 수업 자료 (0927) — 수업 영상(유튜브 일부공개) + 기출테스트 시험지·손풀이 해설 PDF.
   //    정적 목록(mathis-lib/lib.json, build_lib.py 산출)을 읽는다. 표(DB)는 안 건드린다.
-  //    기본은 내 반 것만(유강 0927) — [전체]를 누르면 다른 반·특강까지.
-  H.push(`<h2>수업 자료 <small>수업 영상 · 기출테스트 시험지와 손풀이 해설</small></h2>`
+  //    내 반 것만, 탭 없이 수업일 순 한 목록(유강 0928).
+  H.push(`<h2>수업 자료</h2>`
     +`<div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
   // ② 오류 신고 (0913) — 루프·PT·기출테스트 등 받은 자료에 문제가 있으면 여기서 바로 적는다.
   //    저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
@@ -590,7 +591,7 @@ function render(d){
  * lib.json = { 영상:[{id,제목,반:[..],종류,날짜,단원,길이}], 기출:[{키,학교,학년,과목,종류,시행:[{반,날짜}],시험,해설}] }
  * 영상은 youtu.be 링크(일부공개), PDF 는 mathis-lib 저장소(GitHub Pages). 둘 다 새 탭. */
 const LIB_URL='https://ukan8.github.io/mathis-lib/';
-const LIB={data:null,tab:'v',q:'',showN:{v:15,g:12}};   // (0928) 전체 보기 제거 — 자기 반 것만
+const LIB={data:null,showN:15};   // (0928) 탭·검색·전체 보기 제거 — 내 반 것만
 const mmss=s=>{s=Number(s)||0; return s>=3600?`${Math.floor(s/3600)}시간 ${Math.round(s%3600/60)}분`:`${Math.round(s/60)}분`;};
 const md=s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${+m[2]}/${+m[3]}`:'';};
 async function mountLib(host,ban){
@@ -603,58 +604,33 @@ async function mountLib(host,ban){
   }catch(e){ host.innerHTML='<div class="none">자료 목록을 지금은 못 불러왔어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
   drawLib(host);
 }
-function libFilter(list,mine){
-  const q=LIB.q.trim().toLowerCase();
-  return list.filter(x=>(!mine||x._mine)&&(!q||x._txt.includes(q)));
-}
+// (0928) 탭 없이 내 반 수업일 순 한 줄 목록: 날짜 · 수업 내용 · 시험지/손풀이/영상
 function drawLib(host){
   const D=LIB.data, ban=LIB.ban;
-  const vids=(D.영상||[]).map(v=>({...v,_mine:!!ban&&(v.반||[]).includes(ban),_txt:[v.제목,v.단원,v.파트,(v.반||[]).join(' ')].join(' ').toLowerCase()}));
-  const gs=(D.기출||[]).map(g=>{const my=(g.시행||[]).filter(x=>x.반===ban);
-    return {...g,_mine:my.length>0,_my:my,_txt:[g.학교,g.학년,g.과목,g.종류].join(' ').toLowerCase()};});
-  const mineV=vids.filter(v=>v._mine).length, mineG=gs.filter(g=>g._mine).length;
-  const mine=true;   // (0928) 항상 내 반만. 반 정보가 없으면 빈 목록
-  const V=libFilter(vids,mine), G=libFilter(gs,mine);
-  G.sort((a,b)=>String(b._my.length?b._my[b._my.length-1].날짜:b.최근).localeCompare(String(a._my.length?a._my[a._my.length-1].날짜:a.최근)));
+  if(!ban){ host.innerHTML='<div class="none">반 정보가 없어 자료를 보여 줄 수 없어요.</div>'; return; }
+  const rows=[];
+  (D.기출||[]).forEach(g=>{
+    const my=(g.시행||[]).filter(x=>x.반===ban).map(x=>x.날짜);
+    const vs=(g.영상||[]).filter(v=>(v.반||[]).includes(ban));
+    if(!my.length&&!vs.length) return;
+    const d=(my.length?my:vs.map(v=>v.날짜)).slice().sort();
+    rows.push({d:d[d.length-1],ds:d.filter((x,i,a)=>a.indexOf(x)===i),t:`${g.학교} ${g.학년} ${g.종류}`,sub:g.과목,g,vs});
+  });
+  rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   const H=[];
-  H.push(`<div class="seg">`
-    +`<button type="button" data-tab="v" class="${LIB.tab==='v'?'on':''}">수업 영상 <span class="dim">${mine?mineV:vids.length}</span></button>`
-    +`<button type="button" data-tab="g" class="${LIB.tab==='g'?'on':''}">기출 손풀이 <span class="dim">${mine?mineG:gs.length}</span></button>`
-    +`</div>`);
-  if(ban) H.push(`<div class="seg sm"><span class="dim" style="font-size:11.5px;align-self:center">${E(ban)} 수업 · ${LIB.tab==='v'?'최근 영상부터':'최근에 본 시험부터'}</span></div>`);
-  H.push(`<input class="lib-q" id="lib-q" type="search" placeholder="${LIB.tab==='v'?'단원·제목으로 찾기 (예: 원의 방정식)':'학교 이름으로 찾기 (예: 조원고)'}" value="${E(LIB.q)}">`);
-  if(LIB.tab==='v'){
-    if(!V.length) H.push(`<div class="none">${LIB.q?'찾는 영상이 없어요.':(ban?'아직 내 반 영상이 없어요.':'반 정보가 없어 자료를 보여 줄 수 없어요.')}</div>`);
-    else{
-      const n=Math.min(V.length,LIB.showN.v);
-      H.push(V.slice(0,n).map(v=>`<div class="vrow"><span class="d">${md(v.날짜)}</span>`
-        +`<span class="t">${E(v.제목)}<small>${[!v._mine&&(v.반||[]).length?(v.반.length>1?'고1 공통':v.반[0]):'',v.종류!=='수업'?v.종류:'',v.길이?mmss(v.길이):''].filter(Boolean).join(' · ')}</small></span>`
-        +`<a class="go" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 보기</a></div>`).join(''));
-      if(V.length>n) H.push(`<button type="button" class="lib-more" data-more="v">더 보기 (${V.length-n}개 남음)</button>`);
-    }
-    H.push(`<div class="note">기출테스트 수업 녹화만 올라옵니다. 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
-  }else{
-    if(!G.length) H.push(`<div class="none">${LIB.q?'찾는 시험지가 없어요.':(ban?'아직 내 반에서 본 기출테스트가 없어요.':'반 정보가 없어 자료를 보여 줄 수 없어요.')}</div>`);
-    else{
-      const n=Math.min(G.length,LIB.showN.g);
-      H.push(G.slice(0,n).map(g=>{
-        const when=g._my.length?`${g._my.map(x=>md(x.날짜)).join('·')} ${E(ban)}`:`${md(g.최근)} ${E((g.시행||[]).map(x=>x.반).filter((x,i,a)=>a.indexOf(x)===i).join('·'))}`;
-        // 해설 영상 — 내 반 것만(전체 보기면 반 표시). 같은 반 영상이 여럿이면 날짜로 구분
-        const vs=(g.영상||[]).filter(v=>!mine||(v.반||[]).includes(ban));
-        const vbtn=vs.map(v=>{const lab=[(!mine||vs.length>1)&&(v.반||[]).length?(v.반.length>1?'고1 A·S':v.반.join('·')):'',vs.length>1?md(v.날짜):''].filter(Boolean).join(' ');
-          return `<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 해설 영상${lab?' <small>'+E(lab)+'</small>':''}</a>`;}).join('');
-        return `<div class="grow"><div class="h"><b>${E(g.학교)} ${E(g.학년)} ${E(g.종류)}</b><span>${E(g.과목)} · ${when}</span></div>`
-          +`<div class="rp"><a class="${g.시험?'':'no'}" href="${g.시험?LIB_URL+g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
-          +`<a class="${g.해설?'':'no'}" href="${g.해설?LIB_URL+g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
-      if(G.length>n) H.push(`<button type="button" class="lib-more" data-more="g">더 보기 (${G.length-n}개 남음)</button>`);
-    }
-    H.push(`<div class="note">시험지 PDF 뒤쪽에 활자 해설, 손풀이 해설 PDF 에 손글씨 풀이, 해설 영상은 그날 수업 녹화입니다. 수업에서 본 기출테스트만 올라옵니다.</div>`);
+  if(!rows.length) H.push(`<div class="none">아직 ${E(ban)} 수업 자료가 없어요.</div>`);
+  else{
+    const n=Math.min(rows.length,LIB.showN);
+    H.push(rows.slice(0,n).map(r=>{
+      const vbtn=r.vs.map(v=>`<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 수업 영상${r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':''}</a>`).join('');
+      return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
+        +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
+        +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
+    if(rows.length>n) H.push(`<button type="button" class="lib-more">더 보기 (${rows.length-n}개 남음)</button>`);
   }
+  H.push(`<div class="note">${E(ban)} 수업에서 본 기출테스트만 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   host.innerHTML=H.join('');
-  host.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{LIB.tab=b.dataset.tab; LIB.q=''; drawLib(host);});
-  host.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{LIB.showN[b.dataset.more]+=30; drawLib(host);});
-  const q=host.querySelector('#lib-q');
-  q.oninput=()=>{LIB.q=q.value; const pos=q.selectionStart; drawLib(host); const q2=host.querySelector('#lib-q'); q2.focus(); try{q2.setSelectionRange(pos,pos);}catch(e){}};
+  const m=host.querySelector('.lib-more'); if(m) m.onclick=()=>{LIB.showN+=20; drawLib(host);};
 }
 
 /* ── 오류 신고 (0913) ── */
