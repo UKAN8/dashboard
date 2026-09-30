@@ -263,6 +263,24 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .vs-tbl a{color:var(--tx)}
 .vs-p{color:var(--acc)} .vs-s{color:var(--good)}
 
+/* 0930 설문 탭 */
+.sv-ok{color:#9be3b8;font-weight:700}
+.sv-tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--dim);margin-right:3px}
+.sv-tag.ok{background:rgba(155,227,184,.14);color:#bfeed2}
+.sv-tag.warn{background:rgba(245,160,160,.15);color:#ffd0d0}
+.sv-h{font-size:14px;margin:18px 0 8px}
+.sv-q{background:var(--card);border:1px solid var(--bd);border-radius:11px;padding:10px 12px;margin-bottom:8px;line-height:1.55;white-space:normal}
+.sv-qh{margin-bottom:4px;font-size:13px}
+.sv-ans{display:inline-block;vertical-align:top;min-width:260px;max-width:460px;margin:0 18px 8px 0}
+.sv-h2{font-weight:700;margin-bottom:6px}
+.sv-row{display:grid;grid-template-columns:130px 1fr;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}
+.sv-row span:last-child{white-space:normal;overflow-wrap:anywhere}
+.sv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.sv-sum{padding:10px 12px}
+.sv-bar{display:grid;grid-template-columns:1fr 80px 22px;align-items:center;gap:6px;font-size:12.5px;margin:3px 0}
+.sv-bar i{display:block;height:6px;border-radius:3px;background:var(--acc);min-width:2px}
+.sv-bar b{text-align:right;font-variant-numeric:tabular-nums}
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -571,7 +589,7 @@ body.cs-on #boot{display:none}
 </div>
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
-<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
@@ -1604,6 +1622,7 @@ async function boot(session) {
   if (!window.VS_OK) { const vv = document.querySelector('#nav a[data-v="visits"]'); if (vv) vv.remove(); }
   if (window.ROLE !== 'admin') {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
+    const sv = document.querySelector('#nav a[data-v="survey"]'); if (sv) sv.remove();   // 0930 설문도 관리자만
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
     const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
@@ -1836,7 +1855,8 @@ function render(st) {
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewTypemap(st), viewVideo(st),                      // 0811 병합
     viewGichul(st),                                      // 0907 기출테스트 결과
-    viewVisits(st)                                       // 0928 방문 기록 (유강만)
+    viewVisits(st),                                      // 0928 방문 기록 (유강만)
+    viewSurvey(st)                                       // 0930 설문 (관리자)
   ].join('');
 }
 
@@ -4086,7 +4106,8 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits', 'survey'].includes(main)) main = 'today';
+    if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
     let id = 'v-' + main;
@@ -4099,6 +4120,7 @@ function wire(st) {
     (document.getElementById(id) || document.getElementById('v-today')).classList.add('on');
     navSync(main);
     if (main === 'visits') vsLoad();
+    if (main === 'survey') svLoad();
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -4292,6 +4314,161 @@ function vsDraw() {
   }
   if (!VS.rows.length) html += '<div class="dim" style="margin-top:10px">아직 기록이 없습니다 — 0928 새벽부터 쌓입니다.</div>';
   body.innerHTML = html;
+}
+
+
+/* ───────── 설문 (0930, T0930 — schema_v12 survey_response) ─────────
+ * 누가 냈나 · 뭐라고 답했나 · 홍보에 쓸 수 있는 후기. 탭을 열 때 survey_response 를 한 번 읽는다.
+ * ⚠ 표 정책 admin_all(app_role()='admin') — 조교 계정은 데이터도 탭도 안 열린다.
+ * 설문키 짝: <앞>_s(학생) ↔ <앞>_p(학부모). 학부모 답도 학생 토큰으로 저장되므로 학생ID 로 짝을 맞춘다.
+ * 새 설문을 만들면 SV_META 에 이름 한 줄만 더한다(없어도 키 이름으로 보인다).
+ */
+const SV_META = {
+  ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
+  hw0827: { 이름: '기출 오답 과제 (0827)' },
+};
+// 홍보 금지 칸 — 설문 화면에 "홍보에 안 써요" 라고 약속한 칸
+const SV_PRIVATE = ['바라는점', '요청', '한마디', '개선'];
+const SV_FREE = ['아까운문제', '적중순간', '달라진점', '고마운점', '바라는점', '한문장', '자녀변화', '요청', '한마디'];
+const SV_LABEL = { 적중순간: '"학원에서 했던 거다" 순간', 달라진점: '수업 전후 달라진 점', 고마운점: '고마웠던 것', 바라는점: '바라는 점·아쉬운 점',
+  한문장: '한 문장 소개', 자녀변화: '자녀에게서 느낀 변화', 요청: '바라시는 점', 아까운문제: '제일 아까운 문제', 한마디: '한마디' };
+let SV = { rows: null, key: '', ban: '*', mode: 'who', open: '' };
+
+function viewSurvey(st) {
+  SV.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  return `<section class="view" id="v-survey">
+<h2>설문 <span class="cnt" id="sv-cnt"></span></h2>
+<div class="toolbar" id="sv-bar"></div>
+<div id="sv-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<div class="dim" style="margin-top:14px;line-height:1.6">학생 답과 학부모 답은 같은 학생 링크로 들어와 학생 이름으로 묶입니다 · 다시 낸 답은 덮어써지고 <b>수정</b> 횟수만 남습니다 ·
+ <b>홍보 가능</b> 후기는 본인이 고른 공개 범위, 학생 후기는 학부모의 「자녀 후기」 동의까지 둘 중 좁은 쪽을 따릅니다 · 「바라는 점」 칸은 어떤 경우에도 홍보에 쓰지 않습니다.</div>
+</section>`;
+}
+
+async function svLoad(force) {
+  const body = $('sv-body'); if (!body) return;
+  if (SV.rows && !force) { svDraw(); return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  try {
+    const { data, error } = await sb.from('survey_response').select('설문키,학생ID,반,답,제출시각,수정횟수').order('제출시각', { ascending: false }).limit(5000);
+    if (error) throw error;
+    SV.rows = data || [];
+  } catch (e) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(e.message || e)}</div>`; return; }
+  svDraw();
+}
+
+// 설문키 → 묶음(앞부분). ex26m2_s / ex26m2_p → ex26m2
+const svBase = k => k.replace(/_(s|p)$/, '');
+function svGroups() {
+  const g = {};
+  Object.keys(SV_META).forEach(b => g[b] = { base: b, last: '' });
+  (SV.rows || []).forEach(r => { const b = svBase(r.설문키); const o = g[b] || (g[b] = { base: b, last: '' }); if ((r.제출시각 || '') > o.last) o.last = r.제출시각; });
+  return Object.values(g).sort((a, b) => (b.last || '').localeCompare(a.last || '') || (a.base < b.base ? 1 : -1));
+}
+
+// 공개 범위 → 0 안 됨 · 1 익명 · 2 이니셜 · 3 이름
+function svLevel(v) {
+  if (!v) return 0;
+  if (/쓰지 말/.test(v)) return 0;
+  if (/익명/.test(v)) return 1;
+  if (/이니셜/.test(v)) return 2;
+  if (/이름|학부모로|괜찮다/.test(v)) return 3;
+  return 0;
+}
+const SV_LV = ['홍보 안 됨', '익명만', '이니셜', '실명 가능'];
+const svMask = n => n && n.length >= 2 ? n[0] + '○' + n.slice(2) : (n || '');
+
+function svDraw() {
+  const bar = $('sv-bar'), body = $('sv-body'); if (!bar || !body || !SV.rows) return;
+  const groups = svGroups();
+  if (!SV.key || !groups.some(g => g.base === SV.key)) SV.key = groups.length ? groups[0].base : '';
+  const pair = !!(SV_META[SV.key] && SV_META[SV.key].짝) || SV.rows.some(r => r.설문키 === SV.key + '_p');
+  const kS = pair ? SV.key + '_s' : SV.key, kP = SV.key + '_p';
+  const rs = SV.rows.filter(r => r.설문키 === kS), rp = pair ? SV.rows.filter(r => r.설문키 === kP) : [];
+  const byS = {}, byP = {}; rs.forEach(r => byS[r.학생ID] = r); rp.forEach(r => byP[r.학생ID] = r);
+  const inBan = b => SV.ban === '*' || b === SV.ban;
+  const stuMap = {}; SV.stu.forEach(s => stuMap[s.sid] = s);
+  const bans = [...new Set(SV.stu.map(s => s.ban).filter(Boolean))].sort();
+
+  const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
+  bar.innerHTML = groups.map(g => fb('sk', g.base, (SV_META[g.base] && SV_META[g.base].이름) || g.base, SV.key)).join('')
+    + '<span class="dim" style="margin:0 4px">│</span>' + fb('sb', '*', '반 전체', SV.ban) + bans.map(b => fb('sb', b, b, SV.ban)).join('')
+    + '<span class="dim" style="margin:0 4px">│</span>' + fb('sm', 'who', '제출 현황', SV.mode) + fb('sm', 'sum', '응답 요약', SV.mode) + fb('sm', 'voice', '후기', SV.mode)
+    + `<button class="fbtn" id="sv-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-sk]').forEach(b => b.onclick = () => { SV.key = b.dataset.sk; SV.open = ''; svDraw(); });
+  bar.querySelectorAll('[data-sb]').forEach(b => b.onclick = () => { SV.ban = b.dataset.sb; svDraw(); });
+  bar.querySelectorAll('[data-sm]').forEach(b => b.onclick = () => { SV.mode = b.dataset.sm; svDraw(); });
+  $('sv-re').onclick = () => svLoad(true);
+
+  // 이 설문에 한 번이라도 답한 학생 + 선택 반 명단
+  const ids = [...new Set([...Object.keys(byS), ...Object.keys(byP)])];
+  const who = ids.map(id => ({ sid: id, name: (stuMap[id] || {}).name || id.split('_')[0], ban: (stuMap[id] || {}).ban || ((byS[id] || byP[id] || {}).반 || '') }))
+    .filter(x => inBan(x.ban));
+  const t = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+  const nS = who.filter(x => byS[x.sid]).length, nP = who.filter(x => byP[x.sid]).length;
+  const call = who.filter(x => byP[x.sid] && /이번 주|기말 전/.test((byP[x.sid].답 || {}).상담 || ''));
+  const link = who.filter(x => byP[x.sid] && /링크/.test((byP[x.sid].답 || {}).포털안내 || ''));
+  $('sv-cnt').textContent = `학생 ${nS} · 학부모 ${nP}`;
+  const kpi = (l, v, sub, warn) => `<div class="kpi"><div class="lbl">${l}</div><div class="big"${warn && v ? ' style="color:var(--acc)"' : ''}>${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let html = `<div class="kpis">${kpi('학생 제출', nS, '명')}${pair ? kpi('학부모 제출', nP, '명') + kpi('상담 요청', call.length, '건', true) + kpi('포털 링크 다시', link.length, '건', true) : ''}</div>`;
+  if (!who.length) { body.innerHTML = html + '<div class="card dim" style="padding:14px">아직 제출한 사람이 없습니다. 보낸 링크는 제출하는 순간 여기 뜹니다 (↻ 로 새로고침).</div>'; return; }
+
+  if (SV.mode === 'who') {
+    const cell = r => r ? `<span class="sv-ok">✓</span> <span class="dim">${t(r.제출시각)}${r.수정횟수 ? ` · 수정 ${r.수정횟수}` : ''}</span>` : '<span class="dim">—</span>';
+    const flag = x => { const a = (byP[x.sid] || {}).답 || {}; const f = [];
+      if (/이번 주|기말 전/.test(a.상담 || '')) f.push(`<span class="sv-tag warn">상담 ${E(a.상담)}</span>`);
+      if (/링크|설명/.test(a.포털안내 || '')) f.push(`<span class="sv-tag warn">포털 ${E(a.포털안내)}</span>`);
+      return f.join(' '); };
+    html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학생 설문</th>${pair ? '<th>학부모 설문</th><th>챙길 것</th>' : ''}<th></th></tr></thead><tbody>`
+      + who.sort((a, b) => (a.ban || '').localeCompare(b.ban || '') || a.name.localeCompare(b.name, 'ko')).map(x =>
+        `<tr><td><a href="#student/${encodeURIComponent(x.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td><td>${cell(byS[x.sid])}</td>${pair ? `<td>${cell(byP[x.sid])}</td><td>${flag(x)}</td>` : ''}`
+        + `<td><button class="fbtn" data-so="${E(x.sid)}">${SV.open === x.sid ? '닫기' : '답 보기'}</button></td></tr>`
+        + (SV.open === x.sid ? `<tr><td colspan="${pair ? 6 : 4}" style="white-space:normal;padding:10px 12px">${svAns(byS[x.sid], '학생')}${pair ? svAns(byP[x.sid], '학부모') : ''}</td></tr>` : '')).join('')
+      + '</tbody></table></div>';
+  } else if (SV.mode === 'sum') {
+    html += svSum(who.map(x => byS[x.sid]).filter(Boolean), pair ? '학생' : '응답')
+      + (pair ? svSum(who.map(x => byP[x.sid]).filter(Boolean), '학부모') : '');
+  } else {
+    const items = [];
+    who.forEach(x => {
+      const pa = (byP[x.sid] || {}).답 || {};
+      const push = (r, src) => { if (!r) return; const a = r.답 || {};
+        let lv = svLevel(a.공개);
+        if (src === '학생' && pair) lv = Math.min(lv, byP[x.sid] ? (/쓰지 말/.test(pa.자녀공개 || '') ? 0 : /익명/.test(pa.자녀공개 || '') ? 1 : pa.자녀공개 ? 2 : 1) : 1);
+        SV_FREE.forEach(k => { const v = (a[k] || '').trim(); if (!v) return;
+          const priv = SV_PRIVATE.includes(k); items.push({ x, src, k, v, lv: priv ? -1 : lv }); }); };
+      push(byS[x.sid], pair ? '학생' : '응답'); push(byP[x.sid], '학부모');
+    });
+    const nm = (x, src, lv) => lv >= 3 ? (src === '학부모' ? `${x.name} 학부모` : x.name) : lv === 2 ? (src === '학부모' ? `${svMask(x.name)} 학부모` : svMask(x.name)) : (src === '학부모' ? `${x.ban.slice(0, 2)} 학부모` : `${x.ban.slice(0, 2)} 학생`);
+    const pill = lv => lv < 0 ? '<span class="sv-tag">홍보 금지 칸</span>' : `<span class="sv-tag${lv ? ' ok' : ''}">${SV_LV[lv]}</span>`;
+    const ok = items.filter(i => i.lv > 0), rest = items.filter(i => i.lv <= 0);
+    const card = i => `<div class="sv-q"><div class="sv-qh">${pill(i.lv)} <b>${E(i.lv > 0 ? nm(i.x, i.src, i.lv) : i.x.name + ' · ' + i.src)}</b> <span class="dim">${E(SV_LABEL[i.k] || i.k)}</span></div><div>${E(i.v)}</div></div>`;
+    html += `<h3 class="sv-h">홍보에 쓸 수 있는 후기 <span class="dim">${ok.length}</span></h3>` + (ok.length ? ok.map(card).join('') : '<div class="dim">아직 없습니다.</div>')
+      + `<h3 class="sv-h">내부용 <span class="dim">${rest.length}</span></h3>` + (rest.length ? rest.map(card).join('') : '<div class="dim">없음</div>');
+  }
+  body.innerHTML = html;
+  body.querySelectorAll('[data-so]').forEach(b => b.onclick = () => { SV.open = SV.open === b.dataset.so ? '' : b.dataset.so; svDraw(); });
+}
+
+function svAns(r, src) {
+  if (!r) return `<div class="sv-ans"><div class="sv-h2">${src}</div><div class="dim">아직 안 냄</div></div>`;
+  const a = r.답 || {};
+  return `<div class="sv-ans"><div class="sv-h2">${src} <span class="dim">${new Date(r.제출시각).toLocaleString('ko-KR')}</span></div>`
+    + Object.keys(a).filter(k => !k.startsWith('_')).map(k => `<div class="sv-row"><span class="dim">${E(SV_LABEL[k] || k)}</span><span>${E(Array.isArray(a[k]) ? a[k].join(', ') : a[k])}</span></div>`).join('') + '</div>';
+}
+
+function svSum(rows, src) {
+  if (!rows.length) return `<h3 class="sv-h">${src} <span class="dim">0명</span></h3>`;
+  const cnt = {};
+  rows.forEach(r => Object.entries(r.답 || {}).forEach(([k, v]) => {
+    if (k.startsWith('_') || SV_FREE.includes(k)) return;
+    (Array.isArray(v) ? v : [v]).forEach(x => { if (x === '' || x == null) return; const c = cnt[k] || (cnt[k] = { n: 0, v: {} }); c.v[x] = (c.v[x] || 0) + 1; });
+    if (cnt[k]) cnt[k].n++;
+  }));
+  return `<h3 class="sv-h">${src} <span class="dim">${rows.length}명</span></h3><div class="sv-grid">`
+    + Object.entries(cnt).map(([k, c]) => `<div class="card sv-sum"><div class="sv-qh"><b>${E(SV_LABEL[k] || k)}</b> <span class="dim">${c.n}명</span></div>`
+      + Object.entries(c.v).sort((a, b) => b[1] - a[1]).map(([v, n]) => `<div class="sv-bar"><span>${E(v)}</span><i style="width:${Math.round(n / c.n * 100)}%"></i><b>${n}</b></div>`).join('') + '</div>').join('')
+    + '</div>';
 }
 
 </script>
