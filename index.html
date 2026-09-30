@@ -280,6 +280,34 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .sv-bar{display:grid;grid-template-columns:1fr 80px 22px;align-items:center;gap:6px;font-size:12.5px;margin:3px 0}
 .sv-bar i{display:block;height:6px;border-radius:3px;background:var(--acc);min-width:2px}
 .sv-bar b{text-align:right;font-variant-numeric:tabular-nums}
+/* 개념의 탑 등반 기록 (0930) */
+.tw-grid td.tw-c{text-align:center;padding:6px 4px;min-width:38px;font-size:12px;font-variant-numeric:tabular-nums;border-left:1px solid var(--bd)}
+.tw-grid th.tw-fh{text-align:center;padding:8px 4px;cursor:help}
+.tw-c.g{background:rgba(155,227,184,.16);color:#d7f5e3} .tw-c.m{background:rgba(252,232,200,.14);color:#fce8c8} .tw-c.b{background:rgba(255,92,138,.16);color:#ffd7e3}
+.tw-c.part{outline:1px dashed rgba(255,255,255,.25);outline-offset:-3px}
+.tw-c i,.tw-q{font-style:normal;font-size:10px;color:#ffd08a;margin-left:2px}
+.tw-t.g{color:var(--good)} .tw-t.m{color:var(--mid)} .tw-t.b{color:var(--bad)}
+.tw-st{color:#ffd166;letter-spacing:.02em;font-size:11px}
+tr.tw-on td{background:rgba(245,160,160,.06)}
+tr.tw-det td{white-space:normal;padding:10px 14px;background:rgba(255,255,255,.015)}
+.tw-stu{display:grid;gap:10px}
+.tw-flh{margin-bottom:4px}
+.tw-it{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.tw-it.bad .tw-q2{color:var(--tx)} .tw-it:not(.bad) .tw-q2{color:var(--tx2)}
+.tw-ans{white-space:nowrap}
+.tw-chips{white-space:nowrap}
+.tw-a{display:inline-block;min-width:22px;text-align:center;font-size:11.5px;font-weight:700;padding:1px 5px;border-radius:6px;margin-right:2px}
+.tw-a.ok{background:rgba(155,227,184,.18);color:#bfeed2} .tw-a.amb{background:rgba(255,208,138,.18);color:#ffd08a} .tw-a.no{background:rgba(255,92,138,.2);color:#ffc2d4}
+.tw-a sup{font-size:8px;margin-left:1px}
+.tw-items td.tw-qc{white-space:normal;min-width:260px;max-width:520px;line-height:1.45}
+.tw-barc{white-space:nowrap}
+.tw-bar{display:inline-flex;width:90px;height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;vertical-align:middle;margin-right:6px}
+.tw-bar i{display:block;height:100%} .tw-bar i.w{background:var(--bad)} .tw-bar i.a{background:#ffd08a}
+.tw-who{display:inline-block;font-size:12px;padding:2px 8px;border-radius:8px;margin:0 4px 4px 0}
+.tw-who.no{background:rgba(255,92,138,.14)} .tw-who.amb{background:rgba(255,208,138,.12)}
+@media (max-width:640px){.tw-it{grid-template-columns:auto 1fr}.tw-ans{grid-column:2}}
+.tw-rd{display:inline-block;width:5px;height:5px;border-radius:50%;background:#8ecbff;vertical-align:top;margin-left:2px}
+.tw-chips{min-width:70px}
 
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
@@ -589,7 +617,7 @@ body.cs-on #boot{display:none}
 </div>
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
-<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
@@ -1623,6 +1651,7 @@ async function boot(session) {
   if (window.ROLE !== 'admin') {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
     const sv = document.querySelector('#nav a[data-v="survey"]'); if (sv) sv.remove();   // 0930 설문도 관리자만
+    const tw = document.querySelector('#nav a[data-v="tower"]'); if (tw) tw.remove();    // 0930 개념의 탑 기록도 관리자만
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
     const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
@@ -1861,7 +1890,8 @@ function render(st) {
     viewTypemap(st), viewVideo(st),                      // 0811 병합
     viewGichul(st),                                      // 0907 기출테스트 결과
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
-    viewSurvey(st)                                       // 0930 설문 (관리자)
+    viewSurvey(st),                                      // 0930 설문 (관리자)
+    viewTower(st)                                        // 0930 개념의 탑 등반 기록 (관리자)
   ].join('');
 }
 
@@ -4111,7 +4141,8 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits', 'survey'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits', 'survey', 'tower'].includes(main)) main = 'today';
+    if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
@@ -4126,6 +4157,7 @@ function wire(st) {
     navSync(main);
     if (main === 'visits') vsLoad();
     if (main === 'survey') svLoad();
+    if (main === 'tower') twLoad();
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -4476,6 +4508,304 @@ function svSum(rows, src) {
     + Object.entries(cnt).map(([k, c]) => `<div class="card sv-sum"><div class="sv-qh"><b>${E(SV_LABEL[k] || k)}</b> <span class="dim">${c.n}명</span></div>`
       + Object.entries(c.v).sort((a, b) => b[1] - a[1]).map(([v, n]) => `<div class="sv-bar"><span>${E(v)}</span><i style="width:${Math.round(n / c.n * 100)}%"></i><b>${n}</b></div>`).join('') + '</div>').join('')
     + '</div>';
+}
+
+
+/* ───────── 개념의 탑 등반 기록 (0930 — schema_v31·v32 tower_log) ─────────
+ * 학생이 /tower/ 에서 층마다 낸 OX 기록. 시도마다 1행이 쌓이므로 두 기준으로 본다:
+ *   첫 시도 = 그 문항을 처음 푼 기록(진단) · 최근 = 다시 풀기까지 반영한 마지막 기록(탑 화면의 별과 같은 계산)
+ * 문항 글자·층 이름은 배포된 /dashboard/tower/ 페이지의 BANK 를 그대로 읽는다(정본 make_bank.py — 여기 복사본을 두지 않는다).
+ * ⚠ 표 정책 admin_all(app_role()='admin') — 조교 계정은 탭도 데이터도 안 열린다.
+ * ⚠ 개념 정리를 먼저 읽고 푼 첫 시도(카드 1·3)는 기본으로 진단에서 뺀다(_tower/README). [카드 먼저 읽은 것 포함] 으로 켠다.
+ * 새 세트(기말·고2)를 열면 TW_SETS 에 한 줄 더한다 — 첫 줄이 기본 세트.
+ */
+const TW_SETS = {
+  g1m2_mid: { 이름: '고1 공수2 · 평면좌표~집합', url: '/dashboard/tower/', 학년: '고1' },
+};
+let TW = { rows: null, bank: {}, key: Object.keys(TW_SETS)[0], ban: '*', mode: 'grid', base: 'first', withCard: false, sort: 'ban', open: '', item: '' };
+
+function viewTower(st) {
+  TW.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  return `<section class="view" id="v-tower">
+<h2>개념의 탑 <span class="cnt" id="tw-cnt"></span></h2>
+<div class="toolbar" id="tw-bar"></div>
+<div id="tw-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<div class="dim" style="margin-top:14px;line-height:1.6"><b>첫 시도</b> = 그 문항을 처음 푼 기록(진단) · <b>최근</b> = 다시 풀기까지 반영한 마지막 기록(별 ★ 은 탑 화면과 같은 계산) ·
+ <b>애매정답</b> = 맞혔지만 [애매해요]를 누른 것 · 개념 정리를 <b>먼저 읽고</b> 푼 첫 시도는 기본으로 진단에서 뺍니다 · 칸에 마우스를 올리면 자세히 나옵니다.</div>
+</section>`;
+}
+
+async function twBank(key, force) {
+  if (TW.bank[key] !== undefined && !force) return TW.bank[key];
+  const meta = TW_SETS[key] || { url: '/dashboard/tower/' };
+  let b = null;
+  try {
+    const t = await (await fetch(meta.url + '?_=' + Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/const BANK=(\{.*\});\s*$/m);
+    if (m) b = JSON.parse(m[1]);
+    if (b && b.set !== key) b = null;
+  } catch (e) { console.warn('개념의 탑 문항 못 읽음', e); b = null; }
+  if (b) { b.byId = {}; b.byF = {}; b.items.forEach(x => { b.byId[x.id] = x; (b.byF[x.f] = b.byF[x.f] || []).push(x); }); }
+  TW.bank[key] = b; return b;
+}
+
+async function twLoad(force) {
+  const body = $('tw-body'); if (!body) return;
+  if (TW.rows && !force) { twDraw(); return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  try {
+    await twBank(TW.key, force);
+    const cols = 'id,세트키,학생ID,반,문항ID,층,답,정오,확신,시도,ms,카드,시각';
+    let all = [], from = 0, noCard = false;
+    for (;;) {
+      const { data, error } = await sb.from('tower_log').select(noCard ? cols.replace(',카드', '') : cols)
+        .eq('세트키', TW.key).order('id', { ascending: true }).range(from, from + 999);
+      if (error && !noCard && /카드/.test(error.message || '')) { noCard = true; all = []; from = 0; continue; }   // schema_v32 전
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < 1000 || from > 200000) break;
+      from += 1000;
+    }
+    TW.rows = all; TW.noCard = noCard;
+  } catch (e) {
+    const m = String(e && e.message || e);
+    body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(m)}`
+      + (/tower_log/.test(m) ? '<br>→ schema_v31_tower.sql 을 아직 Run 하지 않은 것 같습니다 (06_자동화/통합_작업실).' : '') + '</div>';
+    return;
+  }
+  twDraw();
+}
+
+// 문항 정의가 없을 때(페이지를 못 읽음) 기록만으로 층·문항 뼈대를 만든다
+function twBankOrRows() {
+  const b = TW.bank[TW.key];
+  if (b) return b;
+  const byF = {}, byId = {}, seen = {};
+  (TW.rows || []).forEach(r => { if (seen[r.문항ID]) return; seen[r.문항ID] = 1;
+    const x = { id: r.문항ID, f: r.층 || 0, q: r.문항ID, a: '?' }; byId[x.id] = x; (byF[x.f] = byF[x.f] || []).push(x); });
+  Object.values(byF).forEach(a => a.sort((p, q) => p.id.localeCompare(q.id)));
+  return { set: TW.key, floors: Object.keys(byF).map(Number).sort((a, b) => a - b).map(n => ({ no: n, name: n + '층', unit: '' })), byF, byId, items: Object.values(byId), fake: true };
+}
+
+// 학생별 → 문항별 시도 배열(시각순). 행은 id 오름차순으로 읽었으니 이미 시각순이다.
+function twIndex(rows) {
+  const by = {};
+  rows.forEach(r => {
+    const s = by[r.학생ID] || (by[r.학생ID] = { sid: r.학생ID, ban: r.반 || '', it: {}, last: '', n: 0 });
+    (s.it[r.문항ID] = s.it[r.문항ID] || []).push(r);
+    if ((r.시각 || '') > s.last) s.last = r.시각; if (r.반) s.ban = r.반; s.n++;
+  });
+  return by;
+}
+const twRead1st = a => !!(a && a[0] && ((a[0].카드 | 0) & 1));          // 개념 정리를 먼저 읽고 푼 첫 시도
+const twFirst = a => (!a || !a.length) ? null : (!TW.withCard && twRead1st(a)) ? null : a[0];
+const twLast = a => a && a.length ? a[a.length - 1] : null;
+
+function twFloor(s, fno, B) {
+  const its = B.byF[fno] || [];
+  const o = { n: its.length, done: 0, fn: 0, fok: 0, famb: 0, ex: 0, lok: 0, lsure: 0, retry: 0, stars: 0 };
+  its.forEach(x => {
+    const a = s && s.it[x.id]; if (!a) return;
+    o.done++; if (a.length > 1) o.retry++;
+    const L = twLast(a); if (L.정오) { o.lok++; if (L.확신 === '확실') o.lsure++; }
+    const F = twFirst(a); if (!F) { o.ex++; return; }
+    o.fn++; if (F.정오) { o.fok++; if (F.확신 === '애매') o.famb++; }
+  });
+  o.stars = o.done < o.n ? 0 : (o.lok === o.n ? (o.lsure === o.n ? 3 : 2) : (o.lok * 2 >= o.n ? 1 : 0));
+  return o;
+}
+const twStar = s => '★'.repeat(s) + '<span style="opacity:.22">' + '★'.repeat(3 - s) + '</span>';
+const twTone = r => r == null ? 'n' : r >= 0.9 ? 'g' : r >= 0.6 ? 'm' : 'b';
+const twPct = (a, b) => b ? Math.round(a / b * 100) : null;
+const twT = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+
+function twDraw() {
+  const bar = $('tw-bar'), body = $('tw-body'); if (!bar || !body || !TW.rows) return;
+  const B = twBankOrRows(), meta = TW_SETS[TW.key] || {};
+  const stuMap = {}; (TW.stu || []).forEach(s => stuMap[s.sid] = s);
+  const idx = twIndex(TW.rows);
+  // 대상 = 그 학년 재원생 전원 + 기록 있는 학생(퇴원·반 이동 포함)
+  const pool = {};
+  (TW.stu || []).filter(s => !meta.학년 || (s.ban || '').startsWith(meta.학년)).forEach(s => pool[s.sid] = { sid: s.sid, name: s.name, ban: s.ban });
+  Object.values(idx).forEach(s => { const m = stuMap[s.sid]; pool[s.sid] = { sid: s.sid, name: m ? m.name : s.sid.split('_')[0], ban: (m && m.ban) || s.ban }; });
+  const bans = [...new Set(Object.values(pool).map(x => x.ban).filter(Boolean))].sort();
+  if (TW.ban !== '*' && !bans.includes(TW.ban)) TW.ban = '*';
+  const who = Object.values(pool).filter(x => TW.ban === '*' || x.ban === TW.ban);
+  const whoSet = new Set(who.map(x => x.sid));
+  const rows = TW.rows.filter(r => whoSet.has(r.학생ID));
+
+  const fb = (grp, v, lbl, cur, tip) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}"${tip ? ` title="${E(tip)}"` : ''}>${E(lbl)}</button>`;
+  const sep = '<span class="dim" style="margin:0 4px">│</span>';
+  bar.innerHTML = (Object.keys(TW_SETS).length > 1 ? Object.keys(TW_SETS).map(k => fb('tk', k, TW_SETS[k].이름, TW.key)).join('') + sep : '')
+    + fb('tb', '*', '반 전체', TW.ban) + bans.map(b => fb('tb', b, b, TW.ban)).join('') + sep
+    + fb('tm', 'grid', '학생 × 층', TW.mode) + fb('tm', 'item', '문항별', TW.mode) + fb('tm', 'log', '최근 등반', TW.mode) + sep
+    + fb('tbase', 'first', '첫 시도', TW.base, '처음 푼 기록 — 진단') + fb('tbase', 'last', '최근', TW.base, '다시 풀기까지 반영')
+    + `<button class="fbtn${TW.withCard ? ' on' : ''}" id="tw-card" title="개념 정리를 먼저 읽고 푼 첫 시도도 진단에 넣기">카드 먼저 읽은 것 포함</button>`
+    + `<button class="fbtn" id="tw-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-tk]').forEach(b => b.onclick = () => { TW.key = b.dataset.tk; TW.rows = null; TW.open = ''; TW.item = ''; twLoad(); });
+  bar.querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { TW.ban = b.dataset.tb; twDraw(); });
+  bar.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { TW.mode = b.dataset.tm; twDraw(); });
+  bar.querySelectorAll('[data-tbase]').forEach(b => b.onclick = () => { TW.base = b.dataset.tbase; twDraw(); });
+  $('tw-card').onclick = () => { TW.withCard = !TW.withCard; twDraw(); };
+  $('tw-re').onclick = () => twLoad(true);
+
+  // KPI
+  const climbers = who.filter(x => idx[x.sid]);
+  let fn = 0, fok = 0, famb = 0, ex = 0, cleared = 0, retry = 0;
+  climbers.forEach(x => B.floors.forEach(f => { const o = twFloor(idx[x.sid], f.no, B); fn += o.fn; fok += o.fok; famb += o.famb; ex += o.ex; if (o.stars >= 2) cleared++; }));
+  rows.forEach(r => { if ((r.시도 | 0) > 1) retry++; });
+  $('tw-cnt').textContent = `${climbers.length}명 · ${B.items.length}문항 ${B.floors.length}층`;
+  const kpi = (l, v, sub, tip) => `<div class="kpi"${tip ? ` title="${E(tip)}"` : ''}><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let html = (B.fake ? '<div class="card dim" style="padding:10px 14px;margin-bottom:8px">⚠ 탑 페이지에서 문항 정의를 못 읽어 문항 ID 로만 보입니다 (/dashboard/tower/ 배포 확인).</div>' : '')
+    + `<div class="kpis">${kpi('오른 학생', climbers.length, ` / ${who.length}명`)}`
+    + kpi('첫 시도 정답률', fn ? twPct(fok, fn) : '—', fn ? '%' : '', `첫 시도 ${fn}문항 중 ${fok}`)
+    + kpi('애매정답', fok ? twPct(famb, fok) : '—', fok ? '%' : '', `맞힌 ${fok}문항 중 [애매해요] ${famb} — 찍었을 수 있음`)
+    + kpi('★★ 이상 층', cleared, '개', '최근 기록 기준 층을 다 맞힌 횟수(학생×층)')
+    + kpi('다시 푼 기록', retry, '행')
+    + (TW.withCard || TW.noCard ? '' : kpi('카드 먼저 읽고 풂', ex, '문항', '진단에서 뺀 첫 시도'))
+    + '</div>';
+  if (!TW.rows.length) { body.innerHTML = html + '<div class="card dim" style="padding:14px">아직 등반 기록이 없습니다. 학생이 한 층을 끝내면 그 층 기록이 한 번에 들어옵니다 (↻ 로 새로고침).</div>'; return; }
+
+  if (TW.mode === 'grid') html += twGrid(who, idx, B);
+  else if (TW.mode === 'item') html += twItems(who, idx, B, pool);
+  else html += twLog(rows, B, pool);
+  body.innerHTML = html;
+  body.querySelectorAll('[data-to]').forEach(b => b.onclick = () => { TW.open = TW.open === b.dataset.to ? '' : b.dataset.to; twDraw(); });
+  body.querySelectorAll('[data-ti]').forEach(b => b.onclick = () => { TW.item = TW.item === b.dataset.ti ? '' : b.dataset.ti; twDraw(); });
+  body.querySelectorAll('[data-ts]').forEach(b => b.onclick = () => { TW.sort = b.dataset.ts; twDraw(); });
+}
+
+/* 보기 ① 학생 × 층 */
+function twGrid(who, idx, B) {
+  const first = TW.base === 'first';
+  const list = who.map(x => {
+    const s = idx[x.sid]; let fn = 0, fok = 0, famb = 0, lok = 0, done = 0, full = 0;
+    const cells = B.floors.map(f => { const o = twFloor(s, f.no, B); fn += o.fn; fok += o.fok; famb += o.famb; lok += o.lok; done += o.done; if (o.done === o.n && o.n) full++; return [f, o]; });
+    return { ...x, s, cells, fn, fok, famb, lok, done, full, rate: first ? (fn ? fok / fn : null) : (done ? lok / done : null) };
+  });
+  const CMP = {
+    ban: (a, b) => (a.ban || '').localeCompare(b.ban || '') || (a.name || '').localeCompare(b.name || '', 'ko'),
+    low: (a, b) => (a.rate == null) - (b.rate == null) || (a.rate || 0) - (b.rate || 0),
+    recent: (a, b) => ((b.s && b.s.last) || '').localeCompare((a.s && a.s.last) || ''),
+    much: (a, b) => b.done - a.done,
+  };
+  const cmp = CMP[TW.sort] || CMP.ban;
+  list.sort((a, b) => (!!b.s - !!a.s) || cmp(a, b));
+  const sb_ = (v, l) => `<button class="fbtn${TW.sort === v ? ' on' : ''}" data-ts="${v}">${l}</button>`;
+  let h = `<div class="toolbar" style="margin:10px 0 6px"><span class="dim" style="margin-right:4px">정렬</span>${sb_('ban', '반·이름')}${sb_('low', '정답률 낮은 순')}${sb_('much', '많이 푼 순')}${sb_('recent', '최근 순')}</div>`;
+  h += `<div class="card vs-wrap"><table class="vs-tbl tw-grid"><thead><tr><th>학생</th><th>반</th><th class="n" title="모든 문항을 한 번 이상 푼 층">다 푼 층</th><th class="n">${first ? '첫 시도' : '최근'} 정답률</th><th class="n" title="첫 시도에 맞혔지만 애매">애매정답</th><th>마지막</th>`
+    + B.floors.map(f => `<th class="tw-fh" title="${E(f.no + 'F ' + (f.unit ? f.unit + ' · ' : '') + f.name + ' (' + (B.byF[f.no] || []).length + '문항)')}">${f.no}</th>`).join('') + '<th></th></tr></thead><tbody>';
+  list.forEach(x => {
+    if (!x.s) {
+      h += `<tr class="vs-none"><td><a href="#student/${encodeURIComponent(x.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="dim">아직 안 오름</td>${B.floors.map(() => '<td class="tw-c n"></td>').join('')}<td></td></tr>`;
+      return;
+    }
+    const cell = ([f, o]) => {
+      if (!o.done) return `<td class="tw-c n" title="${E(f.no + 'F ' + f.name)} — 안 풂"></td>`;
+      const tip = `${f.no}F ${f.name}\n푼 문항 ${o.done}/${o.n}\n첫 시도 ${o.fok}/${o.fn} 정답${o.famb ? ` (애매정답 ${o.famb})` : ''}${o.ex ? `\n카드 먼저 읽고 푼 ${o.ex}문항 제외` : ''}\n최근 ${o.lok}/${o.done} 정답 · 확실 ${o.lsure}${o.retry ? `\n다시 푼 문항 ${o.retry}` : ''}${o.done === o.n ? '\n별 ' + '★'.repeat(o.stars) + '☆'.repeat(3 - o.stars) : ''}`;
+      if (first) {
+        const r = o.fn ? o.fok / o.fn : null;
+        return `<td class="tw-c ${twTone(r)}${o.done < o.n ? ' part' : ''}" title="${E(tip)}">${o.fn ? o.fok + '/' + o.fn : '<span class="dim">읽고</span>'}${o.famb ? `<i>${o.famb}?</i>` : ''}</td>`;
+      }
+      const r = o.lok / o.done;
+      return `<td class="tw-c ${twTone(r)}${o.done < o.n ? ' part' : ''}" title="${E(tip)}">${o.done === o.n ? `<span class="tw-st">${twStar(o.stars)}</span>` : o.lok + '/' + o.done}</td>`;
+    };
+    h += `<tr${TW.open === x.sid ? ' class="tw-on"' : ''}><td><a href="#student/${encodeURIComponent(x.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td>`
+      + `<td class="n">${x.full}<span class="dim">/${B.floors.length}</span></td>`
+      + `<td class="n">${x.rate == null ? '—' : `<b class="tw-t ${twTone(x.rate)}">${Math.round(x.rate * 100)}%</b>`}</td>`
+      + `<td class="n">${x.famb || '<span class="dim">0</span>'}</td><td class="dim">${twT(x.s.last)}</td>`
+      + x.cells.map(cell).join('') + `<td><button class="fbtn" data-to="${E(x.sid)}">${TW.open === x.sid ? '닫기' : '자세히'}</button></td></tr>`;
+    if (TW.open === x.sid) h += `<tr class="tw-det"><td colspan="${B.floors.length + 7}">${twStudent(x, B)}</td></tr>`;
+  });
+  h += '</tbody></table></div>'
+    + `<div class="dim" style="margin-top:6px">칸 = ${first ? '첫 시도 맞힌 수/푼 수 · <i class="tw-q">n?</i> 는 애매정답' : '층을 다 풀었으면 별, 아니면 최근 맞힌 수/푼 수'} · 점선 테두리 = 층을 아직 다 안 풂 · 색: 90%↑ 초록 · 60%↑ 노랑 · 그 아래 분홍</div>`;
+  return h;
+}
+
+// 한 학생 자세히 — 층마다 문항별 시도 기록
+function twStudent(x, B) {
+  const s = x.s; let h = '<div class="tw-stu">';
+  B.floors.forEach(f => {
+    const its = (B.byF[f.no] || []).filter(it => s.it[it.id]); if (!its.length) return;
+    const o = twFloor(s, f.no, B);
+    h += `<div class="tw-fl"><div class="tw-flh"><b>${f.no}F ${E(f.name)}</b> <span class="dim">푼 ${o.done}/${o.n} · 첫 시도 ${o.fok}/${o.fn}${o.famb ? ` · 애매정답 ${o.famb}` : ''} · 최근 ${o.lok}/${o.done}</span> ${o.done === o.n ? `<span class="tw-st">${twStar(o.stars)}</span>` : ''}</div>`;
+    // 틀리거나 애매했던 문항이 위로
+    const bad = a => a.some(r => !r.정오 || r.확신 === '애매');
+    its.slice().sort((p, q) => bad(s.it[q.id]) - bad(s.it[p.id])).forEach(it => {
+      const a = s.it[it.id];
+      const chips = a.map((r, i) => `<span class="tw-a ${r.정오 ? (r.확신 === '확실' ? 'ok' : 'amb') : 'no'}" title="${E(`${i + 1}번째 · ${twT(r.시각)} · 답 ${r.답 || '?'} · ${r.확신 || ''}${r.ms ? ' · ' + Math.round(r.ms / 1000) + '초' : ''}${(r.카드 | 0) & 1 ? ' · 카드 먼저 읽음' : ''}${(r.카드 | 0) & 2 ? ' · 채점 뒤 카드 펼침' : ''}`)}">${r.정오 ? 'O' : 'X'}${r.확신 === '애매' ? '?' : ''}${(r.카드 | 0) & 1 ? '<b class="tw-rd"></b>' : ''}</span>`).join('');
+      h += `<div class="tw-it${bad(a) ? ' bad' : ''}"><span class="tw-chips">${chips}</span><span class="tw-q2">${E(it.q)}</span><span class="dim tw-ans">정답 ${E(it.a)}${a.some(r => !r.정오) ? ` · 낸 답 ${E([...new Set(a.filter(r => !r.정오).map(r => r.답))].join(', '))}` : ''}</span></div>`;
+    });
+    h += '</div>';
+  });
+  return h + '<div class="dim" style="margin-top:6px">O 확실히 맞힘 · O? 애매하게 맞힘 · X 틀림 — 왼쪽부터 시도 순서 · <b class="tw-rd"></b> = 개념 정리를 먼저 읽고 풂</div></div>';
+}
+
+/* 보기 ② 문항별 — 반 전체가 흔들리는 개념 */
+function twItems(who, idx, B, pool) {
+  const stats = B.items.map(it => {
+    const o = { it, n: 0, wrong: 0, amb: 0, fix: 0, fixN: 0, ms: [], bad: [] };
+    who.forEach(x => {
+      const s = idx[x.sid]; const a = s && s.it[it.id]; if (!a) return;
+      const F = twFirst(a); if (!F) return;
+      o.n++; if (!F.정오) o.wrong++; else if (F.확신 === '애매') o.amb++;
+      if (F.ms) o.ms.push(F.ms);
+      if (!F.정오 || F.확신 === '애매') {
+        o.bad.push({ x, F, L: twLast(a), k: a.length });
+        if (a.length > 1) { o.fixN++; const L = twLast(a); if (L.정오 && L.확신 === '확실') o.fix++; }
+      }
+    });
+    o.wr = o.n ? o.wrong / o.n : null; o.ar = o.n ? o.amb / o.n : null;
+    o.med = o.ms.length ? o.ms.sort((a, b) => a - b)[o.ms.length >> 1] : null;
+    return o;
+  });
+  const sb_ = (v, l) => `<button class="fbtn${TW.sort === v ? ' on' : ''}" data-ts="${v}">${l}</button>`;
+  const byWrong = TW.sort === 'wrong';
+  let h = `<div class="toolbar" style="margin:10px 0 6px"><span class="dim" style="margin-right:4px">정렬</span>${sb_('ban', '층 순')}${sb_('wrong', '흔들린 학생 많은 순')}</div>`;
+  const row = o => {
+    const it = o.it, open = TW.item === it.id;
+    const shaky = o.n ? (o.wrong + o.amb) / o.n : null;
+    let r = `<tr${open ? ' class="tw-on"' : ''}><td class="dim">${E(it.id)}</td>${byWrong ? `<td class="dim">${it.f}F</td>` : ''}<td class="tw-qc" title="${E(it.q + (it.w ? '\n\n해설: ' + it.w : ''))}">${E(it.q)}</td><td>${E(it.a)}</td>`
+      + `<td class="n">${o.n || '<span class="dim">0</span>'}</td>`
+      + `<td class="tw-barc">${o.n ? `<span class="tw-bar"><i class="w" style="width:${o.wr * 100}%"></i><i class="a" style="width:${o.ar * 100}%"></i></span><span class="tw-t ${twTone(shaky == null ? null : 1 - shaky)}">${Math.round(o.wr * 100)}%</span>${o.amb ? `<span class="dim"> +${Math.round(o.ar * 100)}%?</span>` : ''}` : ''}</td>`
+      + `<td class="n">${o.fixN ? `${o.fix}/${o.fixN}` : '<span class="dim">—</span>'}</td><td class="n dim">${o.med ? Math.round(o.med / 1000) + '초' : ''}</td>`
+      + `<td>${o.bad.length ? `<button class="fbtn" data-ti="${E(it.id)}">${open ? '닫기' : '누구?'}</button>` : ''}</td></tr>`;
+    if (open) r += `<tr class="tw-det"><td colspan="${byWrong ? 9 : 8}">${it.w ? `<div class="dim" style="margin-bottom:6px">해설 — ${E(it.w)}</div>` : ''}`
+      + o.bad.map(b => `<span class="tw-who ${b.F.정오 ? 'amb' : 'no'}" title="${E(`첫 답 ${b.F.답 || '?'} · ${b.F.확신 || ''} · 시도 ${b.k}번`)}">${E(b.x.name)} <span class="dim">${E(b.x.ban)}</span> ${b.F.정오 ? 'O?' : 'X ' + E(b.F.답 || '')}${b.k > 1 ? ` → ${b.L.정오 ? (b.L.확신 === '확실' ? 'O' : 'O?') : 'X'}` : ''}</span>`).join('') + '</td></tr>';
+    return r;
+  };
+  const head = `<thead><tr><th>ID</th>${byWrong ? '<th>층</th>' : ''}<th>문항</th><th>정답</th><th class="n">푼 학생</th><th>첫 시도 오답률 <span class="dim">+애매</span></th><th class="n" title="첫 시도에 틀렸거나 애매했던 학생 중 다시 풀어 확실히 맞힌 수">다시 풀어 고침</th><th class="n">중간 시간</th><th></th></tr></thead>`;
+  if (byWrong) {
+    // 흔들린 학생 '수' 먼저(1명 푼 100% 가 위를 덮지 않게), 같으면 비율
+    const list = stats.filter(o => o.n).sort((a, b) => (b.wrong + b.amb) - (a.wrong + a.amb) || b.wrong - a.wrong || ((b.wrong + b.amb) / b.n - (a.wrong + a.amb) / a.n));
+    h += `<div class="card vs-wrap"><table class="vs-tbl tw-items">${head}<tbody>${list.map(row).join('')}</tbody></table></div>`;
+  } else {
+    B.floors.forEach(f => {
+      const ss = stats.filter(o => o.it.f === f.no); const n = ss.reduce((a, o) => a + o.n, 0), w = ss.reduce((a, o) => a + o.wrong, 0), am = ss.reduce((a, o) => a + o.amb, 0);
+      h += `<h3 class="sv-h">${f.no}F ${E(f.name)} <span class="dim">${f.unit ? E(f.unit) + ' · ' : ''}${ss.length}문항${n ? ` · 첫 시도 오답 ${twPct(w, n)}% · 애매 ${twPct(am, n)}%` : ' · 아직 없음'}</span></h3>`
+        + `<div class="card vs-wrap"><table class="vs-tbl tw-items">${head}<tbody>${ss.map(row).join('')}</tbody></table></div>`;
+    });
+  }
+  return h + '<div class="dim" style="margin-top:6px">막대 = 분홍 오답 · 노랑 애매정답 (첫 시도) · 문항에 마우스를 올리면 해설이 보입니다</div>';
+}
+
+/* 보기 ③ 최근 등반 — 한 번 보낸 층 기록 = 한 줄 */
+function twLog(rows, B, pool) {
+  const g = {};
+  rows.forEach(r => { const k = r.학생ID + '|' + r.층 + '|' + r.시각; const o = g[k] || (g[k] = { sid: r.학생ID, f: r.층, t: r.시각, n: 0, ok: 0, amb: 0, maxTry: 0, ms: 0, card: 0 });
+    o.n++; if (r.정오) { o.ok++; if (r.확신 === '애매') o.amb++; } o.maxTry = Math.max(o.maxTry, r.시도 | 0); o.ms += r.ms | 0; o.card |= (r.카드 | 0); });
+  const list = Object.values(g).sort((a, b) => (b.t || '').localeCompare(a.t || '')).slice(0, 300);
+  const fName = {}; B.floors.forEach(f => fName[f.no] = f.name);
+  let h = `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>언제</th><th>학생</th><th>반</th><th>층</th><th>시도</th><th class="n">맞힘</th><th class="n">애매정답</th><th class="n">걸린 시간</th><th>개념 정리</th></tr></thead><tbody>`;
+  list.forEach(o => {
+    const x = pool[o.sid] || { name: o.sid.split('_')[0], ban: '' }; const r = o.n ? o.ok / o.n : null;
+    h += `<tr><td class="dim">${twT(o.t)}</td><td><a href="#student/${encodeURIComponent(o.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td>`
+      + `<td>${o.f}F ${E(fName[o.f] || '')}</td><td>${o.maxTry > 1 ? `<span class="sv-tag warn">다시 ${o.maxTry}회차</span>` : '<span class="sv-tag">처음</span>'}</td>`
+      + `<td class="n"><b class="tw-t ${twTone(r)}">${o.ok}/${o.n}</b></td><td class="n">${o.amb || '<span class="dim">0</span>'}</td>`
+      + `<td class="n dim">${o.ms ? (o.ms >= 60000 ? Math.floor(o.ms / 60000) + '분 ' : '') + Math.round(o.ms % 60000 / 1000) + '초' : ''}</td>`
+      + `<td class="dim">${[(o.card & 1) && '먼저 읽음', (o.card & 2) && '채점 뒤 펼침'].filter(Boolean).join(' · ')}</td></tr>`;
+  });
+  return h + '</tbody></table></div>' + (Object.keys(g).length > 300 ? '<div class="dim" style="margin-top:6px">최근 300건만 보입니다.</div>' : '');
 }
 
 </script>
