@@ -553,7 +553,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #nav .ng button{font:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer}
 #nav .ng button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
 #nav .nt{display:flex;gap:2px;flex-wrap:wrap}
-#nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav .nt a[hidden]{display:none} #nav .nt a.ext{color:var(--acc)}
+#nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav:not(:has(#nav-g button.on)) .nt a{display:none} #nav .nt a[hidden]{display:none} #nav .nt a.ext{color:var(--acc)}
 @media (hover:hover) and (pointer:fine){#nav .ng button:hover{color:var(--acc)}}
 #state #who{font-size:11px;color:var(--tx2)}
 #state #jobpill{cursor:pointer}
@@ -1631,6 +1631,11 @@ async function boot(session) {
        느리거나 실패해도 입력은 살아 있어야 한다 — 수업 중에 못 쓰면 그게 사고다. */
   if (typeof csBoot === 'function') { try { csBoot(prof); } catch (e) { console.error('콘솔 기동 실패', e); } }
   csRoute();      // 주소가 이미 #cs-… 면 조회를 기다리지 않고 바로 연다
+  // 0930 — 조회 로딩 중에도 아래 줄 탭을 현재 묶음만 보이게(전엔 로딩 끝날 때까지 탭 30개가 한 줄로 늘어졌다)
+  if (!document.body.classList.contains('cs-on')) {
+    const m0 = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
+    navSync(document.querySelector(`#nav-t a[data-v="${m0}"]`) ? m0 : 'today');
+  }
   try {
     const raw = await loadAll();
     const st = compute(raw);
