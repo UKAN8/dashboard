@@ -38,7 +38,11 @@ main{max-width:620px;margin:0 auto}
 @media (hover:hover) and (pointer:fine){ .opt:hover{border-color:rgba(245,160,160,.35);color:var(--tx)} }
 textarea{width:100%;min-height:88px;resize:vertical;font:inherit;font-size:14px;color:var(--tx);
  background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
-textarea::placeholder{color:var(--dim)}
+textarea::placeholder,input::placeholder{color:var(--dim)}
+input.num{width:100%;font:inherit;font-size:14px;color:var(--tx);background:rgba(255,255,255,.035);
+ border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+.sec{font-size:11px;letter-spacing:.16em;color:var(--dim);margin:22px 2px 8px}
+.opts+.s,.q .s.after{margin:8px 0 0}
 .cnt{text-align:right;color:var(--dim);font-size:11px;margin-top:4px}
 .bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,#0a0a0f 62%,rgba(10,10,15,0));
  padding:14px clamp(12px,4vw,28px) calc(16px + env(safe-area-inset-bottom))}
@@ -65,7 +69,7 @@ button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:d
   <div class="brand">수학은유강</div>
   <div class="who"><b id="nm"></b><span class="ban" id="cl"></span></div>
   <div class="lead" id="lead"></div>
-  <div class="note">답은 <b>성적이랑 아무 상관 없어요.</b> 다음 과제 만들 때 반영하려고 여쭤보는 거라, 솔직할수록 도움이 됩니다~ 1분이면 끝나요.</div>
+  <div class="note" id="note"></div>
   <div id="qs"></div>
   <div class="foot" id="foot"></div>
 </div>
@@ -103,7 +107,17 @@ const $=id=>document.getElementById(id);
  *   여기만 반말·명령형이면 그 순간 '학원이 아니라 시스템이 보낸 것'이 된다.
  *   선택지는 학생이 자기 말로 고르는 자리라 평서형('~했다')으로 둔다.
  */
-const DEFAULT='hw0827';
+/* ── 0930 확장 (T0930-02) ─────────────────────────────────────────────────
+ * 문항 종류: 기본=단일선택 · multi:N=복수(최대 N, EX 목록은 배타) · num:true=숫자 · free:true=글
+ *   opt:true 면 필수 아님(글·숫자는 늘 선택). sec:'…' 는 소제목 줄(문항 아님).
+ * 설문별: 제목·안내·완료·말미 에 {이름} 치환. 부모:true 면 지난 답을 화면에 복원하지 않는다
+ *   (학부모 키도 학생 토큰으로 열리므로 — 학생이 부모 답을 화면에서 못 보게).
+ *   ⚠ 완전 차단은 아님: survey_open 이 지난답을 돌려준다. 막으려면 SQL 수정(유강 Run).
+ */
+const DEFAULT='ex26m2_s';
+const HELP=['기출테스트(타학교)','학습루프','개별 과제(PT)','자평·되짚기','직보','D-DAY 체크리스트','손풀이 해설·수업 영상','수업 설명'];
+const PORTAL=['회차별 시험 점수','요즘 나(추이·예상 등급)','자주 틀리는 단원·주제','할 일(과제 현황)','수업 자료(영상·시험지)'];
+const EX=['없음','놓친 거 없음','지금으로 충분하다','딱히 없다'];
 const SURVEYS={
  'hw0827':{
   제목:'지난 시간 <b>기출 오답 개별 과제</b> 어땠는지 알려주세요~',
@@ -131,44 +145,136 @@ const SURVEYS={
     o:['문항 수를 줄여주세요','쉬운 것부터 단계적으로','유형마다 예시 풀이 1개','해설을 더 자세히','틀린 문제와 더 비슷하게','지금 이대로가 좋아요']},
    {k:'한마디', t:'하고 싶은 말 있으면 편하게 써주세요', s:'없으면 비워두셔도 돼요~ (선택)', free:true,
     ph:'좋았던 것, 불편했던 것, 아무거나'}
+  ]},
+ 'ex26m2_s':{
+  제목:'학교 시험 끝났어요! 정말 수고 많았어요. 4분만 알려주세요~',
+  안내:'답은 <b>성적이랑 아무 상관 없어요.</b> 이 답으로 기말 준비 계획을 짜요. 솔직할수록 도움이 됩니다~',
+  완료:['고마워요!','이 답으로 기말 계획 짜서 다음 수업 때 보여줄게요.<br>바꾸고 싶으면 다시 눌러서 고치셔도 돼요.'],
+  문항:[
+   {sec:'결과'},
+   {k:'점수대',t:'수학 점수(가채점) 대략요?',o:['95 이상','85~94','75~84','60~74','60 미만','아직 모른다']},
+   {k:'점수',t:'정확한 점수 알면 적어주세요',s:'몰라도 괜찮아요. (선택)',num:true,when:a=>a.점수대&&a.점수대!=='아직 모른다'},
+   {k:'변화',t:'지난 시험(1학기 기말)보다요?',o:['많이 올랐다','약간 올랐다','비슷','약간 떨어졌다','많이 떨어졌다','그땐 안 다녔다']},
+   {k:'지난점수',t:'1학기 기말 점수 기억나면 적어주세요',s:'몰라도 괜찮아요. (선택)',num:true,when:a=>a.변화&&a.변화!=='그땐 안 다녔다'},
+   {k:'만족',t:'이번 점수, 본인은 만족해요?',o:['매우 만족','만족','보통','아쉽다','많이 아쉽다']},
+   {sec:'시험지 안에서'},
+   {k:'시간',t:'시간은요?',o:['남아서 검토까지 했다','딱 맞게 끝났다','마지막 몇 문제 급하게 풀었다','못 푼 문제가 있다']},
+   {k:'찍음',t:'찍은 문제는 몇 개예요?',s:'솔직하게요. 다음 과제 난이도 맞추는 데 써요.',o:['0개','1~2개','3~4개','5개 이상']},
+   {k:'놓친이유',t:'놓친 문제, 이유를 골라주세요',s:'최대 2개까지요.',multi:2,o:['계산 실수','문제를 잘못 읽었다','마킹 실수','개념·공식이 헷갈렸다','응용에서 막혔다','처음 보는 유형이었다','시간이 부족했다','놓친 거 없음']},
+   {k:'적중',t:'학원에서 풀어본 것과 비슷한 문제가 나왔어요?',o:['여러 문제','몇 문제','거의 없었다','잘 모르겠다']},
+   {k:'아까운문제',t:'제일 아까운 문제는요?',s:'몇 번이었고 뭐가 막혔는지. (선택)',free:true,ph:'예) 18번 — 원의 방정식에서 반지름을 제곱 안 함'},
+   {sec:'준비 과정'},
+   {k:'도움',t:'준비하면서 제일 도움된 거 하나만요',o:HELP},
+   {k:'줄여도',t:'줄여도 되는 건요?',s:'여러 개 골라도 돼요.',multi:9,o:[...HELP,'없음']},
+   {k:'수행',t:'루프·PT 과제, 실제로 얼마나 했어요?',o:['거의 다 했다','절반쯤','조금','거의 못 했다']},
+   {k:'해설',t:'해설은 어땠어요?',o:['충분했다','더 자세했으면 좋겠다','영상이 더 좋다','거의 안 봤다']},
+   {k:'공부시간',t:'시험 전 주, 학원 밖에서 하루 수학 공부 시간은요?',o:['30분 미만','30분~1시간','1~2시간','2~3시간','3시간 이상']},
+   {sec:'다음 시험'},
+   {k:'강화',t:'기말 대비 때 더 해줬으면 하는 것',s:'최대 2개까지요.',multi:2,o:['응용·변형 문제','실수 방지 훈련','시간 단축 훈련','개념 설명 더 깊게','고난도 문제','내 약점 유형 반복']},
+   {k:'질문',t:'질문하고 싶은데 못 한 적 있어요?',o:['없다','시간이 없어서','친구들 앞이라 부담돼서','쌤이 바빠 보여서']},
+   {sec:'한 줄씩만 · 전부 선택'},
+   {k:'적중순간',t:'시험 보다가 "이거 학원에서 했던 거다!" 싶었던 순간 있어요?',s:'몇 번 문제였는지, 뭐가 떠올랐는지요.',free:true,ph:'예) 16번 보자마자 기출테스트 때 틀린 거랑 똑같아서 바로 풀었다',when:a=>['여러 문제','몇 문제'].includes(a.적중)},
+   {k:'달라진점',t:'유강T 수업 듣기 전과 비교해서 달라진 점 하나',free:true,ph:'공부하는 방식, 점수, 문제 볼 때 태도… 아무거나'},
+   {k:'고마운점',t:'이번 시험 준비하면서 제일 고마웠던 거',free:true,ph:'수업, 자료, 직보, 한마디… 뭐든요'},
+   {k:'바라는점',t:'쌤한테 바라는 거나 아쉬웠던 거',s:'솔직하게요. 이건 홍보에 안 써요.',free:true,ph:'이런 건 바꿔줬으면 좋겠다'},
+   {sec:'마지막'},
+   {k:'자신감',t:'이번 시험 보고 나서 수학 자신감은요?',o:['더 생겼다','그대로다','조금 줄었다','많이 줄었다']},
+   {k:'추천',t:'이 수업, 친구한테 추천할 의향은요?',o:['적극 추천','추천','보통','글쎄요','추천 안 함']},
+   {k:'한문장',t:'친구한테 이 수업을 한 문장으로 소개한다면?',free:true,ph:'예) 틀린 것만 골라서 끝까지 다시 풀게 해주는 수업'},
+   {k:'공개',t:'위에 쓴 말을 수업 소개(블로그·상담 자료)에 써도 될까요?',s:'고른 대로만 써요. "바라는 거나 아쉬웠던 거"는 어떤 경우에도 안 써요.',o:['이름·학교 밝혀도 된다','이니셜·학교만 (예: 이○현, 포곡고1)','완전 익명으로만','쓰지 말아주세요']}
+  ]},
+ 'ex26m2_p':{
+  부모:true,
+  제목:'{이름} 학생 이번 학교 시험, 어떠셨는지 여쭙습니다',
+  안내:'2분 정도면 끝납니다. 답해주신 내용은 {이름} 학생 기말 준비와 앞으로의 안내 방식에만 씁니다.',
+  완료:['소중한 말씀 감사합니다.','{이름} 학생 기말 준비에 그대로 반영하고,<br>상담 요청하셨으면 곧 연락드리겠습니다.'],
+  말미:'{이름} 학생 학부모님께 드리는 개인 링크입니다. 다른 분께 전달하지 말아주세요.<br>답해주신 내용은 선생님만 봅니다.',
+  문항:[
+   {sec:'이번 시험'},
+   {k:'들음',t:'시험 결과, 자녀에게 들으셨나요?',o:['점수까지 들었다','대략 들었다','아직 못 들었다']},
+   {k:'느낌',t:'결과에 대한 부모님 느낌은 어떠세요?',o:['기대 이상','기대만큼','조금 아쉽다','많이 아쉽다','아직 모른다']},
+   {k:'집공부',t:'시험 기간, 집에서 본 자녀의 수학 공부는 어땠나요?',o:['스스로 계획적으로 했다','학원 과제 위주로 했다','몰아서 했다','잘 모르겠다']},
+   {sec:'학원 안내'},
+   {k:'안내',t:'시험 기간 학원 안내(일정·직보·준비 상황)는 충분했나요?',o:['충분했다','대체로 충분했다','조금 부족했다','많이 부족했다']},
+   {k:'원하는정보',t:'앞으로 가장 받고 싶은 정보는요?',s:'최대 2개까지 골라주세요.',multi:2,o:['시험 준비 진행 상황','약점 유형 분석','과제 수행 여부','시험 후 결과 분석','수업 태도·출결','지금으로 충분하다']},
+   {k:'받는법',t:'받기 편한 방법은요?',o:['팀톡 메시지','학생 포털(웹) 요약','전화','카톡 알림톡']},
+   {sec:'학생 포털'},
+   {k:'포털',t:'학생 포털(개인 링크로 여는 성적·과제 페이지) 알고 계세요?',o:['들어가 봤다','있는 건 아는데 안 들어가 봤다','처음 듣는다']},
+   {k:'포털빈도',t:'얼마나 자주 보세요?',o:['거의 매일','주 1~2번','시험 때쯤만','한두 번 봤다'],when:a=>a.포털==='들어가 봤다'},
+   {k:'포털유용',t:'가장 유용한 정보는요?',s:'최대 2개까지요.',multi:2,o:[...PORTAL,'딱히 없다'],when:a=>a.포털==='들어가 봤다'},
+   {k:'포털불필요',t:'없어도 되는 정보는요?',s:'여러 개 골라도 됩니다.',multi:9,o:[...PORTAL,'없음'],when:a=>a.포털==='들어가 봤다'},
+   {k:'포털보기',t:'보기는 어떠셨나요?',o:['한눈에 들어온다','내용이 어렵다','정보가 너무 많다','폰에서 보기 불편하다'],when:a=>a.포털==='들어가 봤다'},
+   {k:'포털안봄',t:'안 들어가 보신 이유는요?',o:['링크를 못 찾겠다','볼 시간이 없다','자녀가 알아서 할 일이라','필요성을 못 느꼈다'],when:a=>a.포털==='있는 건 아는데 안 들어가 봤다'},
+   {k:'포털안내',t:'안내해 드릴까요?',o:['링크를 다시 받고 싶다','설명을 들으면 보겠다','괜찮습니다'],when:a=>!!a.포털&&a.포털!=='들어가 봤다'},
+   {sec:'앞으로'},
+   {k:'걱정',t:'자녀 수학에서 지금 가장 걱정되는 점은요?',o:['기초 개념','실수','응용력·고난도','공부 습관','자신감','특별히 없다']},
+   {k:'목표',t:'다음 시험(기말) 기대하시는 목표는요?',o:['지금 유지','한 등급 위','두 등급 이상 위','잘 모르겠다']},
+   {k:'만족',t:'이번 대비 과정 전반은 어떠셨나요?',o:['매우 만족','만족','보통','아쉽다']},
+   {k:'상담',t:'선생님과 통화 상담 원하시나요?',o:['이번 주 안에 원한다','기말 전에 한 번','필요할 때 연락드리겠다','괜찮습니다']},
+   {sec:'한 줄씩만 · 전부 선택'},
+   {k:'자녀변화',t:'수업을 시작한 뒤 자녀에게서 느끼신 변화가 있다면요?',free:true,ph:'공부 태도, 수학 이야기하는 모습, 성적… 무엇이든'},
+   {k:'요청',t:'선생님께 바라시는 점이나 아쉬운 점',s:'이 칸은 홍보에 쓰지 않습니다.',free:true,ph:'편하게 적어주세요'},
+   {sec:'마지막'},
+   {k:'추천',t:'주변 학부모님께 이 수업을 추천하실 의향은요?',o:['적극 추천','추천','보통','글쎄요','추천하지 않음']},
+   {k:'한문장',t:'다른 학부모님께 한 문장으로 소개하신다면요?',free:true,ph:'예) 아이가 틀린 문제를 끝까지 다시 풀게 챙겨주는 곳'},
+   {k:'공개',t:'남겨주신 말씀을 수업 소개(블로그·상담 자료)에 써도 될까요?',s:'"바라시는 점"은 어떤 경우에도 쓰지 않습니다.',o:['○○ 학부모로 써도 된다','"고1 학부모"처럼 익명으로만','쓰지 말아주세요']},
+   {k:'자녀공개',t:'자녀가 설문에 남긴 후기를 수업 소개에 쓰는 것도 괜찮으신가요?',s:'자녀가 고른 공개 범위와 비교해 더 좁은 쪽으로만 씁니다.',o:['괜찮다','익명이면 괜찮다','쓰지 말아주세요']}
   ]}
 };
 
-let TOK='', SKEY='', DEF=null, ANS={};
-
-function visible(){ return DEF.문항.filter(q=>!q.when||q.when(ANS)); }
-function 필수(){ return visible().filter(q=>!q.free); }
+let TOK='', SKEY='', DEF=null, ANS={}, NAME='';
+const 치환=s=>String(s||'').replace(/\{이름\}/g,E(NAME));
+const 문항만=()=>DEF.문항.filter(q=>!q.sec);
+function 보임(q){ return !q.sec && (!q.when||q.when(ANS)); }
+function visible(){ return 문항만().filter(보임); }
+function 선택(q){ return q.free||q.num||q.opt; }
+function 필수(){ return visible().filter(q=>!선택(q)); }
+// 글 칸이 여럿이면 서버 크기 가드(8000B)에 걸리지 않게 칸당 300자
+const ML=()=>문항만().filter(q=>q.free).length>1?300:500;
+function 답함(q){ const v=ANS[q.k]; return Array.isArray(v)?v.length>0:!!v; }
 
 function draw(){
   const H=[]; let n=0;
-  DEF.문항.forEach(q=>{
-    const on = !q.when || q.when(ANS);
-    if(on && !q.free) n++;
-    const head=`<div class="n">${q.free?'끝으로':'Q'+n}</div><div class="t">${q.t}</div>`
-      +(q.s?`<div class="s">${q.s}</div>`:'');
+  DEF.문항.forEach((q,i)=>{
+    if(q.sec){ H.push(`<div class="sec">${E(q.sec)}</div>`); return; }
+    const on=보임(q);
+    if(!on) return;
+    const lab = 선택(q) ? (q.free&&DEF===SURVEYS.hw0827?'끝으로':'선택') : 'Q'+(++n);
+    const head=`<div class="n">${lab}</div><div class="t">${q.t}</div>`+(q.s?`<div class="s">${q.s}</div>`:'');
+    let body='';
     if(q.free){
-      H.push(`<div class="q${on?'':' hide'}" data-k="${q.k}">${head}
-        <textarea id="free" maxlength="500" placeholder="${E(q.ph||'')}">${E(ANS[q.k]||'')}</textarea>
-        <div class="cnt"><span id="cnt">${(ANS[q.k]||'').length}</span>/500</div></div>`);
+      const v=ANS[q.k]||'';
+      body=`<textarea id="f_${E(q.k)}" data-k="${E(q.k)}" maxlength="${ML()}" placeholder="${E(q.ph||'')}">${E(v)}</textarea>
+        <div class="cnt"><span id="c_${E(q.k)}">${v.length}</span>/${ML()}</div>`;
+    }else if(q.num){
+      body=`<input class="num" type="number" inputmode="numeric" min="0" max="100" id="f_${E(q.k)}" data-k="${E(q.k)}" placeholder="예) 87" value="${E(ANS[q.k]||'')}">`;
     }else{
-      H.push(`<div class="q${on?'':' hide'}" data-k="${q.k}">${head}<div class="opts">`
-        + q.o.map(o=>`<button class="opt${ANS[q.k]===o?' on':''}" data-k="${E(q.k)}" data-v="${E(o)}">${E(o)}</button>`).join('')
-        + `</div></div>`);
+      const cur=ANS[q.k];
+      body='<div class="opts">'+q.o.map(o=>{
+        const sel = q.multi ? (Array.isArray(cur)&&cur.includes(o)) : cur===o;
+        return `<button class="opt${sel?' on':''}" data-i="${i}" data-v="${E(o)}">${E(o)}</button>`;}).join('')+'</div>';
     }
+    H.push(`<div class="q" data-k="${E(q.k)}">${head}${body}</div>`);
   });
   $('qs').innerHTML=H.join('');
   $('qs').querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
-    const k=b.dataset.k, v=b.dataset.v;
-    ANS[k] = (ANS[k]===v ? '' : v);          // 한 번 더 누르면 해제 — 잘못 눌렀을 때 되돌릴 길
+    const q=DEF.문항[+b.dataset.i], v=b.dataset.v;
+    if(q.multi){
+      let a=Array.isArray(ANS[q.k])?[...ANS[q.k]]:[];
+      if(a.includes(v)) a=a.filter(x=>x!==v);
+      else if(EX.includes(v)) a=[v];
+      else { a=a.filter(x=>!EX.includes(x)); if(a.length>=q.multi) a.shift(); a.push(v); }
+      ANS[q.k]=a;
+    } else ANS[q.k] = (ANS[q.k]===v ? '' : v);   // 한 번 더 누르면 해제
     save(); draw();
   });
-  const f=$('free');
-  if(f) f.oninput=()=>{ ANS['한마디']=f.value; $('cnt').textContent=f.value.length; save(); gauge(); };
+  $('qs').querySelectorAll('textarea,input.num').forEach(f=>f.oninput=()=>{
+    ANS[f.dataset.k]=f.value; const c=$('c_'+f.dataset.k); if(c) c.textContent=f.value.length; save(); gauge(); });
   gauge();
 }
 
 function gauge(){
-  const need=필수(), got=need.filter(q=>ANS[q.k]).length;
+  const need=필수(), got=need.filter(답함).length;
   $('pg').style.width = Math.round(got/Math.max(need.length,1)*100)+'%';
   const b=$('send');
   b.disabled = got<need.length;
@@ -184,11 +290,12 @@ function load(){ try{ return JSON.parse(localStorage.getItem(LK())||'{}'); }catc
 function say(t,s){ $('msg').innerHTML=`<b>${E(t)}</b>${E(s||'')}`; $('msg').style.display=''; }
 
 function 완료(수정){
+  const d=DEF.완료||['제출됐어요. 고마워요~','다음 과제에 반영할게요.<br>바꾸고 싶으면 다시 눌러서 고치셔도 돼요.'];
   $('app').style.display='none'; $('bar').style.display='none';
   $('msg').style.display='';
   $('msg').className='done';
-  $('msg').innerHTML=`<div class="k">✓</div><b>${수정?'다시 제출됐어요~':'제출됐어요. 고마워요~'}</b>
-    <p>다음 과제에 반영할게요.<br>바꾸고 싶으면 다시 눌러서 고치셔도 돼요.</p>
+  $('msg').innerHTML=`<div class="k">✓</div><b>${수정?'다시 제출됐어요~':치환(d[0])}</b>
+    <p>${치환(d[1])}</p>
     <button class="again" id="again">답 고치기</button>`;
   $('again').onclick=()=>{ $('msg').style.display='none'; $('msg').className='msg';
     $('app').style.display=''; $('bar').style.display=''; draw(); };
@@ -196,12 +303,12 @@ function 완료(수정){
 
 async function send(){
   const b=$('send'); b.disabled=true; b.textContent='보내는 중이에요…';
-  const 낼것={}; visible().forEach(q=>{ if(ANS[q.k]) 낼것[q.k]=ANS[q.k]; });
+  const 낼것={}; visible().forEach(q=>{ if(답함(q)) 낼것[q.k]=ANS[q.k]; });
+  if(DEF.부모) 낼것._응답자='학부모';
   let data,err;
   try{ ({data,error:err}=await sb.rpc('survey_submit',{tok:TOK,skey:SKEY,ans:낼것})); }
   catch(e){ err=e; }
-  if(err||!data||!data.ok){ b.disabled=false; b.textContent='다시 제출하기';
-    return alert('전송이 안 됐어요. 잠깐 뒤에 다시 눌러주세요~'); }
+  if(err||!data||!data.ok){ b.disabled=false; b.textContent='전송이 안 됐어요. 다시 눌러주세요'; return; }
   save(); 완료(false);
 }
 
@@ -209,7 +316,7 @@ async function send(){
   const p=new URLSearchParams(location.search);
   TOK=p.get('t')||''; SKEY=p.get('s')||DEFAULT;
   DEF=SURVEYS[SKEY];
-  if(!TOK) return say('링크가 올바르지 않아요.','받으신 문자 주소를 그대로 열어주세요~');
+  if(!TOK) return say('링크가 올바르지 않아요.','받으신 주소를 그대로 열어주세요~');
   if(!DEF) return say('끝난 설문이에요.','새 링크가 필요하면 쌤한테 말해주세요~');
   let data,err;
   try{ ({data,error:err}=await sb.rpc('survey_open',{tok:TOK,skey:SKEY})); }
@@ -217,15 +324,18 @@ async function send(){
   if(err) return say('지금은 열 수 없어요.','잠시 뒤에 다시 열어주세요. 계속 이러면 쌤한테 알려주세요~');
   if(!data) return say('만료되었거나 잘못된 링크예요.','새 링크가 필요하면 쌤한테 말해주세요~');
 
-  $('nm').textContent=data.이름||'';
+  NAME=data.이름||'';
+  $('nm').textContent=NAME+(DEF.부모?' 학부모님':'');
   $('cl').textContent=data.반||'';
-  $('lead').innerHTML=DEF.제목;
-  $('foot').innerHTML=`이 주소는 ${E(data.이름||'')} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>
+  $('lead').innerHTML=치환(DEF.제목);
+  $('note').innerHTML=치환(DEF.안내||'답은 <b>성적이랑 아무 상관 없어요.</b> 다음 과제 만들 때 반영하려고 여쭤보는 거라, 솔직할수록 도움이 됩니다~ 1분이면 끝나요.');
+  $('foot').innerHTML=DEF.말미?치환(DEF.말미):`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>
     답은 쌤만 봅니다. 다른 친구들에게 공개되지 않아요.`;
-  ANS = Object.assign({}, data.지난답||{}, load());   // 이미 낸 답 위에 임시저장을 얹는다
+  // 학부모 키는 지난 답을 서버에서 복원하지 않는다(같은 토큰으로 학생이 열 수 있으므로). 기기 임시저장만.
+  ANS = Object.assign({}, DEF.부모?{}:(data.지난답||{}), load());
   $('msg').style.display='none'; $('app').style.display=''; $('bar').style.display='';
   draw();
   $('send').onclick=send;
-  if(data.제출함 && !Object.keys(load()).length) 완료(true);   // 이미 냈고 손댄 흔적도 없으면 완료 화면부터
+  if(data.제출함 && !Object.keys(load()).length) 완료(true);
 })();
 </script><script src="/dashboard/track.js" data-page="survey" defer></script></body></html>
