@@ -4363,7 +4363,9 @@ function svGroups() {
   const g = {};
   Object.keys(SV_META).forEach(b => g[b] = { base: b, last: '' });
   (SV.rows || []).forEach(r => { const b = svBase(r.설문키); const o = g[b] || (g[b] = { base: b, last: '' }); if ((r.제출시각 || '') > o.last) o.last = r.제출시각; });
-  return Object.values(g).sort((a, b) => (b.last || '').localeCompare(a.last || '') || (a.base < b.base ? 1 : -1));
+  // SV_META 에 적은 순서(맨 위 = 지금 돌리는 설문)가 먼저, 그 밖은 최근 제출순
+  const order = Object.keys(SV_META), rank = b => { const i = order.indexOf(b); return i < 0 ? 99 : i; };
+  return Object.values(g).sort((a, b) => rank(a.base) - rank(b.base) || (b.last || '').localeCompare(a.last || ''));
 }
 
 // 공개 범위 → 0 안 됨 · 1 익명 · 2 이니셜 · 3 이름
