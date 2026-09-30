@@ -4555,7 +4555,8 @@ async function twLoad(force) {
   body.innerHTML = '<div class="dim">불러오는 중…</div>';
   try {
     await twBank(TW.key, force);
-    const cols = 'id,세트키,학생ID,반,문항ID,층,답,정오,확신,시도,ms,카드,시각';
+    // ⚠ schema_v31 은 문항ID 를 따옴표 없이 만들어 실제 칸 이름이 소문자 '문항id' 다(학생ID 만 따옴표). 읽은 뒤 문항ID 로 맞춘다.
+    const cols = 'id,세트키,학생ID,반,문항id,층,답,정오,확신,시도,ms,카드,시각';
     let all = [], from = 0, noCard = false;
     for (;;) {
       const { data, error } = await sb.from('tower_log').select(noCard ? cols.replace(',카드', '') : cols)
@@ -4566,11 +4567,12 @@ async function twLoad(force) {
       if (!data || data.length < 1000 || from > 200000) break;
       from += 1000;
     }
+    all.forEach(r => { if (r.문항ID == null) r.문항ID = r.문항id; });
     TW.rows = all; TW.noCard = noCard;
   } catch (e) {
     const m = String(e && e.message || e);
     body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(m)}`
-      + (/tower_log/.test(m) ? '<br>→ schema_v31_tower.sql 을 아직 Run 하지 않은 것 같습니다 (06_자동화/통합_작업실).' : '') + '</div>';
+      + (/relation .*tower_log.* does not exist|Could not find the table/i.test(m) ? '<br>→ schema_v31_tower.sql 을 아직 Run 하지 않은 것 같습니다 (06_자동화/통합_작업실).' : '') + '</div>';
     return;
   }
   twDraw();
