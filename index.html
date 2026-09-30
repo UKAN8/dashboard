@@ -5077,6 +5077,31 @@ function applyLoopMiss(){
 const isGTtype=t=>String(t||'').trim()==='기출테스트';
 function recentOf(id){const cur=isGT();return (RECENT[id]||[]).filter(r=>r.gt===cur).map(r=>r.v);}
 let CHW='';   // 지금 반 전체에 걸려 있는 공통 과제 (개별과제 판정 기준)
+/* 동시 입력(0930 유강 — 조교가 이행률 적는 동안 내가 출석·시험정보를 적으면?)
+   저장은 카드/머리 전체를 읽어 upsert 한다. 화면은 반을 열 때 한 번 읽은 값이라,
+   **읽을 때 이미 있던 값**을 남이 고친 뒤 내가 같은 행의 다른 칸을 건드리면 내 화면의 옛 값이
+   같이 올라가 남의 수정을 되돌렸다. → 기준값(마지막으로 읽거나 저장한 값)과 **같은 칸은 보내지 않는다.**
+   upsert 페이로드에 키가 없으면 ON CONFLICT UPDATE 가 그 칸을 안 건드린다 — 남의 값이 산다.
+   실제로 바뀐 칸끼리 겹치면(같은 학생·같은 칸) 그땐 나중 저장이 이긴다. */
+let CLPREV={};   // 오늘 class_log 의 진도원문·이번과제·테스트유형 기준값
+let HDR0={진도:'',과제:''};   // 반을 열 때 머리칸(진도·공통과제)에 그려진 값 — '내가 머리를 고쳤나' 판정
+let CPROG='';    // 지금 반 전체에 걸린 진도 (CHW 의 진도판) — 진도 고칠 때 학생 행도 옮긴다
+function sameVal(a,b){
+  const x=a==null?'':String(a).trim(), y=b==null?'':String(b).trim();
+  if(x===y)return true;
+  if(x!==''&&y!==''&&!isNaN(x)&&!isNaN(y))return Number(x)===Number(y);
+  return false;
+}
+/* row 에서 기준값(base)과 같은 칸을 뺀다. null 은 그대로 둔다(가드·미응시 규칙이 쓰는 뜻이 있다).
+   keep = 키·표시용 칸(항상 보냄). 반환 = 뺀 칸 이름 목록(테스트용). */
+function dropUnchanged(row,base,keep){
+  const out=[];
+  Object.keys(row).forEach(k=>{
+    if(keep.includes(k)||row[k]===null)return;
+    if(sameVal(row[k],base[k])){delete row[k];out.push(k);}
+  });
+  return out;
+}
 // 지난 과제가 반 공통과 다른 학생만 이름칸에 한 줄 — 과제검사 기준이 사람마다 다르다는 걸 눈으로 알아야 한다
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function prevHwLine(id){
@@ -5188,6 +5213,7 @@ async function selectClass(cls){
     if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o);}
     sel.value=v||'';
   };
+  CLPREV=(cl&&cl[0])?{'진도원문':cl[0]['진도원문']||'','이번과제':cl[0]['이번과제']||'','테스트유형':cl[0]['테스트유형']||''}:{};
   if(cl&&cl[0]){
     $('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';setTest(cl[0]['테스트유형']);
   }else if(prev&&prev[0]){
@@ -5203,6 +5229,8 @@ async function selectClass(cls){
      학생 행(옛 공통 텍스트)이 죄다 '개별과제'로 보였다 — 적지도 않은 지난 과제가 칸에
      들어가 있는 사고(0812 유강). CHW 를 따로 들고, 공통이 바뀌면 행까지 같이 옮긴다. */
   CHW=$('c_hw').value.trim();
+  CPROG=$('c_progress').value.trim();
+  HDR0={진도:$('c_progress').value.trim(),과제:CHW};
   /* 이미 생긴 잔재 정정 — '이번과제 == 직전 수업 과제'인데 오늘 공통은 다르다면
      프리필된 값 그대로 저장된 행이다(개별 지시가 아니다). */
   if(CHW&&PREVHW&&CHW!==PREVHW.trim()){
@@ -5770,6 +5798,19 @@ async function save(id,card){
        화면이 빈 채로 그려진 사고 상황에서는 prev(=DB에서 읽어 온 값)도 비어 있으므로
        자동으로 null 이 나간다 — 즉 빈 화면은 아무것도 못 지운다. */
     const prev=LOGMAP[id]||{};
+    /* 머리칸 파생(진도·공통과제) — 내가 반을 연 뒤 머리를 안 고쳤다면 내 화면 값은 '읽어 온 값'일 뿐이다.
+       특히 남이 먼저 오늘 진도를 적은 뒤 내 화면엔 직전 수업 프리필이 그대로 남아 있을 수 있다.
+       이 학생 행을 이 화면이 처음 저장하는 거면 서버의 지금 값을 한 번 본다(clr 기준 prev 와는 따로). */
+    const hdrSame=sameVal($('c_progress').value,HDR0.진도)&&sameVal($('c_hw').value,HDR0.과제);
+    let dbNow=null, clNow=null;
+    if(hdrSame&&!LOGMAP[id]){
+      try{
+        const [a,b]=await Promise.all([
+          sb.from('daily_log').select('진도,이번과제').eq('학생ID',id).eq('날짜',vDay()).limit(1),
+          sb.from('class_log').select('진도원문,이번과제').eq('반',CLS).eq('날짜',vDay()).limit(1)]);
+        dbNow=(a&&a.data&&a.data[0])||null; clNow=(b&&b.data&&b.data[0])||null;
+      }catch(e){}
+    }
     const clr=(v,dbk)=>v!==''?v:(((prev[dbk]||'')!=='')?'':null);
     /* 이행률은 숫자만 저장한다. 칸이 자유 입력이라 '100%'가 그대로 들어가는데,
        JS parseFloat 은 100 으로 읽어 화면이 멀쩡해 보이고 파이썬 float 은 죽는다.
@@ -5821,13 +5862,26 @@ async function save(id,card){
        v11 을 아직 안 돌린 DB 에서도 리뷰 저장이 "없는 컬럼" 으로 죽지 않는다. */
     if(row['답안']===null)delete row['답안'];
     if(row['응시일']===null)delete row['응시일'];   // schema_v21 미적용 DB 에서도 저장이 안 죽는다
+    /* 채점이 이번 저장에서 실제로 바뀌었나 — 오답 이벤트를 다시 쓸지 여기서 가른다.
+       안 가르면 옛 채점이 떠 있는 남의 화면이 코멘트만 고쳐도 내 재채점 오답 이벤트를 옛 것으로 되돌린다. */
+    const wasNA=(prev['테스트상태']||'')==='미응시';
+    const itemsChanged=(na!==wasNA)||(row['문항점수']!==null&&row['문항점수']!==undefined&&!sameVal(row['문항점수'],prev['문항점수']));
+    dropUnchanged(row,prev,['학생ID','이름','반','날짜','요일','소스']);   // 동시 입력(0930) — 위 CLPREV 주석
+    /* 머리칸 파생 칸: 머리를 안 고쳤으면 서버에 값이 있을 때 안 보낸다. 새 행이면 서버의 오늘 머리값을 쓴다. */
+    const hdrKeys=[['진도','진도원문']].concat(get('개별과제')?[]:[['이번과제','이번과제']]);
+    if(hdrSame)hdrKeys.forEach(([k,ck])=>{
+      if(!(k in row)||row[k]===null)return;
+      const have=LOGMAP[id]?prev[k]:(dbNow&&dbNow[k]);
+      if(have!=null&&String(have).trim()!==''){delete row[k];return;}
+      if(clNow&&clNow[ck])row[k]=clNow[ck];
+    });
     const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
     if(error){rowState(card,'failed');updateAvgs();toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
     saveOk('daily');rowState(card,'saved');
     /* LOGMAP 을 방금 보낸 값으로 맞춘다. 안 맞추면 '이번 세션에 넣었다가 지운 값'이
        prev 에 없어서 지우기가 먹지 않는다(null 로 나가 옛 값이 살아남는다). */
     {
-      const merged=Object.assign({},prev);
+      const merged=Object.assign({},dbNow||{},prev);
       Object.keys(row).forEach(k=>{if(row[k]!==null)merged[k]=row[k];});
       if(na){merged['점수']='';merged['문항점수']='';}
       LOGMAP[id]=merged;
@@ -5838,7 +5892,7 @@ async function save(id,card){
     /* ⚠ 조건이 itemStr 이면 안 된다 — 문항 버튼이 빈 채로 렌더된 상태(",,,,")도 참이라
        아무것도 안 눌렀는데 오답 이벤트를 통째로 지웠다(0813). 실제로 채점된 게 있을 때만 손댄다. */
     const graded=gt?((card.dataset.gtItems||'')!==''):itemBtns.some(b=>b.dataset.s!=='');
-    if(graded||na){
+    if((graded||na)&&itemsChanged){
       // 기출은 소스·참조를 '기출'로 갈라 쌓는다 (RLS 도 '기출:%' 를 연다 — schema_v11)
       const ref=(gt?'기출:':'리뷰:')+CLS+':'+vDay();
       await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
@@ -5910,13 +5964,19 @@ function saveClassLog(){
     const gtRow={'시험지명':gtv('gt_src','시험지명'),'기출정답':gtv('gt_ans','기출정답'),'기출배점':gtv('gt_pts','기출배점')};
     // 신규 컬럼(schema_v11): null 은 키를 뺀다 — v11 이전 DB 에서도 수업정보 저장이 안 죽는다
     Object.keys(gtRow).forEach(k=>{if(gtRow[k]===null)delete gtRow[k];});
-    const {error}=await sb.from('class_log').upsert({
+    const crow={
       '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
       '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
       '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,
       ...gtRow,
-    },{onConflict:'반,날짜'});
-    if(!error)Object.keys(gtRow).forEach(k=>{GTPREV[k]=gtRow[k]===null?(GTPREV[k]||''):(gtRow[k]===''?'':gtRow[k]);});
+    };
+    // 동시 입력(0930) — 내가 안 바꾼 칸(기준값과 같은 칸)은 안 보낸다. 정답표 3칸은 GTPREV 가 기준.
+    dropUnchanged(crow,Object.assign({},CLPREV,GTPREV),['반','날짜','요일','학기','지난과제']);
+    const {error}=await sb.from('class_log').upsert(crow,{onConflict:'반,날짜'});
+    if(!error){
+      Object.keys(gtRow).forEach(k=>{if(k in crow)GTPREV[k]=crow[k]===null?(GTPREV[k]||''):(crow[k]===''?'':crow[k]);});
+      ['진도원문','이번과제','테스트유형'].forEach(k=>{if(k in crow&&crow[k]!==null)CLPREV[k]=crow[k];});
+    }
     const m=$('clogmark');
     if(error){toast('수업 정보 저장 실패: '+error.message);saveFail('clslog','수업 정보 — '+error.message);return;}
     saveOk('clslog');
@@ -5924,6 +5984,7 @@ function saveClassLog(){
        안 옮기면 그 행들이 옛 공통 텍스트를 들고 있어 '개별과제'로 보인다(0812 사고).
        개별로 따로 적어 둔 행(값이 옛 공통과 다른 행)은 건드리지 않는다. */
     const hw=$('c_hw').value.trim();
+    const old0=CHW;
     if(hw!==CHW){
       const old=CHW; CHW=hw;
       const ids=Object.keys(LOGMAP).filter(k=>{
@@ -5941,6 +6002,19 @@ function saveClassLog(){
             if(t&&t.value.trim()===old)t.value='';
           });
         }
+      }
+    }
+    /* (0930) 남의 화면이 만든 학생 행은 내 LOGMAP 에 없다 — 옛 공통과제 그대로인 행은 서버에서 한 번 더 옮긴다. */
+    if(old0&&hw!==old0){
+      await sb.from('daily_log').update({'이번과제':hw||null}).eq('반',CLS).eq('날짜',today).eq('이번과제',old0);
+    }
+    /* 진도도 과제처럼 — 머리 진도를 고치면 옛 진도를 들고 있는 학생 행을 같이 옮긴다(데일리 리포트는 행의 진도를 쓴다). */
+    const pg=$('c_progress').value.trim();
+    if(pg!==CPROG){
+      const oldp=CPROG; CPROG=pg;
+      if(oldp&&pg){
+        const {error:e3}=await sb.from('daily_log').update({'진도':pg}).eq('반',CLS).eq('날짜',today).eq('진도',oldp);
+        if(!e3)Object.keys(LOGMAP).forEach(k=>{if((LOGMAP[k]['진도']||'').trim()===oldp)LOGMAP[k]['진도']=pg;});
       }
     }
     m.style.display='';m.textContent='저장됨 ✓';
@@ -6163,11 +6237,13 @@ async function closeSession(){
      && ![...csAll('.stu [data-f="추가학습사유"]')].some(e=>e.value.trim())
      && !confirm('[② 추가학습 세팅]을 아직 안 눌렀다.\n\n이대로 마감하면 오늘 추가학습은 아무도 지정되지 않는다.\n(손으로 다 적었거나 오늘은 부를 사람이 없으면 그냥 확인)\n\n그대로 마감할까?'))return;
   const present=[...csAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
-  const {error:e1}=await sb.from('class_log').upsert({
+  const crow={
     '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
     '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
     '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,'인원':String(present),
-  },{onConflict:'반,날짜'});
+  };
+  dropUnchanged(crow,CLPREV,['반','날짜','요일','학기','지난과제','인원']);   // 동시 입력(0930)
+  const {error:e1}=await sb.from('class_log').upsert(crow,{onConflict:'반,날짜'});
   const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
   if(e1||e2){toast('마감 실패: '+(e1||e2).message);saveFail('close','마감 — '+(e1||e2).message);return;}
   saveOk('close');
