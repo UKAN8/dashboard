@@ -552,6 +552,15 @@ function render(d){
   }
   else
     H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
+  // ⓪-2 개념의 탑 (0930) — 교과서 개념 OX 점검(층=소절, 탈락 없음). 기록은 tower_open/tower_submit(schema_v31).
+  //    지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만 보인다. 새 세트가 생기면 여기 조건을 넓힌다.
+  if(/^고1/.test(String(d.학생.반||'').trim())){
+    const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
+    const turl=`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`;
+    H.push(`<div class="card" style="border-color:rgba(232,197,106,.4)"><div class="row">`
+      +`<span class="t"><b>개념의 탑</b><span class="dim"> 평면좌표~집합의 연산 · 교과서 개념 OX 17층</span></span>`
+      +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:800">오르기 →</a></div></div>`);
+  }
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
   H.push(`<div id="pr-host"></div>`);
   H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
