@@ -6,6 +6,7 @@
 <meta property="og:title" content="시험기간 추가학습 신청 · 수학은유강">
 <meta property="og:description" content="휴강 기간에 등원해 공통수학1 부족한 단원을 다시 잡습니다.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
 <style>
 :root{color-scheme:dark;
@@ -17,12 +18,12 @@ body{margin:0;background:var(--bg);color:var(--tx);
  font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
  padding:22px clamp(16px,4vw,28px) calc(110px + env(safe-area-inset-bottom))}
 main{max-width:620px;margin:0 auto}
-.brand{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px}
+.brand{display:flex;align-items:center;gap:7px;font-family:'Paperlogy',sans-serif;font-weight:700;font-size:16px}
 .dots{position:relative;width:26px;height:16px}
 .dots i{position:absolute;top:0;width:16px;height:16px;border-radius:50%}
 .dots i:first-child{left:0;background:var(--acc)}
 .dots i:last-child{left:9px;background:#f5f5fa;mix-blend-mode:normal;opacity:.95}
-h1{font-size:26px;line-height:1.3;margin:18px 0 8px;letter-spacing:-.01em}
+h1{font-family:'Paperlogy',sans-serif;font-weight:800;font-size:26px;line-height:1.3;margin:18px 0 8px;letter-spacing:-.01em}
 h1 em{font-style:normal;color:var(--acc)}
 .lead{color:var(--tx2);font-size:14px;margin:0 0 6px}
 .note{color:var(--dim);font-size:12.5px;margin-bottom:22px}
@@ -72,16 +73,10 @@ const ROUNDS={
  'mid2610':{
   title:'시험기간 <em>추가학습</em> 신청',
   lead:'휴강 기간에도 원하는 학생은 등원해 추가학습을 할 수 있습니다. 이번에는 <b>공통수학1에서 아직 부족한 단원</b>을 다시 잡아 드립니다.',
-  note:'고1 S·A반 대상 · 수업 시간은 평소와 같습니다 · 다시 제출하면 마지막 내용으로 바뀝니다.',
-  close:'2026-10-16',
-  bans:['고1 S반','고1 A반'],
-  schools:{
-   '태성고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
-   '삼계고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
-   '포곡고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
-   '고림고':[['10/16(금)','10월 16일 금요일']],
-   '용인고':[['10/16(금)','10월 16일 금요일']]
-  },
+  note:'고1 S·A·T반 대상 · 학교 시험이 끝난 날부터 등원 전까지 매일 가능 · 다시 제출하면 마지막 내용으로 바뀝니다.',
+  close:'2026-10-18',
+  bans:['고1 S반','고1 A반','고1 T반'],
+  schools:{"고1 S반": {"포곡고": [["10/6(화)", "10월 6일 화요일"], ["10/7(수)", "10월 7일 수요일"], ["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "삼계고": [["10/7(수)", "10월 7일 수요일"], ["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "태성고": [["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "용인고": [["10/14(수)", "10월 14일 수요일"], ["10/15(목)", "10월 15일 목요일"], ["10/16(금)", "10월 16일 금요일"], ["10/17(토)", "10월 17일 토요일"], ["10/18(일)", "10월 18일 일요일"]], "고림고": [["10/16(금)", "10월 16일 금요일"], ["10/17(토)", "10월 17일 토요일"], ["10/18(일)", "10월 18일 일요일"]]}, "고1 A반": {"포곡고": [["10/6(화)", "10월 6일 화요일"], ["10/7(수)", "10월 7일 수요일"], ["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "삼계고": [["10/7(수)", "10월 7일 수요일"], ["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "태성고": [["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"], ["10/11(일)", "10월 11일 일요일"]], "용인고": [["10/14(수)", "10월 14일 수요일"], ["10/15(목)", "10월 15일 목요일"], ["10/16(금)", "10월 16일 금요일"], ["10/17(토)", "10월 17일 토요일"], ["10/18(일)", "10월 18일 일요일"]], "고림고": [["10/16(금)", "10월 16일 금요일"], ["10/17(토)", "10월 17일 토요일"], ["10/18(일)", "10월 18일 일요일"]]}, "고1 T반": {"태성고": [["10/8(목)", "10월 8일 목요일"], ["10/9(금)", "10월 9일 금요일"], ["10/10(토)", "10월 10일 토요일"]]}},
   units:['다항식의 연산','항등식과 나머지정리','인수분해','복소수','이차방정식','이차방정식과 이차함수','여러 가지 방정식','여러 가지 부등식','경우의 수','행렬','잘 모르겠어요 (선생님 판단)']
  }
 };
@@ -102,7 +97,7 @@ function render(){
   app.innerHTML=`<div class="brand">${logo()}수학은유강</div><div class="closed"><b>신청이 마감되었습니다</b>문의는 반 단톡방이나 선생님께 직접 연락 주세요.</div>`;
   document.getElementById('bar').style.display='none';return;
  }
- const days=st.학교?R.schools[st.학교]:[];
+ const SCH=st.반?R.schools[st.반]:{};const days=(st.학교&&SCH[st.학교])||[];
  app.innerHTML=`
  <div class="brand">${logo()}수학은유강</div>
  <h1>${R.title}</h1>
@@ -118,11 +113,11 @@ function render(){
  <div class="q"><div class="n">03</div><div class="t">반</div>
   <div class="opts grid">${R.bans.map(v=>opt('반',v,v)).join('')}</div></div>
 
- <div class="q"><div class="n">04</div><div class="t">학교</div><div class="s">학교마다 휴강 날짜가 다릅니다.</div>
-  <div class="opts grid">${Object.keys(R.schools).map(v=>opt('학교',v,v)).join('')}</div></div>
+ <div class="q ${st.반?'':'hide'}"><div class="n">04</div><div class="t">학교</div><div class="s">학교마다 시험이 끝나는 날이 다릅니다.</div>
+  <div class="opts grid">${Object.keys(SCH).map(v=>opt('학교',v,v)).join('')}</div></div>
 
- <div class="q ${st.학교?'':'hide'}"><div class="n">05</div><div class="t">등원 희망일</div><div class="s">${esc(st.학교)} 휴강일 중 오고 싶은 날을 모두 골라 주세요.</div>
-  <div class="opts">${days.map(([v,l])=>optM('희망일',v,l)).join('')}</div></div>
+ <div class="q ${days.length?'':'hide'}"><div class="n">05</div><div class="t">등원 희망일</div><div class="s">${esc(st.학교)} 시험이 끝난 날부터 등원 전까지, 오고 싶은 날을 모두 골라 주세요.</div>
+  <div class="opts grid">${days.map(([v,l])=>optM('희망일',v,l)).join('')}</div></div>
 
  <div class="q"><div class="n">06</div><div class="t">다시 잡고 싶은 공통수학1 단원</div><div class="s">여러 개 골라도 됩니다.</div>
   <div class="opts grid">${R.units.map(v=>optM('단원',v,v)).join('')}</div></div>
@@ -133,7 +128,7 @@ function render(){
  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
   const k=b.dataset.k,v=b.dataset.v;
   if(b.dataset.m){const a=st[k];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);}
-  else{ if(k==='학교'&&st.학교!==v) st.희망일=[]; st[k]=v; }
+  else{ if(k==='반'&&st.반!==v&&!(R.schools[v]||{})[st.학교]){st.학교='';st.희망일=[];} if(k==='반'&&st.반!==v) st.희망일=st.희망일.filter(d=>((R.schools[v]||{})[st.학교]||[]).some(x=>x[0]===d)); if(k==='학교'&&st.학교!==v) st.희망일=[]; st[k]=v; }
   render();
  });
  $('#nm').oninput=e=>{st.학생이름=e.target.value;check()};
