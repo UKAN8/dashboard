@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>추가학습 신청 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="시험기간 추가학습 신청 · 수학은유강">
+<meta property="og:description" content="휴강 기간에 등원해 공통수학1 부족한 단원을 다시 잡습니다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.07);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
+ padding:22px clamp(16px,4vw,28px) calc(110px + env(safe-area-inset-bottom))}
+main{max-width:620px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px}
+.dots{position:relative;width:26px;height:16px}
+.dots i{position:absolute;top:0;width:16px;height:16px;border-radius:50%}
+.dots i:first-child{left:0;background:var(--acc)}
+.dots i:last-child{left:9px;background:#f5f5fa;mix-blend-mode:normal;opacity:.95}
+h1{font-size:26px;line-height:1.3;margin:18px 0 8px;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--acc)}
+.lead{color:var(--tx2);font-size:14px;margin:0 0 6px}
+.note{color:var(--dim);font-size:12.5px;margin-bottom:22px}
+.q{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:15px 16px;margin-bottom:11px}
+.q.hide{display:none}
+.q .n{font-size:11px;letter-spacing:.14em;color:var(--acc);margin-bottom:5px}
+.q .t{font-weight:700;margin-bottom:3px}
+.q .s{color:var(--dim);font-size:12.5px;margin-bottom:10px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opts.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.opt{display:block;width:100%;text-align:left;font:inherit;font-size:14px;color:var(--tx2);
+ background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:11px;
+ padding:11px 13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.opt.on{background:rgba(245,160,160,.16);border-color:rgba(245,160,160,.5);color:#ffe9e9;font-weight:700}
+@media (hover:hover) and (pointer:fine){ .opt:hover{border-color:rgba(245,160,160,.35);color:var(--tx)} }
+.opt small{display:block;font-weight:400;font-size:12px;color:var(--dim)}
+.opt.on small{color:#f3caca}
+input.tx,textarea{width:100%;font:inherit;font-size:16px;color:var(--tx);background:rgba(255,255,255,.035);
+ border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+textarea{min-height:84px;resize:vertical;font-size:15px}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,#0a0a0f 62%,rgba(10,10,15,0));
+ padding:14px clamp(16px,4vw,28px) calc(16px + env(safe-area-inset-bottom))}
+.bar .in{max-width:620px;margin:0 auto}
+.hint{color:var(--dim);font-size:12px;text-align:center;margin-bottom:8px;min-height:18px}
+button.send{width:100%;font:inherit;font-size:16px;font-weight:800;color:#1a0d12;
+ background:var(--acc);border:none;border-radius:13px;padding:15px;cursor:pointer}
+button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:default}
+.done{text-align:center;padding:70px 10px}
+.done .k{font-size:44px;line-height:1}
+.done b{display:block;font-size:20px;margin:16px 0 8px}
+.done p{color:var(--tx2);font-size:14px;margin:0 0 6px}
+.done button{margin-top:22px;font:inherit;font-size:14px;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:11px;padding:10px 16px;cursor:pointer}
+.closed{padding:60px 4px;color:var(--tx2)}
+.closed b{display:block;color:var(--tx);font-size:18px;margin-bottom:6px}
+footer{color:var(--dim);font-size:12px;text-align:center;margin-top:26px}
+</style></head>
+<body><main id="app"></main>
+<div class="bar" id="bar"><div class="in"><div class="hint" id="hint"></div><button class="send" id="send" disabled>신청하기</button></div></div>
+<script>
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+/* 열린 것은 RPC extra_study_submit 하나뿐이다. 표를 직접 읽지 않는다. */
+
+/* 신청 회차 — 새 회차는 여기 한 덩어리를 더하고 DEFAULT 를 바꾼다 */
+const ROUNDS={
+ 'mid2610':{
+  title:'시험기간 <em>추가학습</em> 신청',
+  lead:'휴강 기간에도 원하는 학생은 등원해 추가학습을 할 수 있습니다. 이번에는 <b>공통수학1에서 아직 부족한 단원</b>을 다시 잡아 드립니다.',
+  note:'고1 S·A반 대상 · 수업 시간은 평소와 같습니다 · 다시 제출하면 마지막 내용으로 바뀝니다.',
+  close:'2026-10-16',
+  bans:['고1 S반','고1 A반'],
+  schools:{
+   '태성고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
+   '삼계고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
+   '포곡고':[['10/7(수)','10월 7일 수요일'],['10/9(금)','10월 9일 금요일']],
+   '고림고':[['10/16(금)','10월 16일 금요일']],
+   '용인고':[['10/16(금)','10월 16일 금요일']]
+  },
+  units:['다항식의 연산','항등식과 나머지정리','인수분해','복소수','이차방정식','이차방정식과 이차함수','여러 가지 방정식','여러 가지 부등식','경우의 수','행렬','잘 모르겠어요 (선생님 판단)']
+ }
+};
+const DEFAULT='mid2610';
+
+const qs=new URLSearchParams(location.search);
+const KEY=(qs.get('k')||DEFAULT).toLowerCase();
+const R=ROUNDS[KEY];
+const app=document.getElementById('app');
+const $=s=>app.querySelector(s);
+const st={신청자:'',학생이름:'',학교:'',반:'',희망일:[],단원:[],메모:''};
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
+
+function render(){
+ if(!R||today()>R.close){
+  app.innerHTML=`<div class="brand">${logo()}수학은유강</div><div class="closed"><b>신청이 마감되었습니다</b>문의는 반 단톡방이나 선생님께 직접 연락 주세요.</div>`;
+  document.getElementById('bar').style.display='none';return;
+ }
+ const days=st.학교?R.schools[st.학교]:[];
+ app.innerHTML=`
+ <div class="brand">${logo()}수학은유강</div>
+ <h1>${R.title}</h1>
+ <p class="lead">${R.lead}</p>
+ <p class="note">${R.note}</p>
+
+ <div class="q"><div class="n">01</div><div class="t">작성하시는 분</div>
+  <div class="opts grid">${['학부모','학생'].map(v=>opt('신청자',v,v)).join('')}</div></div>
+
+ <div class="q"><div class="n">02</div><div class="t">학생 이름</div>
+  <input class="tx" id="nm" maxlength="10" placeholder="예) 홍길동" autocomplete="off" value="${esc(st.학생이름)}"></div>
+
+ <div class="q"><div class="n">03</div><div class="t">반</div>
+  <div class="opts grid">${R.bans.map(v=>opt('반',v,v)).join('')}</div></div>
+
+ <div class="q"><div class="n">04</div><div class="t">학교</div><div class="s">학교마다 휴강 날짜가 다릅니다.</div>
+  <div class="opts grid">${Object.keys(R.schools).map(v=>opt('학교',v,v)).join('')}</div></div>
+
+ <div class="q ${st.학교?'':'hide'}"><div class="n">05</div><div class="t">등원 희망일</div><div class="s">${esc(st.학교)} 휴강일 중 오고 싶은 날을 모두 골라 주세요.</div>
+  <div class="opts">${days.map(([v,l])=>optM('희망일',v,l)).join('')}</div></div>
+
+ <div class="q"><div class="n">06</div><div class="t">다시 잡고 싶은 공통수학1 단원</div><div class="s">여러 개 골라도 됩니다.</div>
+  <div class="opts grid">${R.units.map(v=>optM('단원',v,v)).join('')}</div></div>
+
+ <div class="q"><div class="n">07</div><div class="t">전하고 싶은 말 <span style="color:var(--dim);font-weight:400">(선택)</span></div>
+  <textarea id="memo" maxlength="500" placeholder="다른 날 희망, 특히 약한 부분 등">${esc(st.메모)}</textarea></div>
+ <footer>필탑학원 고등수학 · 수학은유강</footer>`;
+ app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.k,v=b.dataset.v;
+  if(b.dataset.m){const a=st[k];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);}
+  else{ if(k==='학교'&&st.학교!==v) st.희망일=[]; st[k]=v; }
+  render();
+ });
+ $('#nm').oninput=e=>{st.학생이름=e.target.value;check()};
+ $('#memo').oninput=e=>{st.메모=e.target.value};
+ check();
+}
+function logo(){return '<span class="dots"><i></i><i></i></span>'}
+function opt(k,v,l){return `<button class="opt ${st[k]===v?'on':''}" data-k="${k}" data-v="${esc(v)}">${esc(l)}</button>`}
+function optM(k,v,l){return `<button class="opt ${st[k].includes(v)?'on':''}" data-k="${k}" data-v="${esc(v)}" data-m="1">${esc(l)}</button>`}
+
+function missing(){
+ const m=[];
+ if(!st.신청자)m.push('작성자');
+ if(st.학생이름.replace(/\s/g,'').length<2)m.push('이름');
+ if(!st.반)m.push('반');
+ if(!st.학교)m.push('학교');
+ if(!st.희망일.length)m.push('희망일');
+ if(!st.단원.length)m.push('단원');
+ return m;
+}
+function check(){
+ const m=missing();
+ document.getElementById('send').disabled=m.length>0;
+ document.getElementById('hint').textContent=m.length?('남은 항목: '+m.join(' · ')):'';
+}
+
+const sb=supabase.createClient(SB_URL,SB_ANON);
+document.getElementById('send').onclick=async()=>{
+ if(missing().length)return;
+ const btn=document.getElementById('send');btn.disabled=true;btn.textContent='보내는 중…';
+ const p={신청키:KEY,신청자:st.신청자,학생이름:st.학생이름.replace(/\s/g,''),반:st.반,학교:st.학교,희망일:st.희망일,단원:st.단원,메모:st.메모.trim()};
+ try{
+  const {data,error}=await sb.rpc('extra_study_submit',{p});
+  if(error||!data||!data.ok) throw error||new Error(data&&data.why||'실패');
+  done(p,data.수정);
+ }catch(e){
+  btn.disabled=false;btn.textContent='신청하기';
+  document.getElementById('hint').textContent='전송에 실패했습니다. 잠시 뒤 다시 눌러 주세요.';
+ }
+};
+function done(p,upd){
+ document.getElementById('bar').style.display='none';
+ app.innerHTML=`<div class="brand">${logo()}수학은유강</div>
+ <div class="done"><div class="k">✓</div><b>${upd?'신청 내용이 수정되었습니다':'신청이 접수되었습니다'}</b>
+ <p>${esc(p.학생이름)} · ${esc(p.학교)} · ${esc(p.희망일.join(', '))}</p>
+ <p style="color:var(--dim);font-size:13px">자세한 시간과 준비물은 따로 안내드리겠습니다.</p>
+ <button id="again">내용 고치기</button></div>`;
+ document.getElementById('again').onclick=()=>{document.getElementById('bar').style.display='';const b=document.getElementById('send');b.textContent='신청하기';render()};
+}
+render();
+</script></body></html>
