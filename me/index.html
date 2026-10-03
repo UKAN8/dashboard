@@ -426,12 +426,21 @@ const PR = (() => {
 
   function todoCard(d, g, staff) {
     const rows = [];
-    (g.PT || []).slice(0, 3).forEach(p => {
+    const ptLinks = p => {
       const links = [];
       if (p.문제url) links.push(`<a href="${E(p.문제url)}" target="_blank" rel="noopener">문제${p.문제쪽 ? ` ${E(p.문제쪽)}쪽` : ''}</a>`);
       if (p.해설url) links.push(`<a href="${E(p.해설url)}" target="_blank" rel="noopener">해설${p.해설쪽 ? ` ${E(p.해설쪽)}쪽` : ''}</a>`);
       if (!links.length && p.url) links.push(`<a href="${E(p.url)}" target="_blank" rel="noopener">전체</a>`);
       if (!links.length && staff) links.push(...['키', '문제키', '해설키'].filter(k => p[k]).map(k => `<a href="#" data-pr-key="${E(p[k])}" data-pr-name="${E(k.replace('키', '') || '전체')}">${E(k.replace('키', '') || '전체')} (서명)</a>`));
+      return links;
+    };
+    /* (1002 유강) 리플레이 트레이닝 = 기출 오답 누적 모음. PT 최근 3개와 별개로 최신본 하나를 늘 맨 위에 둔다. */
+    const isReplay = p => /^리플레이/.test(String(p.시험지명 || ''));
+    const PT = g.PT || [];
+    const rp = PT.find(p => isReplay(p) && ptLinks(p).length);
+    if (rp) rows.push(`<div class="row"><span>리플레이 트레이닝 <span class="dim">기출 오답 모음${rp.날짜 ? ` · ${dfmt(rp.날짜)} 갱신` : ''}</span></span><span class="rp">${ptLinks(rp).join('')}</span></div>`);
+    PT.filter(p => !isReplay(p)).slice(0, 3).forEach(p => {
+      const links = ptLinks(p);
       if (!links.length) return;
       rows.push(`<div class="row"><span>퍼스널트레이닝 <span class="dim">${E(paper(p.시험지명))}</span></span><span class="rp">${links.join('')}</span></div>`);
     });
