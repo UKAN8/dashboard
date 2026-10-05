@@ -308,6 +308,9 @@ tr.tw-det td{white-space:normal;padding:10px 14px;background:rgba(255,255,255,.0
 @media (max-width:640px){.tw-it{grid-template-columns:auto 1fr}.tw-ans{grid-column:2}}
 .tw-rd{display:inline-block;width:5px;height:5px;border-radius:50%;background:#8ecbff;vertical-align:top;margin-left:2px}
 .tw-chips{min-width:70px}
+/* 점수표 (1005) */
+.gc-score thead th{vertical-align:bottom;line-height:1.25} .gc-score thead th small{font-weight:400;font-size:10px}
+.gc-score td.gc-c small{margin-left:2px;font-size:9px;color:var(--dim)} .gc-score tfoot td{position:sticky;bottom:0;background:#14141c;font-weight:600}
 
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
@@ -618,7 +621,7 @@ body.cs-on #boot{display:none}
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
 </div></nav>
@@ -1898,6 +1901,7 @@ function render(st) {
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewTypemap(st), viewVideo(st),                      // 0811 병합
     viewGichul(st),                                      // 0907 기출테스트 결과
+    viewScore(st),                                       // 1005 점수표 (학생×시험지)
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
     viewSurvey(st),                                      // 0930 설문 (관리자)
     viewTower(st)                                        // 0930 개념의 탑 등반 기록 (관리자)
@@ -3965,6 +3969,102 @@ function gcWire(st) {
   draw();
 }
 
+/* ───────── 점수표 (1005 유강 "학생별 시험 점수를 쭉") ─────────
+ * 행=학생, 열=시험지(시행일 순). 학생·반·평균·응시 + 시험지마다 점수. 모든 머리글로 정렬.
+ * 데이터는 기출 화면과 같은 gcBuild 결과(st.gc)를 그대로 쓴다 — 두 벌 계산 금지.
+ * 필터는 기출 화면과 같은 학년 + 반 2단(0917 규칙). 순위·등급은 학년 전체 기준 그대로(0915).
+ * 상태는 scWire 안에만 산다(주소는 #score 하나). */
+function viewScore(st) {
+  const G = st.gc = st.gc || gcBuild(st);
+  return '<section class="view" id="v-score">'
+    + `<h2>점수표 — 학생별 기출테스트 점수 <span class="cnt">${Object.keys(G.byStu).length}</span>`
+    + '<span class="dim" style="font-size:12px"> 행=학생 · 열=시험지(시행일 순). 머리글을 누르면 정렬. 평균은 보이는 시험지 중 응시한 것만</span></h2>'
+    + '<div class="gc-bar" id="sc-mode">'
+    + [...new Set(G.bans.map(gcGrp))].sort().map(g => `<button class="fbtn" data-sgg="${E(g)}">${E(g)}</button>`).join('')
+    + '<span class="gc-dv"></span>'
+    + '<button class="fbtn on" data-sgb="*">반 전체</button>'
+    + G.bans.map(b => `<button class="fbtn gc-bb" data-sgb="${E(b)}" data-sgbg="${E(gcGrp(b))}">${E(b)}</button>`).join('')
+    + '<span class="gc-sp"></span><input class="gc-q" data-sq placeholder="이름 검색" style="width:110px">'
+    + '</div><div id="sc-body"></div></section>';
+}
+
+function scWire(st) {
+  const G = st.gc || gcBuild(st);
+  if (!$('sc-body')) return;
+  const grades = [...new Set(G.bans.map(gcGrp))].sort();
+  let grade = (G.papers[0] && [...G.papers[0].bans].map(gcGrp)[0]) || grades[0] || '고1';
+  let ban = '*', q = '';
+  const sort = { k: 'avg', d: -1 };
+  const banOK = b => gcGrp(b) === grade && (ban === '*' || b === ban);
+  const cmp = (a, b) => a == null && b == null ? 0 : a == null ? 1 : b == null ? -1
+    : typeof a === 'string' ? a.localeCompare(b, 'ko') : a - b;         // null(미응시)은 방향과 무관하게 맨 뒤
+  const th = (k, label, cls, title) => {
+    const on = sort.k === k;
+    return `<th class="sort${cls ? ' ' + cls : ''}${on ? ' on' : ''}" data-ssk="${E(k)}" title="${title ? E(title) + ' · ' : ''}눌러서 정렬">${label}${on ? `<i>${sort.d < 0 ? '▼' : '▲'}</i>` : ''}</th>`;
+  };
+  function table() {
+    // 열 = 이 학년(·반)이 본 시험지, 시행일 오름차순 (G.papers 는 내림차순)
+    const ps = G.papers.filter(p => [...p.bans].some(banOK)).slice().sort((a, b) => a.first.localeCompare(b.first) || a.id.localeCompare(b.id, 'ko'));
+    if (!ps.length) return '<div class="dim">' + (ban === '*' ? '기출테스트 기록이 없다.' : `${E(ban)} 의 기출테스트 기록이 없다.`) + '</div>';
+    const pidx = {}; ps.forEach((p, i) => pidx[p.id] = i);
+    // 행 = 응시 기록이 있는 학생(이 학년·반). 같은 시험지를 두 번 본 일은 없지만, 있으면 마지막 것.
+    let rows = Object.keys(G.byStu).filter(s => banOK(G.byStu[s][0].t.ban)).map(s => {
+      const h = G.byStu[s], t0 = h[h.length - 1].t;
+      const sc = new Array(ps.length).fill(null), tk = new Array(ps.length).fill(null);
+      h.forEach(({ p, t }) => { const i = pidx[p.id]; if (i != null) { sc[i] = t.score; tk[i] = t; } });
+      const got = sc.filter(v => v != null);
+      return { sid: s, name: t0.name, ban: t0.ban, stu: t0.stu, sc, tk, n: got.length, avg: gcMean(got) };
+    });
+    if (q) rows = rows.filter(r => r.name.includes(q));
+    const key = sort.k === 'name' ? r => r.name : sort.k === 'ban' ? r => r.ban : sort.k === 'n' ? r => r.n
+      : sort.k.startsWith('p:') ? r => r.sc[pidx[sort.k.slice(2)]] : r => r.avg;
+    rows.sort((x, y) => { const a = key(x), b = key(y); if (a == null || b == null) return cmp(a, b); return cmp(a, b) * sort.d || x.name.localeCompare(y.name, 'ko'); });
+    const miss = {}; ps.forEach(p => p.miss.forEach(m => { miss[m.sid + '|' + p.id] = 1; }));
+    const cell = (r, p, i) => {
+      const t = r.tk[i];
+      if (!t) return miss[r.sid + '|' + p.id] ? '<td class="gc-c na" title="미응시">미</td>' : '<td class="gc-c na"></td>';
+      const c1 = mi(p.meta, '등급컷1');
+      const cls = c1 != null ? (t.score >= c1 ? 'good' : t.score >= c1 - 15 ? 'mid' : 'bad') : (p.avg != null && t.score < p.avg - 15 ? 'bad' : '');
+      const tip = `${E(gcPaperLabel(p.id))} · ${t.score}점 · ${t.rank}/${t.rankN}위${t.grade ? ' · 예상 ' + t.grade + '등급' : ''}${t.lateN ? ' · 보충 응시 +' + t.lateN + '일' : ''}`;
+      return `<td class="gc-c ${cls}" title="${tip}"><b>${t.score}</b>${t.lateN ? '<small>늦</small>' : ''}</td>`;
+    };
+    // 바닥: 열마다 지금 보이는 반의 평균(보충 응시 제외 — 기출 화면과 같은 규칙)
+    const colAvg = p => gcMean(p.baseTakes.filter(t => banOK(t.ban)).map(t => t.score));
+    const head = `<tr>${th('name', '학생', 'gc-fz')}${th('ban', '반')}${th('avg', '평균', '', '응시한 시험지 점수 평균')}${th('n', '응시', '', '응시 횟수 / 시험지 수')}`
+      + ps.map(p => th('p:' + p.id, `${E(gcPaperLabel(p.id))}<br><small class="dim">${dfmt(p.first, false)}</small>`, '', `${[...p.bans].join('·')} · ${p.baseTakes.length}명`)).join('') + '</tr>';
+    const body = rows.map(r => `<tr><td class="gc-fz">${r.stu ? slink(r.stu) : `<span class="nm">${E(r.name)}</span>`}</td><td class="dim">${E(r.ban)}</td>`
+      + `<td class="gc-c gc-avg"><b>${r.avg == null ? '—' : r1(r.avg)}</b></td><td class="gc-c dim">${r.n}/${ps.length}</td>`
+      + ps.map((p, i) => cell(r, p, i)).join('') + '</tr>').join('');
+    const allAvg = gcMean(rows.map(r => r.avg).filter(v => v != null));
+    const foot = `<tr><td class="gc-fz">평균 <small class="dim">${rows.length}명</small></td><td></td><td class="gc-c"><b>${allAvg == null ? '—' : r1(allAvg)}</b></td><td></td>`
+      + ps.map(p => { const a = colAvg(p); return `<td class="gc-c" title="${E(ban === '*' ? grade : ban)} 평균 · 보충 응시 제외">${a == null ? '—' : r1(a)}</td>`; }).join('') + '</tr>';
+    return `<div class="gc-wrap"><table class="gc-tbl gc-score"><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>`;
+  }
+  function draw() {
+    document.querySelectorAll('#sc-mode [data-sgg]').forEach(b => b.classList.toggle('on', b.dataset.sgg === grade));
+    document.querySelectorAll('#sc-mode [data-sgb]').forEach(b => {
+      if (b.dataset.sgbg) b.style.display = b.dataset.sgbg === grade ? '' : 'none';
+      b.classList.toggle('on', b.dataset.sgb === ban);
+    });
+    $('sc-body').innerHTML = table();
+  }
+  document.addEventListener('click', e => {
+    const el = e.target.closest('#v-score [data-sgg],#v-score [data-sgb],#v-score [data-ssk]');
+    if (!el) return;
+    if (el.dataset.sgg) { grade = el.dataset.sgg; ban = '*'; }
+    if (el.dataset.sgb) ban = el.dataset.sgb;
+    if (el.dataset.ssk) {                                   // 같은 열이면 방향만 뒤집는다
+      if (sort.k === el.dataset.ssk) sort.d = -sort.d; else { sort.k = el.dataset.ssk; sort.d = /^(name|ban)$/.test(sort.k) ? 1 : -1; }
+    }
+    draw();
+  });
+  document.addEventListener('input', e => {
+    const el = e.target.closest('#v-score [data-sq]'); if (!el) return;
+    q = el.value.trim(); $('sc-body').innerHTML = table();
+  });
+  draw();
+}
+
 /* ───────── 리포트 이미지 (서버 렌더 → Storage) ─────────
  * 경로 규칙은 render_daily.py 와 한 몸이다: `<날짜>/<sha1(이름.jpg) 앞 16자>.jpg`.
  * (Storage 키에 한글을 못 써서 해시를 쓴다.) 그래서 매니페스트를 따로 읽지 않고
@@ -4110,6 +4210,7 @@ async function saveReports(btn, files, tag) {
 function wire(st) {
   tmWire(st); vxWire(st);          // 0811 병합 — 유형맵·영상은 상태를 들고 스스로 그린다
   gcWire(st);                      // 0907 기출 — 같은 방식
+  scWire(st);                      // 1005 점수표
   document.addEventListener('toggle', e => {
     const el = e.target;
     if (el.tagName === 'DETAILS' && el.classList.contains('rp-imgs') && el.open) loadReportImages(el);
@@ -4150,7 +4251,7 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'visits', 'survey', 'tower'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower'].includes(main)) main = 'today';
     if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
