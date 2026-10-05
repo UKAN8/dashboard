@@ -825,7 +825,7 @@ body.cs-on #boot{display:none}
         <div class="f grow"><label class="lbl">찾기 — 유형 이름 일부</label><input id="ct_q" placeholder="예: 미분가능성, 접선, 평행이동" oninput="ctRenderPick()"></div>
         <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><label class="ct-chk"><input type="checkbox" id="ct_only" onchange="ctRenderPick()"> 문항 10개 이상만</label></div>
       </div>
-      <div class="lbl" style="margin:0 0 6px">숫자 = 꺼낼 수 있는 문항 수 <b>하 · 중 · 중상 · 상</b> (써킷 원본+변형+문제집). 이 학생에게 이미 나간 문항은 만들 때 빠지므로 조금 줄 수 있다.</div>
+      <div class="lbl" style="margin:0 0 6px">숫자 = 꺼낼 수 있는 문항 수 <b>하 · 중 · 중상 · 상 · 최상</b> (써킷 원본+변형+문제집·모의). 이 학생에게 이미 나간 문항은 만들 때 빠지므로 조금 줄 수 있다.</div>
       <div id="ct_units" class="ct-units">불러오는 중…</div>
     </div>
 
@@ -7167,12 +7167,12 @@ async function staffRemove(email){
  * 조교·유강 시험판. 유형(써킷 유형명)·문항수·난이도를 골라 job_queue(종류=커스텀트레이닝)에 넣는다.
  * pt.yml(pt_worker.handle_ct → scripts/ct_build.py → build_pt2)이 문제·해설 PDF 를 굽는다. 결과 계약은 기출과제와 같다.
  * 카탈로그 = dashboard 저장소 ct/types.json (ct_build.py --catalog, build_app --deploy 가 같이 올린다)
- *   {과목:{공통수학2:[{코드,이름,유형:[{키:'03-T08',이름,n:[하,중,중상,상]}]}]}, 분:{하:1,…}}
+ *   {과목:{공통수학2:[{코드,이름,유형:[{키:'03-T08',이름,n:[하,중,중상,상,최상]}]}]}, 분:{하:1,…}}
  * 자동 추천 = 지난 90일 기출과제 결과의 유형 그레이드(G1~G4, 0922 판정 기록) + 그 유형이 PT 에 나온 횟수. 써킷 축이라 변환이 없다. */
-const CT_LV=['하','중','중상','상'];
+const CT_LV=['하','중','중상','상','최상'];   // (1005) 5단
 let CTCAT=null, CTIDX={}, CTSTU=[], CTSEL=[], CTMODE='auto', CTTIMER=null;
 const ctCourse=cls=>String(cls||'').startsWith('고2')?'미적분1':'공통수학2';
-const ctMin=lv=>((CTCAT&&CTCAT['분'])||{하:1,중:2,중상:3,상:5})[lv]||2;
+const ctMin=lv=>((CTCAT&&CTCAT['분'])||{하:1,중:2,중상:3,상:5,최상:7})[lv]||2;
 function ctAvail(key,lv){
   const t=CTIDX[key]; if(!t)return 0;
   return lv==='섞음'?t.n.reduce((a,b)=>a+b,0):(t.n[CT_LV.indexOf(lv)]||0);
