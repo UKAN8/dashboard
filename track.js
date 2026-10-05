@@ -42,10 +42,15 @@
     var lid = '';
     if (PAGE === 'set') { var m = location.pathname.match(/([^\/]+)\.html$/); lid = m ? decodeURIComponent(m[1]) : ''; }
     var detail = PAGE === 'set' ? lid.replace(HASH, '') : PAGE === 'eval' ? (q.get('d') || '') : PAGE === 'survey' ? (q.get('s') || '') : '';
+    // 출처 꼬리표(1005): 밖에 뿌린 링크에 &ref=teachers 처럼 붙이면 GoatCounter 경로가 /…/@teachers 로 갈라지고 DB 세부에도 남는다.
+    //   (GoatCounter 는 ?ref= 를 캠페인 referrer 로도 따로 센다.)  데모(저장 없음) 열람은 세부 'demo'.
+    var ref = (q.get('ref') || '').replace(/[^0-9A-Za-z가-힣_.-]/g, '').slice(0, 24);
+    if (!detail && ref) detail = ref;
+    if (!detail && q.get('demo') === '1') detail = 'demo';
 
     /* ① GoatCounter */
     window.goatcounter = {
-      path: function () { return clean(location.pathname); },
+      path: function () { return clean(location.pathname) + (ref ? '@' + ref : ''); },
       title: function () { return TITLE[PAGE] || PAGE; },
       referrer: function (r) {
         try { if (!r) return ''; var u = new URL(r); return u.host === location.host ? u.origin + clean(u.pathname) : u.origin; }
