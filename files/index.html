@@ -78,7 +78,8 @@ async function load() {
     const p = j['파라미터'] || {};
     if (!p['반'] || !p['날짜']) continue;
     const ct = j['종류'] === '커스텀트레이닝';          // 같은 날 같은 학생의 PT 를 덮지 않게 묶음을 가른다
-    const k = p['반'] + ' · ' + p['날짜'] + (ct ? ' · 커스텀' : '');
+    const rp = /리플레이/.test(p['시험지명'] || '');    // (1005) 리플레이 트레이닝도 따로 — 1002 누적판이 같은 반·날짜 PT 를 이름으로 덮었다
+    const k = p['반'] + ' · ' + p['날짜'] + (ct ? ' · 커스텀' : rp ? ' · 리플레이' : '');
     (GROUPS[k] = GROUPS[k] || { 반: p['반'], 날짜: p['날짜'], 시험지명: ct ? '커스텀 트레이닝' : (p['시험지명'] || ''), jobs: [] }).jobs.push(j);
   }
   const keys = Object.keys(GROUPS).sort((a, b) => GROUPS[b].날짜.localeCompare(GROUPS[a].날짜) || a.localeCompare(b));
