@@ -312,6 +312,33 @@ tr.tw-det td{white-space:normal;padding:10px 14px;background:rgba(255,255,255,.0
 .gc-score thead th{vertical-align:bottom;line-height:1.25} .gc-score thead th small{font-weight:400;font-size:10px}
 .gc-score td.gc-c small{margin-left:2px;font-size:9px;color:var(--dim)} .gc-score tfoot td{position:sticky;bottom:0;background:#14141c;font-weight:600}
 
+/* ── 표 기본기 (1007) — 모든 <table> 첫 열 = 번호. 정렬은 table_kit.js ──────────────
+   tr::before 가 가짜 칸(display:table-cell)이 된다. DOM 칸이 아니라서 기존 코드의 칸 인덱스가 안 밀린다.
+   끄기: table.tk-off(전부) / table.tk-nonum(번호만). 펼친 상세 행(td 하나+colspan)은 번호를 안 센다. */
+table:not(.tk-off):not(.tk-nonum) > tbody{counter-reset:tkn}
+table:not(.tk-off):not(.tk-nonum) > thead > tr::before,
+table:not(.tk-off):not(.tk-nonum) > tbody > tr::before,
+table:not(.tk-off):not(.tk-nonum) > tfoot > tr::before{
+  content:'';display:table-cell;box-sizing:border-box;width:2.6em;min-width:2.6em;max-width:2.6em;
+  padding:0 8px 0 4px;text-align:right;vertical-align:middle;color:var(--dim);font-size:11px;font-weight:500;
+  font-variant-numeric:tabular-nums;border-bottom:1px solid var(--bd)}
+table:not(.tk-off):not(.tk-nonum) > thead > tr:first-child::before{content:'#'}
+table:not(.tk-off):not(.tk-nonum) > tbody > tr:not(:has(> td:only-child[colspan]))::before{counter-increment:tkn;content:counter(tkn)}
+table:not(.tk-off):not(.tk-nonum) > tbody > tr:has(> td:only-child[colspan])::before{border-bottom:0}
+/* 머리글이 sticky 인 표는 번호 머리도 같이 붙는다 */
+.vs-tbl > thead > tr::before,.gc-tbl > thead > tr::before,.hm-tbl > thead > tr::before{position:sticky;top:0;z-index:2;background:var(--card)}
+.gc-tbl > thead > tr::before,.hm-tbl > thead > tr::before{background:#14141c}
+/* 왼쪽 고정 열이 있는 표(기출·점수표·히트맵) — 번호 칸도 왼쪽에 고정하고 고정 열을 그만큼 민다 */
+.gc-tbl > tbody > tr::before,.gc-tbl > tfoot > tr::before,.hm-tbl > tbody > tr::before,.hm-tbl > tfoot > tr::before{position:sticky;left:0;z-index:1;background:#14141c}
+.gc-tbl > thead > tr::before,.hm-tbl > thead > tr::before{left:0;z-index:4}
+.gc-tbl .gc-fz,.hm-tbl .hm-fz{left:2.6em}
+.gc-score > tfoot > tr::before{bottom:0}
+/* 정렬 표시 */
+th[data-tk-ok]{cursor:pointer;user-select:none}
+th.tk-on{color:var(--tx)}
+th .tk-ar{font-style:normal;font-size:9px;margin-left:3px;color:var(--acc)}
+@media (hover:hover) and (pointer:fine){ th[data-tk-ok]:hover{color:var(--tx2)} }
+
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
 #login .logo{font-weight:800;color:var(--acc);font-size:20px;margin-bottom:14px;text-align:center}
@@ -1144,6 +1171,113 @@ body.cs-on #boot{display:none}
     on: function () { CF.off = false; save(); },
     _open: open, _close: close, _cf: CF, _rowpx: ROW, _wheelStep: wheelStep
   };
+})();
+
+/* ── 표 기본기 (1007) — 유강 "대시보드에 테이블이 들어가면 기본적으로 정렬 + 첫 열 번호" ──
+   1) 번호 열: CSS 만으로 붙인다(app_styles.css 「표 기본기」). tr::before 가 가짜 칸이 되고
+      CSS counter 가 번호를 센다. DOM 에 칸을 넣지 않으므로 기존 코드가 쓰는
+      tr.children[i] 인덱스(히트맵 정렬 등)가 하나도 안 밀린다. 정렬로 행이 옮겨져도 번호는 1부터 다시.
+      - 펼친 상세 행(td 하나 + colspan, 예: 설문 '답 보기')은 번호를 안 센다.
+   2) 정렬: 이 파일. 문서 전체에 클릭 위임 하나 — 표를 다시 그려도(innerHTML) 따로 붙일 게 없다.
+      - 머리글 누르면 오름/내림 토글. 숫자 열은 첫 클릭이 내림차순, 글자 열은 오름차순.
+      - 빈칸·'—'·'-'·'·' 은 방향과 상관없이 맨 뒤. 동점은 원래 순서.
+      - 펼친 상세 행은 바로 위 행에 붙어서 같이 움직인다.
+      - 칸 값: data-sv > data-v > (안의 input/select 값) > 글자.
+   제외:
+      - 자체 정렬이 있는 표(th.sort / th[data-hk] — 기출·점수표·히트맵)는 그쪽 정렬을 그대로 쓴다. 번호만 붙는다.
+      - <table class="tk-off">     번호·정렬 둘 다 끔
+      - <table class="tk-nonum">   번호만 끔
+      - <table class="tk-nosort">  정렬만 끔 / <th data-nosort> 그 열만 끔
+      - thead 가 여러 줄이거나 없는 표는 정렬 안 함(어느 열인지 모호). 번호는 붙음. */
+(function () {
+  'use strict';
+  if (typeof document === 'undefined') return;
+  var EMPTY = /^(|—|-|–|·| )$/;
+  var NUM = /^[-+]?[\d,]*\.?\d+\s*(%|명|점|건|회|개|문항|등급|분|초|일|층|번)?$/;
+
+  function isDetail(tr) {                      // 펼친 상세 행 = 칸 하나 + colspan
+    return tr.cells.length === 1 && tr.cells[0].colSpan > 1;
+  }
+  function cellAt(tr, col) {                   // colspan 을 감안해 col 번째 열의 칸
+    var x = 0;
+    for (var i = 0; i < tr.cells.length; i++) {
+      var c = tr.cells[i], n = c.colSpan || 1;
+      if (col < x + n) return c;
+      x += n;
+    }
+    return null;
+  }
+  function raw(td) {
+    if (!td) return '';
+    if (td.dataset.sv != null) return td.dataset.sv;
+    if (td.dataset.v != null) return td.dataset.v;
+    var f = td.querySelector('input:not([type=checkbox]):not([type=radio]),select,textarea');
+    if (f && f.value != null && f.value !== '') return f.value;
+    var cb = td.querySelector('input[type=checkbox]');
+    if (cb && !td.textContent.trim()) return cb.checked ? '1' : '0';
+    return td.textContent.replace(/\s+/g, ' ').trim();
+  }
+  function numOf(s) { return parseFloat(s.replace(/,/g, '')); }
+
+  function sortable(th) {
+    var tbl = th.closest('table');
+    if (!tbl || tbl.classList.contains('tk-off') || tbl.classList.contains('tk-nosort')) return null;
+    if (th.hasAttribute('data-nosort') || th.closest('tfoot') || th.closest('tbody')) return null;
+    if (tbl.querySelector('thead th.sort, thead th[data-hk], thead th[data-gt], thead th[data-ssk]')) return null;
+    var th0 = tbl.tHead;
+    if (!th0 || th0.rows.length !== 1 || !tbl.tBodies.length) return null;
+    if (th.closest('table') !== tbl || th.parentNode !== th0.rows[0]) return null;
+    return tbl;
+  }
+
+  document.addEventListener('click', function (e) {
+    var th = e.target.closest && e.target.closest('th');
+    if (!th) return;
+    if (e.target.closest('a,button,input,select,textarea,label')) return;   // 머리글 안의 컨트롤은 그대로
+    var tbl = sortable(th);
+    if (!tbl) return;
+    var hr = tbl.tHead.rows[0], col = 0;
+    for (var i = 0; i < hr.cells.length && hr.cells[i] !== th; i++) col += hr.cells[i].colSpan || 1;
+    if (th.colSpan > 1) return;
+
+    // 방향
+    var prev = th.getAttribute('data-tk-dir');
+    var tb = tbl.tBodies[0];
+    var groups = [], cur = null;
+    Array.prototype.forEach.call(tb.rows, function (tr, idx) {
+      if (isDetail(tr) && cur) { cur.rows.push(tr); return; }
+      cur = { rows: [tr], i: idx, v: raw(cellAt(tr, col)) };
+      groups.push(cur);
+    });
+    var data = groups.filter(function (g) { return !EMPTY.test(g.v); });
+    var numeric = data.length > 0 && data.every(function (g) { return NUM.test(g.v); });
+    var dir = prev ? (prev === 'asc' ? 'desc' : 'asc') : (numeric ? 'desc' : 'asc');
+    var s = dir === 'asc' ? 1 : -1;
+    groups.sort(function (a, b) {
+      var ea = EMPTY.test(a.v), eb = EMPTY.test(b.v);
+      if (ea || eb) return ea && eb ? a.i - b.i : ea ? 1 : -1;
+      var c = numeric ? numOf(a.v) - numOf(b.v) : a.v.localeCompare(b.v, 'ko', { numeric: true });
+      return c ? c * s : a.i - b.i;
+    });
+    var frag = document.createDocumentFragment();
+    groups.forEach(function (g) { g.rows.forEach(function (r) { frag.appendChild(r); }); });
+    tb.appendChild(frag);
+
+    Array.prototype.forEach.call(hr.cells, function (c) {
+      c.removeAttribute('data-tk-dir'); c.classList.remove('tk-on');
+      var a = c.querySelector(':scope > .tk-ar'); if (a) a.remove();
+    });
+    th.setAttribute('data-tk-dir', dir); th.classList.add('tk-on');
+    var ar = document.createElement('i'); ar.className = 'tk-ar'; ar.textContent = dir === 'asc' ? '▲' : '▼';
+    th.appendChild(ar);
+  });
+
+  // 정렬 되는 머리글에 손가락 커서 — 마우스가 올라갈 때만 판정(표를 미리 훑지 않는다)
+  document.addEventListener('mouseover', function (e) {
+    var th = e.target.closest && e.target.closest('th');
+    if (!th || th.hasAttribute('data-tk-ok')) return;
+    if (sortable(th) && th.colSpan === 1) { th.setAttribute('data-tk-ok', ''); if (!th.title) th.title = '눌러서 정렬'; }
+  });
 })();
 
 /* 시험 점수를 해석하는 규칙 — 대시보드(app.js)와 학생 포털(portal)이 같이 쓴다.
