@@ -273,7 +273,7 @@ tr.gc-lt{opacity:.72} tr.gc-lt .gc-sc b{color:var(--dim)}
 .sv-qh{margin-bottom:4px;font-size:13px}
 .sv-ans{display:inline-block;vertical-align:top;min-width:260px;max-width:460px;margin:0 18px 8px 0}
 .sv-h2{font-weight:700;margin-bottom:6px}
-.sv-row{display:grid;grid-template-columns:130px 1fr;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}
+.sv-row{display:grid;grid-template-columns:minmax(150px,240px) 1fr;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}
 .sv-row span:last-child{white-space:normal;overflow-wrap:anywhere}
 .sv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .sv-sum{padding:10px 12px}
@@ -4480,6 +4480,28 @@ const SV_FREE = ['아까운문제', '적중순간', '달라진점', '고마운�
 const SV_LABEL = { 적중순간: '"학원에서 했던 거다" 순간', 달라진점: '수업 전후 달라진 점', 고마운점: '고마웠던 것', 바라는점: '바라는 점·아쉬운 점',
   한문장: '한 문장 소개', 자녀변화: '자녀에게서 느낀 변화', 요청: '바라시는 점', 아까운문제: '제일 아까운 문제', 한마디: '한마디' };
 let SV = { rows: null, key: '', ban: '*', mode: 'who', open: '' };
+// 1007 문항별 표시 이름 — 설문키(_s/_p 포함)마다 따로. 같은 키(만족·추천·공개…)라도 학생·학부모 질문이 달라서.
+//  새 설문을 만들면 여기에 한 묶음 더한다. 없으면 SV_LABEL → 키 이름 순으로 보인다.
+const SV_Q = {
+  ex26m2_s: { 점수대: '수학 점수(가채점) 구간', 점수: '정확한 점수', 변화: '지난 시험(1학기 기말) 대비 점수 변화', 지난점수: '1학기 기말 점수',
+    만족: '이번 점수 본인 만족도', 시간: '시험 시간 배분 (남았나·모자랐나)', 찍음: '찍은 문제 수', 놓친이유: '놓친 문제의 이유 (최대 2개)',
+    적중: '학원에서 푼 것과 비슷한 문제가 나왔나', 아까운문제: '제일 아까운 문제와 막힌 지점', 도움: '시험 준비에 제일 도움된 것', 줄여도: '줄여도 되는 것',
+    수행: '루프·PT 과제 실제 수행량', 해설: '해설 만족도 (충분·더 자세히·영상)', 공부시간: '시험 전 주, 학원 밖 하루 수학 공부 시간',
+    강화: '기말 대비 때 더 해줬으면 하는 것 (최대 2개)', 질문: '질문하고 싶었는데 못 한 적 · 그 이유', 적중순간: '시험 중 "학원에서 했던 거다" 싶었던 순간',
+    달라진점: '유강T 수업 전과 비교해 달라진 점', 고마운점: '이번 시험 준비에서 제일 고마웠던 것', 바라는점: '쌤에게 바라는 점·아쉬웠던 점 (홍보 금지)',
+    자신감: '시험 후 수학 자신감 변화', 추천: '친구에게 이 수업 추천할 의향', 한문장: '친구에게 이 수업을 한 문장으로 소개', 공개: '후기를 홍보에 쓸 때 공개 범위' },
+  ex26m2_p: { 들음: '시험 결과를 자녀에게 들으셨나', 느낌: '결과에 대한 부모님 느낌', 집공부: '시험 기간 집에서 본 자녀의 수학 공부 모습',
+    안내: '시험 기간 학원 안내(일정·직보·준비 상황) 충분했나', 원하는정보: '앞으로 가장 받고 싶은 정보 (최대 2개)', 받는법: '정보 받기 편한 방법',
+    포털: '학생 포털 아시는지 · 들어가 보셨는지', 포털빈도: '포털 보시는 빈도', 포털유용: '포털에서 가장 유용한 정보 (최대 2개)', 포털불필요: '포털에서 없어도 되는 정보',
+    포털보기: '포털 화면 보기 편하셨나', 포털안봄: '포털 안 들어가 보신 이유', 포털안내: '포털 안내 원하시나 (링크·설명)',
+    걱정: '자녀 수학에서 지금 가장 걱정되는 점', 목표: '다음 시험(기말) 기대 목표', 만족: '이번 시험 대비 과정 전반 만족도', 상담: '선생님과 통화 상담 희망 시점',
+    자녀변화: '수업 시작 후 자녀에게서 느낀 변화', 요청: '선생님께 바라시는 점·아쉬운 점 (홍보 금지)', 추천: '주변 학부모님께 추천할 의향',
+    한문장: '다른 학부모님께 한 문장으로 소개', 공개: '남긴 말씀을 홍보에 쓸 때 공개 범위', 자녀공개: '자녀 후기를 홍보에 써도 되는지' },
+  hw0827: { 진행: '과제 어디까지 했나', 못한이유: '다 못 한 가장 큰 이유', 시간: '과제에 실제로 쓴 시간', 분량: '문항 수 체감 (많다·적당·적다)',
+    난이도: '난이도 체감', 적중: '나온 유형이 본인 약점 유형과 맞았나', 막힘: '막혔을 때 어떻게 했나', 해설: '해설이 충분했나',
+    효과: '같은 유형이 또 나오면 맞힐 자신', 개선: '다음 과제에서 딱 하나 바꾼다면', 한마디: '하고 싶은 말' },
+};
+const svL = (skey, k) => (SV_Q[skey] || {})[k] || SV_LABEL[k] || k;
 
 function viewSurvey(st) {
   SV.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
@@ -4572,11 +4594,11 @@ function svDraw() {
       + who.sort((a, b) => (a.ban || '').localeCompare(b.ban || '') || a.name.localeCompare(b.name, 'ko')).map(x =>
         `<tr><td><a href="#student/${encodeURIComponent(x.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td><td>${cell(byS[x.sid])}</td>${pair ? `<td>${cell(byP[x.sid])}</td><td>${flag(x)}</td>` : ''}`
         + `<td><button class="fbtn" data-so="${E(x.sid)}">${SV.open === x.sid ? '닫기' : '답 보기'}</button></td></tr>`
-        + (SV.open === x.sid ? `<tr><td colspan="${pair ? 6 : 4}" style="white-space:normal;padding:10px 12px">${svAns(byS[x.sid], '학생')}${pair ? svAns(byP[x.sid], '학부모') : ''}</td></tr>` : '')).join('')
+        + (SV.open === x.sid ? `<tr><td colspan="${pair ? 6 : 4}" style="white-space:normal;padding:10px 12px">${svAns(byS[x.sid], '학생', kS)}${pair ? svAns(byP[x.sid], '학부모', kP) : ''}</td></tr>` : '')).join('')
       + '</tbody></table></div>';
   } else if (SV.mode === 'sum') {
-    html += svSum(who.map(x => byS[x.sid]).filter(Boolean), pair ? '학생' : '응답')
-      + (pair ? svSum(who.map(x => byP[x.sid]).filter(Boolean), '학부모') : '');
+    html += svSum(who.map(x => byS[x.sid]).filter(Boolean), pair ? '학생' : '응답', kS)
+      + (pair ? svSum(who.map(x => byP[x.sid]).filter(Boolean), '학부모', kP) : '');
   } else {
     const items = [];
     who.forEach(x => {
@@ -4585,13 +4607,13 @@ function svDraw() {
         let lv = svLevel(a.공개);
         if (src === '학생' && pair) lv = Math.min(lv, byP[x.sid] ? (/쓰지 말/.test(pa.자녀공개 || '') ? 0 : /익명/.test(pa.자녀공개 || '') ? 1 : pa.자녀공개 ? 2 : 1) : 1);
         SV_FREE.forEach(k => { const v = (a[k] || '').trim(); if (!v) return;
-          const priv = SV_PRIVATE.includes(k); items.push({ x, src, k, v, lv: priv ? -1 : lv }); }); };
+          const priv = SV_PRIVATE.includes(k); items.push({ x, src, k, v, lv: priv ? -1 : lv, sk: r.설문키 }); }); };
       push(byS[x.sid], pair ? '학생' : '응답'); push(byP[x.sid], '학부모');
     });
     const nm = (x, src, lv) => lv >= 3 ? (src === '학부모' ? `${x.name} 학부모` : x.name) : lv === 2 ? (src === '학부모' ? `${svMask(x.name)} 학부모` : svMask(x.name)) : (src === '학부모' ? `${x.ban.slice(0, 2)} 학부모` : `${x.ban.slice(0, 2)} 학생`);
     const pill = lv => lv < 0 ? '<span class="sv-tag">홍보 금지 칸</span>' : `<span class="sv-tag${lv ? ' ok' : ''}">${SV_LV[lv]}</span>`;
     const ok = items.filter(i => i.lv > 0), rest = items.filter(i => i.lv <= 0);
-    const card = i => `<div class="sv-q"><div class="sv-qh">${pill(i.lv)} <b>${E(i.lv > 0 ? nm(i.x, i.src, i.lv) : i.x.name + ' · ' + i.src)}</b> <span class="dim">${E(SV_LABEL[i.k] || i.k)}</span></div><div>${E(i.v)}</div></div>`;
+    const card = i => `<div class="sv-q"><div class="sv-qh">${pill(i.lv)} <b>${E(i.lv > 0 ? nm(i.x, i.src, i.lv) : i.x.name + ' · ' + i.src)}</b> <span class="dim">${E(svL(i.sk, i.k))}</span></div><div>${E(i.v)}</div></div>`;
     html += `<h3 class="sv-h">홍보에 쓸 수 있는 후기 <span class="dim">${ok.length}</span></h3>` + (ok.length ? ok.map(card).join('') : '<div class="dim">아직 없습니다.</div>')
       + `<h3 class="sv-h">내부용 <span class="dim">${rest.length}</span></h3>` + (rest.length ? rest.map(card).join('') : '<div class="dim">없음</div>');
   }
@@ -4599,14 +4621,14 @@ function svDraw() {
   body.querySelectorAll('[data-so]').forEach(b => b.onclick = () => { SV.open = SV.open === b.dataset.so ? '' : b.dataset.so; svDraw(); });
 }
 
-function svAns(r, src) {
+function svAns(r, src, skey) {
   if (!r) return `<div class="sv-ans"><div class="sv-h2">${src}</div><div class="dim">아직 안 냄</div></div>`;
   const a = r.답 || {};
   return `<div class="sv-ans"><div class="sv-h2">${src} <span class="dim">${new Date(r.제출시각).toLocaleString('ko-KR')}</span></div>`
-    + Object.keys(a).filter(k => !k.startsWith('_')).map(k => `<div class="sv-row"><span class="dim">${E(SV_LABEL[k] || k)}</span><span>${E(Array.isArray(a[k]) ? a[k].join(', ') : a[k])}</span></div>`).join('') + '</div>';
+    + Object.keys(a).filter(k => !k.startsWith('_')).map(k => `<div class="sv-row"><span class="dim">${E(svL(skey, k))}</span><span>${E(Array.isArray(a[k]) ? a[k].join(', ') : a[k])}</span></div>`).join('') + '</div>';
 }
 
-function svSum(rows, src) {
+function svSum(rows, src, skey) {
   if (!rows.length) return `<h3 class="sv-h">${src} <span class="dim">0명</span></h3>`;
   const cnt = {};
   rows.forEach(r => Object.entries(r.답 || {}).forEach(([k, v]) => {
@@ -4615,7 +4637,7 @@ function svSum(rows, src) {
     if (cnt[k]) cnt[k].n++;
   }));
   return `<h3 class="sv-h">${src} <span class="dim">${rows.length}명</span></h3><div class="sv-grid">`
-    + Object.entries(cnt).map(([k, c]) => `<div class="card sv-sum"><div class="sv-qh"><b>${E(SV_LABEL[k] || k)}</b> <span class="dim">${c.n}명</span></div>`
+    + Object.entries(cnt).map(([k, c]) => `<div class="card sv-sum"><div class="sv-qh"><b>${E(svL(skey, k))}</b> <span class="dim">${c.n}명</span></div>`
       + Object.entries(c.v).sort((a, b) => b[1] - a[1]).map(([v, n]) => `<div class="sv-bar"><span>${E(v)}</span><i style="width:${Math.round(n / c.n * 100)}%"></i><b>${n}</b></div>`).join('') + '</div>').join('')
     + '</div>';
 }
