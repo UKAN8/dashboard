@@ -229,8 +229,8 @@ function 보임(q){ return !q.sec && (!q.when||q.when(ANS)); }
 function visible(){ return 문항만().filter(보임); }
 function 선택(q){ return q.free||q.num||q.opt; }
 function 필수(){ return visible().filter(q=>!선택(q)); }
-// 글 칸이 여럿이면 서버 크기 가드(8000B)에 걸리지 않게 칸당 300자
-const ML=()=>문항만().filter(q=>q.free).length>1?300:500;
+// 1007 글 칸 제한 완화 — 칸당 2000자 (서버 크기 가드 64000B, schema_v35). 학부모가 300자에서 막혔음
+const ML=()=>2000;
 function 답함(q){ const v=ANS[q.k]; return Array.isArray(v)?v.length>0:!!v; }
 
 function draw(){
