@@ -649,7 +649,7 @@ body.cs-on #boot{display:none}
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
-<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
+<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
 </div></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
@@ -1798,6 +1798,7 @@ async function boot(session) {
     const va = document.querySelector('#nav a[data-v="video"]'); if (va) va.remove();
     const sv = document.querySelector('#nav a[data-v="survey"]'); if (sv) sv.remove();   // 0930 설문도 관리자만
     const tw = document.querySelector('#nav a[data-v="tower"]'); if (tw) tw.remove();    // 0930 개념의 탑 기록도 관리자만
+    const ap = document.querySelector('#nav a[data-v="apply"]'); if (ap) ap.remove();   // 1009 추가학습 신청도 관리자만
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
     const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
@@ -2038,7 +2039,8 @@ function render(st) {
     viewScore(st),                                       // 1005 점수표 (학생×시험지)
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
     viewSurvey(st),                                      // 0930 설문 (관리자)
-    viewTower(st)                                        // 0930 개념의 탑 등반 기록 (관리자)
+    viewTower(st),                                       // 0930 개념의 탑 등반 기록 (관리자)
+    viewApply(st)                                        // 1009 추가학습 신청 (관리자)
   ].join('');
 }
 
@@ -4385,8 +4387,9 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply'].includes(main)) main = 'today';
     if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
+    if (main === 'apply' && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
@@ -4402,6 +4405,7 @@ function wire(st) {
     if (main === 'visits') vsLoad();
     if (main === 'survey') svLoad();
     if (main === 'tower') twLoad();
+    if (main === 'apply') exLoad();
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -5074,6 +5078,145 @@ function twLog(rows, B, pool) {
       + `<td class="dim">${[(o.card & 1) && '먼저 읽음', (o.card & 2) && '채점 뒤 펼침'].filter(Boolean).join(' · ')}</td></tr>`;
   });
   return h + '</tbody></table></div>' + (Object.keys(g).length > 300 ? '<div class="dim" style="margin-top:6px">최근 300건만 보입니다.</div>' : '');
+}
+
+/* ───────── 추가학습 신청 (1009 — schema_v33 extra_study_apply) ─────────
+ * 학부모·학생이 공개 링크(/dashboard/apply/?k=<신청키>)로 낸 시험기간 추가학습 신청을 본다.
+ * ⚠ 표 정책 admin_all — 조교 계정은 탭도 데이터도 안 열린다(설문과 같다).
+ * 신청 화면의 반 이름은 '고1 S반', 명단은 '고1S' → exBan 으로 맞춘다. 학생 매칭은 이름(+반) — 동명이인은 반이 같은 쪽.
+ * 새 신청 회차를 열면 EX_META 에 한 줄(이름·마감) 더한다. 없어도 키 이름으로 보인다.
+ */
+const EX_META = {
+  mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18' },
+};
+let EX = { rows: null, key: '', ban: '*', sch: '*', mode: 'day', q: '' };
+const exBan = b => String(b || '').replace(/\s+/g, '').replace(/반$/, '');
+const exToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+// '10/6(화)' → '2026-10-06' (연도는 제출 시각 기준)
+function exIso(lbl, yr) {
+  const m = String(lbl || '').match(/(\d{1,2})\s*\/\s*(\d{1,2})/); if (!m) return '';
+  return `${yr}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
+}
+
+function viewApply(st) {
+  EX.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  return `<section class="view" id="v-apply">
+<h2>추가학습 신청 <span class="cnt" id="ex-cnt"></span></h2>
+<div class="toolbar" id="ex-bar"></div>
+<div id="ex-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<div class="dim" style="margin-top:14px;line-height:1.6">신청 링크 <a href="/dashboard/apply/" target="_blank" rel="noopener" style="color:var(--acc)">/dashboard/apply/</a> 로 들어온 신청이 제출 즉시 쌓입니다 (↻ 로 새로고침) ·
+ 같은 학생이 다시 내면 마지막 내용으로 덮어쓰고 <b>수정</b> 횟수만 남습니다 · <b>명단 없음</b> = 입력한 이름이 학생 명단과 안 맞는 신청(오타·형제 등) — 확인 필요.</div>
+</section>`;
+}
+
+async function exLoad(force) {
+  const body = $('ex-body'); if (!body) return;
+  if (EX.rows && !force) { exDraw(); return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  try {
+    const { data, error } = await sb.from('extra_study_apply')
+      .select('id,신청키,학생이름,학교,반,희망일,단원,신청자,메모,제출시각,수정횟수')
+      .order('제출시각', { ascending: false }).limit(3000);
+    if (error) throw error;
+    EX.rows = data || [];
+  } catch (e) {
+    const msg = String(e.message || e);
+    body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(msg)}`
+      + (/does not exist|relation|schema cache/i.test(msg) ? '<br>→ Supabase 에 <b>schema_v33_extra_study.sql</b> 이 아직 안 돌았습니다.' : '') + '</div>';
+    return;
+  }
+  exDraw();
+}
+
+function exDraw() {
+  const bar = $('ex-bar'), body = $('ex-body'); if (!bar || !body || !EX.rows) return;
+  const keys = [...new Set([...Object.keys(EX_META), ...EX.rows.map(r => r.신청키)])];
+  if (!EX.key || !keys.includes(EX.key)) EX.key = keys[0] || '';
+  const meta = EX_META[EX.key] || {};
+  const today = exToday(), tmr = new Date(Date.parse(today) + 864e5).toISOString().slice(0, 10);
+
+  // 명단 매칭 — 이름+반 우선, 없으면 이름만(한 명일 때)
+  const byNB = {}, byN = {};
+  EX.stu.forEach(s => { byNB[s.name + '|' + s.ban] = s; (byN[s.name] = byN[s.name] || []).push(s); });
+  const all = EX.rows.filter(r => r.신청키 === EX.key).map(r => {
+    const ban = exBan(r.반), yr = String(r.제출시각 || today).slice(0, 4);
+    const s = byNB[r.학생이름 + '|' + ban] || ((byN[r.학생이름] || []).length === 1 ? byN[r.학생이름][0] : null);
+    const days = (r.희망일 || []).map(l => ({ l, d: exIso(l, yr) })).sort((a, b) => a.d.localeCompare(b.d));
+    return { r, ban, s, days, units: r.단원 || [] };
+  });
+  const bans = [...new Set(all.map(x => x.ban).filter(Boolean))].sort();
+  const schs = [...new Set(all.filter(x => EX.ban === '*' || x.ban === EX.ban).map(x => x.r.학교))].sort((a, b) => a.localeCompare(b, 'ko'));
+  if (EX.ban !== '*' && !bans.includes(EX.ban)) EX.ban = '*';
+  if (EX.sch !== '*' && !schs.includes(EX.sch)) EX.sch = '*';
+  const q = EX.q.trim();
+  const list = all.filter(x => (EX.ban === '*' || x.ban === EX.ban) && (EX.sch === '*' || x.r.학교 === EX.sch) && (!q || x.r.학생이름.includes(q)));
+
+  const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
+  const sep = '<span class="dim" style="margin:0 4px">│</span>';
+  bar.innerHTML = (keys.length > 1 ? keys.map(k => fb('xk', k, (EX_META[k] || {}).이름 || k, EX.key)).join('') + sep : '')
+    + fb('xb', '*', '반 전체', EX.ban) + bans.map(b => fb('xb', b, b, EX.ban)).join('') + sep
+    + `<select id="ex-sch" class="fbtn"><option value="*">학교 전체</option>${schs.map(s => `<option${s === EX.sch ? ' selected' : ''}>${E(s)}</option>`).join('')}</select>` + sep
+    + fb('xm', 'day', '날짜별', EX.mode) + fb('xm', 'list', '신청 목록', EX.mode) + fb('xm', 'unit', '단원별', EX.mode)
+    + `<input id="ex-q" placeholder="이름 검색" value="${E(EX.q)}" style="background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:5px 11px;width:110px;font:inherit;font-size:13px">`
+    + `<button class="fbtn" id="ex-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-xk]').forEach(b => b.onclick = () => { EX.key = b.dataset.xk; exDraw(); });
+  bar.querySelectorAll('[data-xb]').forEach(b => b.onclick = () => { EX.ban = b.dataset.xb; exDraw(); });
+  bar.querySelectorAll('[data-xm]').forEach(b => b.onclick = () => { EX.mode = b.dataset.xm; exDraw(); });
+  $('ex-sch').onchange = e => { EX.sch = e.target.value; exDraw(); };
+  const qi = $('ex-q'); qi.oninput = () => { EX.q = qi.value; clearTimeout(EX.qt); EX.qt = setTimeout(() => { exDraw(); const n = $('ex-q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  $('ex-re').onclick = () => exLoad(true);
+
+  // 날짜 → 학생들
+  const byDay = {};
+  list.forEach(x => x.days.forEach(dd => { const o = byDay[dd.d] || (byDay[dd.d] = { d: dd.d, l: dd.l, xs: [] }); o.xs.push(x); }));
+  const nToday = (byDay[today] || { xs: [] }).xs.length, nTmr = (byDay[tmr] || { xs: [] }).xs.length;
+  const nMiss = list.filter(x => !x.s).length;
+  const upcoming = Object.values(byDay).filter(o => o.d >= today);
+  const peak = upcoming.sort((a, b) => b.xs.length - a.xs.length)[0];
+  $('ex-cnt').textContent = `${list.length}명`;
+  const kpi = (l, v, sub, warn) => `<div class="kpi"><div class="lbl">${l}</div><div class="big"${warn && v ? ' style="color:var(--acc)"' : ''}>${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let html = `<div class="kpis">${kpi('신청', list.length, '명')}${kpi('오늘 등원 희망', nToday, '명', true)}${kpi('내일', nTmr, '명')}`
+    + `${kpi('남은 날 최다', peak ? peak.l : '—', peak ? ` · ${peak.xs.length}명` : '')}${kpi('명단 없음', nMiss, '건', true)}</div>`
+    + (meta.마감 ? `<div class="dim" style="margin:2px 0 10px">신청 마감 ${E(meta.마감)}${today > meta.마감 ? ' · <b style="color:var(--acc)">마감됨</b>' : ''}</div>` : '');
+  if (!list.length) { body.innerHTML = html + '<div class="card dim" style="padding:14px">아직 신청이 없습니다. 링크로 제출하면 바로 여기 뜹니다 (↻ 로 새로고침).</div>'; return; }
+
+  const t = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+  const who = x => (x.s ? `<a href="#student/${encodeURIComponent(x.s.sid)}">${E(x.r.학생이름)}</a>` : `${E(x.r.학생이름)} <span class="sv-tag warn">명단 없음</span>`);
+  const dayChip = dd => `<span class="sv-tag${dd.d === today ? ' warn' : dd.d > today ? ' ok' : ''}"${dd.d < today ? ' style="opacity:.5"' : ''}>${E(dd.l)}${dd.d === today ? ' 오늘' : ''}</span>`;
+  const unitTxt = us => us.length ? us.map(u => E(u)).join(', ') : '<span class="dim">—</span>';
+  const tbl = (head, rows) => `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+
+  if (EX.mode === 'day') {
+    const days = Object.values(byDay).sort((a, b) => a.d.localeCompare(b.d));
+    html += tbl('<th>날짜</th><th class="n">인원</th><th>학생 (학교)</th><th>많이 고른 단원</th>',
+      days.map(o => {
+        const uc = {}; o.xs.forEach(x => x.units.forEach(u => uc[u] = (uc[u] || 0) + 1));
+        const top = Object.entries(uc).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([u, n]) => `${E(u)} ${n}`).join(' · ');
+        const past = o.d < today;
+        return `<tr${past ? ' style="opacity:.5"' : ''}><td data-sv="${o.d}"><b>${E(o.l)}</b>${o.d === today ? ' <span class="sv-tag warn">오늘</span>' : o.d === tmr ? ' <span class="sv-tag ok">내일</span>' : past ? ' <span class="sv-tag">지남</span>' : ''}</td>`
+          + `<td class="n"><b>${o.xs.length}</b></td>`
+          + `<td style="white-space:normal">${o.xs.sort((a, b) => a.r.학교.localeCompare(b.r.학교, 'ko') || a.r.학생이름.localeCompare(b.r.학생이름, 'ko')).map(x => `${who(x)} <span class="dim">${E(x.r.학교)}·${E(x.ban)}</span>`).join(' &nbsp; ')}</td>`
+          + `<td class="dim" style="white-space:normal">${top}</td></tr>`;
+      }).join(''));
+    const none = list.filter(x => !x.days.length);
+    if (none.length) html += `<div class="dim" style="margin-top:6px">희망일 없이 낸 신청 ${none.length}건: ${none.map(x => E(x.r.학생이름)).join(', ')}</div>`;
+  } else if (EX.mode === 'unit') {
+    const uc = {};
+    list.forEach(x => x.units.forEach(u => (uc[u] = uc[u] || []).push(x)));
+    html += tbl('<th>단원</th><th class="n">인원</th><th>학생</th>',
+      Object.entries(uc).sort((a, b) => b[1].length - a[1].length).map(([u, xs]) =>
+        `<tr><td>${E(u)}</td><td class="n"><b>${xs.length}</b></td><td style="white-space:normal">${xs.map(x => `${who(x)} <span class="dim">${E(x.ban)}</span>`).join(' &nbsp; ')}</td></tr>`).join(''));
+  } else {
+    html += tbl('<th>학생</th><th>반</th><th>학교</th><th>희망일</th><th class="n">일수</th><th>단원</th><th>신청자</th><th>메모</th><th>제출</th>',
+      list.slice().sort((a, b) => (b.r.제출시각 || '').localeCompare(a.r.제출시각 || '')).map(x =>
+        `<tr><td data-sv="${E(x.r.학생이름)}">${who(x)}</td><td>${E(x.ban)}</td><td>${E(x.r.학교)}</td>`
+        + `<td data-sv="${x.days.length ? x.days[0].d : ''}" style="white-space:normal">${x.days.map(dayChip).join('') || '<span class="dim">—</span>'}</td>`
+        + `<td class="n">${x.days.length}</td>`
+        + `<td style="white-space:normal;min-width:180px">${unitTxt(x.units)}</td>`
+        + `<td>${E(x.r.신청자 || '')}</td><td style="white-space:normal;min-width:140px">${E(x.r.메모 || '')}</td>`
+        + `<td data-sv="${E(x.r.제출시각 || '')}" class="dim">${t(x.r.제출시각)}${x.r.수정횟수 ? ` · 수정 ${x.r.수정횟수}` : ''}</td></tr>`).join(''));
+  }
+  body.innerHTML = html;
 }
 
 </script>
