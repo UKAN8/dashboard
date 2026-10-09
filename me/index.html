@@ -650,11 +650,13 @@ function drawLib(host){
   const sc=LIB.school.replace(/고$/,''), gr=ban.slice(0,2);
   const hb=(D.학습||[]).filter(x=>sc&&x.학교&&sc.startsWith(x.학교)&&(!x.학년||x.학년===gr));
   if(hb.length){
+    // (1010) 진행 기록을 선생님 대시보드로 — 포털 토큰을 같이 넘긴다(학습 페이지가 haebu_submit 으로 보냄)
+    const tk=new URLSearchParams(location.search).get('t')||'', tq=tk?'?t='+encodeURIComponent(tk):'';
     H.push(`<div class="hb-h"><b>${E(hb[0].학교명)} 프린트 해부 루프</b><span>문제를 다시 푸는 게 아니라, 묻는 개념·조건·함정을 하나씩 짚는다</span></div>`);
     H.push(hb.map(x=>`<div class="grow"><div class="h"><b>${E(x.단원)}</b><span>${E(String(x.문항))}문항</span></div>`
-      +`<div class="rp"><a href="${LIB_URL+x.원본판}" target="_blank" rel="noopener">원본판</a>`
-      +`<a href="${LIB_URL+x.변형판}" target="_blank" rel="noopener">원본+변형판</a></div></div>`).join(''));
-    H.push(`<div class="note" style="margin-bottom:14px">변형 문제를 아직 안 풀었으면 <b>원본판</b>, 변형까지 풀었으면 <b>원본+변형판</b>. 진행은 이 폰에만 저장된다.</div>`);
+      +`<div class="rp"><a href="${LIB_URL+x.원본판+tq}" target="_blank" rel="noopener">원본판</a>`
+      +`<a href="${LIB_URL+x.변형판+tq}" target="_blank" rel="noopener">원본+변형판</a></div></div>`).join(''));
+    H.push(`<div class="note" style="margin-bottom:14px">변형 문제를 아직 안 풀었으면 <b>원본판</b>, 변형까지 풀었으면 <b>원본+변형판</b>. 푼 기록은 선생님께 전달돼요.</div>`);
   }
   if(!rows.length) H.push(`<div class="none">아직 ${E(ban)} 수업 자료가 없어요.</div>`);
   else{
