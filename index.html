@@ -5087,9 +5087,13 @@ function twLog(rows, B, pool) {
  * 새 신청 회차를 열면 EX_META 에 한 줄(이름·마감) 더한다. 없어도 키 이름으로 보인다.
  */
 const EX_META = {
-  mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18' },
+  mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18',
+    단원: ['다항식의 연산', '항등식과 나머지정리', '인수분해', '복소수', '이차방정식', '이차방정식과 이차함수', '여러 가지 방정식', '여러 가지 부등식', '경우의 수', '행렬', '잘 모르겠어요 (선생님 판단)'] },
 };
-let EX = { rows: null, key: '', ban: '*', sch: '*', mode: 'day', q: '' };
+// 학생별 표 머리글용 짧은 이름 (원래 이름은 마우스를 올리면 보인다)
+const EX_SHORT = { '다항식의 연산': '다항식 연산', '항등식과 나머지정리': '항등식·나머지', '이차방정식과 이차함수': '이차방정식·함수',
+  '여러 가지 방정식': '여러 방정식', '여러 가지 부등식': '여러 부등식', '잘 모르겠어요 (선생님 판단)': '쌤 판단' };
+let EX = { rows: null, key: '', ban: '*', sch: '*', mode: 'stu', q: '' };
 const exBan = b => String(b || '').replace(/\s+/g, '').replace(/반$/, '');
 const exToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 // '10/6(화)' → '2026-10-06' (연도는 제출 시각 기준)
@@ -5156,7 +5160,7 @@ function exDraw() {
   bar.innerHTML = (keys.length > 1 ? keys.map(k => fb('xk', k, (EX_META[k] || {}).이름 || k, EX.key)).join('') + sep : '')
     + fb('xb', '*', '반 전체', EX.ban) + bans.map(b => fb('xb', b, b, EX.ban)).join('') + sep
     + `<select id="ex-sch" class="fbtn"><option value="*">학교 전체</option>${schs.map(s => `<option${s === EX.sch ? ' selected' : ''}>${E(s)}</option>`).join('')}</select>` + sep
-    + fb('xm', 'day', '날짜별', EX.mode) + fb('xm', 'list', '신청 목록', EX.mode) + fb('xm', 'unit', '단원별', EX.mode)
+    + fb('xm', 'stu', '학생별 부족 단원', EX.mode) + fb('xm', 'day', '날짜별', EX.mode) + fb('xm', 'list', '신청 목록', EX.mode) + fb('xm', 'unit', '단원별', EX.mode)
     + `<input id="ex-q" placeholder="이름 검색" value="${E(EX.q)}" style="background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:5px 11px;width:110px;font:inherit;font-size:13px">`
     + `<button class="fbtn" id="ex-re" title="다시 불러오기">↻</button>`;
   bar.querySelectorAll('[data-xk]').forEach(b => b.onclick = () => { EX.key = b.dataset.xk; exDraw(); });
@@ -5186,7 +5190,26 @@ function exDraw() {
   const unitTxt = us => us.length ? us.map(u => E(u)).join(', ') : '<span class="dim">—</span>';
   const tbl = (head, rows) => `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 
-  if (EX.mode === 'day') {
+  if (EX.mode === 'stu') {
+    // 학생 × 단원 표 — 신청서에서 찍은 단원에 ●. 열 순서는 신청서 순서, 신청서 밖 단원은 뒤에.
+    const order = (meta.단원 || []).slice();
+    list.forEach(x => x.units.forEach(u => { if (!order.includes(u)) order.push(u); }));
+    const cnt = u => list.filter(x => x.units.includes(u)).length;
+    const cols = order.filter(u => cnt(u));
+    const head = '<th>학생</th><th>반</th><th>학교</th><th class="n">개수</th>'
+      + cols.map(u => `<th class="n" title="${E(u)}" style="white-space:normal;min-width:54px;line-height:1.25">${E(EX_SHORT[u] || u)}<br><span class="dim">${cnt(u)}명</span></th>`).join('')
+      + '<th>희망일</th><th>메모</th>';
+    html += tbl(head, list.slice().sort((a, b) => a.ban.localeCompare(b.ban) || a.r.학교.localeCompare(b.r.학교, 'ko') || a.r.학생이름.localeCompare(b.r.학생이름, 'ko')).map(x => {
+      const real = x.units.filter(u => !/선생님 판단/.test(u)).length;
+      return `<tr><td data-sv="${E(x.r.학생이름)}">${who(x)}</td><td>${E(x.ban)}</td><td>${E(x.r.학교)}</td><td class="n">${real}</td>`
+        + cols.map(u => x.units.includes(u) ? `<td class="n" data-sv="1" style="color:${/선생님 판단/.test(u) ? 'var(--mid)' : 'var(--acc)'};font-size:15px">●</td>` : '<td class="n" data-sv="0"></td>').join('')
+        + `<td data-sv="${x.days.length ? x.days[0].d : ''}" style="white-space:normal;min-width:150px">${x.days.map(dayChip).join('') || '<span class="dim">—</span>'}</td>`
+        + `<td style="white-space:normal;min-width:120px">${E(x.r.메모 || '')}</td></tr>`;
+    }).join(''));
+    const tj = list.filter(x => x.units.some(u => /선생님 판단/.test(u)));
+    if (tj.length) html += `<div class="dim" style="margin-top:6px">「쌤 판단」 ${tj.length}명 — 본인이 단원을 못 골랐습니다: ${tj.map(x => E(x.r.학생이름)).join(', ')}</div>`;
+    html += '<div class="dim" style="margin-top:4px">개수 = 직접 고른 단원 수(쌤 판단 제외) · 머리글을 누르면 그 단원 고른 학생이 위로 정렬됩니다.</div>';
+  } else if (EX.mode === 'day') {
     const days = Object.values(byDay).sort((a, b) => a.d.localeCompare(b.d));
     html += tbl('<th>날짜</th><th class="n">인원</th><th>학생 (학교)</th><th>많이 고른 단원</th>',
       days.map(o => {
@@ -5195,7 +5218,7 @@ function exDraw() {
         const past = o.d < today;
         return `<tr${past ? ' style="opacity:.5"' : ''}><td data-sv="${o.d}"><b>${E(o.l)}</b>${o.d === today ? ' <span class="sv-tag warn">오늘</span>' : o.d === tmr ? ' <span class="sv-tag ok">내일</span>' : past ? ' <span class="sv-tag">지남</span>' : ''}</td>`
           + `<td class="n"><b>${o.xs.length}</b></td>`
-          + `<td style="white-space:normal">${o.xs.sort((a, b) => a.r.학교.localeCompare(b.r.학교, 'ko') || a.r.학생이름.localeCompare(b.r.학생이름, 'ko')).map(x => `${who(x)} <span class="dim">${E(x.r.학교)}·${E(x.ban)}</span>`).join(' &nbsp; ')}</td>`
+          + `<td style="white-space:normal;line-height:1.75">${o.xs.sort((a, b) => a.r.학교.localeCompare(b.r.학교, 'ko') || a.r.학생이름.localeCompare(b.r.학생이름, 'ko')).map(x => `<div>${who(x)} <span class="dim">${E(x.r.학교)}·${E(x.ban)}</span> — ${x.units.map(u => `<span class="sv-tag${/선생님 판단/.test(u) ? ' warn' : ''}">${E(EX_SHORT[u] || u)}</span>`).join('') || '<span class="dim">단원 없음</span>'}</div>`).join('')}</td>`
           + `<td class="dim" style="white-space:normal">${top}</td></tr>`;
       }).join(''));
     const none = list.filter(x => !x.days.length);
