@@ -123,6 +123,7 @@ svg.spark{display:block;margin-top:6px}
 .grow .rp a.vid small{color:var(--dim);font-size:11px;margin-left:3px}
 .grow .ld{color:var(--acc);font-size:12.5px;font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
 .lib-more{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
+.hb-h{display:flex;flex-direction:column;gap:2px;margin:2px 0 8px}.hb-h b{font-size:15px}.hb-h span{font-size:12px;color:#6b7280}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -561,6 +562,15 @@ function render(d){
   }
   else
     H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
+  // ⓪-1 CORE 루프 (1009, P11) — 개념→유형 마스터리(수업 리뷰 5문항 · 저녁 루프 · 단원 지도). 기록은 mastery_open/mastery_submit(schema_v36).
+  //    고1(공수2 07~)·고2(미적1 05~) 기말 범위. 페이지 = _core/ (build_core.py).
+  if(/^고[12]/.test(String(d.학생.반||'').trim())){
+    const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
+    const curl=`https://ukan8.github.io/dashboard/core/?t=${encodeURIComponent(tk)}`;
+    H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
+      +`<span class="t"><b>CORE 루프</b><span class="dim"> 수업 리뷰 · 오늘의 루프 · 단원 지도</span></span>`
+      +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`);
+  }
   // ⓪-2 개념의 탑 (0930) — 교과서 개념 OX 점검(층=소절, 탈락 없음). 기록은 tower_open/tower_submit(schema_v31).
   //    지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만 보인다. 새 세트가 생기면 여기 조건을 넓힌다.
   if(/^고1/.test(String(d.학생.반||'').trim())){
@@ -597,7 +607,7 @@ function render(d){
   H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.</div>`);
   $('app').innerHTML=H.join('');
   wireReport(d.토큰||new URLSearchParams(location.search).get('t')||'');
-  mountLib($('lib-host'), String(d.학생.반||'').trim());
+  mountLib($('lib-host'), String(d.학생.반||'').trim(), String(d.학생.학교||'').trim());
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
   catch(e){ $('pr-host').innerHTML='<div class="none">기출테스트 기록을 그리지 못했습니다. 잠시 뒤 다시 열어 주세요.</div>'; }
@@ -612,9 +622,9 @@ const LIB_URL='https://ukan8.github.io/mathis-lib/';
 const LIB={data:null,showN:15};   // (0928) 탭·검색·전체 보기 제거 — 내 반 것만
 const mmss=s=>{s=Number(s)||0; return s>=3600?`${Math.floor(s/3600)}시간 ${Math.round(s%3600/60)}분`:`${Math.round(s/60)}분`;};
 const md=s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${+m[2]}/${+m[3]}`:'';};
-async function mountLib(host,ban){
+async function mountLib(host,ban,school){
   if(!host) return;
-  LIB.ban=ban;
+  LIB.ban=ban; LIB.school=school||'';
   try{
     const r=await fetch(LIB_URL+'lib.json?v='+Math.floor(Date.now()/6e5),{cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
@@ -636,6 +646,16 @@ function drawLib(host){
   });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   const H=[];
+  // (1009) 학교프린트 해부 루프 — 내 학교·학년 것만, 기출 목록 위에
+  const sc=LIB.school.replace(/고$/,''), gr=ban.slice(0,2);
+  const hb=(D.학습||[]).filter(x=>sc&&x.학교&&sc.startsWith(x.학교)&&(!x.학년||x.학년===gr));
+  if(hb.length){
+    H.push(`<div class="hb-h"><b>${E(hb[0].학교명)} 프린트 해부 루프</b><span>문제를 다시 푸는 게 아니라, 묻는 개념·조건·함정을 하나씩 짚는다</span></div>`);
+    H.push(hb.map(x=>`<div class="grow"><div class="h"><b>${E(x.단원)}</b><span>${E(String(x.문항))}문항</span></div>`
+      +`<div class="rp"><a href="${LIB_URL+x.원본판}" target="_blank" rel="noopener">원본판</a>`
+      +`<a href="${LIB_URL+x.변형판}" target="_blank" rel="noopener">원본+변형판</a></div></div>`).join(''));
+    H.push(`<div class="note" style="margin-bottom:14px">변형 문제를 아직 안 풀었으면 <b>원본판</b>, 변형까지 풀었으면 <b>원본+변형판</b>. 진행은 이 폰에만 저장된다.</div>`);
+  }
   if(!rows.length) H.push(`<div class="none">아직 ${E(ban)} 수업 자료가 없어요.</div>`);
   else{
     const n=Math.min(rows.length,LIB.showN);
