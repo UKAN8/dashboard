@@ -564,7 +564,9 @@ function render(d){
     H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
   // ⓪-1 CORE 루프 (1009, P11) — 개념→유형 마스터리(수업 리뷰 5문항 · 저녁 루프 · 단원 지도). 기록은 mastery_open/mastery_submit(schema_v36).
   //    고1(공수2 07~)·고2(미적1 05~) 기말 범위. 페이지 = _core/ (build_core.py).
-  if(/^고[12]/.test(String(d.학생.반||'').trim())){
+  //    ⚠ (1010) /dashboard/core/ 가 아직 배포 전이라 카드가 404 로 갔다 → CORE_ON=true 로 바꾸고 build_core.py --deploy 뒤에 연다.
+  const CORE_ON=false;
+  if(CORE_ON && /^고[12]/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const curl=`https://ukan8.github.io/dashboard/core/?t=${encodeURIComponent(tk)}`;
     H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
