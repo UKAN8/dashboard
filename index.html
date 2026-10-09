@@ -647,7 +647,7 @@ body.cs-on #boot{display:none}
 </div>
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
-<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="학생">해부 루프</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
@@ -1799,6 +1799,7 @@ async function boot(session) {
     const sv = document.querySelector('#nav a[data-v="survey"]'); if (sv) sv.remove();   // 0930 설문도 관리자만
     const tw = document.querySelector('#nav a[data-v="tower"]'); if (tw) tw.remove();    // 0930 개념의 탑 기록도 관리자만
     const ap = document.querySelector('#nav a[data-v="apply"]'); if (ap) ap.remove();   // 1009 추가학습 신청도 관리자만
+    const hb = document.querySelector('#nav a[data-v="haebu"]'); if (hb) hb.remove();   // 1010 해부 루프도 관리자만
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
     const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
@@ -2040,7 +2041,8 @@ function render(st) {
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
     viewSurvey(st),                                      // 0930 설문 (관리자)
     viewTower(st),                                       // 0930 개념의 탑 등반 기록 (관리자)
-    viewApply(st)                                        // 1009 추가학습 신청 (관리자)
+    viewApply(st),                                       // 1009 추가학습 신청 (관리자)
+    viewHaebu(st)                                        // 1010 프린트 해부 루프 (관리자)
   ].join('');
 }
 
@@ -4387,9 +4389,9 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply', 'haebu'].includes(main)) main = 'today';
     if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
-    if (main === 'apply' && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
+    if ((main === 'apply' || main === 'haebu') && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
@@ -4406,6 +4408,7 @@ function wire(st) {
     if (main === 'survey') svLoad();
     if (main === 'tower') twLoad();
     if (main === 'apply') exLoad();
+    if (main === 'haebu') hbLoad();
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -5240,6 +5243,138 @@ function exDraw() {
         + `<td data-sv="${E(x.r.제출시각 || '')}" class="dim">${t(x.r.제출시각)}${x.r.수정횟수 ? ` · 수정 ${x.r.수정횟수}` : ''}</td></tr>`).join(''));
   }
   body.innerHTML = html;
+}
+
+/* ───────── 프린트 해부 루프 (1010 — schema_v37 haebu_log) ─────────
+ * 포털 「수업 자료」 → 해부 루프 페이지(mathis-lib/learn/*?t=)에서 학생이 스텝을 끝낼 때마다 그 문항 기록을 upsert 한다.
+ * 한 행 = (세트키, 학생, 판, 문항, 시도). 결과 = 스텝마다 o(한 번에)·t(디딤돌 뒤)·x(놓침)·-(아직).
+ * ⚠ 표 정책 admin_all — 조교 계정은 탭도 데이터도 안 열린다.
+ * 문항 목록·스텝 이름은 아래 상수(정본 02_제작자료/07_학교프린트/_루프_1009). 문항이 늘면 HB_ITEMS 를 다시 뽑는다.
+ */
+const HB_ITEMS = [["고림고 Ⅰ-1", "평면좌표와 직선의 방정식"], ["고림고 Ⅰ-2", "평면좌표와 직선의 방정식"], ["고림고 Ⅰ-3", "평면좌표와 직선의 방정식"], ["고림고 Ⅰ-4", "평면좌표와 직선의 방정식"], ["고림고 Ⅰ-5", "평면좌표와 직선의 방정식"], ["고림고 Ⅰ-6", "원의 방정식"], ["고림고 Ⅰ-7", "원의 방정식"], ["고림고 Ⅰ-8", "원의 방정식"], ["고림고 Ⅰ-9", "원의 방정식"], ["고림고 Ⅰ-10", "원의 방정식"], ["고림고 Ⅰ-11", "도형의 이동"], ["고림고 Ⅰ-12", "도형의 이동"], ["고림고 Ⅰ-13", "도형의 이동"], ["고림고 Ⅰ-14", "도형의 이동"], ["고림고 Ⅱ-1", "집합"], ["고림고 Ⅱ-2", "집합"], ["고림고 Ⅱ-3", "집합"], ["고림고 Ⅱ-4", "집합"], ["고림고 Ⅱ-5", "집합"], ["고림고 Ⅱ-6", "집합"], ["진덕고 #1-1", "평면좌표와 직선의 방정식"], ["진덕고 #1-2", "평면좌표와 직선의 방정식"], ["진덕고 #1-3", "평면좌표와 직선의 방정식"], ["진덕고 #1-4", "평면좌표와 직선의 방정식"], ["진덕고 #1-5", "평면좌표와 직선의 방정식"], ["진덕고 #1-6", "평면좌표와 직선의 방정식"], ["진덕고 #1-7", "평면좌표와 직선의 방정식"], ["진덕고 #1-8", "평면좌표와 직선의 방정식"], ["진덕고 #2-1", "원의 방정식"], ["진덕고 #2-2", "원의 방정식"], ["진덕고 #2-3", "원의 방정식"], ["진덕고 #2-4", "원의 방정식"], ["진덕고 #2-5", "원의 방정식"], ["진덕고 #2-6", "원의 방정식"], ["진덕고 #2-7", "원의 방정식"], ["진덕고 #2-8", "원의 방정식"], ["진덕고 #3-1", "도형의 이동"], ["진덕고 #3-2", "도형의 이동"], ["진덕고 #3-3", "도형의 이동"], ["진덕고 #3-4", "도형의 이동"], ["진덕고 #3-5", "도형의 이동"], ["진덕고 #3-6", "도형의 이동"], ["진덕고 #3-7", "도형의 이동"], ["진덕고 #3-8", "도형의 이동"], ["진덕고 #4-1", "집합"], ["진덕고 #4-2", "집합"], ["진덕고 #4-3", "집합"], ["진덕고 #4-4", "집합"], ["진덕고 #4-5", "집합"], ["진덕고 #4-6", "집합"], ["진덕고 #4-7", "집합"], ["진덕고 #4-8", "집합"]];
+const HB_STEPS = { 원본: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '조건을 바꾸면', '함정', '같은 개념'],
+                   변형: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '원본↔변형', '조건을 바꾸면', '함정', '같은 개념'] };
+const HB_IN = ['자신 있음', '감으로 맞힘', '틀림', '손도 못 댐'];
+let HB = { rows: null, pan: '원본', sch: '*', mode: 'stu', open: '' };
+
+function viewHaebu(st) {
+  HB.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  return `<section class="view" id="v-haebu">
+<h2>프린트 해부 루프 <span class="cnt" id="hb-cnt"></span></h2>
+<div class="toolbar" id="hb-bar"></div>
+<div id="hb-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<div class="dim" style="margin-top:14px;line-height:1.6">학생이 포털에서 연 해부 루프 기록입니다(스텝 하나 끝낼 때마다 들어옴) ·
+ <b>○</b> 한 번에 · <b>△</b> 디딤돌 뒤 맞힘 · <b>✕</b> 놓침 · <b>외움 의심</b> = "맞혔다(자신 있음·감으로)"고 했는데 두 스텝 이상 △/✕ ·
+ 같은 문항을 처음부터 다시 하면 새 시도로 쌓이고, 표는 <b>첫 시도</b> 기준입니다. 학생 이름을 누르면 문항별로 펼쳐집니다.</div>
+</section>`;
+}
+
+async function hbLoad(force) {
+  const body = $('hb-body'); if (!body) return;
+  if (HB.rows && !force) { hbDraw(); return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  try {
+    let all = [], from = 0;
+    for (;;) {
+      const { data, error } = await sb.from('haebu_log').select('id,세트키,학생ID,반,판,문항id,단원,시도,입구,갈림,첫발,결과,완료,ms,시작,시각')
+        .order('id', { ascending: true }).range(from, from + 999);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < 1000 || from > 100000) break;
+      from += 1000;
+    }
+    all.forEach(r => { r.문항ID = r.문항ID || r.문항id; });
+    HB.rows = all;
+  } catch (e) {
+    const m = String(e && e.message || e);
+    body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(m)}`
+      + (/does not exist|relation|schema cache/i.test(m) ? '<br>→ schema_v37_haebu.sql 이 아직 안 돌았습니다 (06_자동화/통합_작업실).' : '') + '</div>';
+    return;
+  }
+  hbDraw();
+}
+
+const hbSch = sid => /_고림$/.test(sid) ? '고림' : /_진덕$/.test(sid) ? '진덕' : '';
+const hbMark = c => c === 'o' ? '<b style="color:#10b981">○</b>' : c === 't' ? '<b style="color:#f59e0b">△</b>' : c === 'x' ? '<b style="color:#ef4444">✕</b>' : '<span class="dim">·</span>';
+const hbT = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && ((r.결과 || '').match(/[tx]/g) || []).length >= 2;
+
+function hbDraw() {
+  const bar = $('hb-bar'), body = $('hb-body'); if (!bar || !body || !HB.rows) return;
+  const steps = HB_STEPS[HB.pan], NS = steps.length;
+  const items = HB_ITEMS.filter(([id]) => HB.sch === '*' || id.startsWith(HB.sch));
+  // 첫 시도만, 이 판만
+  const first = {}; const lastAt = {};
+  HB.rows.forEach(r => {
+    if (r.판 !== HB.pan) return;
+    const k = r.학생ID + '|' + r.문항ID;
+    if (!first[k] || r.시도 < first[k].시도) first[k] = r;
+    if (!lastAt[r.학생ID] || r.시각 > lastAt[r.학생ID]) lastAt[r.학생ID] = r.시각;
+  });
+  // 명단: 고림·진덕 고1 + 기록 있는 학생
+  const stuMap = {}; (HB.stu || []).forEach(s => stuMap[s.sid] = s);
+  const sids = new Set((HB.stu || []).filter(s => hbSch(s.sid) && /^고1/.test(s.ban)).map(s => s.sid));
+  HB.rows.forEach(r => sids.add(r.학생ID));
+  const stus = [...sids].map(sid => ({ sid, name: (stuMap[sid] || {}).name || sid.split('_')[0], ban: (stuMap[sid] || {}).ban || (HB.rows.find(r => r.학생ID === sid) || {}).반 || '', sch: hbSch(sid) }))
+    .filter(s => HB.sch === '*' || s.sch === HB.sch)
+    .sort((a, b) => a.sch.localeCompare(b.sch, 'ko') || a.ban.localeCompare(b.ban) || a.name.localeCompare(b.name, 'ko'));
+  const myItems = s => items.filter(([id]) => id.startsWith(s.sch));
+
+  const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
+  const sep = '<span class="dim" style="margin:0 4px">│</span>';
+  bar.innerHTML = fb('hp', '원본', '원본판', HB.pan) + fb('hp', '변형', '원본+변형판', HB.pan) + sep
+    + fb('hs', '*', '학교 전체', HB.sch) + fb('hs', '고림', '고림고', HB.sch) + fb('hs', '진덕', '진덕고', HB.sch) + sep
+    + fb('hm', 'stu', '학생별', HB.mode) + fb('hm', 'item', '문항별', HB.mode)
+    + `<button class="fbtn" id="hb-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-hp]').forEach(b => b.onclick = () => { HB.pan = b.dataset.hp; hbDraw(); });
+  bar.querySelectorAll('[data-hs]').forEach(b => b.onclick = () => { HB.sch = b.dataset.hs; hbDraw(); });
+  bar.querySelectorAll('[data-hm]').forEach(b => b.onclick = () => { HB.mode = b.dataset.hm; hbDraw(); });
+  $('hb-re').onclick = () => hbLoad(true);
+
+  const started = stus.filter(s => myItems(s).some(([id]) => first[s.sid + '|' + id]));
+  $('hb-cnt').textContent = `${started.length}/${stus.length}명 시작 · 기록 ${HB.rows.filter(r => r.판 === HB.pan).length}건`;
+
+  if (HB.mode === 'item') {
+    const H = ['<table><thead><tr><th>문항</th><th>단원</th><th>한 학생</th><th>완료</th>' + steps.map(n => `<th title="△+✕ / 그 스텝까지 간 학생">${E(n)}</th>`).join('') + '<th>외움 의심</th></tr></thead><tbody>'];
+    items.forEach(([id, unit]) => {
+      const rs = stus.map(s => first[s.sid + '|' + id]).filter(Boolean);
+      const cell = k => { const got = rs.filter(r => (r.결과 || '')[k] && r.결과[k] !== '-'); if (!got.length) return '<td data-sv="-1" class="dim">—</td>';
+        const bad = got.filter(r => /[tx]/.test(r.결과[k])).length, p = Math.round(bad / got.length * 100);
+        return `<td data-sv="${p}" style="${p >= 50 ? 'color:#ef4444;font-weight:700' : p >= 30 ? 'color:#f59e0b' : ''}" title="${bad}/${got.length}명">${p}%</td>`; };
+      H.push(`<tr><td>${E(id)}</td><td class="dim">${E(unit)}</td><td data-sv="${rs.length}">${rs.length}</td><td data-sv="${rs.filter(r => r.완료).length}">${rs.filter(r => r.완료).length}</td>`
+        + steps.map((_, k) => cell(k)).join('') + `<td data-sv="${rs.filter(hbMemo).length}">${rs.filter(hbMemo).length || ''}</td></tr>`);
+    });
+    H.push('</tbody></table>');
+    body.innerHTML = `<div class="card" style="overflow:auto">${H.join('')}</div>`;
+    return;
+  }
+
+  const H = ['<table><thead><tr><th>학생</th><th>반</th><th>학교</th><th>완료</th><th>진행 중</th>'
+    + steps.map(n => `<th title="△/✕ 횟수">${E(n)}</th>`).join('') + '<th>외움 의심</th><th>입구 (자신·감·틀림·못댐)</th><th>마지막</th></tr></thead><tbody>'];
+  stus.forEach(s => {
+    const its = myItems(s), rs = its.map(([id]) => first[s.sid + '|' + id]).filter(Boolean);
+    const done = rs.filter(r => r.완료).length, ing = rs.length - done;
+    const weak = k => { const n = rs.filter(r => /[tx]/.test((r.결과 || '')[k] || '')).length; const x = rs.filter(r => (r.결과 || '')[k] === 'x').length;
+      return `<td data-sv="${n}" title="△ ${n - x} · ✕ ${x}">${n ? (x ? `<b style="color:#ef4444">${n}</b>` : n) : '<span class="dim">0</span>'}</td>`; };
+    const ins = [0, 1, 2, 3].map(i => rs.filter(r => r.입구 === i).length).join('·');
+    const memo = rs.filter(hbMemo).length;
+    const open = HB.open === s.sid;
+    H.push(`<tr class="hb-row" data-sid="${E(s.sid)}" style="cursor:pointer"><td><b>${open ? '▾' : '▸'} ${E(s.name)}</b></td><td>${E(s.ban)}</td><td>${E(s.sch)}</td>`
+      + `<td data-sv="${done}">${done}/${its.length}</td><td data-sv="${ing}">${ing || ''}</td>`
+      + steps.map((_, k) => weak(k)).join('')
+      + `<td data-sv="${memo}">${memo ? `<b style="color:#ef4444">${memo}</b>` : ''}</td><td class="dim">${rs.length ? ins : ''}</td><td data-sv="${E(lastAt[s.sid] || '')}" class="dim">${E(hbT(lastAt[s.sid]))}</td></tr>`);
+    if (open) {
+      const D = its.map(([id, unit]) => { const r = first[s.sid + '|' + id]; const tries = HB.rows.filter(x => x.판 === HB.pan && x.학생ID === s.sid && x.문항ID === id).length;
+        return `<tr><td>${E(id)} <span class="dim">${E(unit)}</span></td><td>${r ? E(HB_IN[r.입구] || '') : '<span class="dim">안 함</span>'}</td>`
+          + `<td style="letter-spacing:3px">${r ? [...Array(NS).keys()].map(k => hbMark((r.결과 || '')[k])).join('') : ''}</td>`
+          + `<td>${r ? (r.완료 ? '완료' : '진행 중') : ''}${tries > 1 ? ` <span class="dim">(시도 ${tries})</span>` : ''}${hbMemo(r) ? ' <b style="color:#ef4444">외움 의심</b>' : ''}</td>`
+          + `<td class="dim">${r && r.ms ? Math.round(r.ms / 60000) + '분' : ''}</td><td class="dim">${r ? E(hbT(r.시각)) : ''}</td></tr>`; }).join('');
+      H.push(`<tr><td colspan="${8 + NS}" style="background:var(--bg2,rgba(127,127,127,.06))"><table class="tk-off" style="width:100%"><thead><tr><th>문항</th><th>입구</th><th>${steps.map((n, k) => `<span title="${E(n)}">${k + 1}</span>`).join(' ')}</th><th>상태</th><th>걸린 시간</th><th>시각</th></tr></thead><tbody>${D}</tbody></table></td></tr>`);
+    }
+  });
+  H.push('</tbody></table>');
+  body.innerHTML = stus.length ? `<div class="card" style="overflow:auto">${H.join('')}</div>` : '<div class="dim">대상 학생이 없습니다.</div>';
+  body.querySelectorAll('.hb-row').forEach(tr => tr.onclick = () => { HB.open = HB.open === tr.dataset.sid ? '' : tr.dataset.sid; hbDraw(); });
 }
 
 </script>
