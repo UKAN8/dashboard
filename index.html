@@ -5264,7 +5264,7 @@ function viewHaebu(st) {
 <div class="toolbar" id="hb-bar"></div>
 <div id="hb-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
 <div class="dim" style="margin-top:14px;line-height:1.6">스텝 하나 끝낼 때마다 기록이 들어옵니다(↻ 새로고침) · 모든 숫자는 문항별 <b>첫 시도</b> 기준 ·
- <b>약한 스텝</b> = 디딤돌 뒤에 맞히거나 놓친 횟수/그 스텝까지 간 문항 수 · <b>외움 의심</b> = 처음에 "맞혔다"고 했는데 두 스텝 이상 걸린 문항 · 문항 칩의 점 = 스텝 순서(개념→근거→조건→변형사고→함정→같은개념).</div>
+ 태그·문항 칩에 마우스를 올리면 자세히 보여요.</div>
 </section>`;
 }
 
@@ -5298,10 +5298,16 @@ const hbMark = c => c === 'o' ? '<b style="color:#10b981">○</b>' : c === 't' ?
 const hbT = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
 const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && ((r.결과 || '').match(/[tx]/g) || []).length >= 2;
 
-const HB_SHORT = { '무엇을 묻나': '개념', '어디서 쓰이나': '근거', '조건의 역할': '조건', '조건을 바꾸면': '변형사고', '원본↔변형': '원본↔변형', '함정': '함정', '같은 개념': '같은개념' };
+const HB_SHORT = { '무엇을 묻나': '묻는 개념', '어디서 쓰이나': '개념 쓰는 곳', '조건의 역할': '조건의 역할', '조건을 바꾸면': '조건 바꾸기', '원본↔변형': '원본↔변형', '함정': '함정', '같은 개념': '다른 문제 적용' };
+const HB_DESC = { '무엇을 묻나': '이 문제가 무슨 개념을 묻는지', '어디서 쓰이나': '그 개념이 풀이 어느 단계에서 쓰이는지', '조건의 역할': '조건 하나하나가 풀이에서 하는 일', '원본↔변형': '변형에서 바뀐 조건이 풀이를 어떻게 바꾸는지', '조건을 바꾸면': '조건을 바꾸면 답·풀이가 어떻게 달라지는지', '함정': '이 문제에서 흔히 빠지는 실수', '같은 개념': '같은 개념을 쓰는 다른 문제를 알아보는지' };
 const hbDot = c => c === 'o' ? '<i style="background:#10b981"></i>' : c === 't' ? '<i style="background:#f59e0b"></i>' : c === 'x' ? '<i style="background:#ef4444"></i>' : '<i style="background:rgba(127,127,127,.25)"></i>';
 const hbShortId = id => id.replace(/^(고림고|진덕고) /, '');
 const HB_CSS = `<style>
+#v-haebu .hb-help{margin:0 0 14px;border:1px solid #2a2f3a;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.7}
+#v-haebu .hb-help summary{cursor:pointer;font-weight:600}
+#v-haebu .hb-help ol{margin:4px 0 6px 18px;padding:0}
+#v-haebu .hb-help p{margin:4px 0}
+#v-haebu .hb-help i.d{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 3px 0 8px;vertical-align:middle}
 #v-haebu .hb-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:4px 0 14px}
 #v-haebu .hb-box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
 #v-haebu .hb-box .k{font-size:12px;opacity:.65;margin-bottom:4px}
@@ -5387,11 +5393,12 @@ function hbDraw() {
   const confAll = started.reduce((a, x) => a + x.conf, 0), rsAll = started.reduce((a, x) => a + x.rs.length, 0);
   const H = [HB_CSS, '<div class="hb-sum">'];
   H.push(`<div class="hb-box"><div class="k">참여</div><div class="v">${started.length} / ${S.length}명</div><div class="s">완료 문항 ${started.reduce((a, x) => a + x.done, 0)}개 · 진행 중 ${started.reduce((a, x) => a + x.ing, 0)}개</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">반 전체가 많이 걸린 스텝</div><div class="s">${allSteps.slice(0, 3).map(x => `<span class="tag ${x.p >= 50 ? 'r' : x.p >= 30 ? 'y' : ''}">${E(HB_SHORT[x.n] || x.n)} ${x.p}%</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">어려웠던 문항 (평균 걸린 스텝 수)</div><div class="s">${itemStat.slice(0, 4).map(x => `<span class="tag ${x.avg >= 3 ? 'r' : x.avg >= 2 ? 'y' : ''}">${E(hbShortId(x.id))} ${x.avg.toFixed(1)}</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">확인할 학생</div><div class="s">${memoAll.length ? '외움 의심 ' + memoAll.map(x => `<b>${E(x.s.name)}</b>(${x.memo.length})`).join(' ') : '외움 의심 없음'}`
+  H.push(`<div class="hb-box"><div class="k">반 전체가 많이 막힌 스텝</div><div class="s">${allSteps.slice(0, 3).map(x => `<span class="tag ${x.p >= 50 ? 'r' : x.p >= 30 ? 'y' : ''}" title="${E(HB_DESC[x.n] || '')}">${E(HB_SHORT[x.n] || x.n)} · ${x.p}% 막힘</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
+  H.push(`<div class="hb-box"><div class="k">어려웠던 문항 (${NS}스텝 중 평균 몇 개 막혔나)</div><div class="s">${itemStat.slice(0, 4).map(x => `<span class="tag ${x.avg >= 3 ? 'r' : x.avg >= 2 ? 'y' : ''}">${E(hbShortId(x.id))} · ${x.avg.toFixed(1)}개</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
+  H.push(`<div class="hb-box"><div class="k">확인할 학생</div><div class="s">${memoAll.length ? '안다고 했는데 막힘 · ' + memoAll.map(x => `<b>${E(x.s.name)}</b> ${x.memo.length}문항`).join(', ') : '없음'}`
     + (rsAll && confAll / rsAll > 0.85 ? `<br><span style="color:#f59e0b">⚠ 첫 질문을 ${Math.round(confAll / rsAll * 100)}%가 '자신 있음·감으로'로 골랐어요 — 그냥 넘긴 것일 수 있음</span>` : '') + '</div></div>');
   H.push('</div>');
+  H.push(`<details class="hb-help" open><summary>보는 법</summary><div class="hb-help-b"><p>학생은 문항마다 아래 스텝을 순서대로 풀어요. 각 스텝은 객관식 하나고, 틀리면 더 쉬운 <b>디딤돌 질문</b> → 다시 도전 → 그래도 틀리면 풀이를 보여줘요.</p><ol>${steps.map(n => `<li><b>${E(HB_SHORT[n] || n)}</b> — ${E(HB_DESC[n] || '')}</li>`).join('')}</ol><p>문항 칩의 점은 이 순서대로 한 스텝씩: <i class="d" style="background:#10b981"></i>한 번에 맞힘 <i class="d" style="background:#f59e0b"></i>디딤돌 보고 맞힘 <i class="d" style="background:#ef4444"></i>디딤돌 줘도 놓침 <i class="d" style="background:#475569"></i>아직</p><p><b>막힌 스텝 「조건의 역할 2/5문항」</b> = 그 스텝을 푼 5문항 중 2문항에서 막혔다(노랑·빨강). 태그가 빨강이면 그중 놓친 게 있다는 뜻. 많이 막힌 순서로 3개만 보여요.</p><p><b>안다고 했는데</b> = 문항 시작 때 \"자신 있음/감으로 맞힘\"을 골랐는데 스텝 2개 이상 막힌 문항 — 답만 외웠거나 대충 넘긴 것일 수 있어요. <b>다시 볼 것</b> = 놓친 스텝 2개 이상(카드 빨간 테두리) → 직접 짚어 줄 학생.</p></div></details>`);
 
   if (HB.mode === 'item') {
     H.push('<div class="hb-grid">');
@@ -5422,12 +5429,12 @@ function hbDraw() {
         H.push(`<div class="hb-st${warn ? ' warn' : ''}">`
           + `<div class="hb-top"><b>${E(x.s.name)} <span class="dim" style="font-weight:400;font-size:12px">${E(x.s.sch)}</span></b><span class="t">${x.done}/${x.its.length} 완료${x.ing ? ' · ' + x.ing + ' 진행 중' : ''} · ${x.mins}분 · ${E(hbT(x.last))}</span></div>`
           + `<div class="hb-bar"><span style="width:${pct}%"></span></div>`
-          + `<div class="hb-line"><span class="lab">약한 스텝</span>${weak.length ? weak.slice(0, 3).map(v => `<span class="tag ${v.x ? 'r' : 'y'}">${E(HB_SHORT[v.nm] || v.nm)} ${v.bad}/${v.n}</span>`).join('') : '<span class="tag g">없음</span>'}</div>`
-          + (x.memo.length ? `<div class="hb-line"><span class="lab">외움 의심</span>${x.memo.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">맞혔다 했는데 2스텝↑ 걸림</span></div>` : '')
-          + (x.stuck.length ? `<div class="hb-line"><span class="lab">다시 볼 것</span>${x.stuck.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">✕ 2개↑</span></div>` : '')
-          + (x.okAll.length ? `<div class="hb-line"><span class="lab">완벽</span>${x.okAll.map(id => `<span class="tag g">${E(hbShortId(id))}</span>`).join('')}</div>` : '')
+          + `<div class="hb-line"><span class="lab">막힌 스텝</span>${weak.length ? weak.slice(0, 3).map(v => `<span class="tag ${v.x ? 'r' : 'y'}" title="${E(HB_DESC[v.nm] || '')} — ${v.n}문항 중 ${v.bad}번 막힘">${E(HB_SHORT[v.nm] || v.nm)} ${v.bad}/${v.n}문항</span>`).join('') : '<span class="tag g">없음</span>'}</div>`
+          + (x.memo.length ? `<div class="hb-line"><span class="lab">안다고 했는데</span>${x.memo.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">처음에 '자신 있음'인데 2스텝↑ 막힘</span></div>` : '')
+          + (x.stuck.length ? `<div class="hb-line"><span class="lab">다시 볼 것</span>${x.stuck.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">디딤돌 줘도 못 푼 스텝 2개↑</span></div>` : '')
+          + (x.okAll.length ? `<div class="hb-line"><span class="lab">한 번에 다 맞힘</span>${x.okAll.map(id => `<span class="tag g">${E(hbShortId(id))}</span>`).join('')}</div>` : '')
           + `<div class="hb-chips">${x.its.map(([id]) => { const r = first[x.s.sid + '|' + id]; if (!r) return '';
-              return `<span class="hb-chip${r.완료 ? '' : ' ing'}" title="${E(id)} · ${E(HB_IN[r.입구] || '')}${r.완료 ? '' : ' · 진행 중'}">${E(hbShortId(id))} <span>${[...Array(NS).keys()].map(k => hbDot((r.결과 || '')[k])).join('')}</span></span>`; }).join('')}</div>`
+              return `<span class="hb-chip${r.완료 ? '' : ' ing'}" title="${E(id)} · 처음: ${E(HB_IN[r.입구] || '')}${r.완료 ? '' : ' · 진행 중'}&#10;${steps.map((n, k) => E(HB_SHORT[n] || n) + ': ' + ({o: '한 번에', t: '디딤돌 뒤', x: '놓침'}[(r.결과 || '')[k]] || '아직')).join('&#10;')}">${E(hbShortId(id))} <span>${[...Array(NS).keys()].map(k => hbDot((r.결과 || '')[k])).join('')}</span></span>`; }).join('')}</div>`
           + '</div>');
       });
       H.push('</div>');
