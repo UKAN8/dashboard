@@ -5301,7 +5301,7 @@ const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && ((r.결과 || '').
 const HB_SHORT = { '무엇을 묻나': '묻는 개념', '어디서 쓰이나': '개념 쓰는 곳', '조건의 역할': '조건의 역할', '조건을 바꾸면': '조건 바꾸기', '원본↔변형': '원본↔변형', '함정': '함정', '같은 개념': '다른 문제 적용' };
 const HB_DESC = { '무엇을 묻나': '이 문제가 무슨 개념을 묻는지', '어디서 쓰이나': '그 개념이 풀이 어느 단계에서 쓰이는지', '조건의 역할': '조건 하나하나가 풀이에서 하는 일', '원본↔변형': '변형에서 바뀐 조건이 풀이를 어떻게 바꾸는지', '조건을 바꾸면': '조건을 바꾸면 답·풀이가 어떻게 달라지는지', '함정': '이 문제에서 흔히 빠지는 실수', '같은 개념': '같은 개념을 쓰는 다른 문제를 알아보는지' };
 const hbDot = c => c === 'o' ? '<i style="background:#10b981"></i>' : c === 't' ? '<i style="background:#f59e0b"></i>' : c === 'x' ? '<i style="background:#ef4444"></i>' : '<i style="background:rgba(127,127,127,.25)"></i>';
-const hbShortId = id => id.replace(/^(고림고|진덕고) /, '');
+const hbShortId = id => id.replace(/^(고림고|진덕고) (고2 )?/, '');
 const HB_CSS = `<style>
 #v-haebu .hb-help{margin:0 0 14px;border:1px solid #2a2f3a;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.7}
 #v-haebu .hb-help summary{cursor:pointer;font-weight:600}
