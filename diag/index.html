@@ -268,7 +268,7 @@ async function flush(){
 }
 
 function tex(el){ try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){} }
-function view(html,wide){ const m=$('app'); m.className=wide?'wide':''; if(PREVIEW&&MODE!=='admin') html=`<div class="toast" style="color:var(--warn);border-color:rgba(243,210,122,.4);display:flex;justify-content:space-between;gap:8px;align-items:center"><span>미리보기 · 저장 안 됨 · 답하면 정오가 보여요</span><button class="chip" onclick="try{localStorage.removeItem(LSK())}catch(e){};location.reload()">처음부터</button></div>`+html; m.innerHTML=html; tex(m); window.scrollTo(0,0); }
+function view(html,wide){ const m=$('app'); m.className=wide?'wide':''; if(PREVIEW&&MODE!=='admin') html=`<div class="toast" style="color:var(--warn);border-color:rgba(243,210,122,.4);display:flex;justify-content:space-between;gap:8px;align-items:center"><span>미리보기 · 저장 안 됨 · 답하면 정오가 보여요</span><button class="pill" style="padding:6px 12px;white-space:nowrap" onclick="try{localStorage.removeItem(LSK())}catch(e){};location.reload()">처음부터</button></div>`+html; m.innerHTML=html; tex(m); window.scrollTo(0,0); }
 
 async function boot(){
   if(MODE==='admin') return teacher();
