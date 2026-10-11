@@ -306,6 +306,7 @@ function route(){
   if(!A.started) return intro();
   if(!A.pre||!A.pre.done) return pre();
   for(const b of BLOCKS){ const s=nextStep(A,b.id); if(s){ return s==='self'?selfRate(b):item(b,s); } }
+  { const rv=reviewList(A).find(id=>!(A.re&&A.re[id])); if(rv) return reviewItem(rv); }
   if(!A.fin) return fin();
   return result();
 }
@@ -426,6 +427,42 @@ function answer(conf,skip){
 }
 
 /* ── 화면: 마무리 질문 ── */
+/* ── 2부: 힌트(개념 카드) 보고 다시 풀기 (1011 유강 "셀프 개념학습은 무리") ──
+ * 대상 = 개념·기초·유형 중 '정답+확신'이 아닌 것(틀림·찍음·모름). 심화는 뺀다.
+ * 개념 카드 3줄을 읽고 같은 문항을 다시 → 바로 맞히면 '잊은 것(회복형)', 또 틀리면 '처음부터 쌓을 것'.
+ * 막힌 이유도 같이 고른다(용어/공식/시작/계산/읽기/헷갈림) → 상담·수업 설명 포인트. */
+const WHY=['용어·뜻이 기억 안 났어요','공식·성질이 기억 안 났어요','어떻게 시작할지 몰랐어요','풀다가 계산에서 막혔어요','문제를 잘못 읽었어요','아는데 헷갈렸어요'];
+function reviewList(A){ const out=[]; const r=A.r||{};
+  for(const b of BLOCKS) for(const s of ['c1','c2','b','t']){ const id=b.id+'.'+s; if(r[id] && !good(r,id)) out.push(id); }
+  return out; }
+function reviewItem(id){
+  const [bid,step]=id.split('.'); const b=BMAP[bid], it=b.items[step];
+  const list=reviewList(A), k=list.indexOf(id)+1;
+  cur={id,it,t0:Date.now(),pick:null,why:null};
+  const ord=order(id,it.o.length,it.fix);
+  view(`<div class="top"><div class="brand">2부 · 힌트 보고 다시 풀기</div><span class="dim sm">${k}/${list.length}</span></div>
+  <div class="bar"><i style="width:${Math.round((k-1)/list.length*100)}%"></i></div>
+  ${lastToast?`<div class="toast">${lastToast}</div>`:''}
+  ${k===1?`<p class="sum">1부에서 틀렸거나 확신이 없던 문제만 다시 나와요. <b>개념 카드</b>를 읽고 한 번 더 풀어 보세요. 이번 결과는 1부 점수를 바꾸지 않아요.</p>`:''}
+  <div class="card" style="border-color:rgba(120,180,255,.4);background:rgba(120,180,255,.06)"><b>📌 개념 카드 · ${E(b.name)}</b><div class="sum" style="margin-top:6px">${b.sum}</div></div>
+  <div class="card"><b>처음 풀 때 왜 막혔어요?</b><div class="chips" style="margin-top:8px">${WHY.map((w,i)=>`<button class="chip" data-w="${i}">${w}</button>`).join('')}</div></div>
+  <div class="card"><div class="top"><b>${E(b.name)}</b><span class="pill ${it.k}">${KIND[it.k]}</span></div><div class="q">${it.q}</div>
+  <div class="opts">${ord.map((oi,pos)=>`<button class="opt" data-o="${oi+1}"><span class="n">${pos+1}</span><span>${it.o[oi]}</span></button>`).join('')}</div>
+  <div class="conf"><button class="k1" data-c="확실" disabled>확실</button><button class="k2" data-c="애매" disabled>애매</button><button class="k3" data-c="찍음" disabled>찍음</button></div>
+  <button class="skip" id="sk">카드를 봐도 모르겠어요</button></div>`);
+  lastToast='';
+  const confBtns=[...document.querySelectorAll('.conf button')];
+  const arm=()=>confBtns.forEach(c=>c.disabled=!(cur.pick&&cur.why!=null));
+  document.querySelectorAll('.chip[data-w]').forEach(c=>c.onclick=()=>{ cur.why=+c.dataset.w; document.querySelectorAll('.chip[data-w]').forEach(x=>x.classList.toggle('on',x===c)); arm(); });
+  document.querySelectorAll('.opt').forEach(x=>x.onclick=()=>{ cur.pick=+x.dataset.o; document.querySelectorAll('.opt').forEach(y=>y.classList.toggle('on',y===x)); arm(); });
+  const done=(conf,skip)=>{ if(skip&&cur.why==null){ alertBox('먼저 "왜 막혔는지"를 하나 골라 주세요'); return; }
+    const ok=!skip && cur.pick===it.a;
+    (A.re||(A.re={}))[id]={a:skip?null:cur.pick,ok,conf:skip?'모름':conf,why:WHY[cur.why],ms:Date.now()-cur.t0};
+    if(PREVIEW) lastToast=`<b style="color:${ok?'var(--good)':'var(--bad)'}">${ok?'○ 정답':'× 오답'}</b> · 정답: `+it.o[it.a-1];
+    save(); route(); };
+  confBtns.forEach(c=>c.onclick=()=>done(c.dataset.c));
+  $('sk').onclick=()=>done('모름',true);
+}
 function fin(){
   const sel=new Set();
   view(`<div class="brand">개념 진단 · 마무리</div><h1>거의 끝났어요!</h1>
@@ -453,10 +490,7 @@ function result(){
   ${lv.map(([b,L])=>lvRow(b,L)).join('')}
   <p class="dim sm">'찍음'으로 맞힌 건 정답으로 치지 않았어요. 이건 점수가 아니라 수업에서 어디를 얼마나 깊게 설명할지 정하는 자료예요.</p></div>
   ${review.length?`<h2>다시 볼 개념 요약</h2>${review.map(b=>`<div class="card"><b>${E(b.name)}</b><div class="sum" style="margin-top:6px">${b.sum}</div></div>`).join('')}`:''}
-  <div class="card"><b>📝 이어서 할 일 (쌤이 상담하는 동안)</b>
-  <p class="sum">1) 위에서 <b>가장 약한 단원 1~2개</b>를 골라, 연습지 뒷면에 책 안 보고 <b>백지 개념 정리</b> (정의 · 공식 · 예시 하나씩).<br>
-  2) 다 쓰면 교과서/개념서와 비교해서 <b>빠진 것을 빨간 펜</b>으로 채우기.<br>
-  3) 사진 찍어 두기 — 상담 때 같이 봐요.</p></div>
+  <div class="card"><b>✅ 끝나면</b><p class="sum">연습지 맨 위에 <b>이름</b> 쓰고 쌤 책상에 내 주세요. 상담 순서가 오면 이 화면이랑 연습지를 같이 봐요.</p></div>
   ${code?`<div class="card"><b>결과 코드</b><p class="dim sm">아래 코드를 통째로 복사해서 쌤한테 카톡으로 보내 주세요.</p><textarea rows="4" readonly onclick="this.select()">${E(code)}</textarea></div>`:''}
   <button class="btn ghost" id="redo">마무리 질문 고치기</button>`);
   $('redo').onclick=()=>{ A.fin=null; save(); route(); };
@@ -476,7 +510,9 @@ function summarize(A){
     if(L!=null){sum+=L;cnt++; const s=A.self&&A.self[b.id]; if(s!=null) metaGap.push({b,gap:s-Math.min(L,3),s,L});} }
   const avg=cnt?sum/cnt:null;
   const status = !A.started?'미시작' : (A.fin?'완료' : `${progress(A)}/8`);
-  return {lv,fl,avg,cnt,over,lucky,shaky,ms,metaGap,status,n:totalAnswered(A)};
+  const re=A.re||{}, rl=Object.values(re), rec={n:rl.length,ok:rl.filter(v=>v.ok&&v.conf!=='찍음').length};
+  const why={}; rl.forEach(v=>{ if(v.why) why[v.why]=(why[v.why]||0)+1; });
+  return {lv,fl,avg,cnt,over,lucky,shaky,ms,metaGap,status,n:totalAnswered(A),rec,why};
 }
 function track(avg){ if(avg==null) return ['-','']; if(avg>=3) return ['심화 트랙','개념 설명 시간엔 심화 과제 병행 · 유형은 고난도 위주로'];
   if(avg>=2) return ['유형 트랙','흔들리는 단원만 개념 재확인 → 대표 유형 반복'];
@@ -523,15 +559,15 @@ function renderTeacher(){
   let list=rows.map((r,i)=>({...r,_i:i}));
   const key=SORT.k, d=SORT.d;
   const val=r=> key==='no'?r._i : key==='name'?r.name : key==='avg'?(r.S.avg??-1) : key==='prog'?(r.S.status==='완료'?9:(r.S.status==='미시작'?-1:parseInt(r.S.status))) :
-    key==='over'?r.S.over : key==='lucky'?r.S.lucky : key==='min'?r.S.ms : (r.S.lv[key]??-1);
+    key==='over'?r.S.over : key==='lucky'?r.S.lucky : key==='min'?r.S.ms : key==='rec'?(r.S.rec.n?r.S.rec.ok/r.S.rec.n:-1) : (r.S.lv[key]??-1);
   list.sort((a,b)=>{const x=val(a),y=val(b); return (x>y?1:x<y?-1:0)*d;});
   const th=(k,t)=>`<th data-k="${k}">${t}${SORT.k===k?(SORT.d>0?' ▲':' ▼'):''}</th>`;
   tv.innerHTML=`
   <div class="legend">${LVNAME.map((n,i)=>`<span><i class="L${i}"></i>${i} ${n}</span>`).join('')} <span>· 찍음 정답은 오답 처리</span></div>
   <h2>학생별</h2>
-  <div class="tw"><table><thead><tr>${th('no','#')}${th('name','이름')}${th('prog','진행')}${BLOCKS.map(b=>th(b.id,b.name.replace('·','<br>')+'')).join('')}${th('avg','평균')}${th('over','과신')}${th('lucky','찍음○')}${th('min','풀이분')}<th class="nos">트랙</th></tr></thead>
+  <div class="tw"><table><thead><tr>${th('no','#')}${th('name','이름')}${th('prog','진행')}${BLOCKS.map(b=>th(b.id,b.name.replace('·','<br>')+'')).join('')}${th('avg','평균')}${th('over','과신')}${th('lucky','찍음○')}${th('rec','힌트 후 회복')}${th('min','풀이분')}<th class="nos">트랙</th></tr></thead>
   <tbody>${list.map((r,i)=>`<tr class="row" data-n="${E(r.name)}"><td>${i+1}</td><td class="l"><b>${E(r.name)}</b></td><td>${r.missing?'<span class="dim">미시작</span>':E(r.S.status)}</td>
-   ${BLOCKS.map(b=>`<td>${cell(r.S.lv[b.id])}</td>`).join('')}<td><b>${r.S.avg==null?'-':r.S.avg.toFixed(1)}</b></td><td>${r.S.over||''}</td><td>${r.S.lucky||''}</td><td>${r.S.ms?Math.round(r.S.ms/60000):''}</td><td class="sm">${track(r.S.avg)[0]}</td></tr>`).join('')}</tbody></table></div>
+   ${BLOCKS.map(b=>`<td>${cell(r.S.lv[b.id])}</td>`).join('')}<td><b>${r.S.avg==null?'-':r.S.avg.toFixed(1)}</b></td><td>${r.S.over||''}</td><td>${r.S.lucky||''}</td><td>${r.S.rec.n?`${r.S.rec.ok}/${r.S.rec.n}`:''}</td><td>${r.S.ms?Math.round(r.S.ms/60000):''}</td><td class="sm">${track(r.S.avg)[0]}</td></tr>`).join('')}</tbody></table></div>
   <p class="dim sm">행을 누르면 상담 카드 + 학부모 문구가 열려요. 열 제목을 누르면 정렬.</p>
     `;
   $('cls2').innerHTML=`<h2>반 전체 — 단원별 설명 깊이</h2>
@@ -567,6 +603,9 @@ function parentMsg(r){
   const under=S.metaGap.filter(g=>g.gap<=-2).length, overS=S.metaGap.filter(g=>g.gap>=2).length;
   if(overS>=2) notes.push(`풀기 전 '이 정도는 안다'고 한 단원 중 실제로는 흔들린 곳이 몇 군데 있어서, 기말 전에 꼭 짚고 넘어가겠습니다.`);
   else if(under>=2) notes.push(`본인은 자신 없다고 했는데 실제로는 잘 풀어낸 단원이 많았어요. 생각보다 탄탄하니 자신감을 가져도 된다고 이야기해 주었습니다.`);
+  if(S.rec.n>=3){ const rr=S.rec.ok/S.rec.n;
+    notes.push(rr>=0.6 ? `틀린 문제를 개념 카드를 보여 준 뒤 다시 풀게 했더니 ${S.rec.n}문항 중 ${S.rec.ok}문항을 바로 맞혔어요. 몰라서라기보다 잊어버린 상태라, 짧게 다시 짚어 주면 금방 돌아올 거예요.`
+      : `틀린 문제를 개념 카드를 보여 준 뒤 다시 풀게 했을 때 ${S.rec.n}문항 중 ${S.rec.ok}문항을 맞혔어요. 이 부분은 다시 떠올리기보다 개념을 새로 쌓는다는 생각으로 수업에서 차근차근 설명하겠습니다.`); }
   if(notes.length){ L.push(...notes); L.push(''); }
   const avg=S.avg;
   const plan = avg==null?'' : avg>=3 ? `전체적으로 개념이 탄탄하게 남아 있어서, 수업에서는 개념 설명을 짧게 듣고 심화 문항 위주로 따로 과제를 주려고 합니다. 기말에서 변별되는 고난도 문항까지 대비하는 게 목표예요.`
@@ -586,7 +625,7 @@ function showDetail(silent){
   const items=[];
   for(const b of BLOCKS) for(const s of ['c1','c2','b','t','h']){ const v=(A.r||{})[b.id+'.'+s]; if(!v) continue;
     const it=b.items[s]; const pos = it.type==='mc'&&v.a? order(b.id+'.'+s,it.o.length,it.fix).indexOf(v.a-1)+1 : null;
-    items.push(`<tr><td class="l">${E(b.name)}</td><td>${KIND[it.k]}</td><td>${v.ok?'<b style="color:var(--good)">○</b>':'<b style="color:var(--bad)">×</b>'}</td><td>${E(v.conf)}</td><td>${v.a==null?'-':(it.type==='mc'?`원${v.a}${pos?` (화면 ${pos})`:''}`:E(v.a))}</td><td>${it.type==='mc'?'원'+it.a:E(it.a)}</td><td>${Math.round((v.ms||0)/1000)}초</td></tr>`); }
+    items.push(`<tr><td class="l">${E(b.name)}</td><td>${KIND[it.k]}</td><td>${v.ok?'<b style="color:var(--good)">○</b>':'<b style="color:var(--bad)">×</b>'}</td><td>${E(v.conf)}</td><td>${v.a==null?'-':(it.type==='mc'?`원${v.a}${pos?` (화면 ${pos})`:''}`:E(v.a))}</td><td>${it.type==='mc'?'원'+it.a:E(it.a)}</td><td>${Math.round((v.ms||0)/1000)}초</td><td>${(()=>{const w=(A.re||{})[b.id+'.'+s]; return w?((w.ok&&w.conf!=='찍음')?'<b style="color:var(--good)">회복</b>':'<b style="color:var(--bad)">×</b>')+' · '+E(w.why||''):'';})()}</td></tr>`); }
   const meta=S.metaGap.map(g=>`<span class="flag ${g.gap>=2?'r':g.gap<=-2?'g':''}">${E(g.b.name)} 자기${g.s}→실제${g.L}</span>`).join('');
   const talk=[];
   const weakB=BLOCKS.filter(b=>S.lv[b.id]!=null&&S.lv[b.id]<=1).map(b=>b.name);
@@ -596,6 +635,8 @@ function showDetail(silent){
   if(p.stuck==='그냥 넘어간다'||p.stuck==='바로 해설을 본다') talk.push(`막힐 때 '${p.stuck}' — 고민 시간 규칙(예: 5분 고민 → 힌트 → 해설) 약속하기`);
   if(p.hours==='2시간 미만') talk.push('자습 시간 주 2시간 미만 — 루프 15분/일 루틴부터 확보');
   if(p.goal && S.avg!=null && ((p.goal==='1등급'&&S.avg<3)||(p.goal==='2등급'&&S.avg<2))) talk.push(`목표(${p.goal})와 현재 개념 상태 차이가 큼 — 기말까지 주차별 목표 같이 세우기`);
+  const wy=Object.entries(S.why).sort((a,b)=>b[1]-a[1]); if(wy.length) talk.push('막힌 이유: '+wy.map(([w,c])=>w.replace(/어요$|났어요$/,'')+' '+c).join(' · '));
+  if(S.rec.n) talk.push(`힌트 후 회복 ${S.rec.ok}/${S.rec.n} — `+(S.rec.ok/S.rec.n>=0.6?'잊은 것 위주(짧게 환기하면 돌아옴)':'개념 자체를 새로 쌓아야 하는 쪽'));
   if(A.fin&&A.fin.memo) talk.push(`학생 한마디: "${A.fin.memo}"`);
   if(p.worry) talk.push(`고민: "${p.worry}"`);
   box.innerHTML=`<div class="card"><div class="top"><h2 style="margin:0">${E(r.name)} — ${E(tr[0])}</h2><button class="btn ghost" style="width:auto;margin:0;padding:6px 12px" id="cls">닫기</button></div>
@@ -607,7 +648,7 @@ function showDetail(silent){
   <div><h3>상담 포인트</h3><div class="sum">${talk.length?talk.map(t=>'• '+E(t)).join('<br>'):'<span class="dim">특이사항 없음</span>'}</div>
    <h3>학부모 문구 (고쳐서 쓰세요)</h3><textarea class="msg" id="pm">${E(parentMsg(r))}</textarea>
    <div class="row-tools"><button class="btn" id="cp">복사</button></div></div></div>
-  <h3>문항별</h3><div class="tw"><table><thead><tr><th class="nos">단원</th><th class="nos">종류</th><th class="nos">정오</th><th class="nos">확신</th><th class="nos">학생 답</th><th class="nos">정답</th><th class="nos">시간</th></tr></thead><tbody>${items.join('')||'<tr><td colspan="7" class="dim">아직 없음</td></tr>'}</tbody></table></div></div>`;
+  <h3>문항별</h3><div class="tw"><table><thead><tr><th class="nos">단원</th><th class="nos">종류</th><th class="nos">정오</th><th class="nos">확신</th><th class="nos">학생 답</th><th class="nos">정답</th><th class="nos">시간</th><th class="nos">힌트 후 · 막힌 이유</th></tr></thead><tbody>${items.join('')||'<tr><td colspan="8" class="dim">아직 없음</td></tr>'}</tbody></table></div></div>`;
   tex(box);
   $('cls').onclick=()=>{OPEN=null;box.innerHTML='';};
   $('cp').onclick=async()=>{ const t=$('pm').value; try{ await navigator.clipboard.writeText(t); $('cp').textContent='복사됨 ✓'; }catch(e){ $('pm').select(); document.execCommand('copy'); $('cp').textContent='복사됨 ✓'; } };
