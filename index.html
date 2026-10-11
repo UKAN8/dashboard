@@ -4612,6 +4612,8 @@ function vsDraw() {
  * 새 설문을 만들면 SV_META 에 이름 한 줄만 더한다(없어도 키 이름으로 보인다).
  */
 const SV_META = {
+  // 1011 개념 진단 — 답이 설문이 아니라 진단 기록(r·self·fin)이라 원본을 펼치지 않고 진행 상태만 보인다. 자세히는 진단 교사 화면.
+  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8 },
   ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
   hw0827: { 이름: '기출 오답 과제 (0827)' },
 };
@@ -4642,6 +4644,16 @@ const SV_Q = {
     난이도: '난이도 체감', 적중: '나온 유형이 본인 약점 유형과 맞았나', 막힘: '막혔을 때 어떻게 했나', 해설: '해설이 충분했나',
     효과: '같은 유형이 또 나오면 맞힐 자신', 개선: '다음 과제에서 딱 하나 바꾼다면', 한마디: '하고 싶은 말' },
 };
+// 진단(diag_) 답 → 상태. 시작 버튼만 눌러도 행이 생기므로 행 = 제출이 아니다.
+const svIsDiag = k => /^diag_/.test(k || '');
+function svDiag(r, skey) {
+  const a = (r && r.답) || {}, n = (SV_META[skey] || {}).단원 || 8;
+  const self = Object.keys(a.self || {}).length, m = Object.keys(a.r || {}).length;
+  if (a.fin) return { lv: 2, txt: `완료 · ${m}문항`, cls: 'ok' };
+  if (!a.started) return { lv: 0, txt: '미시작', cls: '' };
+  if (!self && !m) return { lv: 1, txt: '시작만 함 · 응답 0', cls: 'warn' };
+  return { lv: 1, txt: `진행 중 · 단원 ${self}/${n} · ${m}문항`, cls: 'warn' };
+}
 const svL = (skey, k) => (SV_Q[skey] || {})[k] || SV_LABEL[k] || k;
 
 function viewSurvey(st) {
@@ -4705,7 +4717,7 @@ function svDraw() {
   const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
   bar.innerHTML = groups.map(g => fb('sk', g.base, (SV_META[g.base] && SV_META[g.base].이름) || g.base, SV.key)).join('')
     + '<span class="dim" style="margin:0 4px">│</span>' + fb('sb', '*', '반 전체', SV.ban) + bans.map(b => fb('sb', b, b, SV.ban)).join('')
-    + '<span class="dim" style="margin:0 4px">│</span>' + fb('sm', 'who', '제출 현황', SV.mode) + fb('sm', 'sum', '응답 요약', SV.mode) + fb('sm', 'voice', '후기', SV.mode)
+    + (svIsDiag(SV.key) ? '' : '<span class="dim" style="margin:0 4px">│</span>' + fb('sm', 'who', '제출 현황', SV.mode) + fb('sm', 'sum', '응답 요약', SV.mode) + fb('sm', 'voice', '후기', SV.mode))
     + `<button class="fbtn" id="sv-re" title="다시 불러오기">↻</button>`;
   bar.querySelectorAll('[data-sk]').forEach(b => b.onclick = () => { SV.key = b.dataset.sk; SV.open = ''; svDraw(); });
   bar.querySelectorAll('[data-sb]').forEach(b => b.onclick = () => { SV.ban = b.dataset.sb; svDraw(); });
@@ -4722,6 +4734,23 @@ function svDraw() {
   const link = who.filter(x => byP[x.sid] && /링크/.test((byP[x.sid].답 || {}).포털안내 || ''));
   $('sv-cnt').textContent = `학생 ${nS} · 학부모 ${nP}`;
   const kpi = (l, v, sub, warn) => `<div class="kpi"><div class="lbl">${l}</div><div class="big"${warn && v ? ' style="color:var(--acc)"' : ''}>${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  const diag = svIsDiag(SV.key), dUrl = (SV_META[SV.key] || {}).진단;
+  if (diag) {
+    const st = who.map(x => svDiag(byS[x.sid], kS));
+    const nDone = st.filter(d => d.lv === 2).length, nIng = st.filter(d => d.lv === 1).length;
+    $('sv-cnt').textContent = `완료 ${nDone} · 진행 ${nIng}`;
+    let h = `<div class="kpis">${kpi('완료', nDone, '명')}${kpi('진행 중·시작만', nIng, '명', true)}</div>`
+      + (dUrl ? `<div class="dim" style="margin:6px 0 10px">문항별 결과·레벨·상담 메모는 <a href="${E(dUrl)}" target="_blank" rel="noopener">진단 교사 화면 ↗</a> 에서 봅니다.</div>` : '');
+    if (!who.length) { body.innerHTML = h + '<div class="card dim" style="padding:14px">아직 시작한 학생이 없습니다.</div>'; return; }
+    h += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>진행</th><th>마지막 저장</th></tr></thead><tbody>`
+      + who.sort((a, b) => (a.ban || '').localeCompare(b.ban || '') || a.name.localeCompare(b.name, 'ko')).map(x => {
+        const r = byS[x.sid], d = svDiag(r, kS), a = (r && r.답) || {};
+        return `<tr><td><a href="#student/${encodeURIComponent(x.sid)}">${E(x.name)}</a></td><td>${E(x.ban)}</td>`
+          + `<td>${d.cls ? `<span class="sv-tag ${d.cls}">${E(d.txt)}</span>` : `<span class="dim">${E(d.txt)}</span>`}</td>`
+          + `<td class="dim">${t(a.updated || (r && r.제출시각))}</td></tr>`; }).join('')
+      + '</tbody></table></div>';
+    body.innerHTML = h; return;
+  }
   let html = `<div class="kpis">${kpi('학생 제출', nS, '명')}${pair ? kpi('학부모 제출', nP, '명') + kpi('상담 요청', call.length, '건', true) + kpi('포털 링크 다시', link.length, '건', true) : ''}</div>`;
   if (!who.length) { body.innerHTML = html + '<div class="card dim" style="padding:14px">아직 제출한 사람이 없습니다. 보낸 링크는 제출하는 순간 여기 뜹니다 (↻ 로 새로고침).</div>'; return; }
 
@@ -4766,7 +4795,7 @@ function svAns(r, src, skey) {
   if (!r) return `<div class="sv-ans"><div class="sv-h2">${src}</div><div class="dim">아직 안 냄</div></div>`;
   const a = r.답 || {};
   return `<div class="sv-ans"><div class="sv-h2">${src} <span class="dim">${new Date(r.제출시각).toLocaleString('ko-KR')}</span></div>`
-    + Object.keys(a).filter(k => !k.startsWith('_')).map(k => `<div class="sv-row"><span class="dim">${E(svL(skey, k))}</span><span>${E(Array.isArray(a[k]) ? a[k].join(', ') : a[k])}</span></div>`).join('') + '</div>';
+    + Object.keys(a).filter(k => !k.startsWith('_')).map(k => `<div class="sv-row"><span class="dim">${E(svL(skey, k))}</span><span>${E(Array.isArray(a[k]) ? a[k].join(', ') : (a[k] && typeof a[k] === 'object') ? '(세부 기록)' : a[k])}</span></div>`).join('') + '</div>';
 }
 
 function svSum(rows, src, skey) {
