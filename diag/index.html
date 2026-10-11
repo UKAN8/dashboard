@@ -240,12 +240,13 @@ function totalAnswered(A){return Object.keys(A.r||{}).length;}
 /* ── 학생 쪽 상태 ─────────────────────────────────────────────────────── */
 const qs=new URLSearchParams(location.search);
 const TOK=(qs.get('t')||'').trim();
-const MODE= qs.has('admin')?'admin' : (TOK?'student':(qs.has('offline')?'offline':'none'));
+const PREVIEW=qs.has('preview');
+const MODE= qs.has('admin')?'admin' : (TOK?'student':((qs.has('offline')||PREVIEW)?'offline':'none'));
 let ME=null;            // {이름, 반}
 let A=null;             // 답 객체
 let cur=null;           // 현재 문항 화면 상태
 let lastToast='';
-const LSK=()=> 'diag_'+SKEY+'_'+(TOK?TOK.slice(0,10):'off');
+const LSK=()=> 'diag_'+SKEY+'_'+(TOK?TOK.slice(0,10):(PREVIEW?'preview':'off'));
 function blank(){return {v:1,skey:SKEY,started:null,updated:null,pre:{},self:{},r:{},fin:null,name:null};}
 function lsGet(){try{return JSON.parse(localStorage.getItem(LSK())||'null');}catch(e){return null;}}
 function lsSet(){try{localStorage.setItem(LSK(),JSON.stringify(A));}catch(e){}}
@@ -267,7 +268,7 @@ async function flush(){
 }
 
 function tex(el){ try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){} }
-function view(html,wide){ const m=$('app'); m.className=wide?'wide':''; m.innerHTML=html; tex(m); window.scrollTo(0,0); }
+function view(html,wide){ const m=$('app'); m.className=wide?'wide':''; if(PREVIEW&&MODE!=='admin') html=`<div class="toast" style="color:var(--warn);border-color:rgba(243,210,122,.4);display:flex;justify-content:space-between;gap:8px;align-items:center"><span>미리보기 · 저장 안 됨 · 답하면 정오가 보여요</span><button class="chip" onclick="try{localStorage.removeItem(LSK())}catch(e){};location.reload()">처음부터</button></div>`+html; m.innerHTML=html; tex(m); window.scrollTo(0,0); }
 
 async function boot(){
   if(MODE==='admin') return teacher();
@@ -353,7 +354,7 @@ function head(b){
   const el=A.started?Math.round((Date.now()-new Date(A.started))/60000):0;
   return `<div class="top"><div class="brand">개념 진단 · ${i}/8</div><span class="dim sm">${el}분 경과</span></div>
   <div class="bar"><i style="width:${Math.round(done/8*100)}%"></i></div>
-  ${lastToast?`<div class="toast">${E(lastToast)}</div>`:''}`;
+  ${lastToast?`<div class="toast">${lastToast}</div>`:''}`;
 }
 
 /* ── 화면: 블록 자기 평가 ── */
@@ -402,7 +403,9 @@ function answer(conf,skip){
   if(!skip){ if(it.type==='mc'){a=cur.pick; ok=a===it.a;} else {a=norm(cur.num); ok=a===norm(it.a)||Number(a)===Number(it.a)&&a!==''&&!isNaN(Number(a));} }
   A.r[id]={a,ok,conf:skip?'모름':conf,ms,at:new Date().toISOString()};
   const before=progress(A);
-  if(!nextStep(A,b.id)){ const i=BLOCKS.indexOf(b); lastToast = i<7 ? `✓ ${b.name} 끝! 다음 단원으로 가요 (${i+1}/8 완료)` : '✓ 8개 단원 모두 끝!'; }
+  let pv=''; if(PREVIEW){ const ca=it.type==='mc'? it.o[it.a-1] : it.a; pv=`<b style="color:${ok?'var(--good)':'var(--bad)'}">${ok?'○ 정답':'× 오답'}</b> · 정답: `+ca; }
+  lastToast=pv;
+  if(!nextStep(A,b.id)){ const i=BLOCKS.indexOf(b); lastToast = (pv?pv+'<br>':'') + (i<7 ? `✓ ${b.name} 끝! 다음 단원으로 가요 (${i+1}/8 완료)` : '✓ 8개 단원 모두 끝!'); }
   save(); route();
 }
 
