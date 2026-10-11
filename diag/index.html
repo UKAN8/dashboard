@@ -186,6 +186,22 @@ const BLOCKS=[
  t:{k:'t',type:'mc',fix:true,q:R`함수 $y=\sqrt{x+3}-1$의 그래프가 지나지 <b>않는</b> 사분면은?`,o:[R`제1사분면`,R`제2사분면`,R`제3사분면`,R`제4사분면`,R`모든 사분면을 지난다`],a:4},
  h:{k:'h',type:'mc',q:R`함수 $y=\sqrt{2x-4}$의 그래프와 직선 $y=x+k$가 서로 다른 두 점에서 만나도록 하는 실수 $k$의 값의 범위는?`,o:[R`$-2\le k<-\dfrac32$`,R`$-2<k<-\dfrac32$`,R`$k<-\dfrac32$`,R`$k\ge-2$`,R`$-\dfrac32<k\le2$`],a:1}}},
 ];
+
+/* (1011 유강 "수식 입력 어렵다") 단답 → 5지선다. 보기는 작은 수부터, 순서 고정 */
+const NUMOPT={
+ 'B1.c2':['3','4','6','7','10'], 'B1.t':['-4','0','2','3','4'], 'B1.h':['1','2','3','5','6'],
+ 'B2.t':['3','4','5','6','8'], 'B2.h':['4','5','6','7','9'],
+ 'B3.b':['0','1','2','3','4'], 'B3.t':['5','6','7','8','9'], 'B3.h':['2','4','6','8','9'],
+ 'B4.b':['3','6','8','9','12'], 'B4.t':['24','36','48','64','81'], 'B4.h':['1','2','3','4','5'],
+ 'B5.c1':['4','5','6','7','8'], 'B5.t':['2','3','4','5','7'], 'B5.h':['1','2','3','4','5'],
+ 'B6.b':['1/7','1/3','1','3','7'], 'B6.t':['6','7','8','9','10'],
+ 'B7.t':['3','4','5','6','8'], 'B7.h':['-5','-3','-1','1','3'],
+};
+const texNum=v=>v.includes('/')?`$\\dfrac{${v.split('/')[0]}}{${v.split('/')[1]}}$`:`$${v}$`;
+BLOCKS.forEach(b=>Object.entries(b.items).forEach(([k,it])=>{ const id=b.id+'.'+k;
+  if(it.type!=='num') return; const o=NUMOPT[id]; if(!o) return;
+  const ai=o.indexOf(it.a); if(ai<0) throw new Error('보기에 정답 없음 '+id);
+  it.type='mc'; it.fix=true; it.o=o.map(texNum); it.a=ai+1; }));
 const BMAP={}; BLOCKS.forEach(b=>BMAP[b.id]=b);
 
 /* 보기 순서: 문항마다 고정 섞기(정답이 ①에 몰리지 않게). 기록은 원래 번호로 한다 */
@@ -304,7 +320,7 @@ function intro(){
   <div class="card">${nameRow}
   <p class="sum">• 선행 때 배운 게 지금 <b>얼마나 기억나는지</b> 확인하는 진단이에요. <b>성적과 상관없어요.</b><br>
   • 8개 단원 × 2~5문항. 맞히면 더 어려운 문제가, 막히면 쉬운 문제가 나와요. 그래서 사람마다 문항 수가 달라요.<br>
-  • 풀이는 <b>연습지</b>에, 답만 폰에 넣어요. 시간은 대략 <b>50~60분</b>.<br>
+  • 풀이는 <b>연습지</b>에, 폰에서는 <b>보기만 고르면</b> 돼요. 시간은 대략 <b>50~60분</b>.<br>
   • 답을 고른 뒤 <b>확실 / 애매 / 찍음</b> 중 하나를 눌러야 넘어가요. 찍은 건 꼭 '찍음'! 그래야 수업에서 거기를 다시 설명해 줄 수 있어요.<br>
   • 정 모르겠으면 '모르겠어요'로 넘겨도 돼요. 빈칸이 거짓 정답보다 훨씬 도움이 돼요.<br>
   • 중간에 꺼져도 같은 링크로 들어오면 이어서 해요.</p></div>
@@ -384,7 +400,7 @@ function item(b,step){
   <div class="card"><div class="q">${it.q}</div>${body}
   <div class="conf"><button class="k1" data-c="확실" disabled>확실</button><button class="k2" data-c="애매" disabled>애매</button><button class="k3" data-c="찍음" disabled>찍음</button></div>
   <button class="skip" id="sk">모르겠어요 (넘어가기)</button></div>
-  <p class="dim sm">풀이는 연습지에 · 답을 고르고 확실/애매/찍음을 누르면 다음으로 넘어가요.</p>`);
+  <p class="dim sm">풀이는 연습지에 · 보기를 고르고 확실/애매/찍음을 누르면 다음으로 넘어가요.</p>`);
   lastToast='';
   const confBtns=[...document.querySelectorAll('.conf button')];
   const arm=()=>confBtns.forEach(c=>c.disabled=!(it.type==='mc'?cur.pick:cur.num));
