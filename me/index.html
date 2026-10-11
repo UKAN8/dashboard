@@ -546,6 +546,15 @@ function render(d){
     +`<span class="ban">${E(d.학생.반||'')}</span></div>`
     +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 나의 기록만 보여줍니다</div>`);
 
+  // ⓪-00 기말 범위 개념 진단 (1011 유강 "포털 최상단 카드로") — 명제~무리함수 선행 잔존도 적응형 진단. 기록은 survey_open/submit(설문키 diag_m2_1011).
+  //    페이지 = _diag/ (build_diag.py). 지금은 고1T 만. 다른 반으로 넓히면 아래 정규식을 고친다.
+  if(/^고1T/.test(String(d.학생.반||'').trim())){
+    const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
+    const durl=`https://ukan8.github.io/dashboard/diag/?t=${encodeURIComponent(tk)}`;
+    H.push(`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
+      +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 명제~무리함수 · 약 50분 · 이어서 하기 가능</span></span>`
+      +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`);
+  }
   // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — 맨 위 카드. lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
   H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
 
