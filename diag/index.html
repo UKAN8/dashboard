@@ -214,6 +214,7 @@ const good=(r,id)=>!!(r[id]&&r[id].ok&&r[id].conf!=='찍음');
 const has=(r,id)=>!!r[id];
 function nextStep(A,B){
   if(A.self==null||A.self[B]==null) return 'self';
+  if(A.self[B]===-1) return null;            // 미학습 단원 — 문항 없이 건너뛴다(1011)
   const r=A.r||{}, k=x=>B+'.'+x;
   if(!has(r,k('c1'))) return 'c1';
   if(!has(r,k('c2'))) return 'c2';
@@ -226,7 +227,9 @@ function nextStep(A,B){
   if(!has(r,k('h'))) return 'h';
   return null;
 }
+const isNew=(A,B)=>!!(A.self&&A.self[B]===-1);
 function levelOf(A,B){
+  if(isNew(A,B)) return null;
   const r=A.r||{}, k=x=>B+'.'+x;
   if(!has(r,k('c1'))||!has(r,k('c2'))) return null;          // 아직
   const cs=good(r,k('c1'))+good(r,k('c2'));
@@ -379,9 +382,13 @@ function selfRate(b){
   const opts=['기억이 거의 안 나요','들은 기억은 있어요','개념은 설명할 수 있어요','문제도 풀 수 있어요'];
   view(`${head(b)}<h1>${E(b.name)}</h1><p class="dim">${E(b.sub)}</p>
   <div class="card"><b>풀기 전에 — 이 단원, 지금 어느 정도예요?</b>
-  <div class="self">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="n">${i}</span><span>${o}</span></button>`).join('')}</div></div>`);
+  <div class="self">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="n">${i}</span><span>${o}</span></button>`).join('')}</div>
+  <button class="opt" id="never" style="margin-top:14px;border-style:dashed"><span class="n">–</span><span>이 단원은 <b>아직 배운 적이 없어요</b> (선행 안 함)</span></button></div>`);
   lastToast='';
-  document.querySelectorAll('.opt').forEach(x=>x.onclick=()=>{ A.self[b.id]=+x.dataset.i; save(); route(); });
+  document.querySelectorAll('.self .opt').forEach(x=>x.onclick=()=>{ A.self[b.id]=+x.dataset.i; save(); route(); });
+  let armed=false; $('never').onclick=()=>{ const n=$('never');
+    if(!armed){ armed=true; n.classList.add('on'); n.lastElementChild.innerHTML='한 번 더 누르면 이 단원은 <b>건너뛰어요</b>.<br><span class="dim sm">들어 본 적만 있어도 위에서 \'들은 기억은 있어요\'를 골라 주세요.</span>'; return; }
+    A.self[b.id]=-1; lastToast=`${E(b.name)}: 처음 배울 단원으로 표시했어요. 수업에서 처음부터 설명해 줄게요.`; save(); route(); };
 }
 
 /* ── 화면: 문항 ── */
@@ -474,8 +481,8 @@ function fin(){
 }
 
 /* ── 화면: 학생 결과 ── */
-function lvRow(b,L){ const w=L==null?0:[12,32,55,78,100][L];
-  return `<div class="lv"><span>${E(b.name)}</span><div class="lvbar"><i class="L${L??0}" style="width:${w}%"></i></div><span class="sm">${L==null?'-':LVNAME[L]}</span></div>`; }
+function lvRow(b,L,nw){ const w=L==null?0:[12,32,55,78,100][L];
+  return `<div class="lv"><span>${E(b.name)}</span><div class="lvbar"><i class="L${L??0}" style="width:${w}%"></i></div><span class="sm">${nw?'<span class="dim">처음 배울 단원</span>':(L==null?'-':LVNAME[L])}</span></div>`; }
 function result(){
   const lv=BLOCKS.map(b=>[b,levelOf(A,b.id)]);
   const weak=lv.filter(([b,L])=>L!=null&&L<=1).map(([b])=>b);
@@ -487,7 +494,7 @@ function result(){
   view(`<div class="brand">개념 진단 · 결과</div><h1>${E(ME.이름||'')} 수고했어요! (${mins}분)</h1>
   <div class="card"><b>단원별 지금 상태</b>
   <div class="legend">${LVNAME.map((n,i)=>`<span><i class="L${i}"></i>${n}</span>`).join('')}</div>
-  ${lv.map(([b,L])=>lvRow(b,L)).join('')}
+  ${lv.map(([b,L])=>lvRow(b,L,isNew(A,b.id))).join('')}
   <p class="dim sm">'찍음'으로 맞힌 건 정답으로 치지 않았어요. 이건 점수가 아니라 수업에서 어디를 얼마나 깊게 설명할지 정하는 자료예요.</p></div>
   ${review.length?`<h2>다시 볼 개념 요약</h2>${review.map(b=>`<div class="card"><b>${E(b.name)}</b><div class="sum" style="margin-top:6px">${b.sum}</div></div>`).join('')}`:''}
   <div class="card"><b>✅ 끝나면</b><p class="sum">연습지 맨 위에 <b>이름</b> 쓰고 쌤 책상에 내 주세요. 상담 순서가 오면 이 화면이랑 연습지를 같이 봐요.</p></div>
@@ -510,11 +517,13 @@ function summarize(A){
     if(L!=null){sum+=L;cnt++; const s=A.self&&A.self[b.id]; if(s!=null) metaGap.push({b,gap:s-Math.min(L,3),s,L});} }
   const avg=cnt?sum/cnt:null;
   const status = !A.started?'미시작' : (A.fin?'완료' : `${progress(A)}/8`);
+  const nw=BLOCKS.filter(b=>isNew(A,b.id)).map(b=>b.id);
   const re=A.re||{}, rl=Object.values(re), rec={n:rl.length,ok:rl.filter(v=>v.ok&&v.conf!=='찍음').length};
   const why={}; rl.forEach(v=>{ if(v.why) why[v.why]=(why[v.why]||0)+1; });
-  return {lv,fl,avg,cnt,over,lucky,shaky,ms,metaGap,status,n:totalAnswered(A),rec,why};
+  return {lv,fl,avg,cnt,over,lucky,shaky,ms,metaGap,status,n:totalAnswered(A),rec,why,nw};
 }
-function track(avg){ if(avg==null) return ['-','']; if(avg>=3) return ['심화 트랙','개념 설명 시간엔 심화 과제 병행 · 유형은 고난도 위주로'];
+function track(avg,nwN){ if(nwN>=4) return ['선행 없음 트랙','기말 범위 절반 이상이 처음 — 개념 선수업(보강) 따로 편성 · 수업 땐 앞자리·매 시간 개념 확인'];
+  if(avg==null) return ['-','']; if(avg>=3) return ['심화 트랙','개념 설명 시간엔 심화 과제 병행 · 유형은 고난도 위주로'];
   if(avg>=2) return ['유형 트랙','흔들리는 단원만 개념 재확인 → 대표 유형 반복'];
   if(avg>=1) return ['개념 보강 트랙','개념 확인 → 기초·대표 유형 순서로 다시 쌓기'];
   return ['기초 재시작 트랙','처음 배운다는 전제로 개념부터 · 과제 분량 낮추고 확인 횟수 늘리기']; }
@@ -540,6 +549,7 @@ function allRows(){
   ROSTER.filter(n=>!names.has(n)).forEach(n=>rows.push({name:n,A:blank(),missing:true}));
   return rows.map(r=>({...r,S:summarize(r.A)}));
 }
+function cellOf(r,b){ return r.S.nw.includes(b.id)?'<span class="cell" style="background:#55556a;color:#ddd" title="배운 적 없음">미</span>':cell(r.S.lv[b.id]); }
 function cell(L){ return L==null?'<span class="cell na">·</span>':`<span class="cell L${L}">${L}</span>`; }
 function renderTeacher(){
   const tv=$('tv'); if(!tv) return; const rows=allRows();
@@ -553,7 +563,8 @@ function renderTeacher(){
     const low=done.filter(r=>r.S.lv[b.id]!=null&&r.S.lv[b.id]<=1).map(r=>r.name);
     const high=done.filter(r=>r.S.lv[b.id]!=null&&r.S.lv[b.id]>=3).map(r=>r.name);
     const depth = avg==null?'-' : avg<1.5?'<b style="color:var(--bad)">개념부터 풀 설명</b> (정의·예시 충분히)' : avg<2.5?'<b style="color:var(--warn)">핵심 재정리 + 대표 유형</b>' : '<b style="color:var(--good)">개념 짧게 · 유형/심화 중심</b>';
-    return {b,avg,dist,low,high,depth,n:Ls.length};
+    const nwl=rows.filter(r=>r.S.nw.includes(b.id)).map(r=>r.name);
+    return {b,avg,dist,low,high,depth,n:Ls.length,nwl};
   });
   // 학생 표 정렬
   let list=rows.map((r,i)=>({...r,_i:i}));
@@ -567,12 +578,12 @@ function renderTeacher(){
   <h2>학생별</h2>
   <div class="tw"><table><thead><tr>${th('no','#')}${th('name','이름')}${th('prog','진행')}${BLOCKS.map(b=>th(b.id,b.name.replace('·','<br>')+'')).join('')}${th('avg','평균')}${th('over','과신')}${th('lucky','찍음○')}${th('rec','힌트 후 회복')}${th('min','풀이분')}<th class="nos">트랙</th></tr></thead>
   <tbody>${list.map((r,i)=>`<tr class="row" data-n="${E(r.name)}"><td>${i+1}</td><td class="l"><b>${E(r.name)}</b></td><td>${r.missing?'<span class="dim">미시작</span>':E(r.S.status)}</td>
-   ${BLOCKS.map(b=>`<td>${cell(r.S.lv[b.id])}</td>`).join('')}<td><b>${r.S.avg==null?'-':r.S.avg.toFixed(1)}</b></td><td>${r.S.over||''}</td><td>${r.S.lucky||''}</td><td>${r.S.rec.n?`${r.S.rec.ok}/${r.S.rec.n}`:''}</td><td>${r.S.ms?Math.round(r.S.ms/60000):''}</td><td class="sm">${track(r.S.avg)[0]}</td></tr>`).join('')}</tbody></table></div>
+   ${BLOCKS.map(b=>`<td>${cellOf(r,b)}</td>`).join('')}<td><b>${r.S.avg==null?'-':r.S.avg.toFixed(1)}</b></td><td>${r.S.over||''}</td><td>${r.S.lucky||''}</td><td>${r.S.rec.n?`${r.S.rec.ok}/${r.S.rec.n}`:''}</td><td>${r.S.ms?Math.round(r.S.ms/60000):''}</td><td class="sm">${track(r.S.avg,r.S.nw.length)[0]}</td></tr>`).join('')}</tbody></table></div>
   <p class="dim sm">행을 누르면 상담 카드 + 학부모 문구가 열려요. 열 제목을 누르면 정렬.</p>
     `;
   $('cls2').innerHTML=`<h2>반 전체 — 단원별 설명 깊이</h2>
-  <div class="tw"><table><thead><tr><th class="nos">#</th><th class="nos">단원</th><th class="nos">응답</th><th class="nos">평균</th><th class="nos">0/1/2/3/4</th><th class="nos">추천 설명 깊이</th><th class="nos">챙길 학생(0~1)</th><th class="nos">앞서가는 학생(3~4)</th></tr></thead>
-  <tbody>${blockRows.map((x,i)=>`<tr><td>${i+1}</td><td class="l">${E(x.b.name)}</td><td>${x.n}</td><td><b>${x.avg==null?'-':x.avg.toFixed(1)}</b></td><td>${x.dist.join(' / ')}</td><td class="l">${x.depth}</td><td class="l">${E(x.low.join(', '))}</td><td class="l">${E(x.high.join(', '))}</td></tr>`).join('')}</tbody></table></div>
+  <div class="tw"><table><thead><tr><th class="nos">#</th><th class="nos">단원</th><th class="nos">응답</th><th class="nos">평균</th><th class="nos">0/1/2/3/4</th><th class="nos">추천 설명 깊이</th><th class="nos">처음 배우는 학생</th><th class="nos">챙길 학생(0~1)</th><th class="nos">앞서가는 학생(3~4)</th></tr></thead>
+  <tbody>${blockRows.map((x,i)=>`<tr><td>${i+1}</td><td class="l">${E(x.b.name)}</td><td>${x.n}</td><td><b>${x.avg==null?'-':x.avg.toFixed(1)}</b></td><td>${x.dist.join(' / ')}</td><td class="l">${x.depth}</td><td class="l">${E(x.nwl.join(', '))}</td><td class="l">${E(x.low.join(', '))}</td><td class="l">${E(x.high.join(', '))}</td></tr>`).join('')}</tbody></table></div>
   <h2>토큰 없이 푼 학생 결과 코드 붙여넣기</h2>
   <div class="card"><textarea id="code" rows="3" placeholder="학생이 보낸 결과 코드"></textarea><div class="row-tools"><button class="btn ghost" id="imp">불러오기</button></div></div>`;
   tv.querySelectorAll('th[data-k]').forEach(h=>h.onclick=()=>{ const k=h.dataset.k; SORT = SORT.k===k?{k,d:-SORT.d}:{k,d:(k==='name'||k==='no')?1:-1}; renderTeacher(); });
@@ -586,15 +597,19 @@ function parentMsg(r){
   const strong=lvl.filter(x=>x.L>=3).map(x=>x.b.name);
   const ok2=lvl.filter(x=>x.L===2).map(x=>x.b.name);
   const weak=lvl.filter(x=>x.L<=1).map(x=>x.b.name);
-  const notyet=BLOCKS.filter(b=>S.lv[b.id]==null).map(b=>b.name);
+  const notyet=BLOCKS.filter(b=>S.lv[b.id]==null&&!S.nw.includes(b.id)).map(b=>b.name);
+  const nwN=S.nw.map(id=>BMAP[id].name);
   const L=[];
   L.push(`안녕하세요, 어머님. 수학은유강 박유강입니다.`);
   L.push('');
-  L.push(`오늘 ${nm}가 기말고사 범위인 명제~무리함수 단원을 선행 때 배운 만큼 얼마나 기억하고 있는지 확인하는 개념 진단을 봤어요. 단원을 8개로 나눠서, 개념 문항을 맞히면 유형·심화 문항으로 올라가고 막히면 기초 문항으로 내려가는 방식이라 아이가 어디까지 알고 있는지 꽤 또렷하게 보였습니다.`);
+  if(S.nw.length===8) L.push(`오늘 ${nm}와 기말고사 범위(명제~무리함수)를 놓고 지금 상태를 확인하고 상담을 했어요.`);
+  else L.push(`오늘 ${nm}가 기말고사 범위인 명제~무리함수 단원을 선행 때 배운 만큼 얼마나 기억하고 있는지 확인하는 개념 진단을 봤어요. 단원을 8개로 나눠서, 개념 문항을 맞히면 유형·심화 문항으로 올라가고 막히면 기초 문항으로 내려가는 방식이라 아이가 어디까지 알고 있는지 꽤 또렷하게 보였습니다.`);
   L.push('');
   if(strong.length) L.push(`잘 남아 있는 부분: ${strong.join(', ')}\n→ 개념뿐 아니라 대표 유형까지 스스로 풀어냈어요.`);
   if(ok2.length) L.push(`개념은 잡혀 있는 부분: ${ok2.join(', ')}\n→ 개념은 정확한데 유형 문제에서 한 번 더 손이 가야 하는 단계예요.`);
   if(weak.length) L.push(`다시 잡아야 할 부분: ${weak.join(', ')}\n→ 개념 문항에서 흔들려서, 수업에서 개념부터 다시 짚고 확인하겠습니다.`);
+  if(nwN.length===8) L.push(`이번 기말 범위는 아직 한 번도 배운 적이 없는 단원이라, 진단 대신 처음부터 차근차근 배우는 것으로 계획을 세웠어요. 수업과 별도로 개념 보강 시간을 잡아 기말 전까지 진도를 따라잡을 수 있게 하겠습니다.`);
+  else if(nwN.length) L.push(`아직 배운 적이 없는 단원: ${nwN.join(', ')}\n→ 이 부분은 진단에서 빼고, 수업에서 처음부터 설명하겠습니다.${nwN.length>=4?' 범위가 넓어서 수업과 별도로 개념 보강 시간을 잡으려고 해요.':''}`);
   if(notyet.length) L.push(`(${notyet.join(', ')} 단원은 시간이 모자라 다음 시간에 마저 확인할게요.)`);
   L.push('');
   const notes=[];
@@ -612,8 +627,7 @@ function parentMsg(r){
     : avg>=2 ? `개념의 큰 틀은 잡혀 있어서, 흔들리는 단원만 다시 짚고 대표 유형을 반복해서 손에 붙이는 데 집중하겠습니다.`
     : avg>=1 ? `개념이 군데군데 비어 있는 상태라, 기말 전까지 개념 확인 → 기본 유형 순서로 차근차근 다시 쌓아 가겠습니다. 매 수업 시작마다 지난 개념을 짧게 확인하는 리뷰를 하고 있어서 빈틈은 빠르게 메워질 거예요.`
     : `선행 때 배운 내용이 많이 흐려진 상태라, 처음 배운다는 생각으로 개념부터 천천히 다시 잡겠습니다. 지금 시점에 확인한 게 오히려 다행이고, 기말까지 시간은 충분합니다.`;
-  if(plan) L.push(plan);
-  L.push('');
+  if(plan){ L.push(plan); L.push(''); }
   L.push(`궁금하신 점 있으시면 편하게 연락 주세요. 감사합니다.`);
   return L.join('\n');
 }
@@ -621,7 +635,7 @@ function parentMsg(r){
 function showDetail(silent){
   const r=allRows().find(x=>x.name===OPEN); const box=$('detail'); if(!r||!box) return;
   const S=r.S, A=r.A, p=A.pre||{};
-  const tr=track(S.avg);
+  const tr=track(S.avg,S.nw.length);
   const items=[];
   for(const b of BLOCKS) for(const s of ['c1','c2','b','t','h']){ const v=(A.r||{})[b.id+'.'+s]; if(!v) continue;
     const it=b.items[s]; const pos = it.type==='mc'&&v.a? order(b.id+'.'+s,it.o.length,it.fix).indexOf(v.a-1)+1 : null;
@@ -630,6 +644,7 @@ function showDetail(silent){
   const talk=[];
   const weakB=BLOCKS.filter(b=>S.lv[b.id]!=null&&S.lv[b.id]<=1).map(b=>b.name);
   if(weakB.length) talk.push(`약한 단원(${weakB.join(', ')}): 선행 때 이 부분을 어떻게 배웠는지, 어디서부터 기억이 끊기는지 물어보기`);
+  if(S.nw.length) talk.push(`배운 적 없는 단원(${S.nw.map(id=>BMAP[id].name).join(', ')}) — 보강 가능 요일·시간 바로 잡기, 다른 학원·인강 병행 여부 확인`);
   if(S.over>=2) talk.push(`과신 ${S.over}건 — '확실'인데 틀린 문항을 같이 열어 보고 오개념인지 계산 실수인지 구분`);
   if(S.lucky>=2) talk.push(`찍음 정답 ${S.lucky}건 — 정답이라도 근거를 말로 설명해 보게 하기`);
   if(p.stuck==='그냥 넘어간다'||p.stuck==='바로 해설을 본다') talk.push(`막힐 때 '${p.stuck}' — 고민 시간 규칙(예: 5분 고민 → 힌트 → 해설) 약속하기`);
@@ -641,7 +656,7 @@ function showDetail(silent){
   if(p.worry) talk.push(`고민: "${p.worry}"`);
   box.innerHTML=`<div class="card"><div class="top"><h2 style="margin:0">${E(r.name)} — ${E(tr[0])}</h2><button class="btn ghost" style="width:auto;margin:0;padding:6px 12px" id="cls">닫기</button></div>
   <p class="dim sm">${E(tr[1])}</p>
-  <div class="grid2"><div><h3>단원별 레벨</h3>${BLOCKS.map(b=>lvRow(b,S.lv[b.id])).join('')}
+  <div class="grid2"><div><h3>단원별 레벨</h3>${BLOCKS.map(b=>lvRow(b,S.lv[b.id],S.nw.includes(b.id))).join('')}
    <h3>자기 평가 vs 실제</h3><div>${meta||'<span class="dim">-</span>'}</div>
    <h3>문진</h3><div class="kv">${PRE.map(x=>`<div>${E(x.q.replace(/\(.*?\)/g,''))}</div><div>${E(Array.isArray(p[x.k])?p[x.k].join(', '):(p[x.k]||'-'))}</div>`).join('')}
    <div>자신 없는 단원</div><div>${E((A.fin&&A.fin.weak||[]).map(id=>BMAP[id].name).join(', ')||'-')}</div></div></div>
