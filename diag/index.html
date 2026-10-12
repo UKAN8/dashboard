@@ -111,7 +111,14 @@ tr.row{cursor:pointer} tr.row:hover td{background:rgba(255,255,255,.03)}
 const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
 const SKEY='diag_m2_1011';
-const ROSTER=['남궁서우','박시원','박주영','박해성','이명수','이정후','지재환','최시훈','한종혁'];
+// 1012 고1A·고1S 확대 — 교사 화면은 ?admin&ban=고1A 처럼 반별로 본다(기본 고1T).
+const ROSTERS={
+  '고1T':['남궁서우','박시원','박주영','박해성','이명수','이정후','지재환','최시훈','한종혁'],
+  '고1A':['김균영','김도원','김태윤','김현조','도준수','박시후','배정진','백승찬','신효서','이서현','이지환','정라함','황세원'],
+  '고1S':['권유민','김민기','김성윤','김지윤','방승원','이수민','임현서','전윤호','조아영','최건','김유래'],
+};
+const BAN=(()=>{ const b=(new URLSearchParams(location.search).get('ban')||'고1T').trim(); return ROSTERS[b]?b:'고1T'; })();
+const ROSTER=ROSTERS[BAN];
 let sb=null; try{ sb=supabase.createClient(SB_URL,SB_ANON); }catch(e){}
 const E=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 const $=id=>document.getElementById(id);
@@ -529,7 +536,7 @@ function track(avg,nwN){ if(nwN>=4) return ['선행 없음 트랙','기말 범�
   return ['기초 재시작 트랙','처음 배운다는 전제로 개념부터 · 과제 분량 낮추고 확인 횟수 늘리기']; }
 
 async function teacher(){
-  view(`<div class="brand">수학은유강 · 개념 진단 결과 (교사)</div><h1>고1T 기말 범위 개념 진단</h1><p class="dim" id="st">불러오는 중…</p><div id="tv"></div><div id="detail"></div><div id="cls2"></div>`,true);
+  view(`<div class="brand">수학은유강 · 개념 진단 결과 (교사)</div><h1>${BAN} 기말 범위 개념 진단</h1><p class="sm">${Object.keys(ROSTERS).map(b=>b===BAN?`<b>${b}</b>`:`<a href="?admin&ban=${encodeURIComponent(b)}" style="color:var(--acc)">${b}</a>`).join(' · ')}</p><p class="dim" id="st">불러오는 중…</p><div id="tv"></div><div id="detail"></div><div id="cls2"></div>`,true);
   let sess=null; try{ sess=(await sb.auth.getSession()).data.session; }catch(e){}
   if(!sess){ $('st').innerHTML=`대시보드 로그인이 필요해요. <a href="/dashboard/" style="color:var(--acc)">대시보드</a>에서 로그인한 뒤 이 페이지를 새로고침하세요.`; renderTeacher(); return; }
   await load(); AUTO=setInterval(load,20000);
@@ -538,7 +545,7 @@ async function load(){
   try{
     const {data,error}=await sb.from('survey_response').select('*').eq('설문키',SKEY);
     if(error) throw error;
-    ROWS=(data||[]).map(r=>({sid:r['학생ID'],name:(r['학생ID']||'').split('_')[0]||r['학생ID'],ban:r['반'],A:r['답'],at:r['제출시각']}));
+    ROWS=(data||[]).filter(r=>String(r['반']||'').trim().startsWith(BAN)).map(r=>({sid:r['학생ID'],name:(r['학생ID']||'').split('_')[0]||r['학생ID'],ban:r['반'],A:r['답'],at:r['제출시각']}));
     $('st').textContent=`응답 ${ROWS.length}명 · ${new Date().toLocaleTimeString('ko-KR')} 갱신 (20초마다 자동)`;
   }catch(e){ $('st').textContent='읽기 실패: '+(e.message||e)+' — 관리자 계정으로 로그인했는지 확인하세요.'; }
   renderTeacher();
