@@ -548,7 +548,7 @@ function render(d){
 
   // ⓪-00 기말 범위 개념 진단 (1011 유강 "포털 최상단 카드로") — 명제~무리함수 선행 잔존도 적응형 진단. 기록은 survey_open/submit(설문키 diag_m2_1011).
   //    페이지 = _diag/ (build_diag.py). 지금은 고1T 만. 다른 반으로 넓히면 아래 정규식을 고친다.
-  if(/^고1[TAS]/.test(String(d.학생.반||'').trim())){  // 1012 고1A·고1S 확대
+  if(/^고1[TAS]/.test(String(d.학생.반||'').trim()) && !/고림/.test(String(d.학생.학교||''))){  // 1012 고1A·고1S 확대, 고림고 숨김(시험 중)
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const durl=`https://ukan8.github.io/dashboard/diag/?t=${encodeURIComponent(tk)}`;
     H.push(`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
