@@ -124,6 +124,40 @@ svg.spark{display:block;margin-top:6px}
 .grow .ld{color:var(--acc);font-size:12.5px;font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
 .lib-more{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
 .hb-h{display:flex;flex-direction:column;gap:2px;margin:2px 0 8px}.hb-h b{font-size:15px}.hb-h span{font-size:12px;color:#6b7280}
+/* ── 기말 모드 (1015) ── */
+:root{--fx-g:#8fe0b0;--fx-o:rgba(143,224,176,.42);--fx-r:rgba(255,92,138,.62)}
+.fx-hero{margin:4px 0 6px;border-radius:18px;padding:16px 16px 14px;background:linear-gradient(135deg,rgba(245,160,160,.20),rgba(245,160,160,.05));border:1px solid rgba(245,160,160,.5)}
+.fx-hero .t{font-size:12px;color:var(--acc);font-weight:700;letter-spacing:.06em}
+.fx-hero .dd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px}
+.fx-hero .dd b{font-size:38px;font-weight:800;line-height:1.1}
+.fx-hero .dd span{font-size:13px;color:#e2e2e8;font-weight:600}
+.fx-hero .road{display:flex;gap:4px;margin-top:12px}
+.fx-hero .road div{flex:1;min-width:0;text-align:center;font-size:11px;font-weight:700;padding:7px 2px;border-radius:7px;background:rgba(255,255,255,.06);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-hero .road div.done{background:rgba(143,224,176,.16);color:var(--fx-g)}
+.fx-hero .road div.now{background:var(--acc);color:#1a0d10}
+.fx-hero .road div.next{border:1px solid var(--acc);color:#ffd9d9;background:none}
+.fx-hero .nx{font-size:12.5px;color:#d7d7de;margin-top:10px;line-height:1.6}
+.fx-hero .nx b{color:#fff}.fx-hero .sep{color:var(--dim)}
+.fx-un{display:grid;grid-template-columns:minmax(0,92px) 1fr 44px;gap:8px;align-items:center;font-size:13px;font-weight:700;padding:6px 0}
+.fx-un .u{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-un .p{text-align:right;color:var(--tx2);font-size:12px;font-variant-numeric:tabular-nums}
+.fx-bar{height:9px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;display:flex}
+.fx-bar i{display:block;height:100%}.fx-bar .g{background:var(--fx-g)}.fx-bar .o{background:var(--fx-o)}.fx-bar .r{background:var(--fx-r)}
+.fx-lg{font-size:11px;color:var(--dim);margin-top:6px}
+.fx-lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 4px 0 9px}
+.fx-lg i:first-child{margin-left:0}
+.fx-weak{margin-top:9px;padding-top:9px;border-top:1px solid var(--bd);font-size:12.5px;color:#d7d7de;line-height:1.7}
+.fx-weak b{color:var(--acc)}
+.fx-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.fx-mh b{font-size:15px}
+.fx-mk{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:5px;margin-top:10px}
+.fx-mk div{border-radius:9px;background:rgba(255,255,255,.05);text-align:center;padding:6px 0}
+.fx-mk div span{display:block;font-size:10.5px;color:var(--dim)}
+.fx-mk div b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.fx-mk div.e b{color:var(--dim);font-size:11.5px;font-weight:600;line-height:22px}
+.fx-fold{display:flex;justify-content:space-between;width:100%;background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:12px 15px;margin-bottom:8px;color:var(--tx2);font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left}
+.fx-fold i{font-style:normal;color:var(--dim);font-size:12px;font-weight:600}
+.fx-fb{display:none;margin-bottom:12px}.fx-fb.open{display:block}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -536,75 +570,57 @@ function spark(pts,w=280,h=64){
     +`</svg>`;
 }
 
-/* ── 화면 ── */
-const MINIMAL=true;   // (0902 유강) 자기평가 카드만. 0906 정리: 하위 전체 화면 코드는 07_보관/콘솔정리_0906/portal.html 에 있다
-function render(d){
-  const H=[];
-
-  H.push(`<div class="brand">수학은유강</div>`
+/* (1015) 화면 조각 — 평소 화면(render)과 기말 모드(renderFinal)가 같은 조각을 쓴다 */
+function partsOf(d){
+  const P={};
+  P.head=`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(d.학생.이름)}</b>`
     +`<span class="ban">${E(d.학생.반||'')}</span></div>`
-    +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 나의 기록만 보여줍니다</div>`);
-
+    +`<div class="asof">${E(dfmt(d.기준일))} 기준 · 이 화면은 나의 기록만 보여줍니다</div>`;
   // ⓪-00 기말 범위 개념 진단 (1011 유강 "포털 최상단 카드로") — 명제~무리함수 선행 잔존도 적응형 진단. 기록은 survey_open/submit(설문키 diag_m2_1011).
-  //    페이지 = _diag/ (build_diag.py). 지금은 고1T 만. 다른 반으로 넓히면 아래 정규식을 고친다.
-  if(/^고1[TAS]/.test(String(d.학생.반||'').trim()) && !/고림/.test(String(d.학생.학교||''))){  // 1012 고1A·고1S 확대, 고림고 숨김(시험 중)
+  //    페이지 = _diag/ (build_diag.py). 1012 고1A·고1S 확대, 고림고 숨김(시험 중).
+  P.diag='';
+  if(/^고1[TAS]/.test(String(d.학생.반||'').trim()) && !/고림/.test(String(d.학생.학교||''))){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const durl=`https://ukan8.github.io/dashboard/diag/?t=${encodeURIComponent(tk)}`;
-    H.push(`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
+    P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
       +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 명제~무리함수 · 약 50분 · 이어서 하기 가능</span></span>`
-      +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`);
+      +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
   }
-  // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — 맨 위 카드. lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
-  H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
-
-  // ⓪ 오늘 기출테스트 자기평가 (0902) — 시험 직후 답안지 걷자마자 폰으로.
-  //    정보는 gt_eval_open 이 따로 준다(portal_view 는 손대지 않았다). 없으면 아무것도 안 그린다.
-  const G=d.자평||null;
-  const open=!!(G && !G.없음);
+  // ⓪ 오늘 기출테스트 자기평가 (0902) — 시험 직후 답안지 걷자마자 폰으로. 정보는 gt_eval_open 이 따로 준다.
+  const G=d.자평||null, open=!!(G && !G.없음);
+  P.eval=''; P.evalNone='';
   if(open){
     const url=`https://ukan8.github.io/dashboard/eval/?t=${encodeURIComponent(d.토큰||'')}`;
     if(G.제출함 && G.제출시각)   // (0911) 제출시각까지 확인 — v22 gt_eval_open 의 found 오염 방어(eval.html 과 동일)
-      H.push(`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">오늘 기출테스트 자기평가 <b class="good">제출 완료</b></span>`
-        +`<a class="n dim" href="${E(url)}" style="text-decoration:none">고치기</a></div></div>`);
+      P.eval=`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">오늘 기출테스트 자기평가 <b class="good">제출 완료</b></span>`
+        +`<a class="n dim" href="${E(url)}" style="text-decoration:none">고치기</a></div></div>`;
     else
-      H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.08)">`
+      P.eval=`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.08)">`
         +`<div class="row"><span class="t"><b>오늘 기출테스트 자기평가</b><span class="dim"> 문항마다 내 답 + 확신 · 2분</span></span>`
-        +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`);
-  }
-  else
-    H.push(`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`);
-  // ⓪-1 CORE 루프 (1009, P11) — 개념→유형 마스터리(수업 리뷰 5문항 · 저녁 루프 · 단원 지도). 기록은 mastery_open/mastery_submit(schema_v36).
-  //    고1(공수2 07~)·고2(미적1 05~) 기말 범위. 페이지 = _core/ (build_core.py).
-  //    ⚠ (1010) /dashboard/core/ 가 아직 배포 전이라 카드가 404 로 갔다 → CORE_ON=true 로 바꾸고 build_core.py --deploy 뒤에 연다.
+        +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
+  } else P.evalNone=`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`;
+  // ⓪-1 CORE 루프 (1009, P11). ⚠ (1010) /dashboard/core/ 배포 전 → CORE_ON=false. 열 때: build_core.py --deploy 뒤 true.
   const CORE_ON=false;
+  P.core='';
   if(CORE_ON && /^고[12]/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const curl=`https://ukan8.github.io/dashboard/core/?t=${encodeURIComponent(tk)}`;
-    H.push(`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
+    P.core=`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
       +`<span class="t"><b>CORE 루프</b><span class="dim"> 수업 리뷰 · 오늘의 루프 · 단원 지도</span></span>`
-      +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`);
+      +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`;
   }
-  // ⓪-2 개념의 탑 (0930) — 교과서 개념 OX 점검(층=소절, 탈락 없음). 기록은 tower_open/tower_submit(schema_v31).
-  //    지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만 보인다. 새 세트가 생기면 여기 조건을 넓힌다.
+  // ⓪-2 개념의 탑 (0930) — 지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만.
+  P.tower='';
   if(/^고1/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const turl=`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`;
-    H.push(`<div class="card" style="border-color:rgba(232,197,106,.4)"><div class="row">`
+    P.tower=`<div class="card" style="border-color:rgba(232,197,106,.4)"><div class="row">`
       +`<span class="t"><b>개념의 탑</b><span class="dim"> 평면좌표~집합의 연산 · 교과서 개념 OX 17층</span></span>`
-      +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:800">오르기 →</a></div></div>`);
+      +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:800">오르기 →</a></div></div>`;
   }
-  // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
-  H.push(`<div id="pr-host"></div>`);
-  H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
-  // ③ 수업 자료 (0927) — 수업 영상(유튜브 일부공개) + 기출테스트 시험지·손풀이 해설 PDF.
-  //    정적 목록(mathis-lib/lib.json, build_lib.py 산출)을 읽는다. 표(DB)는 안 건드린다.
-  //    내 반 것만, 탭 없이 수업일 순 한 목록(유강 0928).
-  H.push(`<h2>수업 자료</h2>`
-    +`<div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
-  // ② 오류 신고 (0913) — 루프·PT·기출테스트 등 받은 자료에 문제가 있으면 여기서 바로 적는다.
-  //    저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
-  H.push(`<h2>오류 신고</h2>`
+  // ② 오류 신고 (0913) — 저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
+  P.report=`<h2>오류 신고</h2>`
     +`<div class="card" id="rpt-card">`
     +`<button class="rpt-btn" id="rpt-open" type="button">받은 자료에 문제가 있나요? 여기서 알려 주세요<small>정답이 틀림 · 그림이 깨짐 · 링크가 안 열림 · 해설이 잘림 · 같은 문제가 두 번 … 밤에 확인해서 고칩니다</small></button>`
     +`<form id="rpt-form" autocomplete="off">`
@@ -617,16 +633,234 @@ function render(d){
     +`<div id="rpt-msg"></div>`
     +`</form>`
     +`<div id="rpt-list"></div>`
-    +`</div>`);
-  H.push(`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.</div>`);
+    +`</div>`;
+  P.foot=`<div class="foot"><b>이 주소는 ${E(d.학생.이름)} 개인 링크입니다.</b> 다른 사람에게 전달하지 마세요.</div>`;
+  return P;
+}
+
+/* ── 화면 ── */
+const MINIMAL=true;   // (0902 유강) 자기평가 카드만. 0906 정리: 하위 전체 화면 코드는 07_보관/콘솔정리_0906/portal.html 에 있다
+function render(d){
+  const P=partsOf(d);
+  const tok=d.토큰||new URLSearchParams(location.search).get('t')||'';
+  const ban=String(d.학생.반||'').trim(), school=String(d.학생.학교||'').trim();
+  // (1015) 기말 모드 — 반별 정규수업 첫날부터 자동 전환
+  if(finalOn(d)){
+    const o=renderFinal(d,P);
+    wireReport(tok);
+    mountLib($('lib-host'), ban, school, {from:o.from});
+    $('msg').style.display='none'; $('app').style.display='';
+    document.title=`${d.학생.이름} · 수학은유강`;
+    return;
+  }
+  const H=[];
+  H.push(P.head);
+  H.push(P.diag);
+  // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — 맨 위 카드. lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
+  H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
+  H.push(P.eval||P.evalNone);
+  H.push(P.core);
+  H.push(P.tower);
+  // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
+  H.push(`<div id="pr-host"></div>`);
+  H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+  // ③ 수업 자료 (0927) — 정적 목록(mathis-lib/lib.json)을 읽는다. 내 반 것만, 수업일 순 한 목록(유강 0928).
+  H.push(`<h2>수업 자료</h2>`
+    +`<div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
+  H.push(P.report);
+  H.push(P.foot);
   $('app').innerHTML=H.join('');
-  wireReport(d.토큰||new URLSearchParams(location.search).get('t')||'');
-  mountLib($('lib-host'), String(d.학생.반||'').trim(), String(d.학생.학교||'').trim());
+  wireReport(tok);
+  mountLib($('lib-host'), ban, school);
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
   catch(e){ $('pr-host').innerHTML='<div class="none">기출테스트 기록을 그리지 못했습니다. 잠시 뒤 다시 열어 주세요.</div>'; }
   $('msg').style.display='none'; $('app').style.display='';
   document.title=`${d.학생.이름} · 수학은유강`;
+}
+
+/* ── 기말 모드 (1015 유강) ─────────────────────────────────────────────────────
+ * 반별 정규수업 첫날(final_mode.json '시작')부터 포털 첫 화면을 기말 대비 구성으로 바꾼다.
+ *   ① 기말 대시: 내 학교 D-day + 단원 로드맵 + 다음 수업   ② 오늘 할 일(열린 것만)
+ *   ③ 내 기말 준비도: CORE 단원별 '졸업 비율' 그대로(유강 결정) + 먼저 잡을 것
+ *   ④ 기출 모의: 시작일 뒤 회차만. 추정등급은 기말 회차가 '추정등급_최소회차'(3) 이상 + 모델 유효일 때만, 아니면 숨김
+ *   ⑤ 기말 자료(시작일 뒤 수업 자료)   ⑥ 지난 기록(접힘)
+ * 설정 = _portal/final_mode.json, CORE 키 = _core/bank_core.json — 둘 다 build_portal.py 가 끼워 넣는다.
+ * 미리보기: 주소에 &final=1 (시작 전에도 기말 모드), &final=0 (강제로 끔), &today=YYYY-MM-DD.
+ */
+const FINAL={"학기": "2학기 기말", "추정등급_최소회차": 3, "반": {"고1T": {"시작": "2026-10-17", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-17", "2026-10-18"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-24", "2026-10-25", "2026-10-31"], "메모": {"2026-10-31": "역함수·합성함수"}}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-01", "2026-11-07", "2026-11-08"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-14", "2026-11-15"]}], "모의": ["2026-11-21", "2026-11-22", "2026-11-28", "2026-11-29", "2026-12-05", "2026-12-06"]}, "고1A": {"같음": "고1S"}, "고1S": {"시작": "2026-10-19", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-19", "2026-10-21", "2026-10-23"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-26", "2026-10-28", "2026-10-30", "2026-11-02"]}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-04", "2026-11-06", "2026-11-09"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-11", "2026-11-13"]}], "모의": ["2026-11-16", "2026-11-18", "2026-11-20", "2026-11-23", "2026-11-25", "2026-11-27", "2026-11-30", "2026-12-02", "2026-12-04", "2026-12-07"]}, "고2A": {"시작": "2026-10-20", "과목": "미적분Ⅰ", "core": "core_c1", "진도": [{"단원": "05 도함수의 활용(2)", "core": "m05", "날짜": ["2026-10-20", "2026-10-22"]}, {"단원": "06 도함수의 활용(3)", "core": "m06", "날짜": ["2026-10-24", "2026-10-27", "2026-10-29"]}, {"단원": "07 부정적분", "core": "m07", "날짜": ["2026-10-31"]}, {"단원": "08 정적분", "core": "m08", "날짜": ["2026-11-03", "2026-11-05"]}, {"단원": "09 정적분의 활용", "core": "m09", "날짜": ["2026-11-07", "2026-11-10"]}], "모의": ["2026-11-12", "2026-11-14", "2026-11-17", "2026-11-19", "2026-11-21", "2026-11-24", "2026-11-26", "2026-11-28", "2026-12-01", "2026-12-03", "2026-12-05", "2026-12-08"]}}, "학교": {"태성고": {"기말시작": "2026-12-09", "기말끝": "2026-12-16", "수학": null}, "용인고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": null}, "진덕고": {"기말시작": "2026-12-10", "기말끝": "2026-12-15", "수학": null}, "삼계고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": null}, "고림고": {"기말시작": "2026-12-14", "기말끝": "2026-12-18", "수학": null}, "효양고": {"기말시작": null, "기말끝": null, "수학": null}, "포곡고": {"기말시작": null, "기말끝": null, "수학": null}}};
+const CORE_KEYS={"_need": {"C": 2, "T": 1}, "_gap": 3, "core_m2": {"units": [{"code": "07", "keys": [{"k": "C07-01", "t": "명제와 조건"}, {"k": "T07-01", "t": "명제와 조건의 부정"}, {"k": "T07-02", "t": "진리집합과 명제의 참·거짓"}, {"k": "T07-03", "t": "거짓인 명제의 반례"}, {"k": "C07-02", "t": "명제의 참·거짓과 역·대우"}, {"k": "T07-04", "t": "참이 되도록 하는 미지수"}, {"k": "T07-05", "t": "'모든'과 '어떤'이 있는 명제"}, {"k": "T07-06", "t": "명제의 역과 대우"}, {"k": "T07-07", "t": "대우가 참이 되게 하는 미지수"}, {"k": "T07-08", "t": "삼단논법과 명제의 추론"}, {"k": "C07-03", "t": "충분조건과 필요조건"}, {"k": "T07-09", "t": "충분·필요·필요충분조건"}, {"k": "T07-10", "t": "조건이 되게 하는 미지수와 연산"}, {"k": "C07-04", "t": "명제의 증명과 절대부등식"}, {"k": "T07-11", "t": "대우법과 귀류법"}, {"k": "T07-12", "t": "절대부등식의 증명"}, {"k": "T07-13", "t": "산술·기하평균 : 전개와 변형"}, {"k": "T07-14", "t": "산술·기하평균 : 합·곱이 일정"}, {"k": "T07-15", "t": "코시-슈바르츠 부등식"}]}]}, "core_c1": {"units": [{"code": "m05", "keys": [{"k": "Cm05-01", "t": "함수의 증가와 감소"}, {"k": "Tm05-01", "t": "함수의 증가와 감소"}, {"k": "Tm05-02", "t": "실수 전체에서 증가 또는 감소할 조건"}, {"k": "Tm05-03", "t": "주어진 구간에서 증가 또는 감소할 조건"}, {"k": "Cm05-02", "t": "함수의 극대와 극소"}, {"k": "Tm05-04", "t": "함수의 극대와 극소"}, {"k": "Tm05-05", "t": "극대와 극소를 이용한 미정계수의 결정"}, {"k": "Tm05-06", "t": "극대와 극소의 활용"}, {"k": "Tm05-07", "t": "극값을 이용한 삼차함수의 계수의 부호"}, {"k": "Cm05-03", "t": "도함수의 그래프와 함수의 그래프"}, {"k": "Tm05-08", "t": "도함수의 그래프를 이용한 극대와 극소"}, {"k": "Tm05-09", "t": "도함수의 그래프와 함수의 그래프 해석"}, {"k": "Tm05-10", "t": "도함수의 그래프로 함수의 그래프 그리기"}, {"k": "Cm05-04", "t": "극값을 가질 조건"}, {"k": "Tm05-11", "t": "삼차함수가 극값을 가질 조건"}, {"k": "Tm05-12", "t": "삼차함수가 극값을 갖지 않을 조건"}, {"k": "Tm05-13", "t": "삼차함수가 주어진 구간에서 극값을 가질 조건"}, {"k": "Tm05-14", "t": "사차함수의 극값의 조건"}, {"k": "Cm05-05", "t": "함수의 최대와 최소"}, {"k": "Tm05-15", "t": "함수의 최대와 최소"}, {"k": "Tm05-16", "t": "최대와 최소를 이용한 미정계수의 결정"}, {"k": "Tm05-17", "t": "최대와 최소의 활용"}]}]}};
+const QP=new URLSearchParams(location.search);
+const dn=s=>{const[y,m,d]=String(s).slice(0,10).split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5);};
+const sd=s=>{const[y,m,d]=String(s).split('-').map(Number);return `${m}/${d}(${DOW[new Date(y,m-1,d).getDay()]})`;};
+const todayOf=d=>(QP.get('today')||String(d.기준일||'').slice(0,10)||new Date(Date.now()+9*36e5).toISOString().slice(0,10));
+function finalCfg(ban){
+  if(!FINAL||!FINAL.반) return null;
+  let c=FINAL.반[ban]; if(c&&c.같음) c=FINAL.반[c.같음];
+  return c||null;
+}
+function finalOn(d){
+  if(QP.get('final')==='0') return false;
+  const c=finalCfg(String(d.학생.반||'').trim());
+  if(!c) return false;
+  if(QP.get('final')==='1') return true;
+  return todayOf(d)>=c.시작;
+}
+const schoolKey=s=>String(s||'').trim().replace(/고등학교$|고$/,'');
+function schoolInfo(name){
+  if(!FINAL||!FINAL.학교) return null;
+  const k=schoolKey(name); if(!k) return null;
+  const hit=Object.keys(FINAL.학교).find(x=>schoolKey(x)===k);
+  return hit?{이름:hit,...FINAL.학교[hit]}:null;
+}
+/* z → 등급 범위 — SQL gt_grade_range(schema_v18) 과 같은 규칙 */
+function gradeRange(z,M){
+  if(z==null||!M||!M.유효||!(M.경계||[]).length) return null;
+  const band=Number(M.폭)||0.25; let g=Number(M.경계[0].좋은);
+  M.경계.forEach(b=>{ if(z<Number(b.z)) g=Number(b.나쁜); });
+  let lo=g,hi=g;
+  M.경계.forEach(b=>{ if(Math.abs(z-Number(b.z))<band){ lo=Math.min(lo,Number(b.좋은)); hi=Math.max(hi,Number(b.나쁜)); } });
+  return [lo,hi];
+}
+/* 기말 회차만 남긴 기출 블록. 추정등급은 충분할 때만(유강 1015) — 아니면 회차 등급까지 지운다 */
+function finalGichul(g,start){
+  g=g||{회차:[]};
+  const R=(g.회차||[]).filter(r=>String(r.날짜||'')>=start);
+  const zs=R.map(r=>r.z==null?null:Number(r.z)).filter(v=>v!=null&&isFinite(v));
+  const need=Number((FINAL||{}).추정등급_최소회차)||3;
+  const ok=zs.length>=need && g.모델 && g.모델.유효;
+  const last=zs.slice(-4), cur=last.length?last.reduce((a,b)=>a+b,0)/last.length:null;
+  const gr=ok?gradeRange(cur,g.모델):null;
+  return {...g, 회차: gr?R:R.map(r=>({...r,등급:null})),
+    흐름: gr?{현재z:Math.round(cur*100)/100,회차수:R.length,등급:gr,앵커:(g.흐름||{}).앵커}:{회차수:R.length},
+    _충분:!!gr};
+}
+/* CORE 상태 — core.html keyState 와 같은 규칙 */
+function coreState(log,k,need,gap){
+  const rows=log.filter(r=>r[0]===k);
+  if(!rows.length) return 'new';
+  let lf=-1; rows.forEach((r,i)=>{ if(!(r[2]&&r[3]==='확실')) lf=i; });
+  const first=new Set(), per={};
+  rows.forEach((r,i)=>{ const d=String(r[5]).slice(0,10), id=d+'|'+r[1]; const f=!first.has(id); first.add(id);
+    if(i>lf && f && r[2] && r[3]==='확실') (per[d]=per[d]||new Set()).add(r[1]); });
+  const days=Object.keys(per).filter(d=>per[d].size>=need).sort();
+  if(days.length>=2 && dn(days[days.length-1])-dn(days[0])>=gap) return 'grad';
+  if(days.length>=1) return 'one';
+  return lf>=0?'fail':'try';
+}
+function roadmap(c,today){
+  const units=c.진도.map(u=>({이름:u.단원,짧게:u.단원.replace(/\(.*\)/,'').replace(/^(\d+)\s*/,'$1 ').trim(),첫:u.날짜[0],끝:u.날짜[u.날짜.length-1]}));
+  units.push({이름:'기출 모의',짧게:'기출 모의',첫:c.모의[0],끝:c.모의[c.모의.length-1]});
+  const nowIdx=units.findIndex(u=>u.끝>=today);
+  return units.map((u,i)=>({...u,st:nowIdx<0||i<nowIdx?'done':i===nowIdx?(u.첫<=today?'now':'next'):'later'}));
+}
+function nextLesson(c,today){
+  const L=[];
+  c.진도.forEach(u=>u.날짜.forEach(d=>L.push({d,t:u.단원+((u.메모||{})[d]?` (${u.메모[d]})`:'')})));
+  c.모의.forEach((d,i)=>L.push({d,t:`기출 모의 ${i+1}회`}));
+  L.sort((a,b)=>a.d.localeCompare(b.d));
+  return L.find(x=>x.d>=today)||null;
+}
+function heroCard(d,c,today){
+  const sc=schoolInfo(d.학생.학교);
+  let dday='', sub='';
+  const tgt=sc&&(sc.수학||sc.기말시작);
+  if(tgt){
+    const n=dn(tgt)-dn(today);
+    dday=n>0?`D-${n}`:n===0?'D-DAY':'시험 기간';
+    sub=sc.수학?`${E(sc.이름)} 수학 시험 · ${sd(sc.수학)}`:`${E(sc.이름)} 기말고사 시작 · ${sd(sc.기말시작)}`;
+  }else{
+    dday='D-?'; sub=`${sc?E(sc.이름)+' ':''}기말 일정이 나오면 여기에 표시돼요`;
+  }
+  const rm=roadmap(c,today);
+  const nx=nextLesson(c,today);
+  const mockStart=c.모의[0];
+  return `<div class="fx-hero">`
+    +`<div class="t">${E(FINAL.학기||'기말')} 대비 · ${E(c.과목||'')}</div>`
+    +`<div class="dd"><b>${dday}</b><span>${sub}</span></div>`
+    +`<div class="road">${rm.map(u=>`<div class="${u.st}">${E(u.짧게)}</div>`).join('')}</div>`
+    +`<div class="nx">${nx?`다음 수업 <b>${sd(nx.d)}</b> ${E(nx.t)}`:'정규 진도와 기출 모의를 모두 마쳤어요'}`
+    +`${mockStart>today?` <span class="sep">·</span> 기출 모의 ${sd(mockStart)}부터 ${c.모의.length}회`:''}</div>`
+    +`</div>`;
+}
+function readyCardShell(c){
+  return `<h2>내 기말 준비도<small>개념·유형 졸업 비율</small></h2><div class="card" id="fx-ready">`
+    +c.진도.map(u=>`<div class="fx-un"><span class="u">${E(u.단원.replace(/\(.*\)/,'').trim())}</span><div class="fx-bar"></div><span class="p">—</span></div>`).join('')
+    +`<div class="note">불러오는 중…</div></div>`;
+}
+async function mountReady(c,tok,today){
+  const box=$('fx-ready'); if(!box) return;
+  const set=CORE_KEYS&&CORE_KEYS[c.core];
+  let log=null;
+  if(set){ try{ const r=await sb.rpc('mastery_open',{tok,skey:c.core}); if(r&&r.data&&!r.error) log=(r.data.기록||[]); }catch(e){} }
+  const need=(CORE_KEYS&&CORE_KEYS._need)||{C:2,T:1}, gap=(CORE_KEYS&&CORE_KEYS._gap)||3;
+  const weak=[];
+  let anyLog=!!(log&&log.length);
+  const rows=c.진도.map(u=>{
+    const name=u.단원.replace(/\(.*\)/,'').trim();
+    const U=set&&(set.units||[]).find(x=>x.code===u.core);
+    const opened=u.날짜[0]<=today;
+    if(!U||!log) return `<div class="fx-un"><span class="u">${E(name)}</span><div class="fx-bar"></div><span class="p dim">${opened?'—':'수업 후'}</span></div>`;
+    const keys=U.keys; const cnt={grad:0,one:0,fail:0};
+    keys.forEach(k=>{ const s=coreState(log,k.k,k.k[0]==='C'?need.C:need.T,gap);
+      if(s in cnt) cnt[s]++;
+      if(s==='fail') weak.push({t:k.t,u:name}); });
+    const n=keys.length||1, pg=Math.round(cnt.grad/n*100);
+    const w=x=>(x/n*100).toFixed(1)+'%';
+    return `<div class="fx-un"><span class="u">${E(name)}</span><div class="fx-bar"><i class="g" style="width:${w(cnt.grad)}"></i><i class="o" style="width:${w(cnt.one)}"></i><i class="r" style="width:${w(cnt.fail)}"></i></div>`
+      +`<span class="p">${opened||cnt.grad+cnt.one+cnt.fail?pg+'%':'수업 후'}</span></div>`;
+  });
+  box.innerHTML=rows.join('')
+    +`<div class="fx-lg"><i style="background:var(--fx-g)"></i>졸업<i style="background:var(--fx-o)"></i>1회 통과<i style="background:var(--fx-r)"></i>다시</div>`
+    +(weak.length?`<div class="fx-weak">먼저 잡을 것 ${weak.slice(0,3).map(x=>`<b>${E(x.t)}</b>`).join(' · ')}</div>`:'')
+    +`<div class="note">${anyLog?'졸업 = 서로 다른 날 두 번 이상, 확실하게 맞힌 개념·유형이에요. 단원 칸 수 중 졸업한 비율이에요.'
+      :'수업 리뷰·오늘의 루프를 시작하면 단원별 졸업 비율이 여기에 쌓여요.'}</div>`;
+}
+function mockCard(c,G,today){
+  const R=G.회차||[];
+  const cells=c.모의.map((d,i)=>{ const r=R[i]; return r?`<div><span>${i+1}회</span><b>${E(String(Math.round(Number(r.점수)*10)/10))}</b></div>`
+      :`<div class="e"><span>${i+1}회</span><b>${d>=today?sd(d).replace(/\(.\)/,''):'—'}</b></div>`; }).join('');
+  return `<div class="card"><div class="fx-mh"><b>기출 모의 ${R.length} / ${c.모의.length}회</b>`
+    +`<span class="dim">${R.length?'':`${sd(c.모의[0])}부터 시작`}</span></div><div class="fx-mk">${cells}</div>`
+    +(R.length&&!G._충분?`<div class="note">추정 등급은 기출 모의가 ${Number((FINAL||{}).추정등급_최소회차)||3}회 이상 쌓이면 표시돼요.</div>`:'')+`</div>`;
+}
+function foldBtn(id,label){
+  return `<button type="button" class="fx-fold" data-fold="${id}"><span>${label}</span><i>펼치기 ⌄</i></button><div class="fx-fb" id="${id}"></div>`;
+}
+function renderFinal(d,parts){
+  const ban=String(d.학생.반||'').trim(), c=finalCfg(ban), today=todayOf(d);
+  const tok=QP.get('t')||d.토큰||'';
+  const H=[];
+  H.push(parts.head);
+  H.push(heroCard(d,c,today));
+  const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
+  H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 수업 리뷰·기출 모의 날 여기에 버튼이 떠요.</div>`)
+    +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
+  H.push(readyCardShell(c));
+  const G=finalGichul(d.기출,c.시작);
+  H.push(`<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''));
+  H.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
+  H.push(`<h2>지난 기록</h2>`
+    +foldBtn('fx-old-pr','지난 기출테스트 기록')
+    +foldBtn('fx-old-lib','지난 수업 자료')
+    +(parts.tower?foldBtn('fx-old-tw','개념의 탑'):''));
+  H.push(parts.report);
+  H.push(parts.foot);
+  $('app').innerHTML=H.join('');
+  // 접힘 — <details> 는 폰에서 안 눌린 적이 있다(0926) → 버튼 + 클래스
+  const filled={};
+  $('app').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.fold, box=$(id), open=!box.classList.contains('open');
+    box.classList.toggle('open',open); b.querySelector('i').textContent=open?'접기 ⌃':'펼치기 ⌄';
+    if(open&&!filled[id]){ filled[id]=1;
+      if(id==='fx-old-pr'){ try{ PR.mount(box,d,{staff:false}); }catch(e){ box.innerHTML='<div class="none">기록을 그리지 못했어요.</div>'; } }
+      if(id==='fx-old-lib'){ box.innerHTML='<div class="card" id="lib-old"></div>'; drawLib($('lib-old'),{to:c.시작}); }
+      if(id==='fx-old-tw'){ box.innerHTML=parts.tower; }
+    }
+  });
+  if(G.회차.length){ try{ PR.mount($('fx-pr'),{...d,기출:G},{staff:false}); }catch(e){} }
+  mountReady(c,tok,today);
+  return {from:c.시작};
 }
 
 /* ── 수업 자료 (0927) ──
@@ -636,19 +870,22 @@ const LIB_URL='https://ukan8.github.io/mathis-lib/';
 const LIB={data:null,showN:15};   // (0928) 탭·검색·전체 보기 제거 — 내 반 것만
 const mmss=s=>{s=Number(s)||0; return s>=3600?`${Math.floor(s/3600)}시간 ${Math.round(s%3600/60)}분`:`${Math.round(s/60)}분`;};
 const md=s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${+m[2]}/${+m[3]}`:'';};
-async function mountLib(host,ban,school){
+async function mountLib(host,ban,school,opt){
   if(!host) return;
-  LIB.ban=ban; LIB.school=school||'';
+  LIB.ban=ban; LIB.school=school||''; host._opt=opt||{};
   try{
     const r=await fetch(LIB_URL+'lib.json?v='+Math.floor(Date.now()/6e5),{cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
     LIB.data=await r.json();
   }catch(e){ host.innerHTML='<div class="none">자료 목록을 지금은 못 불러왔어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
-  drawLib(host);
+  drawLib(host,host._opt);
 }
 // (0928) 탭 없이 내 반 수업일 순 한 줄 목록: 날짜 · 수업 내용 · 시험지/손풀이/영상
-function drawLib(host){
+function drawLib(host,opt){
+  // (1015) 기말 모드 — opt.from 이후(기말 자료) / opt.to 이전(지난 수업 자료)만
+  opt=opt||host._opt||{}; host._opt=opt;
   const D=LIB.data, ban=LIB.ban;
+  if(!D){ host.innerHTML='<div class="none">자료 목록을 불러오는 중…</div>'; return; }
   if(!ban){ host.innerHTML='<div class="none">반 정보가 없어 자료를 보여 줄 수 없어요.</div>'; return; }
   const rows=[];
   (D.기출||[]).forEach(g=>{
@@ -659,6 +896,8 @@ function drawLib(host){
     rows.push({d:d[d.length-1],ds:d.filter((x,i,a)=>a.indexOf(x)===i),t:`${g.학교} ${g.학년} ${g.종류}`,sub:g.과목,g,vs});
   });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+  if(opt.from) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)>=opt.from));
+  if(opt.to) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)<opt.to));
   const H=[];
   // (1010) 학교프린트 해부 루프 — 수업 자료 목록이 아니라 맨 위 카드(#hb-card)로. 내 학교·학년 것만.
   const sc=LIB.school.replace(/고$/,''), gr=ban.slice(0,2);
@@ -674,7 +913,7 @@ function drawLib(host){
       +`<div class="note">프린트: 변형 안 풀었으면 <b>원본판</b>, 변형까지 풀었으면 <b>원본+변형판</b>. 교과서는 <b>시작</b>. 푼 기록은 선생님께 전달돼요.</div></div>`;
     hc.style.display='';
   }
-  if(!rows.length) H.push(`<div class="none">아직 ${E(ban)} 수업 자료가 없어요.</div>`);
+  if(!rows.length) H.push(opt.from?`<div class="none">기말 범위 수업 영상·기출 모의 시험지·해설이 올라오면 여기에 모여요.</div>`:`<div class="none">아직 ${E(ban)} 수업 자료가 없어요.</div>`);
   else{
     const n=Math.min(rows.length,LIB.showN);
     H.push(rows.slice(0,n).map(r=>{
@@ -686,7 +925,7 @@ function drawLib(host){
   }
   H.push(`<div class="note">${E(ban)} 수업에서 본 기출테스트만 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   host.innerHTML=H.join('');
-  const m=host.querySelector('.lib-more'); if(m) m.onclick=()=>{LIB.showN+=20; drawLib(host);};
+  const m=host.querySelector('.lib-more'); if(m) m.onclick=()=>{LIB.showN+=20; drawLib(host,opt);};
 }
 
 /* ── 오류 신고 (0913) ── */
