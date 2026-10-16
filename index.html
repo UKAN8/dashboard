@@ -5281,19 +5281,26 @@ function exDraw() {
  * 문항 목록·스텝 이름은 아래 상수(정본 02_제작자료/07_학교프린트/_루프_1009). 문항이 늘면 HB_ITEMS 를 다시 뽑는다.
  */
 const HB_ITEMS = [["고림고 Ⅰ-1", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-2", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-3", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-4", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-5", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-6", "원의 방정식", "고1"], ["고림고 Ⅰ-7", "원의 방정식", "고1"], ["고림고 Ⅰ-8", "원의 방정식", "고1"], ["고림고 Ⅰ-9", "원의 방정식", "고1"], ["고림고 Ⅰ-10", "원의 방정식", "고1"], ["고림고 Ⅰ-11", "도형의 이동", "고1"], ["고림고 Ⅰ-12", "도형의 이동", "고1"], ["고림고 Ⅰ-13", "도형의 이동", "고1"], ["고림고 Ⅰ-14", "도형의 이동", "고1"], ["고림고 Ⅱ-1", "집합", "고1"], ["고림고 Ⅱ-2", "집합", "고1"], ["고림고 Ⅱ-3", "집합", "고1"], ["고림고 Ⅱ-4", "집합", "고1"], ["고림고 Ⅱ-5", "집합", "고1"], ["고림고 Ⅱ-6", "집합", "고1"], ["진덕고 #1-1", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-2", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-3", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-4", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-5", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-6", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-7", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-8", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #2-1", "원의 방정식", "고1"], ["진덕고 #2-2", "원의 방정식", "고1"], ["진덕고 #2-3", "원의 방정식", "고1"], ["진덕고 #2-4", "원의 방정식", "고1"], ["진덕고 #2-5", "원의 방정식", "고1"], ["진덕고 #2-6", "원의 방정식", "고1"], ["진덕고 #2-7", "원의 방정식", "고1"], ["진덕고 #2-8", "원의 방정식", "고1"], ["진덕고 #3-1", "도형의 이동", "고1"], ["진덕고 #3-2", "도형의 이동", "고1"], ["진덕고 #3-3", "도형의 이동", "고1"], ["진덕고 #3-4", "도형의 이동", "고1"], ["진덕고 #3-5", "도형의 이동", "고1"], ["진덕고 #3-6", "도형의 이동", "고1"], ["진덕고 #3-7", "도형의 이동", "고1"], ["진덕고 #3-8", "도형의 이동", "고1"], ["진덕고 #4-1", "집합", "고1"], ["진덕고 #4-2", "집합", "고1"], ["진덕고 #4-3", "집합", "고1"], ["진덕고 #4-4", "집합", "고1"], ["진덕고 #4-5", "집합", "고1"], ["진덕고 #4-6", "집합", "고1"], ["진덕고 #4-7", "집합", "고1"], ["진덕고 #4-8", "집합", "고1"], ["고림고 고2 Ⅰ-1", "함수의 극한", "고2"], ["고림고 고2 Ⅰ-2", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-3", "함수의 극한", "고2"], ["고림고 고2 Ⅰ-4", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-5", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-6", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-7", "함수의 극한", "고2"], ["고림고 고2 Ⅱ-1", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-2", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-3", "도함수의 활용", "고2"], ["고림고 고2 Ⅱ-4", "도함수의 활용", "고2"], ["고림고 고2 Ⅱ-5", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-6", "도함수의 활용", "고2"]];   // [문항ID, 단원, 학년]
+/* ── (1016) 해부 루프 현황판 v3 — 유강 "현황판이 보기 어렵다" ──
+ * 학생 카드+태그 나열 → ① 먼저 볼 학생 ② 학생×문항 지도(칸 하나 = 그 문항 스텝 결과 막대) ③ 문항×스텝 막힘표 + 학생 상세 서랍.
+ * 세트(세트키+판)는 기록에서 자동으로 뽑는다 — 새 세트가 생겨도 코드 고칠 것 없음. HB_ITEMS 는 '아직 안 한 학생'을 보이게 하는 목록(없어도 돈다).
+ * 판 '기초'(기초판, schema_v38)는 문항마다 스텝 수가 달라 '걸음 k' 로 센다.
+ */
 const HB_STEPS = { 원본: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '조건을 바꾸면', '함정', '같은 개념'],
                    변형: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '원본↔변형', '조건을 바꾸면', '함정', '같은 개념'] };
 const HB_IN = ['자신 있음', '감으로 맞힘', '틀림', '손도 못 댐'];
-let HB = { rows: null, pan: '원본', sch: '*', mode: 'stu', open: '' };
+const HB_SET = { print1009: '학교프린트', tb_gorim2_1013: '교과서', basic1015: '학교프린트', theme4thm1013: '네 정리' };
+const HB_PAN = { 원본: '원본판', 변형: '원본+변형판', 기초: '기초판' };
+const HB_FAST = { 원본: 60000, 변형: 70000, 기초: 40000 };      // 이보다 빨리 '완료' = 찍고 넘긴 것으로 본다
+let HB = { rows: null, grp: '', sch: '*', ban: '*', days: 0, open: '' };
 
 function viewHaebu(st) {
   HB.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
   return `<section class="view" id="v-haebu">
-<h2>프린트 해부 루프 <span class="cnt" id="hb-cnt"></span></h2>
-<div class="toolbar" id="hb-bar"></div>
+<h2>해부 루프 현황 <span class="cnt" id="hb-cnt"></span></h2>
+<div class="toolbar hb-tool" id="hb-bar"></div>
 <div id="hb-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
-<div class="dim" style="margin-top:14px;line-height:1.6">스텝 하나 끝낼 때마다 기록이 들어옵니다(↻ 새로고침) · 모든 숫자는 문항별 <b>첫 시도</b> 기준 ·
- 태그·문항 칩에 마우스를 올리면 자세히 보여요.</div>
+<aside class="hb-dr" id="hb-dr" aria-hidden="true"></aside>
 </section>`;
 }
 
@@ -5322,155 +5329,288 @@ async function hbLoad(force) {
   hbDraw();
 }
 
-const hbSch = sid => /_고림$/.test(sid) ? '고림' : /_진덕$/.test(sid) ? '진덕' : '';
-const hbMark = c => c === 'o' ? '<b style="color:#10b981">○</b>' : c === 't' ? '<b style="color:#f59e0b">△</b>' : c === 'x' ? '<b style="color:#ef4444">✕</b>' : '<span class="dim">·</span>';
+const hbSch = sid => (String(sid).match(/_([^_]+)$/) || [])[1] || '';           // 학생ID 끝 = 학교(고림·진덕…)
 const hbT = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && ((r.결과 || '').match(/[tx]/g) || []).length >= 2;
+const hbShortId = id => String(id).replace(/^\S+고 (고\d )?/, '');
+const hbSchOfItem = id => (String(id).match(/^(\S+)고/) || [])[1] || '';
+const hbBad = r => ((r.결과 || '').match(/[tx]/g) || []).length;
+const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && hbBad(r) >= 2;
+const hbStuck = r => ((r.결과 || '').match(/x/g) || []).length >= 2;
+const hbFastR = r => r && r.완료 && r.ms != null && r.ms < (HB_FAST[r.판] || 60000);
+const hbMin = ms => ms == null ? '' : ms < 60000 ? Math.round(ms / 1000) + '초' : Math.round(ms / 60000) + '분';
+function hbBar(res, n, cls) {                                   // 스텝 결과 막대 — 칸 하나에 스텝 수만큼
+  const s = (res || '').padEnd(n, '-').slice(0, Math.max(n, (res || '').length));
+  return `<span class="hb-b${cls ? ' ' + cls : ''}">${[...s].map(c => `<i class="q${c === '-' ? 'n' : c}"></i>`).join('')}</span>`;
+}
+function hbStepNames(pan, n) { return HB_STEPS[pan] || [...Array(n)].map((_, k) => '걸음 ' + (k + 1)); }
 
-const HB_SHORT = { '무엇을 묻나': '묻는 개념', '어디서 쓰이나': '개념 쓰는 곳', '조건의 역할': '조건의 역할', '조건을 바꾸면': '조건 바꾸기', '원본↔변형': '원본↔변형', '함정': '함정', '같은 개념': '다른 문제 적용' };
-const HB_DESC = { '무엇을 묻나': '이 문제가 무슨 개념을 묻는지', '어디서 쓰이나': '그 개념이 풀이 어느 단계에서 쓰이는지', '조건의 역할': '조건 하나하나가 풀이에서 하는 일', '원본↔변형': '변형에서 바뀐 조건이 풀이를 어떻게 바꾸는지', '조건을 바꾸면': '조건을 바꾸면 답·풀이가 어떻게 달라지는지', '함정': '이 문제에서 흔히 빠지는 실수', '같은 개념': '같은 개념을 쓰는 다른 문제를 알아보는지' };
-const hbDot = c => c === 'o' ? '<i style="background:#10b981"></i>' : c === 't' ? '<i style="background:#f59e0b"></i>' : c === 'x' ? '<i style="background:#ef4444"></i>' : '<i style="background:rgba(127,127,127,.25)"></i>';
-const hbShortId = id => id.replace(/^(고림고|진덕고) (고2 )?/, '');
 const HB_CSS = `<style>
-#v-haebu .hb-help{margin:0 0 14px;border:1px solid #2a2f3a;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.7}
-#v-haebu .hb-help summary{cursor:pointer;font-weight:600}
-#v-haebu .hb-help ol{margin:4px 0 6px 18px;padding:0}
-#v-haebu .hb-help p{margin:4px 0}
-#v-haebu .hb-help i.d{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 3px 0 8px;vertical-align:middle}
-#v-haebu .hb-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:4px 0 14px}
-#v-haebu .hb-box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
-#v-haebu .hb-box .k{font-size:12px;opacity:.65;margin-bottom:4px}
-#v-haebu .hb-box .v{font-size:20px;font-weight:800}
-#v-haebu .hb-box .s{font-size:12.5px;opacity:.85;margin-top:4px;line-height:1.5}
-#v-haebu .hb-ban{font-size:14px;font-weight:800;margin:18px 0 8px;opacity:.9}
-#v-haebu .hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
-#v-haebu .hb-st{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
-#v-haebu .hb-st.warn{border-color:rgba(239,68,68,.55)}
-#v-haebu .hb-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-#v-haebu .hb-top b{font-size:15px}
-#v-haebu .hb-top .t{font-size:12px;opacity:.6}
-#v-haebu .hb-bar{height:6px;border-radius:3px;background:rgba(127,127,127,.2);margin:8px 0 6px;overflow:hidden}
-#v-haebu .hb-bar span{display:block;height:100%;background:var(--acc,#f59e0b)}
-#v-haebu .hb-line{font-size:13px;line-height:1.6;margin-top:2px}
-#v-haebu .hb-line .lab{display:inline-block;min-width:58px;opacity:.6;font-size:12px}
-#v-haebu .tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;margin:1px 3px 1px 0;border:1px solid var(--bd)}
-#v-haebu .tag.r{border-color:rgba(239,68,68,.6);color:#ef4444}
-#v-haebu .tag.y{border-color:rgba(245,158,11,.6);color:#f59e0b}
-#v-haebu .tag.g{border-color:rgba(16,185,129,.6);color:#10b981}
-#v-haebu .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-#v-haebu .hb-chip{font-size:11.5px;border:1px solid var(--bd);border-radius:8px;padding:3px 6px;display:flex;align-items:center;gap:5px}
-#v-haebu .hb-chip i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:1px}
-#v-haebu .hb-chip.ing{border-style:dashed}
-#v-haebu .hb-none{font-size:13px;opacity:.75;margin-top:8px}
-#v-haebu .hb-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px 0 8px;vertical-align:middle}
+#v-haebu{--ok:#5fd3a0;--tt:#f2b45a;--xx:#ff6b7f;--nn:rgba(255,255,255,.09)}
+#v-haebu .hb-tool .sep{color:var(--dim);margin:0 2px}
+#v-haebu .hb-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:2px 0 18px}
+#v-haebu .hb-kpi>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:11px 14px}
+#v-haebu .hb-kpi .k{font-size:12px;color:var(--dim)}
+#v-haebu .hb-kpi .v{font-size:22px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+#v-haebu .hb-kpi .v small{font-size:12px;font-weight:500;color:var(--dim);margin-left:4px}
+#v-haebu .hb-kpi .s{font-size:12px;color:var(--tx2);margin-top:3px}
+#v-haebu h3.hb-h{font-size:14px;margin:22px 0 4px;color:var(--tx)}
+#v-haebu .hb-sub{font-size:12px;color:var(--dim);margin:0 0 10px;line-height:1.6}
+#v-haebu .hb-b{display:inline-flex;gap:2px;vertical-align:middle}
+#v-haebu .hb-b i{width:7px;height:14px;border-radius:2px;background:var(--nn)}
+#v-haebu .hb-b i.qo{background:var(--ok)}#v-haebu .hb-b i.qt{background:var(--tt)}#v-haebu .hb-b i.qx{background:var(--xx)}
+#v-haebu .hb-b.ing{outline:1px dashed rgba(255,255,255,.35);outline-offset:2px;border-radius:2px}
+#v-haebu .hb-b.big i{width:12px;height:18px}
+#v-haebu .hb-lg{display:inline-flex;gap:12px;align-items:center;font-size:12px;color:var(--tx2)}
+#v-haebu .hb-lg i{display:inline-block;width:9px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+#v-haebu .hb-watch{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+#v-haebu .hb-w{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+#v-haebu .hb-w:hover{border-color:rgba(245,160,160,.5)}
+#v-haebu .hb-w b{font-size:14px}#v-haebu .hb-w .bn{font-size:11.5px;color:var(--dim);margin-left:6px}
+#v-haebu .hb-w .why{font-size:12.5px;color:var(--tx2);margin-top:3px;line-height:1.55}
+#v-haebu .hb-tag{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 7px;margin:2px 4px 0 0;background:rgba(255,255,255,.06)}
+#v-haebu .hb-tag.r{background:rgba(255,107,127,.16);color:#ffc2cb}#v-haebu .hb-tag.y{background:rgba(242,180,90,.16);color:#ffe0b0}#v-haebu .hb-tag.g{background:rgba(95,211,160,.14);color:#c4f3dc}#v-haebu .hb-tag.d{color:var(--dim)}
+#v-haebu .hb-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#v-haebu table.hb-m{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:100%}
+#v-haebu table.hb-m th,#v-haebu table.hb-m td{padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap;text-align:center}
+#v-haebu table.hb-m thead th{position:sticky;top:0;background:#14141b;color:var(--tx2);font-weight:600;font-size:11.5px;z-index:2}
+#v-haebu table.hb-m th.u{font-size:10.5px;color:var(--dim);font-weight:500;border-bottom:0;padding-bottom:0}
+#v-haebu table.hb-m td.nm,#v-haebu table.hb-m th.nm{text-align:left;position:sticky;left:0;background:#121219;z-index:1}
+#v-haebu table.hb-m td.nm{cursor:pointer;font-weight:700}
+#v-haebu table.hb-m td.nm:hover{color:var(--acc)}
+#v-haebu table.hb-m td.nm small{font-weight:400;color:var(--dim);margin-left:5px}
+#v-haebu table.hb-m tr.bnr td{background:rgba(245,160,160,.07);color:#ffd9d9;font-weight:700;text-align:left;font-size:12px}
+#v-haebu table.hb-m td.c{cursor:pointer}
+#v-haebu table.hb-m td.c:hover{background:rgba(255,255,255,.04)}
+#v-haebu table.hb-m td.c .e{color:rgba(255,255,255,.18)}
+#v-haebu table.hb-m td.r{text-align:right;font-variant-numeric:tabular-nums}
+#v-haebu table.hb-m td.fl{text-align:left}
+#v-haebu .hb-pct{display:inline-block;min-width:44px;text-align:right;font-weight:700}
+#v-haebu table.hb-h td.h{min-width:62px;font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer}
+#v-haebu table.hb-h td.h small{display:block;font-weight:400;font-size:10.5px;opacity:.75}
+#v-haebu table.hb-h td.nm{cursor:default;font-weight:600}
+#v-haebu .hb-steps{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+#v-haebu .hb-st{flex:1 1 130px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
+#v-haebu .hb-st .n{font-size:12px;color:var(--tx2)}
+#v-haebu .hb-st .p{font-size:18px;font-weight:800;margin-top:2px}
+#v-haebu .hb-st .tr{height:5px;border-radius:3px;background:var(--nn);margin-top:5px;overflow:hidden;display:flex}
+#v-haebu .hb-st .tr span{display:block;height:100%}
+#v-haebu .hb-dr{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:#111118;border-left:1px solid var(--bd);transform:translateX(102%);transition:transform .22s ease;z-index:80;overflow-y:auto;padding:18px 18px 40px;box-shadow:-20px 0 40px rgba(0,0,0,.4)}
+#v-haebu .hb-dr.on{transform:none}
+#v-haebu .hb-dr .hb-close{float:right;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:4px 12px;cursor:pointer}
+#v-haebu .hb-dr h4{margin:0 0 2px;font-size:18px}
+#v-haebu .hb-dr .meta{font-size:12px;color:var(--dim);margin-bottom:12px}
+#v-haebu .hb-it{border-top:1px solid var(--bd);padding:10px 0}
+#v-haebu .hb-it .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+#v-haebu .hb-it .t b{font-size:14px}
+#v-haebu .hb-it .t span{font-size:11.5px;color:var(--dim)}
+#v-haebu .hb-it .rw{font-size:12.5px;color:var(--tx2);margin-top:5px;line-height:1.7}
+#v-haebu .hb-it .rw em{font-style:normal;font-weight:700}
+#v-haebu .hb-it .rw em{display:inline;margin-right:8px}#v-haebu .hb-it .rw em.qt{color:var(--tt)}#v-haebu .hb-it .rw em.qx{color:var(--xx)}
+#v-haebu details.hb-hm{margin:12px 0 4px}
+#v-haebu details.hb-hm summary{cursor:pointer;font-size:13px;font-weight:700;padding:6px 0}
+#v-haebu details.hb-hm:not(.all) tr.hb-more{display:none}
+#v-haebu .hb-all{margin-top:8px}
+#v-haebu h3.hb-g{margin-top:30px;font-size:16px;padding-top:14px;border-top:1px solid var(--bd)}
+#v-haebu tr.off td{opacity:.55}
+#v-haebu .fz{color:var(--xx);font-size:10px;margin-left:3px}#v-haebu .rt{color:var(--dim);font-size:10px;margin-left:2px}
+#v-haebu .hb-empty{padding:18px;color:var(--dim);font-size:13px}
 </style>`;
 
 function hbDraw() {
   const bar = $('hb-bar'), body = $('hb-body'); if (!bar || !body || !HB.rows) return;
-  const steps = HB_STEPS[HB.pan], NS = steps.length;
-  const items = HB_ITEMS.filter(([id]) => HB.sch === '*' || id.startsWith(HB.sch));
-  const first = {}, lastAt = {};
-  HB.rows.forEach(r => {
-    if (r.판 !== HB.pan) return;
-    const k = r.학생ID + '|' + r.문항ID;
-    if (!first[k] || r.시도 < first[k].시도) first[k] = r;
-    if (!lastAt[r.학생ID] || r.시각 > lastAt[r.학생ID]) lastAt[r.학생ID] = r.시각;
-  });
-  const stuMap = {}; (HB.stu || []).forEach(s => stuMap[s.sid] = s);
-  const sids = new Set((HB.stu || []).filter(s => hbSch(s.sid) && HB_ITEMS.some(([id, , g]) => id.startsWith(hbSch(s.sid)) && g === s.ban.slice(0, 2))).map(s => s.sid));
-  HB.rows.forEach(r => sids.add(r.학생ID));
-  const stus = [...sids].map(sid => ({ sid, name: (stuMap[sid] || {}).name || sid.split('_')[0], ban: (stuMap[sid] || {}).ban || (HB.rows.find(r => r.학생ID === sid) || {}).반 || '', sch: hbSch(sid) }))
-    .filter(s => HB.sch === '*' || s.sch === HB.sch)
-    .sort((a, b) => a.ban.localeCompare(b.ban) || a.sch.localeCompare(b.sch, 'ko') || a.name.localeCompare(b.name, 'ko'));
-  const myItems = s => items.filter(([id, , g]) => id.startsWith(s.sch) && (!s.ban || g === s.ban.slice(0, 2)));
+  // ── 세트(세트키+판) 목록 — 기록에서
+  const gk = r => r.세트키 + '|' + r.판;
+  const grpCnt = {}; HB.rows.forEach(r => { grpCnt[gk(r)] = (grpCnt[gk(r)] || 0) + 1; });
+  const grps = Object.keys(grpCnt).sort((a, b) => grpCnt[b] - grpCnt[a]);
+  if (!grps.length) { bar.innerHTML = ''; body.innerHTML = HB_CSS + '<div class="card hb-empty">아직 기록이 없습니다. 학생이 포털 링크(토큰 붙은 주소)로 루프를 열고 스텝 하나를 끝내면 여기에 뜹니다.</div>'; return; }
+  if (!grps.includes(HB.grp)) HB.grp = grps[0];
+  const [SK, PAN] = HB.grp.split('|');
+  const cutoff = HB.days ? Date.now() - HB.days * 864e5 : 0;
+  const R = HB.rows.filter(r => gk(r) === HB.grp && (!cutoff || new Date(r.시각) >= cutoff));
 
+  // ── 문항: 기록 + HB_ITEMS(같은 세트 학교·학년 것만 — 프린트 세트일 때)
+  const itemMap = new Map();
+  R.forEach(r => { if (!itemMap.has(r.문항ID)) itemMap.set(r.문항ID, { id: r.문항ID, unit: r.단원 || '', g: (r.반 || '').slice(0, 2) }); });
+  if (SK === 'print1009' || SK === 'basic1015') {
+    const seen = new Set([...itemMap.values()].map(x => hbSchOfItem(x.id) + x.g));
+    HB_ITEMS.forEach(([id, unit, g]) => { if (!itemMap.has(id) && seen.has(hbSchOfItem(id) + g) && !(PAN === '기초' && !id.startsWith('고림고 Ⅰ') && !id.startsWith('고림고 Ⅱ'))) itemMap.set(id, { id, unit, g }); });
+  }
+  const order = HB_ITEMS.map(x => x[0]);
+  let items = [...itemMap.values()].sort((a, b) => { const i = order.indexOf(a.id), j = order.indexOf(b.id); return (i < 0 ? 1e4 : i) - (j < 0 ? 1e4 : j) || a.id.localeCompare(b.id, 'ko'); });
+  const schools = [...new Set(items.map(x => hbSchOfItem(x.id)).filter(Boolean))];
+  if (HB.sch !== '*' && !schools.includes(HB.sch)) HB.sch = '*';
+  if (HB.sch !== '*') items = items.filter(x => hbSchOfItem(x.id) === HB.sch);
+  const NSmax = Math.max(PAN === '변형' ? 7 : PAN === '원본' ? 6 : 1, ...R.map(r => (r.결과 || '').length));
+
+  // ── 학생: 이 세트 문항을 받는 학교·학년 + 기록 있는 학생
+  const stuMap = {}; (HB.stu || []).forEach(s => stuMap[s.sid] = s);
+  const want = new Set(items.map(x => hbSchOfItem(x.id) + x.g));
+  const sids = new Set((HB.stu || []).filter(s => want.has(hbSch(s.sid) + String(s.ban || '').slice(0, 2))).map(s => s.sid));
+  R.forEach(r => sids.add(r.학생ID));
+  let stus = [...sids].map(sid => ({ sid, name: (stuMap[sid] || {}).name || String(sid).split('_')[0], ban: (stuMap[sid] || {}).ban || (R.find(r => r.학생ID === sid) || {}).반 || '', sch: hbSch(sid) }))
+    .filter(s => HB.sch === '*' || s.sch === HB.sch);
+  const bans = [...new Set(stus.map(s => s.ban))].sort();
+  if (HB.ban !== '*' && !bans.includes(HB.ban)) HB.ban = '*';
+  if (HB.ban !== '*') stus = stus.filter(s => s.ban === HB.ban);
+  stus.sort((a, b) => a.ban.localeCompare(b.ban) || a.sch.localeCompare(b.sch, 'ko') || a.name.localeCompare(b.name, 'ko'));
+  const myItems = s => items.filter(x => hbSchOfItem(x.id) === s.sch && (!s.ban || !x.g || x.g === s.ban.slice(0, 2)));
+
+  // 첫 시도 / 마지막 시도
+  const first = {}, last = {}, lastAt = {};
+  R.forEach(r => { const k = r.학생ID + '|' + r.문항ID;
+    if (!first[k] || r.시도 < first[k].시도) first[k] = r;
+    if (!last[k] || r.시도 > last[k].시도) last[k] = r;
+    if (!lastAt[r.학생ID] || r.시각 > lastAt[r.학생ID]) lastAt[r.학생ID] = r.시각; });
+
+  // ── 툴바
   const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
-  const sep = '<span class="dim" style="margin:0 4px">│</span>';
-  bar.innerHTML = fb('hp', '원본', '원본판', HB.pan) + fb('hp', '변형', '원본+변형판', HB.pan) + sep
-    + fb('hs', '*', '학교 전체', HB.sch) + fb('hs', '고림', '고림고', HB.sch) + fb('hs', '진덕', '진덕고', HB.sch) + sep
-    + fb('hm', 'stu', '학생별', HB.mode) + fb('hm', 'item', '문항별', HB.mode)
-    + `<button class="fbtn" id="hb-re" title="다시 불러오기">↻</button>`
-    + `<span class="dim hb-legend" style="margin-left:10px;font-size:12px">스텝 점: <i style="background:#10b981"></i>한 번에 <i style="background:#f59e0b"></i>디딤돌 뒤 <i style="background:#ef4444"></i>놓침</span>`;
-  bar.querySelectorAll('[data-hp]').forEach(b => b.onclick = () => { HB.pan = b.dataset.hp; hbDraw(); });
+  const sep = '<span class="sep">│</span>';
+  bar.innerHTML = grps.map(g => { const [k, p] = g.split('|'); return fb('hg', g, (HB_SET[k] || k) + ' ' + (HB_PAN[p] || p), HB.grp); }).join('') + sep
+    + fb('hs', '*', '학교 전체', HB.sch) + schools.map(s => fb('hs', s, s + '고', HB.sch)).join('') + sep
+    + fb('hb', '*', '반 전체', HB.ban) + bans.map(b => fb('hb', b, b, HB.ban)).join('') + sep
+    + fb('hd', '0', '전체 기간', String(HB.days)) + fb('hd', '7', '최근 7일', String(HB.days))
+    + ` <button class="fbtn" id="hb-re" title="다시 불러오기">↻</button>`;
+  bar.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { HB.grp = b.dataset.hg; hbDraw(); });
   bar.querySelectorAll('[data-hs]').forEach(b => b.onclick = () => { HB.sch = b.dataset.hs; hbDraw(); });
-  bar.querySelectorAll('[data-hm]').forEach(b => b.onclick = () => { HB.mode = b.dataset.hm; hbDraw(); });
+  bar.querySelectorAll('[data-hb]').forEach(b => b.onclick = () => { HB.ban = b.dataset.hb; hbDraw(); });
+  bar.querySelectorAll('[data-hd]').forEach(b => b.onclick = () => { HB.days = +b.dataset.hd; hbDraw(); });
   $('hb-re').onclick = () => hbLoad(true);
 
-  // ── 학생별 요약 계산
+  // ── 학생별 계산
   const S = stus.map(s => {
-    const its = myItems(s), rs = its.map(([id]) => ({ id, r: first[s.sid + '|' + id] })).filter(x => x.r);
-    const done = rs.filter(x => x.r.완료).length;
-    const stepBad = steps.map((_, k) => { const got = rs.filter(x => (x.r.결과 || '')[k] && x.r.결과[k] !== '-');
-      return { n: got.length, bad: got.filter(x => /[tx]/.test(x.r.결과[k])).length, x: got.filter(x => x.r.결과[k] === 'x').length }; });
-    const okAll = rs.filter(x => x.r.완료 && !/[tx]/.test(x.r.결과 || '')).map(x => x.id);
-    const memo = rs.filter(x => hbMemo(x.r)).map(x => x.id);
-    const stuck = rs.filter(x => ((x.r.결과 || '').match(/x/g) || []).length >= 2).map(x => x.id);
-    const conf = rs.filter(x => x.r.입구 != null && x.r.입구 <= 1).length;
-    const mins = Math.round(rs.reduce((a, x) => a + (x.r.ms || 0), 0) / 60000);
-    return { s, its, rs, done, ing: rs.length - done, stepBad, okAll, memo, stuck, conf, mins, last: lastAt[s.sid] };
+    const its = myItems(s), rs = its.map(x => ({ x, r: first[s.sid + '|' + x.id], l: last[s.sid + '|' + x.id] })).filter(y => y.r);
+    const done = rs.filter(y => y.r.완료);
+    const cells = done.reduce((a, y) => a + (y.r.결과 || '').replace(/-/g, '').length, 0);
+    const okc = done.reduce((a, y) => a + ((y.r.결과 || '').match(/o/g) || []).length, 0);
+    const memo = rs.filter(y => hbMemo(y.r)), stuck = rs.filter(y => hbStuck(y.r)), fast = rs.filter(y => hbFastR(y.r));
+    const retry = rs.filter(y => y.l && y.l.시도 > y.r.시도);
+    return { s, its, rs, done: done.length, ing: rs.length - done.length, pass: cells ? okc / cells : null, memo, stuck, fast, retry,
+      mins: Math.round(rs.reduce((a, y) => a + (y.r.ms || 0), 0) / 60000), last: lastAt[s.sid] };
   });
-  const started = S.filter(x => x.rs.length);
-  $('hb-cnt').textContent = `${started.length}/${S.length}명 시작`;
+  const on = S.filter(x => x.rs.length);
+  $('hb-cnt').textContent = `${on.length}/${S.length}명`;
 
-  // ── 상단 요약
-  const allSteps = steps.map((n, k) => { let a = 0, b = 0; started.forEach(x => { a += x.stepBad[k].n; b += x.stepBad[k].bad; }); return { n, a, b, p: a ? Math.round(b / a * 100) : null }; })
-    .filter(x => x.a).sort((p, q) => q.p - p.p);
-  const itemStat = items.map(([id]) => { const rs = S.map(x => first[x.s.sid + '|' + id]).filter(Boolean).filter(r => r.완료);
-    const bad = rs.reduce((a, r) => a + ((r.결과 || '').match(/[tx]/g) || []).length, 0);
-    return { id, n: rs.length, avg: rs.length ? bad / rs.length : null }; }).filter(x => x.n).sort((p, q) => q.avg - p.avg);
-  const memoAll = started.filter(x => x.memo.length), notYet = S.filter(x => !x.rs.length);
-  const confAll = started.reduce((a, x) => a + x.conf, 0), rsAll = started.reduce((a, x) => a + x.rs.length, 0);
-  const H = [HB_CSS, '<div class="hb-sum">'];
-  H.push(`<div class="hb-box"><div class="k">참여</div><div class="v">${started.length} / ${S.length}명</div><div class="s">완료 문항 ${started.reduce((a, x) => a + x.done, 0)}개 · 진행 중 ${started.reduce((a, x) => a + x.ing, 0)}개</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">반 전체가 많이 막힌 스텝</div><div class="s">${allSteps.slice(0, 3).map(x => `<span class="tag ${x.p >= 50 ? 'r' : x.p >= 30 ? 'y' : ''}" title="${E(HB_DESC[x.n] || '')}">${E(HB_SHORT[x.n] || x.n)} · ${x.p}% 막힘</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">어려웠던 문항 (${NS}스텝 중 평균 몇 개 막혔나)</div><div class="s">${itemStat.slice(0, 4).map(x => `<span class="tag ${x.avg >= 3 ? 'r' : x.avg >= 2 ? 'y' : ''}">${E(hbShortId(x.id))} · ${x.avg.toFixed(1)}개</span>`).join('') || '<span class="dim">아직 없음</span>'}</div></div>`);
-  H.push(`<div class="hb-box"><div class="k">확인할 학생</div><div class="s">${memoAll.length ? '안다고 했는데 막힘 · ' + memoAll.map(x => `<b>${E(x.s.name)}</b> ${x.memo.length}문항`).join(', ') : '없음'}`
-    + (rsAll && confAll / rsAll > 0.85 ? `<br><span style="color:#f59e0b">⚠ 첫 질문을 ${Math.round(confAll / rsAll * 100)}%가 '자신 있음·감으로'로 골랐어요 — 그냥 넘긴 것일 수 있음</span>` : '') + '</div></div>');
+  // ── KPI
+  const allFirst = on.flatMap(x => x.rs.map(y => y.r)), doneR = allFirst.filter(r => r.완료);
+  const tot = doneR.map(r => (r.결과 || '').replace(/-/g, '')).join('');
+  const passAll = tot.length ? (tot.match(/o/g) || []).length / tot.length : null;
+  const conf = allFirst.filter(r => r.입구 != null && r.입구 <= 1), confBad = conf.filter(r => hbBad(r) > 0);
+  const fastN = allFirst.filter(hbFastR).length;
+  const watch = S.map(x => {
+    const why = [];
+    if (x.fast.length) why.push(['r', `찍고 넘김 ${x.fast.length}문항`, `완료까지 ${Math.round((HB_FAST[PAN] || 60000) / 1000)}초가 안 걸린 문항`]);
+    if (x.memo.length >= 2 || (x.memo.length && x.memo.length >= x.done * .4)) why.push(['r', `안다더니 막힘 ${x.memo.length}`, "처음에 '자신 있음·감으로'였는데 2스텝 이상 걸림 — 답만 외웠을 수 있음"]);
+    if (x.stuck.length) why.push(['y', `디딤돌로도 못 품 ${x.stuck.length}`, '디딤돌을 거치고도 놓친 스텝이 2개 이상']);
+    if (!x.rs.length) why.push(['d', '아직 시작 안 함', '']);
+    else if (x.ing && !x.done) why.push(['d', `진행만 ${x.ing}문항`, '시작만 하고 끝낸 문항이 없음']);
+    const score = x.fast.length * 3 + (x.memo.length >= 2 ? x.memo.length * 2 : 0) + x.stuck.length * 2 + (x.rs.length ? 0 : 1);
+    return { x, why, score };
+  }).filter(w => w.why.length).sort((a, b) => b.score - a.score || a.x.s.name.localeCompare(b.x.s.name, 'ko'));
+
+  const H = [HB_CSS];
+  H.push('<div class="hb-kpi">');
+  H.push(`<div><div class="k">참여</div><div class="v">${on.length}<small>/ ${S.length}명</small></div><div class="s">끝낸 문항 ${doneR.length}개 · 진행 중 ${allFirst.length - doneR.length}개</div></div>`);
+  H.push(`<div><div class="k">한 번에 통과 (첫 시도 스텝 기준)</div><div class="v">${passAll == null ? '—' : Math.round(passAll * 100) + '%'}</div><div class="s">${hbBar('o', 1)} 한 번에 ${hbBar('t', 1)} 디딤돌 뒤 ${hbBar('x', 1)} 놓침</div></div>`);
+  H.push(`<div><div class="k">'자신 있음'의 실제</div><div class="v">${conf.length ? Math.round(confBad.length / conf.length * 100) + '%' : '—'}<small>가 어딘가 막힘</small></div><div class="s">처음에 맞혔다고 한 ${conf.length}문항 중 ${confBad.length}문항</div></div>`);
+  H.push(`<div><div class="k">찍고 넘긴 문항</div><div class="v">${fastN}<small>문항</small></div><div class="s">${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝까지 간 것 — 기록이 부풀려짐</div></div>`);
   H.push('</div>');
-  H.push(`<details class="hb-help" open><summary>보는 법</summary><div class="hb-help-b"><p>학생은 문항마다 아래 스텝을 순서대로 풀어요. 각 스텝은 객관식 하나고, 틀리면 더 쉬운 <b>디딤돌 질문</b> → 다시 도전 → 그래도 틀리면 풀이를 보여줘요.</p><ol>${steps.map(n => `<li><b>${E(HB_SHORT[n] || n)}</b> — ${E(HB_DESC[n] || '')}</li>`).join('')}</ol><p>문항 칩의 점은 이 순서대로 한 스텝씩: <i class="d" style="background:#10b981"></i>한 번에 맞힘 <i class="d" style="background:#f59e0b"></i>디딤돌 보고 맞힘 <i class="d" style="background:#ef4444"></i>디딤돌 줘도 놓침 <i class="d" style="background:#475569"></i>아직</p><p><b>막힌 스텝 「조건의 역할 2/5문항」</b> = 그 스텝을 푼 5문항 중 2문항에서 막혔다(노랑·빨강). 태그가 빨강이면 그중 놓친 게 있다는 뜻. 많이 막힌 순서로 3개만 보여요.</p><p><b>안다고 했는데</b> = 문항 시작 때 \"자신 있음/감으로 맞힘\"을 골랐는데 스텝 2개 이상 막힌 문항 — 답만 외웠거나 대충 넘긴 것일 수 있어요. <b>다시 볼 것</b> = 놓친 스텝 2개 이상(카드 빨간 테두리) → 직접 짚어 줄 학생.</p></div></details>`);
 
-  if (HB.mode === 'item') {
-    H.push('<div class="hb-grid">');
-    items.forEach(([id, unit]) => {
-      const rs = S.map(x => ({ x, r: first[x.s.sid + '|' + id] })).filter(y => y.r);
-      if (!rs.length) return;
-      const rowsH = steps.map((n, k) => { const got = rs.filter(y => (y.r.결과 || '')[k] && y.r.결과[k] !== '-'); if (!got.length) return '';
-        const bad = got.filter(y => /[tx]/.test(y.r.결과[k])); const p = Math.round(bad.length / got.length * 100);
-        return `<div class="hb-line"><span class="lab">${E(HB_SHORT[n] || n)}</span><span class="tag ${p >= 50 ? 'r' : p >= 30 ? 'y' : 'g'}">${p}%</span> ${bad.map(y => E(y.x.s.name)).join(', ')}</div>`; }).join('');
-      H.push(`<div class="hb-st"><div class="hb-top"><b>${E(hbShortId(id))}</b><span class="t">${E(unit)} · ${rs.length}명</span></div>${rowsH}</div>`);
-    });
+  // ① 먼저 볼 학생
+  H.push(`<h3 class="hb-h">먼저 볼 학생</h3><p class="hb-sub">찍고 넘김 → 안다더니 막힘 → 디딤돌로도 못 품 순으로 위에. 이름을 누르면 문항별 기록이 열립니다.</p>`);
+  const wv = watch.filter(w => w.score > 1);
+  H.push(wv.length ? '<div class="hb-watch">' + wv.slice(0, 12).map(w => `<button class="hb-w" data-sid="${E(w.x.s.sid)}"><div><b>${E(w.x.s.name)}</b><span class="bn">${E(w.x.s.ban)} ${E(w.x.s.sch)}</span>`
+      + `<div class="why">${w.why.map(([c, t, d]) => `<span class="hb-tag ${c}" title="${E(d)}">${E(t)}</span>`).join('')}</div></div></button>`).join('') + '</div>'
+    : '<div class="card hb-empty">걸리는 학생 없음</div>');
+  const notYet = watch.filter(w => !w.x.rs.length);
+  if (notYet.length) H.push(`<p class="hb-sub" style="margin-top:8px">아직 시작 안 함 (${notYet.length}명) · ${notYet.map(w => E(w.x.s.name)).join(', ')}</p>`);
+
+  // ② 스텝별 — 반 전체
+  const names = hbStepNames(PAN, NSmax);
+  const stepAgg = names.map((n, k) => { let o = 0, t = 0, x = 0; doneR.forEach(r => { const c = (r.결과 || '')[k]; if (c === 'o') o++; else if (c === 't') t++; else if (c === 'x') x++; }); return { n, o, t, x, a: o + t + x }; }).filter(v => v.a);
+  if (stepAgg.length) {
+    H.push(`<h3 class="hb-h">어느 스텝에서 막히나</h3><p class="hb-sub">끝낸 문항의 첫 시도 기준 · 숫자 = 디딤돌을 거치거나 놓친 비율</p><div class="hb-steps">`);
+    stepAgg.forEach(v => { const p = Math.round((v.t + v.x) / v.a * 100);
+      H.push(`<div class="hb-st"><div class="n">${E(v.n)}</div><div class="p" style="color:${p >= 40 ? 'var(--xx)' : p >= 25 ? 'var(--tt)' : 'var(--ok)'}">${p}%</div>`
+        + `<div class="tr"><span style="width:${v.o / v.a * 100}%;background:var(--ok)"></span><span style="width:${v.t / v.a * 100}%;background:var(--tt)"></span><span style="width:${v.x / v.a * 100}%;background:var(--xx)"></span></div></div>`); });
     H.push('</div>');
-    if (!itemStat.length) H.push('<div class="dim">아직 기록이 없습니다.</div>');
-    body.innerHTML = H.join(''); return;
   }
 
-  // ── 학생 카드 (반별)
-  const bans = [...new Set(S.map(x => x.s.ban))];
-  bans.forEach(b => {
-    const grp = S.filter(x => x.s.ban === b), on = grp.filter(x => x.rs.length), off = grp.filter(x => !x.rs.length);
-    H.push(`<div class="hb-ban">${E(b)} · ${on.length}/${grp.length}명 참여</div>`);
-    if (on.length) {
-      H.push('<div class="hb-grid">');
-      on.sort((p, q) => q.done - p.done).forEach(x => {
-        const weak = x.stepBad.map((v, k) => ({ nm: steps[k], ...v })).filter(v => v.bad).sort((p, q) => q.bad - p.bad || q.x - p.x);
-        const pct = x.its.length ? Math.round(x.done / x.its.length * 100) : 0;
-        const warn = x.stuck.length;
-        H.push(`<div class="hb-st${warn ? ' warn' : ''}">`
-          + `<div class="hb-top"><b>${E(x.s.name)} <span class="dim" style="font-weight:400;font-size:12px">${E(x.s.sch)}</span></b><span class="t">${x.done}/${x.its.length} 완료${x.ing ? ' · ' + x.ing + ' 진행 중' : ''} · ${x.mins}분 · ${E(hbT(x.last))}</span></div>`
-          + `<div class="hb-bar"><span style="width:${pct}%"></span></div>`
-          + `<div class="hb-line"><span class="lab">막힌 스텝</span>${weak.length ? weak.slice(0, 3).map(v => `<span class="tag ${v.x ? 'r' : 'y'}" title="${E(HB_DESC[v.nm] || '')} — ${v.n}문항 중 ${v.bad}번 막힘">${E(HB_SHORT[v.nm] || v.nm)} ${v.bad}/${v.n}문항</span>`).join('') : '<span class="tag g">없음</span>'}</div>`
-          + (x.memo.length ? `<div class="hb-line"><span class="lab">안다고 했는데</span>${x.memo.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">처음에 '자신 있음'인데 2스텝↑ 막힘</span></div>` : '')
-          + (x.stuck.length ? `<div class="hb-line"><span class="lab">다시 볼 것</span>${x.stuck.map(id => `<span class="tag r">${E(hbShortId(id))}</span>`).join('')}<span class="dim" style="font-size:12px">디딤돌 줘도 못 푼 스텝 2개↑</span></div>` : '')
-          + (x.okAll.length ? `<div class="hb-line"><span class="lab">한 번에 다 맞힘</span>${x.okAll.map(id => `<span class="tag g">${E(hbShortId(id))}</span>`).join('')}</div>` : '')
-          + `<div class="hb-chips">${x.its.map(([id]) => { const r = first[x.s.sid + '|' + id]; if (!r) return '';
-              return `<span class="hb-chip${r.완료 ? '' : ' ing'}" title="${E(id)} · 처음: ${E(HB_IN[r.입구] || '')}${r.완료 ? '' : ' · 진행 중'}&#10;${steps.map((n, k) => E(HB_SHORT[n] || n) + ': ' + ({o: '한 번에', t: '디딤돌 뒤', x: '놓침'}[(r.결과 || '')[k]] || '아직')).join('&#10;')}">${E(hbShortId(id))} <span>${[...Array(NS).keys()].map(k => hbDot((r.결과 || '')[k])).join('')}</span></span>`; }).join('')}</div>`
-          + '</div>');
-      });
-      H.push('</div>');
-    }
-    if (off.length) H.push(`<div class="hb-none">아직 안 함: ${off.map(x => E(x.s.name)).join(', ')}</div>`);
+  // ③④ 학교·학년 묶음마다 — 학생 × 문항 지도 + 문항 × 스텝 막힘표
+  const gOf = s => s.sch + '고 ' + String(s.ban || '').slice(0, 2);
+  const groups = [...new Set(S.map(x => gOf(x.s)))].sort();
+  groups.forEach(gname => {
+    const GS = S.filter(x => gOf(x.s) === gname);
+    const shown = items.filter(it => GS.some(x => x.its.includes(it)));
+    if (!shown.length) return;
+    const gon = GS.filter(x => x.rs.length).length;
+    H.push(`<h3 class="hb-h hb-g">${E(gname)} <span class="dim">· ${gon}/${GS.length}명 참여 · ${shown.length}문항</span></h3>`);
+    H.push(`<p class="hb-sub">칸 하나 = 그 문항 스텝 막대(첫 시도) · 점선 = 진행 중 · ⚡ = 찍고 넘김 · ↻ = 다시 풀어 봄 · 이름·칸을 누르면 학생 기록, 머리글을 누르면 정렬</p>`);
+    H.push('<div class="hb-scroll"><table class="hb-m"><thead>');
+    H.push(`<tr><th class="nm">이름</th><th>끝냄</th><th>한 번에</th><th>표시</th>${shown.map(it => `<th title="${E(it.id + ' · ' + it.unit)}">${E(hbShortId(it.id))}</th>`).join('')}<th>시간</th><th>마지막</th></tr></thead><tbody>`);
+    GS.forEach(x => {
+      const cells = shown.map(it => {
+        if (!x.its.includes(it)) return '<td class="c" data-sv=""><span class="e">·</span></td>';
+        const r = first[x.s.sid + '|' + it.id], l = last[x.s.sid + '|' + it.id];
+        if (!r) return '<td class="c" data-sv=""><span class="e">—</span></td>';
+        const n = (r.결과 || '').length, bad = hbBad(r);
+        const tip = `${it.id} · 처음: ${HB_IN[r.입구] || '-'}${r.완료 ? '' : ' · 진행 중'}${hbFastR(r) ? ' · ' + hbMin(r.ms) + ' 만에 끝냄' : ''}${l && l.시도 > r.시도 ? ' · 다시 ' + (l.시도 - 1) + '번(마지막 ' + (l.결과 || '') + ')' : ''}`;
+        return `<td class="c" data-sid="${E(x.s.sid)}" data-sv="${r.완료 ? n - bad : -1}" title="${E(tip)}">${hbBar(r.결과, n, r.완료 ? '' : 'ing')}${hbFastR(r) ? '<span class="fz">⚡</span>' : ''}${l && l.시도 > r.시도 ? '<span class="rt">↻</span>' : ''}</td>`;
+      }).join('');
+      const pc = x.pass == null ? '—' : Math.round(x.pass * 100) + '%';
+      const flags = [x.fast.length ? `<span class="hb-tag r" title="찍고 넘김">⚡${x.fast.length}</span>` : '', x.memo.length ? `<span class="hb-tag r" title="안다더니 막힘">외움? ${x.memo.length}</span>` : '', x.stuck.length ? `<span class="hb-tag y" title="디딤돌로도 못 품">못 품 ${x.stuck.length}</span>` : ''].join('');
+      H.push(`<tr${x.rs.length ? '' : ' class="off"'}><td class="nm" data-sid="${E(x.s.sid)}" data-sv="${E(x.s.name)}">${E(x.s.name)}<small>${E(x.s.ban)}</small></td>`
+        + `<td class="r" data-sv="${x.done}">${x.done}/${x.its.length}</td><td class="r" data-sv="${x.pass == null ? '' : x.pass}"><span class="hb-pct" style="color:${x.pass == null ? 'var(--dim)' : x.pass >= .75 ? 'var(--ok)' : x.pass >= .55 ? 'var(--tt)' : 'var(--xx)'}">${pc}</span></td>`
+        + `<td class="fl" data-sv="${x.fast.length * 3 + x.memo.length * 2 + x.stuck.length || ''}">${flags}</td>${cells}`
+        + `<td class="r" data-sv="${x.rs.length ? x.mins : ''}">${x.rs.length ? x.mins + '분' : '—'}</td><td class="r" data-sv="${x.last || ''}">${x.last ? hbT(x.last) : '—'}</td></tr>`);
+    });
+    H.push('</tbody></table></div>');
+
+    const itemRows = shown.map(it => {
+      const rs = GS.map(x => ({ x, r: first[x.s.sid + '|' + it.id] })).filter(y => y.r && y.r.완료);
+      if (!rs.length) return null;
+      const cols = names.map((_, k) => { const got = rs.filter(y => (y.r.결과 || '')[k] && y.r.결과[k] !== '-'); const bad = got.filter(y => /[tx]/.test(y.r.결과[k]));
+        return { a: got.length, b: bad.length, who: bad.map(y => y.x.s.name + (y.r.결과[k] === 'x' ? '✕' : '△')) }; });
+      const avg = rs.reduce((a, y) => a + hbBad(y.r), 0) / rs.length;
+      return { it, rs, cols, avg };
+    }).filter(Boolean).sort((a, b) => (b.rs.length >= 2) - (a.rs.length >= 2) || b.avg - a.avg);
+    if (!itemRows.length) return;
+    const gid = 'hbx-' + gname.replace(/\W/g, '');
+    const TOP = 8, more = itemRows.length > TOP;
+    H.push(`<details class="hb-hm" id="${gid}"${HB['x' + gid] ? ' open' : ''}><summary>문항 × 스텝 막힘표 <span class="dim">· 많이 막힌 순${more ? ' · 위 ' + TOP + '개 먼저' : ''}</span></summary>`
+      + `<p class="hb-sub">칸 = 그 스텝에서 디딤돌을 거치거나 놓친 학생 비율, 작은 숫자 = 명수 · 진할수록 많이 막힘 · 칸에 마우스를 올리면 이름 · 1명만 푼 문항은 아래로</p>`);
+    H.push(`<div class="hb-scroll"><table class="hb-m hb-h"><thead><tr><th class="nm">문항</th><th>단원</th><th>푼 학생</th><th>평균 막힌 스텝</th>${names.map(n => `<th>${E(n)}</th>`).join('')}</tr></thead><tbody>`);
+    itemRows.forEach(({ it, rs, cols, avg }, i) => {
+      H.push(`<tr${more && i >= TOP ? ' class="hb-more"' : ''}><td class="nm" data-sv="${E(it.id)}">${E(hbShortId(it.id))}</td><td class="fl dim" data-sv="${E(it.unit)}">${E(it.unit)}</td><td class="r" data-sv="${rs.length}">${rs.length}명</td><td class="r" data-sv="${avg.toFixed(2)}">${avg.toFixed(1)}</td>`
+        + cols.map(c => { if (!c.a) return '<td class="h" data-sv=""><span class="dim">·</span></td>'; const p = c.b / c.a;
+          return `<td class="h" data-sv="${p.toFixed(3)}" title="${E(c.who.join(', ') || '없음')}" style="${p ? `background:rgba(255,107,127,${(0.12 + p * 0.58).toFixed(2)})` : 'color:var(--dim)'}">${Math.round(p * 100)}%<small>${c.b}/${c.a}</small></td>`; }).join('') + '</tr>');
+    });
+    H.push(`</tbody></table></div>${more ? `<button class="fbtn hb-all" data-x="${gid}">${itemRows.length}개 모두 보기</button>` : ''}</details>`);
   });
   body.innerHTML = H.join('');
+
+  body.querySelectorAll('.hb-all').forEach(b => b.onclick = () => { const d = $(b.dataset.x); d.classList.add('all'); b.remove(); });
+  body.querySelectorAll('details.hb-hm').forEach(d => d.ontoggle = () => { HB['x' + d.id] = d.open; });
+  // ── 학생 서랍
+  const dr = $('hb-dr');
+  const openDr = sid => {
+    const x = S.find(y => y.s.sid === sid); if (!x) return;
+    const recs = R.filter(r => r.학생ID === sid).sort((a, b) => (a.문항ID.localeCompare(b.문항ID, 'ko')) || a.시도 - b.시도);
+    const nm = n => hbStepNames(PAN, n);
+    const L = [`<button class="hb-close" id="hb-drx">닫기</button><h4>${E(x.s.name)}</h4><div class="meta">${E(x.s.ban)} ${E(x.s.sch)}고 · ${E((HB_SET[SK] || SK) + ' ' + (HB_PAN[PAN] || PAN))} · 끝낸 문항 ${x.done}/${x.its.length} · ${x.mins}분${x.last ? ' · 마지막 ' + hbT(x.last) : ''}</div>`];
+    if (!recs.length) L.push('<div class="hb-empty">기록 없음 — 포털 링크로 안 열었거나 아직 시작 안 함</div>');
+    recs.forEach(r => {
+      const ns = nm((r.결과 || '').length), bad = [...(r.결과 || '')].map((c, k) => /[tx]/.test(c) ? `<em class="q${c}">${E(ns[k] || '걸음 ' + (k + 1))}${c === 'x' ? ' ✕' : ' △'}</em>` : null).filter(Boolean);
+      L.push(`<div class="hb-it"><div class="t"><b>${E(hbShortId(r.문항ID))}${r.시도 > 1 ? ` <span class="dim">· ${r.시도}회차</span>` : ''}</b><span>${hbT(r.시각)} · ${hbMin(r.ms)}${r.완료 ? '' : ' · 진행 중'}</span></div>`
+        + `<div class="rw">${hbBar(r.결과, (r.결과 || '').length, 'big' + (r.완료 ? '' : ' ing'))}</div>`
+        + `<div class="rw">${r.입구 != null ? '처음: <b>' + E(HB_IN[r.입구]) + '</b>' : ''}${hbMemo(r) ? ' <span class="hb-tag r">안다더니 막힘</span>' : ''}${hbFastR(r) ? ' <span class="hb-tag r">찍고 넘김</span>' : ''}`
+        + `${bad.length ? '<br>막힌 곳 · ' + bad.join(' ') : r.완료 ? '<br><span style="color:var(--ok)">전부 한 번에</span>' : ''}</div></div>`);
+    });
+    dr.innerHTML = L.join(''); dr.classList.add('on'); dr.setAttribute('aria-hidden', 'false'); HB.open = sid;
+    $('hb-drx').onclick = () => { dr.classList.remove('on'); dr.setAttribute('aria-hidden', 'true'); HB.open = ''; };
+  };
+  body.querySelectorAll('[data-sid]').forEach(e => e.onclick = () => openDr(e.dataset.sid));
+  if (HB.open) openDr(HB.open);
+  if (!hbDraw._esc) { hbDraw._esc = 1; document.addEventListener('keydown', e => { if (e.key === 'Escape') { const d = $('hb-dr'); if (d) { d.classList.remove('on'); HB.open = ''; } } }); }
 }
 
 
