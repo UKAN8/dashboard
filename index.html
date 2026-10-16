@@ -5281,23 +5281,24 @@ function exDraw() {
  * 문항 목록·스텝 이름은 아래 상수(정본 02_제작자료/07_학교프린트/_루프_1009). 문항이 늘면 HB_ITEMS 를 다시 뽑는다.
  */
 const HB_ITEMS = [["고림고 Ⅰ-1", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-2", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-3", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-4", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-5", "평면좌표와 직선의 방정식", "고1"], ["고림고 Ⅰ-6", "원의 방정식", "고1"], ["고림고 Ⅰ-7", "원의 방정식", "고1"], ["고림고 Ⅰ-8", "원의 방정식", "고1"], ["고림고 Ⅰ-9", "원의 방정식", "고1"], ["고림고 Ⅰ-10", "원의 방정식", "고1"], ["고림고 Ⅰ-11", "도형의 이동", "고1"], ["고림고 Ⅰ-12", "도형의 이동", "고1"], ["고림고 Ⅰ-13", "도형의 이동", "고1"], ["고림고 Ⅰ-14", "도형의 이동", "고1"], ["고림고 Ⅱ-1", "집합", "고1"], ["고림고 Ⅱ-2", "집합", "고1"], ["고림고 Ⅱ-3", "집합", "고1"], ["고림고 Ⅱ-4", "집합", "고1"], ["고림고 Ⅱ-5", "집합", "고1"], ["고림고 Ⅱ-6", "집합", "고1"], ["진덕고 #1-1", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-2", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-3", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-4", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-5", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-6", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-7", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #1-8", "평면좌표와 직선의 방정식", "고1"], ["진덕고 #2-1", "원의 방정식", "고1"], ["진덕고 #2-2", "원의 방정식", "고1"], ["진덕고 #2-3", "원의 방정식", "고1"], ["진덕고 #2-4", "원의 방정식", "고1"], ["진덕고 #2-5", "원의 방정식", "고1"], ["진덕고 #2-6", "원의 방정식", "고1"], ["진덕고 #2-7", "원의 방정식", "고1"], ["진덕고 #2-8", "원의 방정식", "고1"], ["진덕고 #3-1", "도형의 이동", "고1"], ["진덕고 #3-2", "도형의 이동", "고1"], ["진덕고 #3-3", "도형의 이동", "고1"], ["진덕고 #3-4", "도형의 이동", "고1"], ["진덕고 #3-5", "도형의 이동", "고1"], ["진덕고 #3-6", "도형의 이동", "고1"], ["진덕고 #3-7", "도형의 이동", "고1"], ["진덕고 #3-8", "도형의 이동", "고1"], ["진덕고 #4-1", "집합", "고1"], ["진덕고 #4-2", "집합", "고1"], ["진덕고 #4-3", "집합", "고1"], ["진덕고 #4-4", "집합", "고1"], ["진덕고 #4-5", "집합", "고1"], ["진덕고 #4-6", "집합", "고1"], ["진덕고 #4-7", "집합", "고1"], ["진덕고 #4-8", "집합", "고1"], ["고림고 고2 Ⅰ-1", "함수의 극한", "고2"], ["고림고 고2 Ⅰ-2", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-3", "함수의 극한", "고2"], ["고림고 고2 Ⅰ-4", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-5", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-6", "함수의 연속", "고2"], ["고림고 고2 Ⅰ-7", "함수의 극한", "고2"], ["고림고 고2 Ⅱ-1", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-2", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-3", "도함수의 활용", "고2"], ["고림고 고2 Ⅱ-4", "도함수의 활용", "고2"], ["고림고 고2 Ⅱ-5", "미분계수와 도함수", "고2"], ["고림고 고2 Ⅱ-6", "도함수의 활용", "고2"]];   // [문항ID, 단원, 학년]
-/* ── (1016) 해부 루프 현황판 v3 — 유강 "현황판이 보기 어렵다" ──
+/* ── (1016 오후) v4: 타겟 트레이닝 표기·확신/감 분리·짧은 기록 빼고 보기 ──
+ * (1016) 해부 루프 현황판 v3 — 유강 "현황판이 보기 어렵다" ──
  * 학생 카드+태그 나열 → ① 먼저 볼 학생 ② 학생×문항 지도(칸 하나 = 그 문항 스텝 결과 막대) ③ 문항×스텝 막힘표 + 학생 상세 서랍.
  * 세트(세트키+판)는 기록에서 자동으로 뽑는다 — 새 세트가 생겨도 코드 고칠 것 없음. HB_ITEMS 는 '아직 안 한 학생'을 보이게 하는 목록(없어도 돈다).
  * 판 '기초'(기초판, schema_v38)는 문항마다 스텝 수가 달라 '걸음 k' 로 센다.
  */
-const HB_STEPS = { 원본: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '조건을 바꾸면', '함정', '같은 개념'],
-                   변형: ['무엇을 묻나', '어디서 쓰이나', '조건의 역할', '원본↔변형', '조건을 바꾸면', '함정', '같은 개념'] };
-const HB_IN = ['자신 있음', '감으로 맞힘', '틀림', '손도 못 댐'];
+const HB_STEPS = { 원본: ['무엇을 구하나', '어떤 개념을 쓰나', '조건은 어떻게 쓰이나', '조건이 바뀌면', '어디서 실수하나', '다른 문제에도 쓸 수 있나'],
+                   변형: ['무엇을 구하나', '어떤 개념을 쓰나', '조건은 어떻게 쓰이나', '원본과 변형 비교', '조건이 바뀌면', '어디서 실수하나', '다른 문제에도 쓸 수 있나'] };
+const HB_IN = ['맞혔고 설명 가능', '감으로 맞힘', '틀림', '손도 못 댐'];
 const HB_SET = { print1009: '학교프린트', tb_gorim2_1013: '교과서', basic1015: '학교프린트', theme4thm1013: '네 정리' };
-const HB_PAN = { 원본: '원본판', 변형: '원본+변형판', 기초: '기초판' };
+const HB_PAN = { 원본: '원본 훈련', 변형: '변형 훈련', 기초: '기초 훈련' };
 const HB_FAST = { 원본: 60000, 변형: 70000, 기초: 40000 };      // 이보다 빨리 '완료' = 찍고 넘긴 것으로 본다
-let HB = { rows: null, grp: '', sch: '*', ban: '*', days: 0, open: '' };
+let HB = { rows: null, grp: '', sch: '*', ban: '*', days: 0, open: '', nofast: false };
 
 function viewHaebu(st) {
   HB.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
   return `<section class="view" id="v-haebu">
-<h2>해부 루프 현황 <span class="cnt" id="hb-cnt"></span></h2>
+<h2>타겟 트레이닝 현황 <span class="cnt" id="hb-cnt"></span></h2>
 <div class="toolbar hb-tool" id="hb-bar"></div>
 <div id="hb-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
 <aside class="hb-dr" id="hb-dr" aria-hidden="true"></aside>
@@ -5334,7 +5335,7 @@ const hbT = s => s ? new Date(s).toLocaleString('ko-KR', { month: 'numeric', day
 const hbShortId = id => String(id).replace(/^\S+고 (고\d )?/, '');
 const hbSchOfItem = id => (String(id).match(/^(\S+)고/) || [])[1] || '';
 const hbBad = r => ((r.결과 || '').match(/[tx]/g) || []).length;
-const hbMemo = r => r && r.입구 != null && r.입구 <= 1 && hbBad(r) >= 2;
+const hbMemo = r => r && r.입구 === 0 && hbBad(r) >= 2;      // (v4) '설명할 수 있다'고 했는데 2단계 이상 막힘 — 감으로 맞힘은 따로
 const hbStuck = r => ((r.결과 || '').match(/x/g) || []).length >= 2;
 const hbFastR = r => r && r.완료 && r.ms != null && r.ms < (HB_FAST[r.판] || 60000);
 const hbMin = ms => ms == null ? '' : ms < 60000 ? Math.round(ms / 1000) + '초' : Math.round(ms / 60000) + '분';
@@ -5342,7 +5343,7 @@ function hbBar(res, n, cls) {                                   // 스텝 결과
   const s = (res || '').padEnd(n, '-').slice(0, Math.max(n, (res || '').length));
   return `<span class="hb-b${cls ? ' ' + cls : ''}">${[...s].map(c => `<i class="q${c === '-' ? 'n' : c}"></i>`).join('')}</span>`;
 }
-function hbStepNames(pan, n) { return HB_STEPS[pan] || [...Array(n)].map((_, k) => '걸음 ' + (k + 1)); }
+function hbStepNames(pan, n) { return HB_STEPS[pan] || [...Array(n)].map((_, k) => '단계 ' + (k + 1)); }
 
 const HB_CSS = `<style>
 #v-haebu{--ok:#5fd3a0;--tt:#f2b45a;--xx:#ff6b7f;--nn:rgba(255,255,255,.09)}
@@ -5468,18 +5469,21 @@ function hbDraw() {
   bar.innerHTML = grps.map(g => { const [k, p] = g.split('|'); return fb('hg', g, (HB_SET[k] || k) + ' ' + (HB_PAN[p] || p), HB.grp); }).join('') + sep
     + fb('hs', '*', '학교 전체', HB.sch) + schools.map(s => fb('hs', s, s + '고', HB.sch)).join('') + sep
     + fb('hb', '*', '반 전체', HB.ban) + bans.map(b => fb('hb', b, b, HB.ban)).join('') + sep
-    + fb('hd', '0', '전체 기간', String(HB.days)) + fb('hd', '7', '최근 7일', String(HB.days))
+    + fb('hd', '0', '전체 기간', String(HB.days)) + fb('hd', '7', '최근 7일', String(HB.days)) + sep
+    + `<button class="fbtn${HB.nofast ? ' on' : ''}" id="hb-nf" title="${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝낸 문항을 정답률·막힘 계산에서 뺍니다">짧은 기록 빼고 계산</button>`
     + ` <button class="fbtn" id="hb-re" title="다시 불러오기">↻</button>`;
   bar.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { HB.grp = b.dataset.hg; hbDraw(); });
   bar.querySelectorAll('[data-hs]').forEach(b => b.onclick = () => { HB.sch = b.dataset.hs; hbDraw(); });
   bar.querySelectorAll('[data-hb]').forEach(b => b.onclick = () => { HB.ban = b.dataset.hb; hbDraw(); });
   bar.querySelectorAll('[data-hd]').forEach(b => b.onclick = () => { HB.days = +b.dataset.hd; hbDraw(); });
   $('hb-re').onclick = () => hbLoad(true);
+  $('hb-nf').onclick = () => { HB.nofast = !HB.nofast; hbDraw(); };
+  const useR = r => !(HB.nofast && hbFastR(r));                        // 계산에 넣을 기록
 
   // ── 학생별 계산
   const S = stus.map(s => {
     const its = myItems(s), rs = its.map(x => ({ x, r: first[s.sid + '|' + x.id], l: last[s.sid + '|' + x.id] })).filter(y => y.r);
-    const done = rs.filter(y => y.r.완료);
+    const done = rs.filter(y => y.r.완료 && useR(y.r));
     const cells = done.reduce((a, y) => a + (y.r.결과 || '').replace(/-/g, '').length, 0);
     const okc = done.reduce((a, y) => a + ((y.r.결과 || '').match(/o/g) || []).length, 0);
     const memo = rs.filter(y => hbMemo(y.r)), stuck = rs.filter(y => hbStuck(y.r)), fast = rs.filter(y => hbFastR(y.r));
@@ -5491,16 +5495,18 @@ function hbDraw() {
   $('hb-cnt').textContent = `${on.length}/${S.length}명`;
 
   // ── KPI
-  const allFirst = on.flatMap(x => x.rs.map(y => y.r)), doneR = allFirst.filter(r => r.완료);
+  const allFirst = on.flatMap(x => x.rs.map(y => y.r)), doneR = allFirst.filter(r => r.완료 && useR(r));
   const tot = doneR.map(r => (r.결과 || '').replace(/-/g, '')).join('');
   const passAll = tot.length ? (tot.match(/o/g) || []).length / tot.length : null;
-  const conf = allFirst.filter(r => r.입구 != null && r.입구 <= 1), confBad = conf.filter(r => hbBad(r) > 0);
+  const conf = doneR.filter(r => r.입구 === 0), confBad = conf.filter(r => hbBad(r) > 0);
+  const gam = doneR.filter(r => r.입구 === 1), gamBad = gam.filter(r => hbBad(r) > 0);
+  const okN = (tot.match(/o/g) || []).length;
   const fastN = allFirst.filter(hbFastR).length;
   const watch = S.map(x => {
     const why = [];
-    if (x.fast.length) why.push(['r', `찍고 넘김 ${x.fast.length}문항`, `완료까지 ${Math.round((HB_FAST[PAN] || 60000) / 1000)}초가 안 걸린 문항`]);
-    if (x.memo.length >= 2 || (x.memo.length && x.memo.length >= x.done * .4)) why.push(['r', `안다더니 막힘 ${x.memo.length}`, "처음에 '자신 있음·감으로'였는데 2스텝 이상 걸림 — 답만 외웠을 수 있음"]);
-    if (x.stuck.length) why.push(['y', `디딤돌로도 못 품 ${x.stuck.length}`, '디딤돌을 거치고도 놓친 스텝이 2개 이상']);
+    if (x.fast.length) why.push(['r', `풀이 시간 확인 ${x.fast.length}문항`, `${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝낸 문항 — 응답과 함께 확인`]);
+    if (x.memo.length >= 2 || (x.memo.length && x.memo.length >= x.done * .4)) why.push(['r', `확신했는데 막힘 ${x.memo.length}`, "처음에 '맞혔고 설명할 수 있다'고 했는데 2단계 이상 첫 응답에서 틀린 문항"]);
+    if (x.stuck.length) why.push(['y', `재확인 필요 ${x.stuck.length}문항`, '도움 질문 뒤에도 틀린 단계가 2개 이상인 문항']);
     if (!x.rs.length) why.push(['d', '아직 시작 안 함', '']);
     else if (x.ing && !x.done) why.push(['d', `진행만 ${x.ing}문항`, '시작만 하고 끝낸 문항이 없음']);
     const score = x.fast.length * 3 + (x.memo.length >= 2 ? x.memo.length * 2 : 0) + x.stuck.length * 2 + (x.rs.length ? 0 : 1);
@@ -5509,14 +5515,14 @@ function hbDraw() {
 
   const H = [HB_CSS];
   H.push('<div class="hb-kpi">');
-  H.push(`<div><div class="k">참여</div><div class="v">${on.length}<small>/ ${S.length}명</small></div><div class="s">끝낸 문항 ${doneR.length}개 · 진행 중 ${allFirst.length - doneR.length}개</div></div>`);
-  H.push(`<div><div class="k">한 번에 통과 (첫 시도 스텝 기준)</div><div class="v">${passAll == null ? '—' : Math.round(passAll * 100) + '%'}</div><div class="s">${hbBar('o', 1)} 한 번에 ${hbBar('t', 1)} 디딤돌 뒤 ${hbBar('x', 1)} 놓침</div></div>`);
-  H.push(`<div><div class="k">'자신 있음'의 실제</div><div class="v">${conf.length ? Math.round(confBad.length / conf.length * 100) + '%' : '—'}<small>가 어딘가 막힘</small></div><div class="s">처음에 맞혔다고 한 ${conf.length}문항 중 ${confBad.length}문항</div></div>`);
-  H.push(`<div><div class="k">찍고 넘긴 문항</div><div class="v">${fastN}<small>문항</small></div><div class="s">${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝까지 간 것 — 기록이 부풀려짐</div></div>`);
+  H.push(`<div><div class="k">참여</div><div class="v">${on.length}<small>/ ${S.length}명</small></div><div class="s">끝낸 문항 ${allFirst.filter(r => r.완료).length}개 · 진행 중 ${allFirst.filter(r => !r.완료).length}개</div></div>`);
+  H.push(`<div><div class="k">첫 응답 정답률 (끝낸 문항, 단계 기준)</div><div class="v">${passAll == null ? '—' : Math.round(passAll * 100) + '%'}</div><div class="s">${okN} / ${tot.length}단계 · ${hbBar('o', 1)} 첫 응답 ${hbBar('t', 1)} 도움 후 ${hbBar('x', 1)} 재확인</div></div>`);
+  H.push(`<div><div class="k">'설명할 수 있다'고 한 문항</div><div class="v">${conf.length ? Math.round(confBad.length / conf.length * 100) + '%' : '—'}<small>가 한 단계 이상 틀림</small></div><div class="s">${confBad.length} / ${conf.length}문항 · 감으로 맞힘 ${gamBad.length} / ${gam.length}문항</div></div>`);
+  H.push(`<div><div class="k">풀이 시간 확인</div><div class="v">${fastN}<small>문항</small></div><div class="s">${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝낸 문항 · ${HB.nofast ? '지금 계산에서 뺌' : '계산에 포함 중 (위 버튼으로 빼기)'}</div></div>`);
   H.push('</div>');
 
   // ① 먼저 볼 학생
-  H.push(`<h3 class="hb-h">먼저 볼 학생</h3><p class="hb-sub">찍고 넘김 → 안다더니 막힘 → 디딤돌로도 못 품 순으로 위에. 이름을 누르면 문항별 기록이 열립니다.</p>`);
+  H.push(`<h3 class="hb-h">먼저 볼 학생</h3><p class="hb-sub">풀이 시간 확인 → 확신했는데 막힘 → 재확인 필요 순으로 위에. 시간만으로 판단하지 말고 응답과 같이 보세요. 이름을 누르면 문항별 기록이 열립니다.</p>`);
   const wv = watch.filter(w => w.score > 1);
   H.push(wv.length ? '<div class="hb-watch">' + wv.slice(0, 12).map(w => `<button class="hb-w" data-sid="${E(w.x.s.sid)}"><div><b>${E(w.x.s.name)}</b><span class="bn">${E(w.x.s.ban)} ${E(w.x.s.sch)}</span>`
       + `<div class="why">${w.why.map(([c, t, d]) => `<span class="hb-tag ${c}" title="${E(d)}">${E(t)}</span>`).join('')}</div></div></button>`).join('') + '</div>'
@@ -5528,7 +5534,7 @@ function hbDraw() {
   const names = hbStepNames(PAN, NSmax);
   const stepAgg = names.map((n, k) => { let o = 0, t = 0, x = 0; doneR.forEach(r => { const c = (r.결과 || '')[k]; if (c === 'o') o++; else if (c === 't') t++; else if (c === 'x') x++; }); return { n, o, t, x, a: o + t + x }; }).filter(v => v.a);
   if (stepAgg.length) {
-    H.push(`<h3 class="hb-h">어느 스텝에서 막히나</h3><p class="hb-sub">끝낸 문항의 첫 시도 기준 · 숫자 = 디딤돌을 거치거나 놓친 비율</p><div class="hb-steps">`);
+    H.push(`<h3 class="hb-h">어느 단계에서 막히나</h3><p class="hb-sub">끝낸 문항의 첫 시도 기준 · 숫자 = 첫 응답에서 틀린 비율(도움 후 정답 + 재확인 필요)</p><div class="hb-steps">`);
     stepAgg.forEach(v => { const p = Math.round((v.t + v.x) / v.a * 100);
       H.push(`<div class="hb-st"><div class="n">${E(v.n)}</div><div class="p" style="color:${p >= 40 ? 'var(--xx)' : p >= 25 ? 'var(--tt)' : 'var(--ok)'}">${p}%</div>`
         + `<div class="tr"><span style="width:${v.o / v.a * 100}%;background:var(--ok)"></span><span style="width:${v.t / v.a * 100}%;background:var(--tt)"></span><span style="width:${v.x / v.a * 100}%;background:var(--xx)"></span></div></div>`); });
@@ -5544,9 +5550,9 @@ function hbDraw() {
     if (!shown.length) return;
     const gon = GS.filter(x => x.rs.length).length;
     H.push(`<h3 class="hb-h hb-g">${E(gname)} <span class="dim">· ${gon}/${GS.length}명 참여 · ${shown.length}문항</span></h3>`);
-    H.push(`<p class="hb-sub">칸 하나 = 그 문항 스텝 막대(첫 시도) · 점선 = 진행 중 · ⚡ = 찍고 넘김 · ↻ = 다시 풀어 봄 · 이름·칸을 누르면 학생 기록, 머리글을 누르면 정렬</p>`);
+    H.push(`<p class="hb-sub">칸 하나 = 그 문항의 단계 막대(첫 시도) · 초록 첫 응답 정답 · 주황 도움 후 정답 · 빨강 재확인 필요 · 점선 = 진행 중 · ⚡ = 풀이 시간 확인 · ↻ = 다시 풀어 봄 · 이름·칸을 누르면 학생 기록, 머리글을 누르면 정렬</p>`);
     H.push('<div class="hb-scroll"><table class="hb-m"><thead>');
-    H.push(`<tr><th class="nm">이름</th><th>끝냄</th><th>한 번에</th><th>표시</th>${shown.map(it => `<th title="${E(it.id + ' · ' + it.unit)}">${E(hbShortId(it.id))}</th>`).join('')}<th>시간</th><th>마지막</th></tr></thead><tbody>`);
+    H.push(`<tr><th class="nm">이름</th><th>끝냄</th><th>첫 응답 정답률</th><th>표시</th>${shown.map(it => `<th title="${E(it.id + ' · ' + it.unit)}">${E(hbShortId(it.id))}</th>`).join('')}<th>시간</th><th>마지막</th></tr></thead><tbody>`);
     GS.forEach(x => {
       const cells = shown.map(it => {
         if (!x.its.includes(it)) return '<td class="c" data-sv=""><span class="e">·</span></td>';
@@ -5557,7 +5563,7 @@ function hbDraw() {
         return `<td class="c" data-sid="${E(x.s.sid)}" data-sv="${r.완료 ? n - bad : -1}" title="${E(tip)}">${hbBar(r.결과, n, r.완료 ? '' : 'ing')}${hbFastR(r) ? '<span class="fz">⚡</span>' : ''}${l && l.시도 > r.시도 ? '<span class="rt">↻</span>' : ''}</td>`;
       }).join('');
       const pc = x.pass == null ? '—' : Math.round(x.pass * 100) + '%';
-      const flags = [x.fast.length ? `<span class="hb-tag r" title="찍고 넘김">⚡${x.fast.length}</span>` : '', x.memo.length ? `<span class="hb-tag r" title="안다더니 막힘">외움? ${x.memo.length}</span>` : '', x.stuck.length ? `<span class="hb-tag y" title="디딤돌로도 못 품">못 품 ${x.stuck.length}</span>` : ''].join('');
+      const flags = [x.fast.length ? `<span class="hb-tag r" title="풀이 시간 확인">⚡${x.fast.length}</span>` : '', x.memo.length ? `<span class="hb-tag r" title="확신했는데 2단계 이상 막힘">확신↓ ${x.memo.length}</span>` : '', x.stuck.length ? `<span class="hb-tag y" title="재확인 필요 2단계 이상">재확인 ${x.stuck.length}</span>` : ''].join('');
       H.push(`<tr${x.rs.length ? '' : ' class="off"'}><td class="nm" data-sid="${E(x.s.sid)}" data-sv="${E(x.s.name)}">${E(x.s.name)}<small>${E(x.s.ban)}</small></td>`
         + `<td class="r" data-sv="${x.done}">${x.done}/${x.its.length}</td><td class="r" data-sv="${x.pass == null ? '' : x.pass}"><span class="hb-pct" style="color:${x.pass == null ? 'var(--dim)' : x.pass >= .75 ? 'var(--ok)' : x.pass >= .55 ? 'var(--tt)' : 'var(--xx)'}">${pc}</span></td>`
         + `<td class="fl" data-sv="${x.fast.length * 3 + x.memo.length * 2 + x.stuck.length || ''}">${flags}</td>${cells}`
@@ -5566,7 +5572,7 @@ function hbDraw() {
     H.push('</tbody></table></div>');
 
     const itemRows = shown.map(it => {
-      const rs = GS.map(x => ({ x, r: first[x.s.sid + '|' + it.id] })).filter(y => y.r && y.r.완료);
+      const rs = GS.map(x => ({ x, r: first[x.s.sid + '|' + it.id] })).filter(y => y.r && y.r.완료 && useR(y.r));
       if (!rs.length) return null;
       const cols = names.map((_, k) => { const got = rs.filter(y => (y.r.결과 || '')[k] && y.r.결과[k] !== '-'); const bad = got.filter(y => /[tx]/.test(y.r.결과[k]));
         return { a: got.length, b: bad.length, who: bad.map(y => y.x.s.name + (y.r.결과[k] === 'x' ? '✕' : '△')) }; });
@@ -5576,9 +5582,9 @@ function hbDraw() {
     if (!itemRows.length) return;
     const gid = 'hbx-' + gname.replace(/\W/g, '');
     const TOP = 8, more = itemRows.length > TOP;
-    H.push(`<details class="hb-hm" id="${gid}"${HB['x' + gid] ? ' open' : ''}><summary>문항 × 스텝 막힘표 <span class="dim">· 많이 막힌 순${more ? ' · 위 ' + TOP + '개 먼저' : ''}</span></summary>`
-      + `<p class="hb-sub">칸 = 그 스텝에서 디딤돌을 거치거나 놓친 학생 비율, 작은 숫자 = 명수 · 진할수록 많이 막힘 · 칸에 마우스를 올리면 이름 · 1명만 푼 문항은 아래로</p>`);
-    H.push(`<div class="hb-scroll"><table class="hb-m hb-h"><thead><tr><th class="nm">문항</th><th>단원</th><th>푼 학생</th><th>평균 막힌 스텝</th>${names.map(n => `<th>${E(n)}</th>`).join('')}</tr></thead><tbody>`);
+    H.push(`<details class="hb-hm" id="${gid}"${HB['x' + gid] ? ' open' : ''}><summary>문항 × 단계 막힘표 <span class="dim">· 많이 막힌 순${more ? ' · 위 ' + TOP + '개 먼저' : ''}</span></summary>`
+      + `<p class="hb-sub">칸 = 그 단계에서 첫 응답이 틀린 학생 비율, 작은 숫자 = 명수 · 진할수록 많이 막힘 · 칸에 마우스를 올리면 이름 · 1명만 푼 문항은 아래로</p>`);
+    H.push(`<div class="hb-scroll"><table class="hb-m hb-h"><thead><tr><th class="nm">문항</th><th>단원</th><th>푼 학생</th><th>평균 막힌 단계</th>${names.map(n => `<th>${E(n)}</th>`).join('')}</tr></thead><tbody>`);
     itemRows.forEach(({ it, rs, cols, avg }, i) => {
       H.push(`<tr${more && i >= TOP ? ' class="hb-more"' : ''}><td class="nm" data-sv="${E(it.id)}">${E(hbShortId(it.id))}</td><td class="fl dim" data-sv="${E(it.unit)}">${E(it.unit)}</td><td class="r" data-sv="${rs.length}">${rs.length}명</td><td class="r" data-sv="${avg.toFixed(2)}">${avg.toFixed(1)}</td>`
         + cols.map(c => { if (!c.a) return '<td class="h" data-sv=""><span class="dim">·</span></td>'; const p = c.b / c.a;
@@ -5599,11 +5605,11 @@ function hbDraw() {
     const L = [`<button class="hb-close" id="hb-drx">닫기</button><h4>${E(x.s.name)}</h4><div class="meta">${E(x.s.ban)} ${E(x.s.sch)}고 · ${E((HB_SET[SK] || SK) + ' ' + (HB_PAN[PAN] || PAN))} · 끝낸 문항 ${x.done}/${x.its.length} · ${x.mins}분${x.last ? ' · 마지막 ' + hbT(x.last) : ''}</div>`];
     if (!recs.length) L.push('<div class="hb-empty">기록 없음 — 포털 링크로 안 열었거나 아직 시작 안 함</div>');
     recs.forEach(r => {
-      const ns = nm((r.결과 || '').length), bad = [...(r.결과 || '')].map((c, k) => /[tx]/.test(c) ? `<em class="q${c}">${E(ns[k] || '걸음 ' + (k + 1))}${c === 'x' ? ' ✕' : ' △'}</em>` : null).filter(Boolean);
+      const ns = nm((r.결과 || '').length), bad = [...(r.결과 || '')].map((c, k) => /[tx]/.test(c) ? `<em class="q${c}">${E(ns[k] || '단계 ' + (k + 1))}${c === 'x' ? ' ✕' : ' △'}</em>` : null).filter(Boolean);
       L.push(`<div class="hb-it"><div class="t"><b>${E(hbShortId(r.문항ID))}${r.시도 > 1 ? ` <span class="dim">· ${r.시도}회차</span>` : ''}</b><span>${hbT(r.시각)} · ${hbMin(r.ms)}${r.완료 ? '' : ' · 진행 중'}</span></div>`
         + `<div class="rw">${hbBar(r.결과, (r.결과 || '').length, 'big' + (r.완료 ? '' : ' ing'))}</div>`
-        + `<div class="rw">${r.입구 != null ? '처음: <b>' + E(HB_IN[r.입구]) + '</b>' : ''}${hbMemo(r) ? ' <span class="hb-tag r">안다더니 막힘</span>' : ''}${hbFastR(r) ? ' <span class="hb-tag r">찍고 넘김</span>' : ''}`
-        + `${bad.length ? '<br>막힌 곳 · ' + bad.join(' ') : r.완료 ? '<br><span style="color:var(--ok)">전부 한 번에</span>' : ''}</div></div>`);
+        + `<div class="rw">${r.입구 != null ? '처음: <b>' + E(HB_IN[r.입구]) + '</b>' : ''}${hbMemo(r) ? ' <span class="hb-tag r">확신했는데 막힘</span>' : ''}${hbFastR(r) ? ' <span class="hb-tag r">풀이 시간 확인</span>' : ''}`
+        + `${bad.length ? '<br>막힌 곳 · ' + bad.join(' ') : r.완료 ? '<br><span style="color:var(--ok)">모든 단계 첫 응답 정답</span>' : ''}</div></div>`);
     });
     dr.innerHTML = L.join(''); dr.classList.add('on'); dr.setAttribute('aria-hidden', 'false'); HB.open = sid;
     $('hb-drx').onclick = () => { dr.classList.remove('on'); dr.setAttribute('aria-hidden', 'true'); HB.open = ''; };
