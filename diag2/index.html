@@ -144,7 +144,7 @@ const BLOCKS=[
  t:{k:'t',type:'mc',fix:true,q:R`함수 $f(x)=x^3-3x$에 대하여 닫힌구간 $[0,\ 3]$에서 평균값 정리를 만족시키는 실수 $c$의 값은?`,o:[R`$1$`,R`$\sqrt2$`,R`$\sqrt3$`,R`$2$`,R`$\sqrt5$`],a:3},
  h:{k:'h',type:'num',q:R`함수 $f(x)=x^3-3x^2+2$에 대하여 닫힌구간 $[0,\ a]$에서 평균값 정리를 만족시키는 실수 $c$의 값이 $2$일 때, 양수 $a$의 값은?`,a:'3'}}},
 {id:'B3',name:'증가·감소와 극값',sub:'증가 조건 · 극대/극소 · 계수 결정',
- sum:R`$f'(x)>0$인 구간에서 증가. 미분가능한 $f$가 실수 전체에서 증가 ⇔ 모든 $x$에서 $f'(x)\ge0$ → 삼차함수면 $f'(x)=0$의 <b>판별식 $D\le0$</b>. <b>극값</b>: $f'(a)=0$이고 $x=a$ 좌우에서 $f'$의 부호가 바뀔 때 (+→− 극대, −→+ 극소). $f'(a)=0$이어도 부호가 안 바뀌면 극값이 아니다($y=x^3$).`,
+ sum:R`$f'(x)>0$인 구간에서 증가. 미분가능한 $f$가 증가하면 $f'(x)\ge0$. <b>최고차항의 계수가 양수인 삼차함수</b>는 $f'(x)=0$의 <b>판별식 $D\le0$</b>이면 실수 전체에서 증가한다(계수가 음수면 $D\le0$일 때 감소). <b>극값</b>: $f'(a)=0$이고 $x=a$ 좌우에서 $f'$의 부호가 바뀔 때 (+→− 극대, −→+ 극소). $f'(a)=0$이어도 부호가 안 바뀌면 극값이 아니다($y=x^3$).`,
  items:{
  c1:{k:'c',type:'mc',q:R`함수 $f(x)=x^3$에 대한 설명으로 옳은 것은?`,o:[R`$f'(0)=0$이므로 $x=0$에서 극값을 갖는다.`,R`실수 전체의 집합에서 증가한다.`,R`$x<0$에서 감소한다.`,R`$x=0$에서 극솟값 $0$을 갖는다.`,R`$x=0$에서 미분가능하지 않다.`],a:2},
  c2:{k:'c',type:'mc',q:R`미분가능한 함수 $f(x)$에 대하여 $f'(a)=0$이고, $x=a$의 좌우에서 $f'(x)$의 부호가 <b>양에서 음으로</b> 바뀌면 $f(x)$는 $x=a$에서 어떻게 되는가?`,o:[R`극대`,R`극소`,R`극값을 갖지 않는다`,R`최솟값을 갖는다`,R`미분가능하지 않다`],a:1},
@@ -160,7 +160,7 @@ const BLOCKS=[
  t:{k:'t',type:'num',q:R`닫힌구간 $[-1,\ 4]$에서 함수 $f(x)=x^3-3x^2+2$의 최댓값과 최솟값의 합은?`,a:'16'},
  h:{k:'h',type:'num',q:R`한 변의 길이가 $12$인 정사각형 모양의 종이의 네 귀퉁이에서 한 변의 길이가 $x$인 정사각형을 잘라 내고 접어 뚜껑이 없는 상자를 만들려고 한다. 상자의 부피의 최댓값은?`,a:'128'}}},
 {id:'B5',name:'방정식·부등식',sub:'실근의 개수 · 정수 k · 항상 성립',
- sum:R`방정식 $f(x)=k$의 실근의 개수 = $y=f(x)$와 <b>직선 $y=k$의 교점 개수</b> → 문자는 한쪽으로 분리. 삼차방정식이 서로 다른 세 실근 ⇔ (극댓값)$\times$(극솟값)$<0$. 부등식 '$f(x)\ge0$이 항상 성립'은 그 범위에서 <b>$f$의 최솟값 $\ge0$</b>.`,
+ sum:R`방정식 $f(x)=k$의 실근의 개수 = $y=f(x)$와 <b>직선 $y=k$의 교점 개수</b> → 문자는 한쪽으로 분리. 삼차함수 $F(x)$에 대하여 $F(x)=0$이 서로 다른 세 실근 ⇔ $F(x)$의 (극댓값)$\times$(극솟값)$<0$ — $f(x)=k$ 꼴이면 $F(x)=f(x)-k$로 본다. 부등식 '$f(x)\ge0$이 항상 성립'은 그 범위에서 <b>$f$의 최솟값 $\ge0$</b>.`,
  items:{
  c1:{k:'c',type:'mc',q:R`방정식 $f(x)=k$의 서로 다른 실근의 개수와 항상 같은 것은?`,o:[R`함수 $y=f(x)$의 그래프와 직선 $y=k$의 교점의 개수`,R`함수 $y=f(x)$의 그래프와 $x$축의 교점의 개수`,R`$f'(x)=0$의 실근의 개수`,R`함수 $f(x)$의 극값의 개수`,R`$f(x)$의 차수`],a:1},
  c2:{k:'c',type:'mc',q:R`극댓값과 극솟값을 갖는 삼차함수 $f(x)$에 대하여 방정식 $f(x)=0$이 서로 다른 세 실근을 가질 조건은?`,o:[R`(극댓값)$\times$(극솟값)$<0$`,R`(극댓값)$\times$(극솟값)$>0$`,R`(극댓값)$\times$(극솟값)$=0$`,R`(극댓값)$>0$`,R`(극솟값)$<0$`],a:1},
@@ -176,7 +176,7 @@ const BLOCKS=[
  t:{k:'t',type:'num',q:R`수직선 위를 움직이는 점 P의 시각 $t\ (t\ge0)$에서의 위치가 $x(t)=t^3-6t^2+9t$일 때, 점 P가 <b>처음으로</b> 운동 방향을 바꾸는 순간의 위치는?`,a:'4'},
  h:{k:'h',type:'num',q:R`수직선 위를 움직이는 점 P의 시각 $t\ (t\ge0)$에서의 위치가 $x(t)=t^3-6t^2+9t$일 때, $t=0$부터 $t=4$까지 점 P가 <b>움직인 거리</b>는?`,a:'12'}}},
 {id:'B7',name:'부정적분',sub:'계산 · 미분과의 관계 · 적분상수',
- sum:R`$F'(x)=f(x)$이면 $\displaystyle\int f(x)\,dx=F(x)+C$. $\displaystyle\int x^n dx=\dfrac{x^{n+1}}{n+1}+C$. $\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)$, $\displaystyle\int\Big\{\dfrac{d}{dx}f(x)\Big\}dx=f(x)+C$ — 순서에 따라 $C$가 붙고 안 붙는다. 조건 $f(a)=b$로 $C$를 정한다. 식에 $\int f\,dx$가 있으면 <b>양변을 미분</b>.`,
+ sum:R`$F'(x)=f(x)$이면 $\displaystyle\int f(x)\,dx=F(x)+C$. $\displaystyle\int x^n dx=\dfrac{x^{n+1}}{n+1}+C$ ($n$은 $0$ 이상의 정수). $\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)$, $\displaystyle\int\Big\{\dfrac{d}{dx}f(x)\Big\}dx=f(x)+C$ — 순서에 따라 $C$가 붙고 안 붙는다. 조건 $f(a)=b$로 $C$를 정한다. 식에 $\int f\,dx$가 있으면 <b>양변을 미분</b>.`,
  items:{
  c1:{k:'c',type:'mc',q:R`$\displaystyle\int(3x^2+2x)\,dx$는? (단, $C$는 적분상수)`,o:[R`$x^3+x^2+C$`,R`$6x+2+C$`,R`$x^3+x^2$`,R`$3x^3+2x^2+C$`,R`$x^3+2x^2+C$`],a:1},
  c2:{k:'c',type:'mc',q:R`다음 중 <b>항상 옳은</b> 것은? (단, $C$는 적분상수)`,o:[R`$\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)$`,R`$\displaystyle\int\Big\{\dfrac{d}{dx}f(x)\Big\}dx=f(x)$`,R`$\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)+C$`,R`$\displaystyle\int f'(x)\,dx=f'(x)+C$`,R`$\displaystyle\int f(x)\,dx=f'(x)+C$`],a:1},
@@ -192,7 +192,7 @@ const BLOCKS=[
  t:{k:'t',type:'num',q:R`$\displaystyle\int_{-1}^{1}(x^3+3x^2+2x+1)\,dx$의 값은?`,a:'4'},
  h:{k:'h',type:'num',q:R`다항함수 $f(x)$가 모든 실수 $x$에 대하여 $\displaystyle\int_1^x f(t)\,dt=x^3-ax+2$를 만족시킬 때, $f(a)$의 값은? (단, $a$는 상수)`,a:'24'}}},
 {id:'B9',name:'정적분의 활용',sub:'넓이 · 두 곡선 사이 · 거리',
- sum:R`곡선과 $x$축 사이의 넓이 $=\displaystyle\int_a^b|f(x)|\,dx$ — $x$축 아래 부분은 부호를 바꿔 더한다. 두 곡선 사이 넓이 $=\displaystyle\int_a^b|f(x)-g(x)|\,dx$, <b>교점부터</b> 구한다. 속도 $v(t)$일 때 위치의 변화량 $=\displaystyle\int v\,dt$, 움직인 거리 $=\displaystyle\int|v|\,dt$.`,
+ sum:R`곡선과 $x$축 사이의 넓이 $=\displaystyle\int_a^b|f(x)|\,dx$ — $x$축 아래 부분은 부호를 바꿔 더한다. 두 곡선 사이 넓이 $=\displaystyle\int_a^b|f(x)-g(x)|\,dx$, <b>교점부터</b> 구한다. 속도 $v(t)$일 때 $t=t_1$부터 $t=t_2$까지 위치의 변화량 $=\displaystyle\int_{t_1}^{t_2}v(t)\,dt$, 움직인 거리 $=\displaystyle\int_{t_1}^{t_2}|v(t)|\,dt$.`,
  items:{
  c1:{k:'c',type:'mc',q:R`닫힌구간 $[a,\ b]$에서 $f(x)\le0$일 때, 곡선 $y=f(x)$와 $x$축 및 두 직선 $x=a,\ x=b$로 둘러싸인 부분의 넓이는?`,o:[R`$-\displaystyle\int_a^b f(x)\,dx$`,R`$\displaystyle\int_a^b f(x)\,dx$`,R`$f(b)-f(a)$`,R`$(b-a)\,f(a)$`,R`$\displaystyle\int_b^a\{-f(x)\}\,dx$`],a:1},
  c2:{k:'c',type:'mc',q:R`수직선 위를 움직이는 점의 시각 $t$에서의 속도가 $v(t)$일 때, $t=0$부터 $t=4$까지 <b>움직인 거리</b>는?`,o:[R`$\displaystyle\int_0^4|v(t)|\,dt$`,R`$\displaystyle\int_0^4 v(t)\,dt$`,R`$v(4)-v(0)$`,R`$\left|\displaystyle\int_0^4 v(t)\,dt\right|$`,R`$v'(4)$`],a:1},
@@ -241,6 +241,7 @@ function nextStep(A,B){
   if(!toT) return null;
   if(!has(r,k('t'))) return 't';
   if(!good(r,k('t'))) return null;
+  if(cs<2) return null;                      // 기초를 거친 경로는 유형까지만(레벨 상한 2) — 1017 검토 반영
   if(!has(r,k('h'))) return 'h';
   return null;
 }
