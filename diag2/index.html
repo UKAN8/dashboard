@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>수학은유강 개념 진단</title>
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="수학은유강 기말 범위 개념 진단">
+<meta property="og:description" content="개인 링크입니다. 다른 사람에게 전달하지 마세요.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.035); --card2:rgba(255,255,255,.06); --bd:rgba(255,255,255,.09);
+ --tx:#f5f5fa; --tx2:#c4c4d0; --dim:#8a8a98; --acc:#f5a0a0; --good:#9fe3bd; --warn:#f3d27a; --bad:#f08a8a;
+ --l0:#5a2a32; --l1:#7a4a2a; --l2:#6b6b2e; --l3:#2e6b4c; --l4:#2a5f8a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
+ padding:16px clamp(12px,4vw,28px) calc(110px + env(safe-area-inset-bottom))}
+main{max-width:640px;margin:0 auto}
+main.wide{max-width:1180px}
+.brand{font-weight:800;color:var(--acc);font-size:14px;letter-spacing:.02em}
+h1{font-size:21px;margin:6px 0 4px;line-height:1.35}
+h2{font-size:17px;margin:22px 0 8px}
+h3{font-size:15px;margin:16px 0 6px;color:var(--tx2)}
+p{margin:6px 0}
+.dim{color:var(--dim)} .sm{font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:12px 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;background:var(--card2);border:1px solid var(--bd);color:var(--tx2)}
+.pill.c{color:#bcd7ff}.pill.b{color:#ffd8a8}.pill.t{color:#c8f0da}.pill.h{color:#f5b8e6}
+.bar{height:6px;background:var(--card2);border-radius:9px;overflow:hidden;margin:8px 0 2px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#f5a0a0,#f3d27a);border-radius:9px;transition:width .3s}
+.q{font-size:16.5px;line-height:1.75;margin:10px 0 14px;word-break:keep-all}
+.opts{display:flex;flex-direction:column;gap:8px}
+button{font:inherit;color:inherit;cursor:pointer}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:12px 13px;border-radius:11px;
+ background:var(--card2);border:1px solid var(--bd);line-height:1.6}
+.opt .n{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--dim);display:grid;place-items:center;font-size:12px;margin-top:2px}
+.opt.on{border-color:var(--acc);background:rgba(245,160,160,.12)}
+.opt.on .n{background:var(--acc);color:#111;border-color:var(--acc)}
+.numbox{font-size:26px;text-align:center;padding:10px;border-radius:11px;background:var(--card2);border:1px solid var(--bd);min-height:56px;letter-spacing:.04em}
+.numbox.empty{color:var(--dim);font-size:15px;line-height:36px}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+.pad button{padding:13px 0;border-radius:10px;background:var(--card2);border:1px solid var(--bd);font-size:18px}
+.conf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.conf button{padding:13px 4px;border-radius:11px;border:1px solid var(--bd);background:var(--card2);font-weight:700}
+.conf button:disabled{opacity:.35}
+.conf .k1{color:var(--good)} .conf .k2{color:var(--warn)} .conf .k3{color:var(--bad)}
+.skip{margin-top:12px;background:none;border:none;color:var(--dim);text-decoration:underline;font-size:13px}
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:none;background:var(--acc);color:#151515;font-weight:800;font-size:16px;margin-top:14px}
+.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+.btn:disabled{opacity:.4}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:9px 12px;border-radius:10px;background:var(--card2);border:1px solid var(--bd);font-size:14px}
+.chip.on{border-color:var(--acc);background:rgba(245,160,160,.14);color:#ffd9d9}
+.fld{margin:16px 0}
+.fld>label{display:block;font-weight:700;margin-bottom:7px}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--tx);background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px}
+.self{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.lv{display:grid;grid-template-columns:118px 1fr 70px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
+.lvbar{height:12px;border-radius:7px;background:var(--card2);overflow:hidden}
+.lvbar>i{display:block;height:100%;border-radius:7px}
+.L0{background:#c25b6a}.L1{background:#d9905a}.L2{background:#cfc45a}.L3{background:#5fc28d}.L4{background:#5aa7e0}
+.save{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));font-size:12px;padding:5px 10px;border-radius:99px;background:#1b1b24;border:1px solid var(--bd);color:var(--dim)}
+.save.ok{color:var(--good)} .save.err{color:var(--bad)}
+.toast{background:rgba(159,227,189,.1);border:1px solid rgba(159,227,189,.3);color:var(--good);border-radius:10px;padding:8px 12px;font-size:13.5px;margin:10px 0}
+.sum{font-size:14px;line-height:1.75;color:var(--tx2)}
+.sum b{color:var(--tx)}
+/* 교사 화면 */
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:center;white-space:nowrap}
+th{color:var(--dim);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:#101018}
+th.nos{cursor:default}
+td.l{text-align:left}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:12px}
+.cell{display:inline-block;min-width:30px;padding:2px 6px;border-radius:6px;color:#111;font-weight:800}
+.cell.na{background:transparent;color:var(--dim);font-weight:400}
+tr.row{cursor:pointer} tr.row:hover td{background:rgba(255,255,255,.03)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:4px 10px;font-size:13.5px}
+.kv div:nth-child(odd){color:var(--dim)}
+.flag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:6px;margin:1px 2px;background:var(--card2);border:1px solid var(--bd)}
+.flag.r{color:var(--bad)} .flag.y{color:var(--warn)} .flag.g{color:var(--good)}
+.msg{width:100%;min-height:330px;font-size:14px;line-height:1.7}
+.row-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.row-tools .btn{width:auto;display:inline-block;padding:9px 14px;font-size:14px;margin-top:0}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);margin:6px 0}
+.legend span{display:inline-flex;gap:4px;align-items:center}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+</style>
+</head><body>
+<main id="app"><p class="dim">불러오는 중…</p></main>
+<div class="save" id="save" hidden></div>
+<script>
+/* 기말 범위(미적분1 도함수의 활용~정적분의 활용) 개념 진단 — 2026-10-17 고2A. 고1판(_diag/diag.html, 1011)을 그대로 복제.
+ * 페이지 /dashboard/diag2/ · 설문키 diag_m1_1017 · 9단원.
+ *
+ * 학생:  /diag2/?t=<포털 토큰>          (설문과 같은 survey_open·survey_submit RPC, 설문키 = SKEY)
+ * 교사:  /diag2/?admin                  (대시보드 로그인 세션 → survey_response 를 admin 으로 읽는다)
+ * 토큰이 안 먹을 때: /diag2/?offline    (폰에만 저장 → 끝에 '결과 코드'를 쌤에게 보내면 교사 화면에서 붙여넣기)
+ *
+ * 적응 규칙(블록마다): 자기 평가 → 개념 2문항
+ *   개념 2개 모두 '정답+(확실|애매)' → 유형 → (유형 통과) → 심화
+ *   아니면 → 기초 1문항 → (개념 1개 + 기초 통과) → 유형까지만
+ *   '찍음' 정답은 정답으로 치지 않는다(기존 자평 '가짜정답'과 같은 결).
+ * 레벨: 0 다시 시작 · 1 흐릿 · 2 개념 OK · 3 유형 OK · 4 심화 OK
+ */
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const SKEY='diag_m1_1017';
+// 1017 고2A — 교사 화면은 ?admin (반이 늘면 ROSTERS 에 한 줄 더하고 ?admin&ban=…)
+const ROSTERS={
+  '고2A':['김성오','김예훈','안상민','안성주','윤현석','장유진','정운정','한성주','홍성안'],
+};
+const BAN=(()=>{ const b=(new URLSearchParams(location.search).get('ban')||'고2A').trim(); return ROSTERS[b]?b:'고2A'; })();
+const ROSTER=ROSTERS[BAN];
+let sb=null; try{ sb=supabase.createClient(SB_URL,SB_ANON); }catch(e){}
+const E=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+const $=id=>document.getElementById(id);
+const R=String.raw;
+
+/* ── 문항 ─────────────────────────────────────────────────────────────── */
+const KIND={c:'개념',b:'기초',t:'유형',h:'심화'};
+const LVNAME=['다시 시작','흐릿','개념 OK','유형 OK','심화 OK'];
+const BLOCKS=[
+{id:'B1',name:'접선의 방정식',sub:'기울기 · 접점 · 곡선 밖의 점',
+ sum:R`곡선 $y=f(x)$ 위의 점 $(a,\ f(a))$에서의 접선의 기울기는 $f'(a)$, 접선은 $y-f(a)=f'(a)(x-a)$. <b>기울기가 주어지면</b> $f'(t)=m$으로 접점부터. <b>곡선 밖의 점</b>에서 그은 접선은 접점을 $(t,\ f(t))$로 두고 접선의 식에 그 점을 대입해 $t$를 구한다.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`곡선 $y=f(x)$ 위의 점 $(a,\ f(a))$에서의 <b>접선의 기울기</b>는?`,o:[R`$f(a)$`,R`$f'(a)$`,R`$f'(x)$`,R`$\dfrac{f(a)}{a}$`,R`$-\dfrac{1}{f'(a)}$`],a:2},
+ c2:{k:'c',type:'num',q:R`곡선 $y=x^3-2x$ 위의 점 $(1,\ -1)$에서의 접선의 $y$절편은?`,a:'-2'},
+ b:{k:'b',type:'mc',q:R`함수 $f(x)=x^3$의 도함수 $f'(x)$는?`,o:[R`$3x^2$`,R`$x^2$`,R`$3x$`,R`$3x^3$`,R`$\dfrac{x^4}{4}$`],a:1},
+ t:{k:'t',type:'num',q:R`곡선 $y=x^2+3$에 접하고 기울기가 $4$인 직선의 $y$절편은?`,a:'-1'},
+ h:{k:'h',type:'num',q:R`원점에서 곡선 $y=x^3+2$에 그은 접선의 기울기는?`,a:'3'}}},
+{id:'B2',name:'평균값 정리',sub:'롤의 정리 · 평균값 정리 · 조건',
+ sum:R`<b>롤의 정리</b>: $f$가 $[a,b]$에서 연속, $(a,b)$에서 미분가능, $f(a)=f(b)$ → $f'(c)=0$인 $c$가 $(a,b)$에 적어도 하나. <b>평균값 정리</b>: $f'(c)=\dfrac{f(b)-f(a)}{b-a}$인 $c$가 $(a,b)$에 적어도 하나. 뜻은 '양 끝을 잇는 직선과 평행한 접선이 있다'. 조건 두 개(닫힌구간 연속, 열린구간 미분가능)를 꼭 확인.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`함수 $f(x)$가 닫힌구간 $[a,b]$에서 연속이고 열린구간 $(a,b)$에서 미분가능할 때, <b>평균값 정리</b>에 의해 열린구간 $(a,b)$에 적어도 하나 존재하는 $c$가 만족시키는 식은?`,o:[R`$f'(c)=\dfrac{f(b)-f(a)}{b-a}$`,R`$f(c)=\dfrac{f(b)-f(a)}{b-a}$`,R`$f'(c)=0$`,R`$f'(c)=f(b)-f(a)$`,R`$f(c)=\dfrac{f(a)+f(b)}{2}$`],a:1},
+ c2:{k:'c',type:'mc',q:R`롤의 정리에서 $f'(c)=0$이라는 것은 곡선 $y=f(x)$ 위의 점 $(c,\ f(c))$에서의 접선이 어떻다는 뜻인가?`,o:[R`$x$축에 평행하다`,R`$y$축에 평행하다`,R`직선 $y=x$에 평행하다`,R`원점을 지난다`,R`곡선과 두 점에서 만난다`],a:1},
+ b:{k:'b',type:'num',q:R`함수 $f(x)=x^2-4x$에 대하여 닫힌구간 $[0,\ 4]$에서 롤의 정리를 만족시키는 실수 $c$의 값은?`,a:'2'},
+ t:{k:'t',type:'mc',fix:true,q:R`함수 $f(x)=x^3-3x$에 대하여 닫힌구간 $[0,\ 3]$에서 평균값 정리를 만족시키는 실수 $c$의 값은?`,o:[R`$1$`,R`$\sqrt2$`,R`$\sqrt3$`,R`$2$`,R`$\sqrt5$`],a:3},
+ h:{k:'h',type:'num',q:R`함수 $f(x)=x^3-3x^2+2$에 대하여 닫힌구간 $[0,\ a]$에서 평균값 정리를 만족시키는 실수 $c$의 값이 $2$일 때, 양수 $a$의 값은?`,a:'3'}}},
+{id:'B3',name:'증가·감소와 극값',sub:'증가 조건 · 극대/극소 · 계수 결정',
+ sum:R`$f'(x)>0$인 구간에서 증가. 미분가능한 $f$가 실수 전체에서 증가 ⇔ 모든 $x$에서 $f'(x)\ge0$ → 삼차함수면 $f'(x)=0$의 <b>판별식 $D\le0$</b>. <b>극값</b>: $f'(a)=0$이고 $x=a$ 좌우에서 $f'$의 부호가 바뀔 때 (+→− 극대, −→+ 극소). $f'(a)=0$이어도 부호가 안 바뀌면 극값이 아니다($y=x^3$).`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`함수 $f(x)=x^3$에 대한 설명으로 옳은 것은?`,o:[R`$f'(0)=0$이므로 $x=0$에서 극값을 갖는다.`,R`실수 전체의 집합에서 증가한다.`,R`$x<0$에서 감소한다.`,R`$x=0$에서 극솟값 $0$을 갖는다.`,R`$x=0$에서 미분가능하지 않다.`],a:2},
+ c2:{k:'c',type:'mc',q:R`미분가능한 함수 $f(x)$에 대하여 $f'(a)=0$이고, $x=a$의 좌우에서 $f'(x)$의 부호가 <b>양에서 음으로</b> 바뀌면 $f(x)$는 $x=a$에서 어떻게 되는가?`,o:[R`극대`,R`극소`,R`극값을 갖지 않는다`,R`최솟값을 갖는다`,R`미분가능하지 않다`],a:1},
+ b:{k:'b',type:'num',q:R`함수 $f(x)=x^3-3x$의 극댓값은?`,a:'2'},
+ t:{k:'t',type:'num',q:R`함수 $f(x)=x^3+ax^2+3x+1$이 실수 전체의 집합에서 증가하도록 하는 정수 $a$의 개수는?`,a:'7'},
+ h:{k:'h',type:'num',q:R`함수 $f(x)=x^3+ax^2+bx$가 $x=1$에서 극솟값 $-5$를 가질 때, $f(x)$의 극댓값은? (단, $a,\ b$는 상수)`,a:'27'}}},
+{id:'B4',name:'그래프와 최대·최소',sub:'증감표 · 닫힌구간 · 활용',
+ sum:R`그래프는 $f'(x)=0$인 $x$를 찾아 <b>증감표</b>로 그린다. 닫힌구간 $[a,b]$의 최댓값·최솟값은 <b>극값과 양 끝값</b> $f(a),\ f(b)$를 모두 비교해서 고른다(극값이 곧 최대·최소는 아니다). 활용 문제는 변수 하나로 식을 세우고 범위부터 적는다.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`닫힌구간 $[a,\ b]$에서 연속인 함수의 최댓값과 최솟값을 구할 때 비교해야 하는 값은?`,o:[R`구간 안의 극값과 $f(a),\ f(b)$`,R`구간 안의 극값만`,R`$f(a),\ f(b)$만`,R`$f'(x)=0$을 만족시키는 $x$의 값들`,R`극댓값과 극솟값의 평균`],a:1},
+ c2:{k:'c',type:'mc',q:R`미분가능한 함수 $f(x)$에 대하여 $x=1$의 좌우에서 $f'(x)$의 부호가 음에서 양으로, $x=3$의 좌우에서 양에서 음으로 바뀐다. 옳은 것은?`,o:[R`$x=1$에서 극소, $x=3$에서 극대`,R`$x=1$에서 극대, $x=3$에서 극소`,R`$x=1,\ 3$에서 모두 극대`,R`$x=1,\ 3$에서 모두 극소`,R`$1\lt x\lt 3$에서 감소한다`],a:1},
+ b:{k:'b',type:'num',q:R`닫힌구간 $[0,\ 3]$에서 함수 $f(x)=x^2-4x+1$의 최솟값은?`,a:'-3'},
+ t:{k:'t',type:'num',q:R`닫힌구간 $[-1,\ 4]$에서 함수 $f(x)=x^3-3x^2+2$의 최댓값과 최솟값의 합은?`,a:'16'},
+ h:{k:'h',type:'num',q:R`한 변의 길이가 $12$인 정사각형 모양의 종이의 네 귀퉁이에서 한 변의 길이가 $x$인 정사각형을 잘라 내고 접어 뚜껑이 없는 상자를 만들려고 한다. 상자의 부피의 최댓값은?`,a:'128'}}},
+{id:'B5',name:'방정식·부등식',sub:'실근의 개수 · 정수 k · 항상 성립',
+ sum:R`방정식 $f(x)=k$의 실근의 개수 = $y=f(x)$와 <b>직선 $y=k$의 교점 개수</b> → 문자는 한쪽으로 분리. 삼차방정식이 서로 다른 세 실근 ⇔ (극댓값)$\times$(극솟값)$<0$. 부등식 '$f(x)\ge0$이 항상 성립'은 그 범위에서 <b>$f$의 최솟값 $\ge0$</b>.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`방정식 $f(x)=k$의 서로 다른 실근의 개수와 항상 같은 것은?`,o:[R`함수 $y=f(x)$의 그래프와 직선 $y=k$의 교점의 개수`,R`함수 $y=f(x)$의 그래프와 $x$축의 교점의 개수`,R`$f'(x)=0$의 실근의 개수`,R`함수 $f(x)$의 극값의 개수`,R`$f(x)$의 차수`],a:1},
+ c2:{k:'c',type:'mc',q:R`극댓값과 극솟값을 갖는 삼차함수 $f(x)$에 대하여 방정식 $f(x)=0$이 서로 다른 세 실근을 가질 조건은?`,o:[R`(극댓값)$\times$(극솟값)$<0$`,R`(극댓값)$\times$(극솟값)$>0$`,R`(극댓값)$\times$(극솟값)$=0$`,R`(극댓값)$>0$`,R`(극솟값)$<0$`],a:1},
+ b:{k:'b',type:'num',q:R`방정식 $x^3-3x+1=0$의 서로 다른 실근의 개수는?`,a:'3'},
+ t:{k:'t',type:'num',q:R`방정식 $x^3-3x^2-k=0$이 서로 다른 세 실근을 갖도록 하는 정수 $k$의 개수는?`,a:'3'},
+ h:{k:'h',type:'num',q:R`두 함수 $f(x)=x^3+3x^2,\ g(x)=9x+k$에 대하여 $x\ge0$인 모든 실수 $x$에서 $f(x)\ge g(x)$가 성립하도록 하는 실수 $k$의 최댓값은?`,a:'-5'}}},
+{id:'B6',name:'속도와 가속도',sub:'미분 · 운동 방향 · 움직인 거리',
+ sum:R`위치 $x(t)$ → 속도 $v(t)=x'(t)$ → 가속도 $a(t)=v'(t)$. <b>운동 방향이 바뀌는 순간</b> = $v(t)=0$이고 그 전후로 $v$의 부호가 바뀔 때. 움직인 거리는 방향이 바뀌는 시각에서 끊어 각 구간의 위치 변화량 크기를 더한다.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`수직선 위를 움직이는 점 P의 시각 $t$에서의 위치가 $x(t)$일 때, 시각 $t$에서의 <b>속도</b>는?`,o:[R`$x'(t)$`,R`$\dfrac{x(t)}{t}$`,R`$x''(t)$`,R`$x(t)-x(0)$`,R`$\displaystyle\int x(t)\,dt$`],a:1},
+ c2:{k:'c',type:'mc',q:R`수직선 위를 움직이는 점 P가 <b>운동 방향을 바꾸는</b> 순간에 대한 설명으로 옳은 것은?`,o:[R`속도가 $0$이고 그 전후로 속도의 부호가 바뀐다`,R`가속도가 $0$이다`,R`위치가 $0$이다`,R`속도가 최대이다`,R`가속도의 부호가 바뀐다`],a:1},
+ b:{k:'b',type:'num',q:R`수직선 위를 움직이는 점 P의 시각 $t$에서의 위치가 $x(t)=t^3-3t^2$일 때, $t=3$에서 점 P의 속도는?`,a:'9'},
+ t:{k:'t',type:'num',q:R`수직선 위를 움직이는 점 P의 시각 $t\ (t\ge0)$에서의 위치가 $x(t)=t^3-6t^2+9t$일 때, 점 P가 <b>처음으로</b> 운동 방향을 바꾸는 순간의 위치는?`,a:'4'},
+ h:{k:'h',type:'num',q:R`수직선 위를 움직이는 점 P의 시각 $t\ (t\ge0)$에서의 위치가 $x(t)=t^3-6t^2+9t$일 때, $t=0$부터 $t=4$까지 점 P가 <b>움직인 거리</b>는?`,a:'12'}}},
+{id:'B7',name:'부정적분',sub:'계산 · 미분과의 관계 · 적분상수',
+ sum:R`$F'(x)=f(x)$이면 $\displaystyle\int f(x)\,dx=F(x)+C$. $\displaystyle\int x^n dx=\dfrac{x^{n+1}}{n+1}+C$. $\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)$, $\displaystyle\int\Big\{\dfrac{d}{dx}f(x)\Big\}dx=f(x)+C$ — 순서에 따라 $C$가 붙고 안 붙는다. 조건 $f(a)=b$로 $C$를 정한다. 식에 $\int f\,dx$가 있으면 <b>양변을 미분</b>.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`$\displaystyle\int(3x^2+2x)\,dx$는? (단, $C$는 적분상수)`,o:[R`$x^3+x^2+C$`,R`$6x+2+C$`,R`$x^3+x^2$`,R`$3x^3+2x^2+C$`,R`$x^3+2x^2+C$`],a:1},
+ c2:{k:'c',type:'mc',q:R`다음 중 <b>항상 옳은</b> 것은? (단, $C$는 적분상수)`,o:[R`$\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)$`,R`$\displaystyle\int\Big\{\dfrac{d}{dx}f(x)\Big\}dx=f(x)$`,R`$\dfrac{d}{dx}\displaystyle\int f(x)\,dx=f(x)+C$`,R`$\displaystyle\int f'(x)\,dx=f'(x)+C$`,R`$\displaystyle\int f(x)\,dx=f'(x)+C$`],a:1},
+ b:{k:'b',type:'num',q:R`함수 $f(x)$에 대하여 $f'(x)=2x+1,\ f(0)=3$일 때, $f(1)$의 값은?`,a:'5'},
+ t:{k:'t',type:'num',q:R`곡선 $y=f(x)$ 위의 점 $(x,\ f(x))$에서의 접선의 기울기가 $3x^2-2$이고 이 곡선이 원점을 지날 때, $f(2)$의 값은?`,a:'4'},
+ h:{k:'h',type:'num',q:R`다항함수 $f(x)$가 모든 실수 $x$에 대하여 $\displaystyle\int f(x)\,dx=xf(x)-2x^3+x^2$을 만족시키고 $f(0)=1$일 때, $f(1)$의 값은?`,a:'2'}}},
+{id:'B8',name:'정적분',sub:'계산 · 성질 · 정적분으로 정의된 함수',
+ sum:R`$\displaystyle\int_a^b f(x)\,dx=F(b)-F(a)$. $\displaystyle\int_a^c f+\int_c^b f=\int_a^b f$. 구간 $[-a,a]$에서 <b>짝수차항은 2배, 홀수차항은 0</b>. $\dfrac{d}{dx}\displaystyle\int_a^x f(t)\,dt=f(x)$. $\displaystyle\int_a^x f(t)\,dt=g(x)$ 꼴은 ① $x=a$ 대입(좌변 $0$) ② 양변 미분.`,
+ items:{
+ c1:{k:'c',type:'num',q:R`$\displaystyle\int_0^2(3x^2-2x)\,dx$의 값은?`,a:'4'},
+ c2:{k:'c',type:'mc',q:R`$\dfrac{d}{dx}\displaystyle\int_1^x(t^2+1)\,dt$는?`,o:[R`$x^2+1$`,R`$x^2$`,R`$2x$`,R`$\dfrac{x^3}{3}+x$`,R`$\dfrac{x^3}{3}+x-\dfrac43$`],a:1},
+ b:{k:'b',type:'mc',q:R`$\displaystyle\int_1^3 f(x)\,dx+\int_3^5 f(x)\,dx$와 항상 같은 것은?`,o:[R`$\displaystyle\int_1^5 f(x)\,dx$`,R`$\displaystyle\int_5^1 f(x)\,dx$`,R`$0$`,R`$2\displaystyle\int_1^3 f(x)\,dx$`,R`$\displaystyle\int_3^5 f(x)\,dx-\int_1^3 f(x)\,dx$`],a:1},
+ t:{k:'t',type:'num',q:R`$\displaystyle\int_{-1}^{1}(x^3+3x^2+2x+1)\,dx$의 값은?`,a:'4'},
+ h:{k:'h',type:'num',q:R`다항함수 $f(x)$가 모든 실수 $x$에 대하여 $\displaystyle\int_1^x f(t)\,dt=x^3-ax+2$를 만족시킬 때, $f(a)$의 값은? (단, $a$는 상수)`,a:'24'}}},
+{id:'B9',name:'정적분의 활용',sub:'넓이 · 두 곡선 사이 · 거리',
+ sum:R`곡선과 $x$축 사이의 넓이 $=\displaystyle\int_a^b|f(x)|\,dx$ — $x$축 아래 부분은 부호를 바꿔 더한다. 두 곡선 사이 넓이 $=\displaystyle\int_a^b|f(x)-g(x)|\,dx$, <b>교점부터</b> 구한다. 속도 $v(t)$일 때 위치의 변화량 $=\displaystyle\int v\,dt$, 움직인 거리 $=\displaystyle\int|v|\,dt$.`,
+ items:{
+ c1:{k:'c',type:'mc',q:R`닫힌구간 $[a,\ b]$에서 $f(x)\le0$일 때, 곡선 $y=f(x)$와 $x$축 및 두 직선 $x=a,\ x=b$로 둘러싸인 부분의 넓이는?`,o:[R`$-\displaystyle\int_a^b f(x)\,dx$`,R`$\displaystyle\int_a^b f(x)\,dx$`,R`$f(b)-f(a)$`,R`$(b-a)\,f(a)$`,R`$\displaystyle\int_b^a\{-f(x)\}\,dx$`],a:1},
+ c2:{k:'c',type:'mc',q:R`수직선 위를 움직이는 점의 시각 $t$에서의 속도가 $v(t)$일 때, $t=0$부터 $t=4$까지 <b>움직인 거리</b>는?`,o:[R`$\displaystyle\int_0^4|v(t)|\,dt$`,R`$\displaystyle\int_0^4 v(t)\,dt$`,R`$v(4)-v(0)$`,R`$\left|\displaystyle\int_0^4 v(t)\,dt\right|$`,R`$v'(4)$`],a:1},
+ b:{k:'b',type:'num',q:R`곡선 $y=x^2$과 $x$축 및 직선 $x=3$으로 둘러싸인 부분의 넓이는?`,a:'9'},
+ t:{k:'t',type:'num',q:R`곡선 $y=x^2-2x$와 $x$축으로 둘러싸인 부분의 넓이는?`,a:'4/3'},
+ h:{k:'h',type:'num',q:R`곡선 $y=x^2$과 직선 $y=x+2$로 둘러싸인 부분의 넓이는?`,a:'9/2'}}},
+];
+
+/* (1011 유강 "수식 입력 어렵다") 단답 → 5지선다. 보기는 작은 수부터, 순서 고정 */
+const NUMOPT={
+ 'B1.c2':['-3','-2','-1','1','2'], 'B1.t':['-3','-1','1','3','7'], 'B1.h':['1','2','3','4','6'],
+ 'B2.b':['1','3/2','2','5/2','3'], 'B2.h':['2','3','4','5','6'],
+ 'B3.b':['-2','0','1','2','3'], 'B3.t':['5','6','7','8','9'], 'B3.h':['5','20','22','27','32'],
+ 'B4.b':['-4','-3','-2','0','1'], 'B4.t':['12','14','16','18','20'], 'B4.h':['96','108','128','144','160'],
+ 'B5.b':['0','1','2','3','4'], 'B5.t':['1','2','3','4','5'], 'B5.h':['-7','-5','-3','0','5'],
+ 'B6.b':['0','3','6','9','12'], 'B6.t':['0','2','4','5','6'], 'B6.h':['4','8','10','12','16'],
+ 'B7.b':['3','4','5','6','7'], 'B7.t':['2','4','6','8','10'], 'B7.h':['0','1','2','3','4'],
+ 'B8.c1':['2','4','6','8','12'], 'B8.t':['2','4','6','8','10'], 'B8.h':['9','12','18','24','27'],
+ 'B9.b':['3','6','9','12','27'], 'B9.t':['2/3','1','4/3','2','8/3'], 'B9.h':['7/2','4','9/2','5','11/2'],
+};
+const texNum=v=>v.includes('/')?`$\\dfrac{${v.split('/')[0]}}{${v.split('/')[1]}}$`:`$${v}$`;
+BLOCKS.forEach(b=>Object.entries(b.items).forEach(([k,it])=>{ const id=b.id+'.'+k;
+  if(it.type!=='num') return; const o=NUMOPT[id]; if(!o) return;
+  const ai=o.indexOf(it.a); if(ai<0) throw new Error('보기에 정답 없음 '+id);
+  it.type='mc'; it.fix=true; it.o=o.map(texNum); it.a=ai+1; }));
+const NB=BLOCKS.length, RANGE='도함수의 활용~정적분의 활용';
+const BMAP={}; BLOCKS.forEach(b=>BMAP[b.id]=b);
+
+/* 보기 순서: 문항마다 고정 섞기(정답이 ①에 몰리지 않게). 기록은 원래 번호로 한다 */
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function order(id,n,fix){const ix=[...Array(n).keys()];if(fix)return ix;let h=hash(id);
+ for(let i=n-1;i>0;i--){h=Math.imul(h^(h>>>13),1103515245)>>>0;const j=h%(i+1);[ix[i],ix[j]]=[ix[j],ix[i]];}return ix;}
+
+/* ── 적응 엔진 (학생·교사 화면이 같은 함수를 쓴다) ─────────────────────── */
+const good=(r,id)=>!!(r[id]&&r[id].ok&&r[id].conf!=='찍음');
+const has=(r,id)=>!!r[id];
+function nextStep(A,B){
+  if(A.self==null||A.self[B]==null) return 'self';
+  if(A.self[B]===-1) return null;            // 미학습 단원 — 문항 없이 건너뛴다(1011)
+  const r=A.r||{}, k=x=>B+'.'+x;
+  if(!has(r,k('c1'))) return 'c1';
+  if(!has(r,k('c2'))) return 'c2';
+  const cs=good(r,k('c1'))+good(r,k('c2'));
+  let toT = cs===2;
+  if(!toT){ if(!has(r,k('b'))) return 'b'; toT = (cs===1 && good(r,k('b'))); }
+  if(!toT) return null;
+  if(!has(r,k('t'))) return 't';
+  if(!good(r,k('t'))) return null;
+  if(!has(r,k('h'))) return 'h';
+  return null;
+}
+const isNew=(A,B)=>!!(A.self&&A.self[B]===-1);
+function levelOf(A,B){
+  if(isNew(A,B)) return null;
+  const r=A.r||{}, k=x=>B+'.'+x;
+  if(!has(r,k('c1'))||!has(r,k('c2'))) return null;          // 아직
+  const cs=good(r,k('c1'))+good(r,k('c2'));
+  if(cs===2){
+    if(!has(r,k('t'))) return nextStep(A,B)?null:2;
+    if(!good(r,k('t'))) return 2;
+    if(!has(r,k('h'))) return null;
+    return good(r,k('h'))?4:3;
+  }
+  if(!has(r,k('b'))) return null;
+  if(cs===0 && !good(r,k('b'))) return 0;
+  if(has(r,k('t')) && good(r,k('t'))) return 2;
+  if(cs===1 && good(r,k('b')) && !has(r,k('t'))) return null;
+  return 1;
+}
+function flagsOf(A,B){
+  const r=A.r||{}; let over=0,lucky=0,shaky=0,n=0,ms=0;
+  for(const x of ['c1','c2','b','t','h']){const v=r[B+'.'+x]; if(!v) continue; n++; ms+=v.ms||0;
+    if(!v.ok && v.conf==='확실') over++;
+    if(v.ok && v.conf==='찍음') lucky++;
+    if(v.ok && v.conf==='애매') shaky++;}
+  return {over,lucky,shaky,n,ms};
+}
+function progress(A){let done=0;for(const b of BLOCKS) if(A.self&&A.self[b.id]!=null&&!nextStep(A,b.id)) done++;return done;}
+function totalAnswered(A){return Object.keys(A.r||{}).length;}
+
+/* ── 학생 쪽 상태 ─────────────────────────────────────────────────────── */
+const qs=new URLSearchParams(location.search);
+const TOK=(qs.get('t')||'').trim();
+const PREVIEW=qs.has('preview');
+const MODE= qs.has('admin')?'admin' : (TOK?'student':((qs.has('offline')||PREVIEW)?'offline':'none'));
+let ME=null;            // {이름, 반}
+let A=null;             // 답 객체
+let cur=null;           // 현재 문항 화면 상태
+let lastToast='';
+const LSK=()=> 'diag_'+SKEY+'_'+(TOK?TOK.slice(0,10):(PREVIEW?'preview':'off'));
+function blank(){return {v:1,skey:SKEY,started:null,updated:null,pre:{},self:{},r:{},fin:null,name:null};}
+function lsGet(){try{return JSON.parse(localStorage.getItem(LSK())||'null');}catch(e){return null;}}
+function lsSet(){try{localStorage.setItem(LSK(),JSON.stringify(A));}catch(e){}}
+
+let saveTimer=null, saving=false, pending=false;
+function setSave(t,c){const s=$('save');s.hidden=false;s.textContent=t;s.className='save '+(c||'');}
+function save(){
+  A.updated=new Date().toISOString(); lsSet();
+  if(MODE!=='student'){ setSave('폰에 저장됨'); return; }
+  pending=true; clearTimeout(saveTimer); saveTimer=setTimeout(flush,300);
+}
+async function flush(){
+  if(saving||!pending) return; saving=true; pending=false; setSave('저장 중…');
+  let ok=false;
+  try{ const {data,error}=await sb.rpc('survey_submit',{tok:TOK,skey:SKEY,ans:A}); ok=!error && data && data.ok; }catch(e){}
+  saving=false;
+  if(ok) setSave('저장됨 ✓','ok'); else { setSave('저장 실패 · 다시 시도 중','err'); pending=true; setTimeout(flush,4000); }
+  if(pending) flush();
+}
+
+function tex(el){ try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){} }
+function view(html,wide){ const m=$('app'); m.className=wide?'wide':''; if(PREVIEW&&MODE!=='admin') html=`<div class="toast" style="color:var(--warn);border-color:rgba(243,210,122,.4);display:flex;justify-content:space-between;gap:8px;align-items:center"><span>미리보기 · 저장 안 됨 · 답하면 정오가 보여요</span><button class="pill" style="padding:6px 12px;white-space:nowrap" onclick="try{localStorage.removeItem(LSK())}catch(e){};location.reload()">처음부터</button></div>`+html; m.innerHTML=html; tex(m); window.scrollTo(0,0); }
+
+async function boot(){
+  if(MODE==='admin') return teacher();
+  if(MODE==='none') return view(`<div class="brand">수학은유강</div><h1>링크를 다시 확인해 주세요</h1><p class="dim">쌤이 보내 준 개인 링크로 들어와야 해요.</p>`);
+  if(MODE==='student'){
+    let o=null; try{ const {data}=await sb.rpc('survey_open',{tok:TOK,skey:SKEY}); o=data; }catch(e){}
+    if(!o){ return view(`<div class="brand">수학은유강</div><h1>링크가 열리지 않아요</h1>
+      <p>링크가 만료됐거나 인터넷이 불안정할 수 있어요. 새로고침 한 번 해 보고, 그래도 안 되면 아래 버튼으로 시작하세요. (끝나고 결과 코드를 쌤한테 보내면 돼요)</p>
+      <a class="btn" href="?offline" style="text-align:center;text-decoration:none">이 폰에 저장하면서 시작하기</a>`); }
+    ME={이름:o['이름'],반:o['반']};
+    const prev=o['지난답']&&o['지난답'].v?o['지난답']:null, loc=lsGet();
+    A = (loc && (!prev || (loc.updated||'')>(prev.updated||''))) ? loc : (prev||blank());
+    A.name=ME.이름;
+  } else { A=lsGet()||blank(); ME={이름:A.name||'',반:''}; }
+  route();
+}
+
+function route(){
+  if(!A.started) return intro();
+  if(!A.pre||!A.pre.done) return pre();
+  for(const b of BLOCKS){ const s=nextStep(A,b.id); if(s){ return s==='self'?selfRate(b):item(b,s); } }
+  { const rv=reviewList(A).find(id=>!(A.re&&A.re[id])); if(rv) return reviewItem(rv); }
+  if(!A.fin) return fin();
+  return result();
+}
+
+/* ── 화면: 시작 ── */
+function intro(){
+  const nameRow = MODE==='offline'
+   ? `<div class="fld"><label>이름</label><input type="text" id="nm" placeholder="이름을 써 주세요" value="${E(A.name||'')}"></div>`
+   : `<p><b>${E(ME.이름)}</b> 맞나요? 내 이름이 아니면 쌤한테 말해 주세요.</p>`;
+  view(`<div class="brand">수학은유강 · 기말 범위 개념 진단</div>
+  <h1>도함수의 활용 ~ 정적분, 지금 얼마나 남아 있을까?</h1>
+  <div class="card">${nameRow}
+  <p class="sum">• 선행 때 배운 게 지금 <b>얼마나 기억나는지</b> 확인하는 진단이에요. <b>성적과 상관없어요.</b><br>
+  • ${NB}개 단원 × 2~5문항. 맞히면 더 어려운 문제가, 막히면 쉬운 문제가 나와요. 그래서 사람마다 문항 수가 달라요.<br>
+  • 풀이는 <b>연습지</b>에, 폰에서는 <b>보기만 고르면</b> 돼요. 시간은 대략 <b>50~60분</b>.<br>
+  • 답을 고른 뒤 <b>확실 / 애매 / 찍음</b> 중 하나를 눌러야 넘어가요. 찍은 건 꼭 '찍음'! 그래야 수업에서 거기를 다시 설명해 줄 수 있어요.<br>
+  • 정 모르겠으면 '모르겠어요'로 넘겨도 돼요. 빈칸이 거짓 정답보다 훨씬 도움이 돼요.<br>
+  • 중간에 꺼져도 같은 링크로 들어오면 이어서 해요.</p></div>
+  <button class="btn" id="go">시작하기</button>`);
+  $('go').onclick=()=>{ if(MODE==='offline'){const v=($('nm').value||'').trim(); if(!v){$('nm').focus();return;} A.name=v; ME.이름=v;}
+    A.started=new Date().toISOString(); save(); route(); };
+}
+
+/* ── 화면: 문진 ── */
+const PRE=[
+ {k:'when',q:'미적분1 뒷부분(도함수의 활용~적분) 선행은 언제 했어요?',o:['고1 겨울방학 전','고1 겨울방학','고2 1학기 중','고2 여름방학','지금이 처음','기억 안 나요']},
+ {k:'times',q:'이 범위를 몇 번 돌렸어요?',o:['처음','1번','2번','3번 이상']},
+ {k:'how',q:'선행은 어떻게 했어요? (여러 개 가능)',o:['학원 수업','인강','과외','혼자 교재로'],multi:true},
+ {k:'book',q:'그때 쓴 교재(기억나면)',text:true,ph:'예: 개념원리, 쎈, 마플시너지…'},
+ {k:'hours',q:'학원 수업 말고, 일주일에 혼자 수학 공부하는 시간은?',o:['2시간 미만','2~4시간','4~7시간','7시간 이상']},
+ {k:'goal',q:'이번 기말 수학 목표 등급은?',o:['1등급','2등급','3등급','4등급','5등급 이하','아직 모르겠어요']},
+ {k:'stuck',q:'혼자 풀다 막히면 보통 어떻게 해요?',o:['바로 해설을 본다','10분 이상 고민하고 해설','표시해 두고 질문한다','그냥 넘어간다']},
+ {k:'style',q:'이번 기말 수업, 어떤 방식이 더 도움될 것 같아요?',o:['개념 설명을 자세히','핵심만 정리하고 문제 위주','문제를 최대한 많이','잘 모르겠어요']},
+ {k:'worry',q:'요즘 수학 공부하면서 제일 고민되는 것 (안 써도 돼요)',text:true,long:true,ph:'편하게 써 주세요. 쌤만 봐요.'},
+];
+function pre(){
+  const p=A.pre||(A.pre={});
+  const f=PRE.map(x=>{
+    if(x.text) return `<div class="fld"><label>${E(x.q)}</label>${x.long?`<textarea rows="3" data-k="${x.k}" placeholder="${E(x.ph||'')}">${E(p[x.k]||'')}</textarea>`:`<input type="text" data-k="${x.k}" placeholder="${E(x.ph||'')}" value="${E(p[x.k]||'')}">`}</div>`;
+    const sel=p[x.k]; return `<div class="fld"><label>${E(x.q)}</label><div class="chips">${x.o.map(o=>{
+      const on = x.multi ? (Array.isArray(sel)&&sel.includes(o)) : sel===o;
+      return `<button class="chip${on?' on':''}" data-k="${x.k}" data-v="${E(o)}" data-m="${x.multi?1:0}">${E(o)}</button>`;}).join('')}</div></div>`;
+  }).join('');
+  view(`<div class="brand">수학은유강 · 개념 진단</div><h1>먼저, 문진표</h1><p class="dim">정답 없는 질문이에요. 1~2분이면 끝나요.</p>
+  <div class="card">${f}</div><button class="btn" id="go">문제 시작</button>`);
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k,v=b.dataset.v;
+    if(b.dataset.m==='1'){ const s=new Set(p[k]||[]); s.has(v)?s.delete(v):s.add(v); p[k]=[...s]; b.classList.toggle('on'); }
+    else { p[k]=v; b.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b)); }
+  });
+  $('go').onclick=()=>{
+    document.querySelectorAll('[data-k]').forEach(i=>{ if(i.tagName==='INPUT'||i.tagName==='TEXTAREA') p[i.dataset.k]=i.value.trim().slice(0,500); });
+    const miss=PRE.filter(x=>!x.text && (x.multi? !(p[x.k]&&p[x.k].length) : !p[x.k]));
+    if(miss.length){ alertBox('선택 안 한 칸이 있어요: '+miss.map(m=>m.q).join(' / ')); return; }
+    p.done=true; save(); route();
+  };
+}
+function alertBox(t){ let d=document.getElementById('ab'); if(!d){d=document.createElement('div');d.id='ab';d.className='toast';d.style.color='var(--warn)';d.style.borderColor='rgba(243,210,122,.35)';$('app').appendChild(d);} d.textContent=t; d.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+function head(b){
+  const i=BLOCKS.indexOf(b)+1, done=progress(A);
+  const el=A.started?Math.round((Date.now()-new Date(A.started))/60000):0;
+  return `<div class="top"><div class="brand">개념 진단 · ${i}/${NB}</div><span class="dim sm">${el}분 경과</span></div>
+  <div class="bar"><i style="width:${Math.round(done/NB*100)}%"></i></div>
+  ${lastToast?`<div class="toast">${lastToast}</div>`:''}`;
+}
+
+/* ── 화면: 블록 자기 평가 ── */
+function selfRate(b){
+  const opts=['기억이 거의 안 나요','들은 기억은 있어요','개념은 설명할 수 있어요','문제도 풀 수 있어요'];
+  view(`${head(b)}<h1>${E(b.name)}</h1><p class="dim">${E(b.sub)}</p>
+  <div class="card"><b>풀기 전에 — 이 단원, 지금 어느 정도예요?</b>
+  <div class="self">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="n">${i}</span><span>${o}</span></button>`).join('')}</div>
+  <button class="opt" id="never" style="margin-top:14px;border-style:dashed"><span class="n">–</span><span>이 단원은 <b>아직 배운 적이 없어요</b> (선행 안 함)</span></button></div>`);
+  lastToast='';
+  document.querySelectorAll('.self .opt').forEach(x=>x.onclick=()=>{ A.self[b.id]=+x.dataset.i; save(); route(); });
+  let armed=false; $('never').onclick=()=>{ const n=$('never');
+    if(!armed){ armed=true; n.classList.add('on'); n.lastElementChild.innerHTML='한 번 더 누르면 이 단원은 <b>건너뛰어요</b>.<br><span class="dim sm">들어 본 적만 있어도 위에서 \'들은 기억은 있어요\'를 골라 주세요.</span>'; return; }
+    A.self[b.id]=-1; lastToast=`${E(b.name)}: 처음 배울 단원으로 표시했어요. 수업에서 처음부터 설명해 줄게요.`; save(); route(); };
+}
+
+/* ── 화면: 문항 ── */
+function item(b,step){
+  const it=b.items[step], id=b.id+'.'+step;
+  cur={b,step,it,id,t0:Date.now(),pick:null,num:''};
+  const kindPill=`<span class="pill ${it.k}">${KIND[it.k]}</span>`;
+  let body='';
+  if(it.type==='mc'){
+    const ord=order(id,it.o.length,it.fix);
+    body=`<div class="opts">${ord.map((oi,pos)=>`<button class="opt" data-o="${oi+1}"><span class="n">${pos+1}</span><span>${it.o[oi]}</span></button>`).join('')}</div>`;
+  } else {
+    body=`<div class="numbox empty" id="nb">답을 입력하세요</div>
+    <div class="pad">${['7','8','9','⌫','4','5','6','−','1','2','3','/','0','.','√','C'].map(k=>`<button data-k="${k}">${k}</button>`).join('')}</div>`;
+  }
+  view(`${head(b)}<div class="top"><b>${E(b.name)}</b>${kindPill}</div>
+  <div class="card"><div class="q">${it.q}</div>${body}
+  <div class="conf"><button class="k1" data-c="확실" disabled>확실</button><button class="k2" data-c="애매" disabled>애매</button><button class="k3" data-c="찍음" disabled>찍음</button></div>
+  <button class="skip" id="sk">모르겠어요 (넘어가기)</button></div>
+  <p class="dim sm">풀이는 연습지에 · 보기를 고르고 확실/애매/찍음을 누르면 다음으로 넘어가요.</p>`);
+  lastToast='';
+  const confBtns=[...document.querySelectorAll('.conf button')];
+  const arm=()=>confBtns.forEach(c=>c.disabled=!(it.type==='mc'?cur.pick:cur.num));
+  if(it.type==='mc') document.querySelectorAll('.opt').forEach(x=>x.onclick=()=>{ cur.pick=+x.dataset.o; document.querySelectorAll('.opt').forEach(y=>y.classList.toggle('on',y===x)); arm(); });
+  else document.querySelectorAll('.pad button').forEach(x=>x.onclick=()=>{ const k=x.dataset.k;
+    if(k==='⌫') cur.num=cur.num.slice(0,-1); else if(k==='C') cur.num=''; else if(k==='−') cur.num = cur.num.startsWith('-')?cur.num.slice(1):'-'+cur.num;
+    else if(cur.num.length<10) cur.num+=k;
+    const nb=$('nb'); nb.textContent=cur.num||'답을 입력하세요'; nb.classList.toggle('empty',!cur.num); arm(); });
+  confBtns.forEach(c=>c.onclick=()=>answer(c.dataset.c));
+  $('sk').onclick=()=>answer('모름',true);
+}
+const norm=s=>String(s).replace(/\s/g,'').replace(/−/g,'-').replace(/^\+/,'');
+function answer(conf,skip){
+  const {b,it,id,t0}=cur; const ms=Date.now()-t0;
+  let a=null, ok=false;
+  if(!skip){ if(it.type==='mc'){a=cur.pick; ok=a===it.a;} else {a=norm(cur.num); ok=a===norm(it.a)||Number(a)===Number(it.a)&&a!==''&&!isNaN(Number(a));} }
+  A.r[id]={a,ok,conf:skip?'모름':conf,ms,at:new Date().toISOString()};
+  const before=progress(A);
+  let pv=''; if(PREVIEW){ const ca=it.type==='mc'? it.o[it.a-1] : it.a; pv=`<b style="color:${ok?'var(--good)':'var(--bad)'}">${ok?'○ 정답':'× 오답'}</b> · 정답: `+ca; }
+  lastToast=pv;
+  if(!nextStep(A,b.id)){ const i=BLOCKS.indexOf(b); lastToast = (pv?pv+'<br>':'') + (i<NB-1 ? `✓ ${b.name} 끝! 다음 단원으로 가요 (${i+1}/${NB} 완료)` : `✓ ${NB}개 단원 모두 끝!`); }
+  save(); route();
+}
+
+/* ── 화면: 마무리 질문 ── */
+/* ── 2부: 힌트(개념 카드) 보고 다시 풀기 (1011 유강 "셀프 개념학습은 무리") ──
+ * 대상 = 개념·기초·유형 중 '정답+확신'이 아닌 것(틀림·찍음·모름). 심화는 뺀다.
+ * 개념 카드 3줄을 읽고 같은 문항을 다시 → 바로 맞히면 '잊은 것(회복형)', 또 틀리면 '처음부터 쌓을 것'.
+ * 막힌 이유도 같이 고른다(용어/공식/시작/계산/읽기/헷갈림) → 상담·수업 설명 포인트. */
+const WHY=['용어·뜻이 기억 안 났어요','공식·성질이 기억 안 났어요','어떻게 시작할지 몰랐어요','풀다가 계산에서 막혔어요','문제를 잘못 읽었어요','아는데 헷갈렸어요'];
+function reviewList(A){ const out=[]; const r=A.r||{};
+  for(const b of BLOCKS) for(const s of ['c1','c2','b','t']){ const id=b.id+'.'+s; if(r[id] && !good(r,id)) out.push(id); }
+  return out; }
+function reviewItem(id){
+  const [bid,step]=id.split('.'); const b=BMAP[bid], it=b.items[step];
+  const list=reviewList(A), k=list.indexOf(id)+1;
+  cur={id,it,t0:Date.now(),pick:null,why:null};
+  const ord=order(id,it.o.length,it.fix);
+  view(`<div class="top"><div class="brand">2부 · 힌트 보고 다시 풀기</div><span class="dim sm">${k}/${list.length}</span></div>
+  <div class="bar"><i style="width:${Math.round((k-1)/list.length*100)}%"></i></div>
+  ${lastToast?`<div class="toast">${lastToast}</div>`:''}
+  ${k===1?`<p class="sum">1부에서 틀렸거나 확신이 없던 문제만 다시 나와요. <b>개념 카드</b>를 읽고 한 번 더 풀어 보세요. 이번 결과는 1부 점수를 바꾸지 않아요.</p>`:''}
+  <div class="card" style="border-color:rgba(120,180,255,.4);background:rgba(120,180,255,.06)"><b>📌 개념 카드 · ${E(b.name)}</b><div class="sum" style="margin-top:6px">${b.sum}</div></div>
+  <div class="card"><b>처음 풀 때 왜 막혔어요?</b><div class="chips" style="margin-top:8px">${WHY.map((w,i)=>`<button class="chip" data-w="${i}">${w}</button>`).join('')}</div></div>
+  <div class="card"><div class="top"><b>${E(b.name)}</b><span class="pill ${it.k}">${KIND[it.k]}</span></div><div class="q">${it.q}</div>
+  <div class="opts">${ord.map((oi,pos)=>`<button class="opt" data-o="${oi+1}"><span class="n">${pos+1}</span><span>${it.o[oi]}</span></button>`).join('')}</div>
+  <div class="conf"><button class="k1" data-c="확실" disabled>확실</button><button class="k2" data-c="애매" disabled>애매</button><button class="k3" data-c="찍음" disabled>찍음</button></div>
+  <button class="skip" id="sk">카드를 봐도 모르겠어요</button></div>`);
+  lastToast='';
+  const confBtns=[...document.querySelectorAll('.conf button')];
+  const arm=()=>confBtns.forEach(c=>c.disabled=!(cur.pick&&cur.why!=null));
+  document.querySelectorAll('.chip[data-w]').forEach(c=>c.onclick=()=>{ cur.why=+c.dataset.w; document.querySelectorAll('.chip[data-w]').forEach(x=>x.classList.toggle('on',x===c)); arm(); });
+  document.querySelectorAll('.opt').forEach(x=>x.onclick=()=>{ cur.pick=+x.dataset.o; document.querySelectorAll('.opt').forEach(y=>y.classList.toggle('on',y===x)); arm(); });
+  const done=(conf,skip)=>{ if(skip&&cur.why==null){ alertBox('먼저 "왜 막혔는지"를 하나 골라 주세요'); return; }
+    const ok=!skip && cur.pick===it.a;
+    (A.re||(A.re={}))[id]={a:skip?null:cur.pick,ok,conf:skip?'모름':conf,why:WHY[cur.why],ms:Date.now()-cur.t0};
+    if(PREVIEW) lastToast=`<b style="color:${ok?'var(--good)':'var(--bad)'}">${ok?'○ 정답':'× 오답'}</b> · 정답: `+it.o[it.a-1];
+    save(); route(); };
+  confBtns.forEach(c=>c.onclick=()=>done(c.dataset.c));
+  $('sk').onclick=()=>done('모름',true);
+}
+function fin(){
+  const sel=new Set();
+  view(`<div class="brand">개념 진단 · 마무리</div><h1>거의 끝났어요!</h1>
+  <div class="card"><div class="fld"><label>풀어 보니 제일 자신 없는 단원은? (여러 개 가능)</label><div class="chips">${BLOCKS.map(b=>`<button class="chip" data-v="${b.id}">${E(b.name)}</button>`).join('')}</div></div>
+  <div class="fld"><label>쌤한테 하고 싶은 말 (안 써도 돼요)</label><textarea id="memo" rows="3" placeholder="수업에서 이런 걸 해 줬으면, 이런 게 걱정돼요 등"></textarea></div></div>
+  <button class="btn" id="go">결과 보기</button>`);
+  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ const v=c.dataset.v; sel.has(v)?sel.delete(v):sel.add(v); c.classList.toggle('on'); });
+  $('go').onclick=()=>{ A.fin={weak:[...sel],memo:($('memo').value||'').trim().slice(0,500),at:new Date().toISOString()}; save(); route(); };
+}
+
+/* ── 화면: 학생 결과 ── */
+function lvRow(b,L,nw){ const w=L==null?0:[12,32,55,78,100][L];
+  return `<div class="lv"><span>${E(b.name)}</span><div class="lvbar"><i class="L${L??0}" style="width:${w}%"></i></div><span class="sm">${nw?'<span class="dim">처음 배울 단원</span>':(L==null?'-':LVNAME[L])}</span></div>`; }
+function result(){
+  const lv=BLOCKS.map(b=>[b,levelOf(A,b.id)]);
+  const weak=lv.filter(([b,L])=>L!=null&&L<=1).map(([b])=>b);
+  const mid=lv.filter(([b,L])=>L===2).map(([b])=>b);
+  const mins=A.started?Math.round((new Date(A.updated)-new Date(A.started))/60000):0;
+  let code='';
+  if(MODE==='offline'){ try{ code=btoa(unescape(encodeURIComponent(JSON.stringify(A)))); }catch(e){} }
+  const review=[...weak,...mid].slice(0,4);
+  view(`<div class="brand">개념 진단 · 결과</div><h1>${E(ME.이름||'')} 수고했어요! (${mins}분)</h1>
+  <div class="card"><b>단원별 지금 상태</b>
+  <div class="legend">${LVNAME.map((n,i)=>`<span><i class="L${i}"></i>${n}</span>`).join('')}</div>
+  ${lv.map(([b,L])=>lvRow(b,L,isNew(A,b.id))).join('')}
+  <p class="dim sm">'찍음'으로 맞힌 건 정답으로 치지 않았어요. 이건 점수가 아니라 수업에서 어디를 얼마나 깊게 설명할지 정하는 자료예요.</p></div>
+  ${review.length?`<h2>다시 볼 개념 요약</h2>${review.map(b=>`<div class="card"><b>${E(b.name)}</b><div class="sum" style="margin-top:6px">${b.sum}</div></div>`).join('')}`:''}
+  <div class="card"><b>✅ 끝나면</b><p class="sum">연습지 맨 위에 <b>이름</b> 쓰고 쌤 책상에 내 주세요. 상담 순서가 오면 이 화면이랑 연습지를 같이 봐요.</p></div>
+  ${code?`<div class="card"><b>결과 코드</b><p class="dim sm">아래 코드를 통째로 복사해서 쌤한테 카톡으로 보내 주세요.</p><textarea rows="4" readonly onclick="this.select()">${E(code)}</textarea></div>`:''}
+  <button class="btn ghost" id="redo">마무리 질문 고치기</button>`);
+  $('redo').onclick=()=>{ A.fin=null; save(); route(); };
+}
+
+/* ══ 교사 화면 ═════════════════════════════════════════════════════════ */
+let ROWS=[], SORT={k:'no',d:1}, OPEN=null, AUTO=null, EXTRA=[];
+function given(n){ n=String(n||''); const two=['남궁','황보','제갈','선우','독고','사공','서문']; return two.some(s=>n.startsWith(s))&&n.length>3? n.slice(2) : (n.length>=3?n.slice(1):n); }
+function batchim(ch){ const c=ch.charCodeAt(0)-0xac00; return c>=0&&c<=11171 && c%28!==0; }
+function callName(n){ const g=given(n); return batchim(g.slice(-1))? g+'이' : g; }   // 주영→주영이, 서우→서우
+function josa(w,a,b){ return batchim(w.slice(-1))?w+a:w+b; }
+
+function summarize(A){
+  const lv={}, fl={}; let sum=0,cnt=0,over=0,lucky=0,shaky=0,ms=0,metaGap=[];
+  for(const b of BLOCKS){ const L=levelOf(A,b.id); lv[b.id]=L; const f=flagsOf(A,b.id); fl[b.id]=f;
+    over+=f.over; lucky+=f.lucky; shaky+=f.shaky; ms+=f.ms;
+    if(L!=null){sum+=L;cnt++; const s=A.self&&A.self[b.id]; if(s!=null) metaGap.push({b,gap:s-Math.min(L,3),s,L});} }
+  const avg=cnt?sum/cnt:null;
+  const status = !A.started?'미시작' : (A.fin?'완료' : `${progress(A)}/${NB}`);
+  const nw=BLOCKS.filter(b=>isNew(A,b.id)).map(b=>b.id);
+  const re=A.re||{}, rl=Object.values(re), rec={n:rl.length,ok:rl.filter(v=>v.ok&&v.conf!=='찍음').length};
+  const why={}; rl.forEach(v=>{ if(v.why) why[v.why]=(why[v.why]||0)+1; });
+  return {lv,fl,avg,cnt,over,lucky,shaky,ms,metaGap,status,n:totalAnswered(A),rec,why,nw};
+}
+function track(avg,nwN){ if(nwN>=Math.ceil(NB/2)) return ['선행 없음 트랙','기말 범위 절반 이상이 처음 — 개념 선수업(보강) 따로 편성 · 수업 땐 앞자리·매 시간 개념 확인'];
+  if(avg==null) return ['-','']; if(avg>=3) return ['심화 트랙','개념 설명 시간엔 심화 과제 병행 · 유형은 고난도 위주로'];
+  if(avg>=2) return ['유형 트랙','흔들리는 단원만 개념 재확인 → 대표 유형 반복'];
+  if(avg>=1) return ['개념 보강 트랙','개념 확인 → 기초·대표 유형 순서로 다시 쌓기'];
+  return ['기초 재시작 트랙','처음 배운다는 전제로 개념부터 · 과제 분량 낮추고 확인 횟수 늘리기']; }
+
+async function teacher(){
+  view(`<div class="brand">수학은유강 · 개념 진단 결과 (교사)</div><h1>${BAN} 기말 범위 개념 진단</h1><p class="sm">${Object.keys(ROSTERS).map(b=>b===BAN?`<b>${b}</b>`:`<a href="?admin&ban=${encodeURIComponent(b)}" style="color:var(--acc)">${b}</a>`).join(' · ')}</p><p class="dim" id="st">불러오는 중…</p><div id="tv"></div><div id="detail"></div><div id="cls2"></div>`,true);
+  let sess=null; try{ sess=(await sb.auth.getSession()).data.session; }catch(e){}
+  if(!sess){ $('st').innerHTML=`대시보드 로그인이 필요해요. <a href="/dashboard/" style="color:var(--acc)">대시보드</a>에서 로그인한 뒤 이 페이지를 새로고침하세요.`; renderTeacher(); return; }
+  await load(); AUTO=setInterval(load,20000);
+}
+async function load(){
+  try{
+    const {data,error}=await sb.from('survey_response').select('*').eq('설문키',SKEY);
+    if(error) throw error;
+    ROWS=(data||[]).filter(r=>String(r['반']||'').trim().startsWith(BAN)).map(r=>({sid:r['학생ID'],name:(r['학생ID']||'').split('_')[0]||r['학생ID'],ban:r['반'],A:r['답'],at:r['제출시각']}));
+    $('st').textContent=`응답 ${ROWS.length}명 · ${new Date().toLocaleTimeString('ko-KR')} 갱신 (20초마다 자동)`;
+  }catch(e){ $('st').textContent='읽기 실패: '+(e.message||e)+' — 관리자 계정으로 로그인했는지 확인하세요.'; }
+  renderTeacher();
+}
+function allRows(){
+  const rows=[...ROWS,...EXTRA];
+  const names=new Set(rows.map(r=>r.name));
+  ROSTER.filter(n=>!names.has(n)).forEach(n=>rows.push({name:n,A:blank(),missing:true}));
+  return rows.map(r=>({...r,S:summarize(r.A)}));
+}
+function cellOf(r,b){ return r.S.nw.includes(b.id)?'<span class="cell" style="background:#55556a;color:#ddd" title="배운 적 없음">미</span>':cell(r.S.lv[b.id]); }
+function cell(L){ return L==null?'<span class="cell na">·</span>':`<span class="cell L${L}">${L}</span>`; }
+function renderTeacher(){
+  const tv=$('tv'); if(!tv) return; const rows=allRows();
+  const keep=OPEN;
+  // 반 요약
+  const done=rows.filter(r=>r.S.cnt>0);
+  const blockRows=BLOCKS.map(b=>{
+    const Ls=done.map(r=>r.S.lv[b.id]).filter(x=>x!=null);
+    const avg=Ls.length?Ls.reduce((a,c)=>a+c,0)/Ls.length:null;
+    const dist=[0,1,2,3,4].map(i=>Ls.filter(x=>x===i).length);
+    const low=done.filter(r=>r.S.lv[b.id]!=null&&r.S.lv[b.id]<=1).map(r=>r.name);
+    const high=done.filter(r=>r.S.lv[b.id]!=null&&r.S.lv[b.id]>=3).map(r=>r.name);
+    const depth = avg==null?'-' : avg<1.5?'<b style="color:var(--bad)">개념부터 풀 설명</b> (정의·예시 충분히)' : avg<2.5?'<b style="color:var(--warn)">핵심 재정리 + 대표 유형</b>' : '<b style="color:var(--good)">개념 짧게 · 유형/심화 중심</b>';
+    const nwl=rows.filter(r=>r.S.nw.includes(b.id)).map(r=>r.name);
+    return {b,avg,dist,low,high,depth,n:Ls.length,nwl};
+  });
+  // 학생 표 정렬
+  let list=rows.map((r,i)=>({...r,_i:i}));
+  const key=SORT.k, d=SORT.d;
+  const val=r=> key==='no'?r._i : key==='name'?r.name : key==='avg'?(r.S.avg??-1) : key==='prog'?(r.S.status==='완료'?9:(r.S.status==='미시작'?-1:parseInt(r.S.status))) :
+    key==='over'?r.S.over : key==='lucky'?r.S.lucky : key==='min'?r.S.ms : key==='rec'?(r.S.rec.n?r.S.rec.ok/r.S.rec.n:-1) : (r.S.lv[key]??-1);
+  list.sort((a,b)=>{const x=val(a),y=val(b); return (x>y?1:x<y?-1:0)*d;});
+  const th=(k,t)=>`<th data-k="${k}">${t}${SORT.k===k?(SORT.d>0?' ▲':' ▼'):''}</th>`;
+  tv.innerHTML=`
+  <div class="legend">${LVNAME.map((n,i)=>`<span><i class="L${i}"></i>${i} ${n}</span>`).join('')} <span>· 찍음 정답은 오답 처리</span></div>
+  <h2>학생별</h2>
+  <div class="tw"><table><thead><tr>${th('no','#')}${th('name','이름')}${th('prog','진행')}${BLOCKS.map(b=>th(b.id,b.name.replace('·','<br>')+'')).join('')}${th('avg','평균')}${th('over','과신')}${th('lucky','찍음○')}${th('rec','힌트 후 회복')}${th('min','풀이분')}<th class="nos">트랙</th></tr></thead>
+  <tbody>${list.map((r,i)=>`<tr class="row" data-n="${E(r.name)}"><td>${i+1}</td><td class="l"><b>${E(r.name)}</b></td><td>${r.missing?'<span class="dim">미시작</span>':E(r.S.status)}</td>
+   ${BLOCKS.map(b=>`<td>${cellOf(r,b)}</td>`).join('')}<td><b>${r.S.avg==null?'-':r.S.avg.toFixed(1)}</b></td><td>${r.S.over||''}</td><td>${r.S.lucky||''}</td><td>${r.S.rec.n?`${r.S.rec.ok}/${r.S.rec.n}`:''}</td><td>${r.S.ms?Math.round(r.S.ms/60000):''}</td><td class="sm">${track(r.S.avg,r.S.nw.length)[0]}</td></tr>`).join('')}</tbody></table></div>
+  <p class="dim sm">행을 누르면 상담 카드 + 학부모 문구가 열려요. 열 제목을 누르면 정렬.</p>
+    `;
+  $('cls2').innerHTML=`<h2>반 전체 — 단원별 설명 깊이</h2>
+  <div class="tw"><table><thead><tr><th class="nos">#</th><th class="nos">단원</th><th class="nos">응답</th><th class="nos">평균</th><th class="nos">0/1/2/3/4</th><th class="nos">추천 설명 깊이</th><th class="nos">처음 배우는 학생</th><th class="nos">챙길 학생(0~1)</th><th class="nos">앞서가는 학생(3~4)</th></tr></thead>
+  <tbody>${blockRows.map((x,i)=>`<tr><td>${i+1}</td><td class="l">${E(x.b.name)}</td><td>${x.n}</td><td><b>${x.avg==null?'-':x.avg.toFixed(1)}</b></td><td>${x.dist.join(' / ')}</td><td class="l">${x.depth}</td><td class="l">${E(x.nwl.join(', '))}</td><td class="l">${E(x.low.join(', '))}</td><td class="l">${E(x.high.join(', '))}</td></tr>`).join('')}</tbody></table></div>
+  <h2>토큰 없이 푼 학생 결과 코드 붙여넣기</h2>
+  <div class="card"><textarea id="code" rows="3" placeholder="학생이 보낸 결과 코드"></textarea><div class="row-tools"><button class="btn ghost" id="imp">불러오기</button></div></div>`;
+  tv.querySelectorAll('th[data-k]').forEach(h=>h.onclick=()=>{ const k=h.dataset.k; SORT = SORT.k===k?{k,d:-SORT.d}:{k,d:(k==='name'||k==='no')?1:-1}; renderTeacher(); });
+  tv.querySelectorAll('tr.row').forEach(t=>t.onclick=()=>{ OPEN=t.dataset.n; showDetail(); });
+  $('cls2').querySelector('#imp').onclick=()=>{ try{ const A2=JSON.parse(decodeURIComponent(escape(atob($('code').value.trim())))); EXTRA=EXTRA.filter(r=>r.name!==A2.name); EXTRA.push({name:A2.name||'(이름 없음)',A:A2}); renderTeacher(); }catch(e){ alert('코드를 읽을 수 없어요'); } };
+}
+
+function parentMsg(r){
+  const S=r.S, nm=callName(r.name);
+  const lvl=BLOCKS.map(b=>({b,L:S.lv[b.id]})).filter(x=>x.L!=null);
+  const strong=lvl.filter(x=>x.L>=3).map(x=>x.b.name);
+  const ok2=lvl.filter(x=>x.L===2).map(x=>x.b.name);
+  const weak=lvl.filter(x=>x.L<=1).map(x=>x.b.name);
+  const notyet=BLOCKS.filter(b=>S.lv[b.id]==null&&!S.nw.includes(b.id)).map(b=>b.name);
+  const nwN=S.nw.map(id=>BMAP[id].name);
+  const L=[];
+  L.push(`안녕하세요, 어머님. 수학은유강 박유강입니다.`);
+  L.push('');
+  if(S.nw.length===NB) L.push(`오늘 ${nm}와 기말고사 범위(${RANGE})를 놓고 지금 상태를 확인하고 상담을 했어요.`);
+  else L.push(`오늘 ${nm}가 기말고사 범위인 ${RANGE} 단원을 선행 때 배운 만큼 얼마나 기억하고 있는지 확인하는 개념 진단을 봤어요. 단원을 ${NB}개로 나눠서, 개념 문항을 맞히면 유형·심화 문항으로 올라가고 막히면 기초 문항으로 내려가는 방식이라 아이가 어디까지 알고 있는지 꽤 또렷하게 보였습니다.`);
+  L.push('');
+  if(strong.length) L.push(`잘 남아 있는 부분: ${strong.join(', ')}\n→ 개념뿐 아니라 대표 유형까지 스스로 풀어냈어요.`);
+  if(ok2.length) L.push(`개념은 잡혀 있는 부분: ${ok2.join(', ')}\n→ 개념은 정확한데 유형 문제에서 한 번 더 손이 가야 하는 단계예요.`);
+  if(weak.length) L.push(`다시 잡아야 할 부분: ${weak.join(', ')}\n→ 개념 문항에서 흔들려서, 수업에서 개념부터 다시 짚고 확인하겠습니다.`);
+  if(nwN.length===NB) L.push(`이번 기말 범위는 아직 한 번도 배운 적이 없는 단원이라, 진단 대신 처음부터 차근차근 배우는 것으로 계획을 세웠어요. 수업과 별도로 개념 보강 시간을 잡아 기말 전까지 진도를 따라잡을 수 있게 하겠습니다.`);
+  else if(nwN.length) L.push(`아직 배운 적이 없는 단원: ${nwN.join(', ')}\n→ 이 부분은 진단에서 빼고, 수업에서 처음부터 설명하겠습니다.${nwN.length>=Math.ceil(NB/2)?' 범위가 넓어서 수업과 별도로 개념 보강 시간을 잡으려고 해요.':''}`);
+  if(notyet.length) L.push(`(${notyet.join(', ')} 단원은 시간이 모자라 다음 시간에 마저 확인할게요.)`);
+  L.push('');
+  const notes=[];
+  if(S.over>=2) notes.push(`'확실하다'고 답했는데 틀린 문항이 ${S.over}개 있었어요. 안다고 생각하는 부분에서 실수가 나오는 편이라, 풀이를 말로 설명하게 하면서 확인하려고 해요.`);
+  if(S.lucky>=2) notes.push(`맞힌 문항 중 스스로 '찍었다'고 표시한 게 ${S.lucky}개였어요. 솔직하게 표시해 준 덕분에 정답이어도 다시 봐야 할 곳을 정확히 알게 됐습니다.`);
+  const under=S.metaGap.filter(g=>g.gap<=-2).length, overS=S.metaGap.filter(g=>g.gap>=2).length;
+  if(overS>=2) notes.push(`풀기 전 '이 정도는 안다'고 한 단원 중 실제로는 흔들린 곳이 몇 군데 있어서, 기말 전에 꼭 짚고 넘어가겠습니다.`);
+  else if(under>=2) notes.push(`본인은 자신 없다고 했는데 실제로는 잘 풀어낸 단원이 많았어요. 생각보다 탄탄하니 자신감을 가져도 된다고 이야기해 주었습니다.`);
+  if(S.rec.n>=3){ const rr=S.rec.ok/S.rec.n;
+    notes.push(rr>=0.6 ? `틀린 문제를 개념 카드를 보여 준 뒤 다시 풀게 했더니 ${S.rec.n}문항 중 ${S.rec.ok}문항을 바로 맞혔어요. 몰라서라기보다 잊어버린 상태라, 짧게 다시 짚어 주면 금방 돌아올 거예요.`
+      : `틀린 문제를 개념 카드를 보여 준 뒤 다시 풀게 했을 때 ${S.rec.n}문항 중 ${S.rec.ok}문항을 맞혔어요. 이 부분은 다시 떠올리기보다 개념을 새로 쌓는다는 생각으로 수업에서 차근차근 설명하겠습니다.`); }
+  if(notes.length){ L.push(...notes); L.push(''); }
+  const avg=S.avg;
+  const plan = avg==null?'' : avg>=3 ? `전체적으로 개념이 탄탄하게 남아 있어서, 수업에서는 개념 설명을 짧게 듣고 심화 문항 위주로 따로 과제를 주려고 합니다. 기말에서 변별되는 고난도 문항까지 대비하는 게 목표예요.`
+    : avg>=2 ? `개념의 큰 틀은 잡혀 있어서, 흔들리는 단원만 다시 짚고 대표 유형을 반복해서 손에 붙이는 데 집중하겠습니다.`
+    : avg>=1 ? `개념이 군데군데 비어 있는 상태라, 기말 전까지 개념 확인 → 기본 유형 순서로 차근차근 다시 쌓아 가겠습니다. 매 수업 시작마다 지난 개념을 짧게 확인하는 리뷰를 하고 있어서 빈틈은 빠르게 메워질 거예요.`
+    : `선행 때 배운 내용이 많이 흐려진 상태라, 처음 배운다는 생각으로 개념부터 천천히 다시 잡겠습니다. 지금 시점에 확인한 게 오히려 다행이고, 기말까지 시간은 충분합니다.`;
+  if(plan){ L.push(plan); L.push(''); }
+  L.push(`궁금하신 점 있으시면 편하게 연락 주세요. 감사합니다.`);
+  return L.join('\n');
+}
+
+function showDetail(silent){
+  const r=allRows().find(x=>x.name===OPEN); const box=$('detail'); if(!r||!box) return;
+  const S=r.S, A=r.A, p=A.pre||{};
+  const tr=track(S.avg,S.nw.length);
+  const items=[];
+  for(const b of BLOCKS) for(const s of ['c1','c2','b','t','h']){ const v=(A.r||{})[b.id+'.'+s]; if(!v) continue;
+    const it=b.items[s]; const pos = it.type==='mc'&&v.a? order(b.id+'.'+s,it.o.length,it.fix).indexOf(v.a-1)+1 : null;
+    items.push(`<tr><td class="l">${E(b.name)}</td><td>${KIND[it.k]}</td><td>${v.ok?'<b style="color:var(--good)">○</b>':'<b style="color:var(--bad)">×</b>'}</td><td>${E(v.conf)}</td><td>${v.a==null?'-':(it.type==='mc'?`원${v.a}${pos?` (화면 ${pos})`:''}`:E(v.a))}</td><td>${it.type==='mc'?'원'+it.a:E(it.a)}</td><td>${Math.round((v.ms||0)/1000)}초</td><td>${(()=>{const w=(A.re||{})[b.id+'.'+s]; return w?((w.ok&&w.conf!=='찍음')?'<b style="color:var(--good)">회복</b>':'<b style="color:var(--bad)">×</b>')+' · '+E(w.why||''):'';})()}</td></tr>`); }
+  const meta=S.metaGap.map(g=>`<span class="flag ${g.gap>=2?'r':g.gap<=-2?'g':''}">${E(g.b.name)} 자기${g.s}→실제${g.L}</span>`).join('');
+  const talk=[];
+  const weakB=BLOCKS.filter(b=>S.lv[b.id]!=null&&S.lv[b.id]<=1).map(b=>b.name);
+  if(weakB.length) talk.push(`약한 단원(${weakB.join(', ')}): 선행 때 이 부분을 어떻게 배웠는지, 어디서부터 기억이 끊기는지 물어보기`);
+  if(S.nw.length) talk.push(`배운 적 없는 단원(${S.nw.map(id=>BMAP[id].name).join(', ')}) — 보강 가능 요일·시간 바로 잡기, 다른 학원·인강 병행 여부 확인`);
+  if(S.over>=2) talk.push(`과신 ${S.over}건 — '확실'인데 틀린 문항을 같이 열어 보고 오개념인지 계산 실수인지 구분`);
+  if(S.lucky>=2) talk.push(`찍음 정답 ${S.lucky}건 — 정답이라도 근거를 말로 설명해 보게 하기`);
+  if(p.stuck==='그냥 넘어간다'||p.stuck==='바로 해설을 본다') talk.push(`막힐 때 '${p.stuck}' — 고민 시간 규칙(예: 5분 고민 → 힌트 → 해설) 약속하기`);
+  if(p.hours==='2시간 미만') talk.push('자습 시간 주 2시간 미만 — 루프 15분/일 루틴부터 확보');
+  if(p.goal && S.avg!=null && ((p.goal==='1등급'&&S.avg<3)||(p.goal==='2등급'&&S.avg<2))) talk.push(`목표(${p.goal})와 현재 개념 상태 차이가 큼 — 기말까지 주차별 목표 같이 세우기`);
+  const wy=Object.entries(S.why).sort((a,b)=>b[1]-a[1]); if(wy.length) talk.push('막힌 이유: '+wy.map(([w,c])=>w.replace(/어요$|났어요$/,'')+' '+c).join(' · '));
+  if(S.rec.n) talk.push(`힌트 후 회복 ${S.rec.ok}/${S.rec.n} — `+(S.rec.ok/S.rec.n>=0.6?'잊은 것 위주(짧게 환기하면 돌아옴)':'개념 자체를 새로 쌓아야 하는 쪽'));
+  if(A.fin&&A.fin.memo) talk.push(`학생 한마디: "${A.fin.memo}"`);
+  if(p.worry) talk.push(`고민: "${p.worry}"`);
+  box.innerHTML=`<div class="card"><div class="top"><h2 style="margin:0">${E(r.name)} — ${E(tr[0])}</h2><button class="btn ghost" style="width:auto;margin:0;padding:6px 12px" id="cls">닫기</button></div>
+  <p class="dim sm">${E(tr[1])}</p>
+  <div class="grid2"><div><h3>단원별 레벨</h3>${BLOCKS.map(b=>lvRow(b,S.lv[b.id],S.nw.includes(b.id))).join('')}
+   <h3>자기 평가 vs 실제</h3><div>${meta||'<span class="dim">-</span>'}</div>
+   <h3>문진</h3><div class="kv">${PRE.map(x=>`<div>${E(x.q.replace(/\(.*?\)/g,''))}</div><div>${E(Array.isArray(p[x.k])?p[x.k].join(', '):(p[x.k]||'-'))}</div>`).join('')}
+   <div>자신 없는 단원</div><div>${E((A.fin&&A.fin.weak||[]).map(id=>BMAP[id].name).join(', ')||'-')}</div></div></div>
+  <div><h3>상담 포인트</h3><div class="sum">${talk.length?talk.map(t=>'• '+E(t)).join('<br>'):'<span class="dim">특이사항 없음</span>'}</div>
+   <h3>학부모 문구 (고쳐서 쓰세요)</h3><textarea class="msg" id="pm">${E(parentMsg(r))}</textarea>
+   <div class="row-tools"><button class="btn" id="cp">복사</button></div></div></div>
+  <h3>문항별</h3><div class="tw"><table><thead><tr><th class="nos">단원</th><th class="nos">종류</th><th class="nos">정오</th><th class="nos">확신</th><th class="nos">학생 답</th><th class="nos">정답</th><th class="nos">시간</th><th class="nos">힌트 후 · 막힌 이유</th></tr></thead><tbody>${items.join('')||'<tr><td colspan="8" class="dim">아직 없음</td></tr>'}</tbody></table></div></div>`;
+  tex(box);
+  $('cls').onclick=()=>{OPEN=null;box.innerHTML='';};
+  $('cp').onclick=async()=>{ const t=$('pm').value; try{ await navigator.clipboard.writeText(t); $('cp').textContent='복사됨 ✓'; }catch(e){ $('pm').select(); document.execCommand('copy'); $('cp').textContent='복사됨 ✓'; } };
+  if(!silent) box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+boot();
+</script>
+</body></html>
