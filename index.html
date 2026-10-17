@@ -4613,7 +4613,8 @@ function vsDraw() {
  */
 const SV_META = {
   // 1011 개념 진단 — 답이 설문이 아니라 진단 기록(r·self·fin)이라 원본을 펼치지 않고 진행 상태만 보인다. 자세히는 진단 교사 화면.
-  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8 },
+  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8, 반: ['고1T', '고1A', '고1S'] },
+  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan8.github.io/dashboard/diag2/?admin', 단원: 9, 반: ['고2A'] },
   ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
   hw0827: { 이름: '기출 오답 과제 (0827)' },
 };
@@ -4740,7 +4741,7 @@ function svDraw() {
     const nDone = st.filter(d => d.lv === 2).length, nIng = st.filter(d => d.lv === 1).length;
     $('sv-cnt').textContent = `완료 ${nDone} · 진행 ${nIng}`;
     let h = `<div class="kpis">${kpi('완료', nDone, '명')}${kpi('진행 중·시작만', nIng, '명', true)}</div>`
-      + (dUrl ? `<div class="dim" style="margin:6px 0 10px">문항별 결과·레벨·상담 메모·학부모 문구 → 진단 교사 화면 ${['고1T','고1A','고1S'].map(b => `<a href="${E(dUrl)}&ban=${encodeURIComponent(b)}" target="_blank" rel="noopener"><b>${b} ↗</b></a>`).join(' · ')}</div>` : '');
+      + (dUrl ? `<div class="dim" style="margin:6px 0 10px">문항별 결과·레벨·상담 메모·학부모 문구 → 진단 교사 화면 ${((SV_META[SV.key] || {}).반 || ['고1T','고1A','고1S']).map(b => `<a href="${E(dUrl)}&ban=${encodeURIComponent(b)}" target="_blank" rel="noopener"><b>${b} ↗</b></a>`).join(' · ')}</div>` : '');
     if (!who.length) { body.innerHTML = h + '<div class="card dim" style="padding:14px">아직 시작한 학생이 없습니다.</div>'; return; }
     h += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>진행</th><th>마지막 저장</th></tr></thead><tbody>`
       + who.sort((a, b) => (a.ban || '').localeCompare(b.ban || '') || a.name.localeCompare(b.name, 'ko')).map(x => {
