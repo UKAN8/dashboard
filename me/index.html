@@ -587,6 +587,14 @@ function partsOf(d){
       +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 명제~무리함수 · 약 50분 · 이어서 하기 가능</span></span>`
       +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
   }
+  // 1017 고2A 복귀 — 미적분1 도함수의 활용~정적분의 활용 진단(_diag/diag2.html, 설문키 diag_m1_1017).
+  if(/^고2A/.test(String(d.학생.반||'').trim())){
+    const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
+    const durl=`https://ukan8.github.io/dashboard/diag2/?t=${encodeURIComponent(tk)}`;
+    P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
+      +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 도함수의 활용~정적분 · 약 50분 · 이어서 하기 가능</span></span>`
+      +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
+  }
   // ⓪ 오늘 기출테스트 자기평가 (0902) — 시험 직후 답안지 걷자마자 폰으로. 정보는 gt_eval_open 이 따로 준다.
   const G=d.자평||null, open=!!(G && !G.없음);
   P.eval=''; P.evalNone='';
