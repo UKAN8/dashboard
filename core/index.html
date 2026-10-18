@@ -184,6 +184,8 @@ function nowKST(){ const d=new Date(Date.now()+9*36e5).toISOString().slice(0,19)
 const hm=s=>{ const [h,m]=String(s).split(':').map(Number); return h*60+(m||0); };
 function nowMin(){ const d=new Date(Date.now()+SKEW+9*36e5); return d.getUTCHours()*60+d.getUTCMinutes(); }
 function inClass(){ if(CLASS===null) return true; const n=nowMin(); return CLASS.some(([a,b])=>n>=hm(a) && n<=hm(b)); }
+function afterClass(){ if(CLASS===null||!CLASS.length) return true; const n=nowMin(); return n>Math.max(...CLASS.map(([a,b])=>hm(b))); }
+function reviewDone(){ return todayRows('리뷰')>=REVIEW_C+REVIEW_T || lget('rdone_'+TODAY,false); }   // (1018) 리뷰는 하루 한 번
 function classText(){
   if(!CLASS||!CLASS.length) return '오늘은 수업이 없는 날이에요. 수업 시간에 열려요';
   return '수업 시간에 열려요 · 오늘 '+CLASS.map(([a,b])=>a+'~'+b).join(', ');
@@ -228,7 +230,7 @@ function keyState(k){
   return {st:lastFail>=0?'fail':'try',n:rows.length,last,failAt:lastFail>=0?rows[lastFail][5]:null};
 }
 function openDate(ck){ return UNL[ck] || ((SET.schedule[BAN]||{})[ck]) || null; }
-function cOpen(ck){ const d=openDate(ck); return !!d && d<=TODAY; }
+function cOpen(ck){ const d=openDate(ck); return !!d && (d<TODAY || (d===TODAY && afterClass())); }   // (1018) 오늘 수업하는 개념은 수업이 끝난 뒤에 연다
 function cPassed(ck){ const s=keyState(ck).st; return s==='one'||s==='grad'; }
 function everPassed(ck){   // 한 번이라도 '1회'였던 개념(그때의 마지막 실패 뒤로만 센다)
   const rows=LOG.filter(r=>r[0]===ck);
@@ -311,7 +313,7 @@ function drawHome(){
   let tot=0, grad=0, open=0;
   CONCEPTS.forEach(c=>[c.key,...c.themes.map(t=>t.key)].forEach(k=>{ tot++; const s=cellState(k); if(s==='grad') grad++; if(s!=='lock') open++; }));
   const lc=lastClassConcepts(); const loop=buildLoop();
-  const rDone=todayRows('리뷰')>=REVIEW_C+1, lDone=todayRows('루프')>0 && !loop.length, rOpen=inClass();
+  const rDone=reviewDone(), lDone=todayRows('루프')>0 && !loop.length, rOpen=inClass(), lLock=CLASS!==null && inClass();
   const H=[];
   H.push(`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
@@ -321,8 +323,8 @@ function drawHome(){
     +`<div><b>${loop.length}</b><span>오늘 돌아온 문항</span></div></div>`);
   H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>수업 리뷰 ${rDone?'· 오늘 완료':''}</b>`
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 2 + 나에게 돌아온 유형 3 · 연습지에 풀고 답만 넣어요`}</span></button>`);
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>오늘의 루프 ${loop.length?`· ${loop.length}문항`:'· 오늘은 끝'}</b>`
-    +`<span>${loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 칸만 골랐어요`:'돌아온 칸이 없어요. 내일 다시 와요'}</span></button>`);
+  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>오늘의 루프 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:'· 오늘은 끝'}</b>`
+    +`<span>${lLock?'수업 중에는 [수업 리뷰]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 칸만 골랐어요`:'돌아온 칸이 없어요. 내일 다시 와요'}</span></button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 칸을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 칸은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
@@ -339,9 +341,9 @@ function drawHome(){
     :`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>`}`
     +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 칸을 0개</b>로 만드는 게 목표예요.</div>`);
   $('app').innerHTML=H.join('');
-  $('goR').onclick=()=>{ if(lc.length && inClass()) startSession('리뷰'); else drawHome(); };
+  $('goR').onclick=()=>{ if(lc.length && inClass() && !reviewDone()) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=rOpen;
-  $('goL').onclick=()=>{ if(loop.length) startSession('루프', loop); };
+  $('goL').onclick=()=>{ if(CLASS!==null && inClass()){ drawHome(); return; } if(loop.length) startSession('루프', loop); };
   window.scrollTo(0,0);
 }
 
@@ -454,6 +456,7 @@ async function finish(early){
     +`<p>${okN===res.length?'전부 확실해요. 이 칸들은 며칠 뒤 한 번 더 보면 졸업이에요.':'틀리거나 애매했던 칸은 다음 루프에 다시 와요.'}</p>`
     +`<div class="save" id="sv">기록 보내는 중…</div></div><div class="list">${L}</div>`
     +`<div class="btns"><button class="p" id="home">단원 지도 보기</button></div>`;
+  if(S.mode==='리뷰' && !early) lset('rdone_'+TODAY,true);
   $('home').onclick=drawHome; S=null;
   const ok=await flush();
   const sv=$('sv'); if(sv){ sv.textContent=ok?'기록 저장됨':'인터넷이 불안정해서 이 기기에 보관했어요. 다음에 열면 자동으로 보내요'; if(!ok) sv.classList.add('bad'); }
