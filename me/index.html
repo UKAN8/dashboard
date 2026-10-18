@@ -608,8 +608,8 @@ function partsOf(d){
         +`<div class="row"><span class="t"><b>오늘 기출테스트 자기평가</b><span class="dim"> 문항마다 내 답 + 확신 · 2분</span></span>`
         +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
   } else P.evalNone=`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`;
-  // ⓪-1 CORE 루프 (1009, P11). ⚠ (1010) /dashboard/core/ 배포 전 → CORE_ON=false. 열 때: build_core.py --deploy 뒤 true.
-  const CORE_ON=false;
+  // ⓪-1 CORE 루프 (1009, P11). 1018 켬(core 1015 배포 + schema_v36 Run 1018 확인).
+  const CORE_ON=true;
   P.core='';
   if(CORE_ON && /^고[12]/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
