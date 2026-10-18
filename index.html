@@ -649,7 +649,7 @@ body.cs-on #boot{display:none}
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="학생">타겟 트레이닝</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
-<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
+<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#core" data-v="core" data-g="루프">CORE 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
 <a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
 </div></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
@@ -1800,6 +1800,7 @@ async function boot(session) {
     const tw = document.querySelector('#nav a[data-v="tower"]'); if (tw) tw.remove();    // 0930 개념의 탑 기록도 관리자만
     const ap = document.querySelector('#nav a[data-v="apply"]'); if (ap) ap.remove();   // 1009 추가학습 신청도 관리자만
     const hb = document.querySelector('#nav a[data-v="haebu"]'); if (hb) hb.remove();   // 1010 해부 루프도 관리자만
+    const co = document.querySelector('#nav a[data-v="core"]'); if (co) co.remove();   // 1018 CORE 루프 현황도 관리자만(mastery_log admin_all)
     const cl = document.querySelector('#nav a[data-v="cs-load"]'); if (cl) cl.remove();   // 성적 적재도 관리자만
     const cst = document.querySelector('#nav a[data-v="cs-staff"]'); if (cst) cst.remove(); // 조교 관리도 관리자만
   }
@@ -2042,7 +2043,8 @@ function render(st) {
     viewSurvey(st),                                      // 0930 설문 (관리자)
     viewTower(st),                                       // 0930 개념의 탑 등반 기록 (관리자)
     viewApply(st),                                       // 1009 추가학습 신청 (관리자)
-    viewHaebu(st)                                        // 1010 프린트 해부 루프 (관리자)
+    viewHaebu(st),                                       // 1010 프린트 해부 루프 (관리자)
+    viewCore(st)                                         // 1018 CORE 루프 현황 (관리자)
   ].join('');
 }
 
@@ -4389,9 +4391,9 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply', 'haebu'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply', 'haebu', 'core'].includes(main)) main = 'today';
     if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
-    if ((main === 'apply' || main === 'haebu') && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
+    if ((main === 'apply' || main === 'haebu' || main === 'core') && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
     if (main === 'visits' && !window.VS_OK) main = 'today';            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
@@ -4409,6 +4411,7 @@ function wire(st) {
     if (main === 'tower') twLoad();
     if (main === 'apply') exLoad();
     if (main === 'haebu') hbLoad();
+    if (main === 'core') coLoad(); else if (typeof CO !== 'undefined') clearTimeout(CO.timer);
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
@@ -5620,6 +5623,240 @@ function hbDraw() {
   if (!hbDraw._esc) { hbDraw._esc = 1; document.addEventListener('keydown', e => { if (e.key === 'Escape') { const d = $('hb-dr'); if (d) { d.classList.remove('on'); HB.open = ''; } } }); }
 }
 
+
+/* ───────── CORE 루프 현황 (1018 — schema_v36 mastery_log) ─────────
+ * 유강 "항상 내가 확인할 수 있는 페이지 — 애들이 어떤 문제 푸는지 보는 마스터 페이지".
+ * 학생 페이지(/dashboard/core/?t=)가 문항마다 mastery_submit 으로 1행씩 쌓는다. 여기선 admin 권한으로 표를 직접 읽는다.
+ * 문항 본문·정답·해설은 배포된 CORE 페이지 안의 BANK 를 읽어 온다(따로 배포할 것 없음).
+ * ① 학생별 오늘 풀이 흐름(칸 하나 = 시도 하나, 누르면 문항·학생 답·정답·해설) ② 문항별 정답률 ③ 단원 지도(학생×칸 상태).
+ * 상태 규칙은 학생 페이지 keyState 와 같다: 성공 = 정답+확실, 마지막 실패 뒤만, 그날 같은 문항 첫 시도만, 성공일 1 → 1회, 3일 이상 떨어진 두 성공일 → 졸업.
+ */
+const CO_SETS = { core_m2: '고1 · 공통수학2 (07 명제~)', core_c1: '고2 · 미적분Ⅰ (05~)' };
+let CO = { rows: null, bank: null, set: 'core_m2', ban: '*', day: '', auto: true, timer: null, open: null, loadedAt: null };
+
+function viewCore(st) {
+  CO.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: String(s.ban || '').trim() }));
+  return `<section class="view" id="v-core">
+<h2>CORE 루프 현황 <span class="cnt" id="co-cnt"></span></h2>
+<div class="toolbar co-tool" id="co-bar"></div>
+<div id="co-body"><div class="dim">탭을 열면 불러옵니다.</div></div>
+<aside class="co-dr" id="co-dr" aria-hidden="true"></aside>
+</section>`;
+}
+
+const coKST = d => new Date(new Date(d).getTime() + 9 * 36e5).toISOString();
+const coToday = () => coKST(Date.now()).slice(0, 10);
+const coHM = s => coKST(s).slice(11, 16);
+function coAgo(s) { const m = Math.round((Date.now() - new Date(s).getTime()) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : Math.floor(m / 60) + '시간 전'; }
+
+async function coBank(force) {
+  if (CO.bank && !force) return CO.bank;
+  try {
+    const t = await (await fetch('/dashboard/core/?_=' + Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/const BANK=(\{.*?\});\s*$/m);
+    const b = m ? JSON.parse(m[1]) : null;
+    if (b) {
+      b.title = {};
+      Object.values(b.sets).forEach(S => S.units.forEach(U => U.concepts.forEach(c => {
+        b.title[c.key] = '개념 ' + c.no + ' ' + c.title;
+        c.themes.forEach(th => { b.title[th.key] = '유형 ' + th.no + ' ' + th.name; });
+      })));
+    }
+    CO.bank = b;
+  } catch (e) { console.warn('CORE 문항 못 읽음', e); CO.bank = null; }
+  return CO.bank;
+}
+
+async function coLoad(force) {
+  const body = $('co-body'); if (!body) return;
+  if (!CO.day) CO.day = coToday();
+  if (CO.rows && !force) { coDraw(); coTick(); return; }
+  if (!CO.rows) body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  try {
+    await coBank(force && !CO.bank);
+    let all = [], from = 0;
+    for (;;) {
+      const { data, error } = await sb.from('mastery_log').select('id,세트키,학생ID,반,키,문항id,모드,답,정오,확신,ms,시각')
+        .eq('세트키', CO.set).order('id', { ascending: true }).range(from, from + 999);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < 1000 || from > 200000) break;
+      from += 1000;
+    }
+    all.forEach(r => { r.문항ID = r.문항ID || r.문항id; r.d = coKST(r.시각).slice(0, 10); });
+    CO.rows = all; CO.loadedAt = Date.now();
+  } catch (e) {
+    const m = String(e && e.message || e);
+    body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(m)}`
+      + (/does not exist|relation|schema cache/i.test(m) ? '<br>→ schema_v36_mastery.sql 이 아직 안 돌았습니다 (06_자동화/통합_작업실).' : '') + '</div>';
+    return;
+  }
+  coDraw(); coTick();
+}
+function coTick() {
+  clearTimeout(CO.timer);
+  if (!CO.auto || CO.day !== coToday()) return;
+  CO.timer = setTimeout(() => { if (document.getElementById('v-core')?.classList.contains('on')) coLoad(true); }, 15000);
+}
+
+/* 학생 페이지 keyState 와 같은 규칙 — rows 는 한 학생·한 키, 시각순 */
+function coState(rows) {
+  if (!rows.length) return { st: 'new' };
+  const need = (CO.bank && CO.bank.need && CO.bank.need[rows[0].키[0]]) || (rows[0].키[0] === 'C' ? 2 : 1);
+  const gap = (CO.bank && CO.bank.gap) || 3;
+  let lf = -1; rows.forEach((r, i) => { if (!(r.정오 && r.확신 === '확실')) lf = i; });
+  const seen = {}, per = {};
+  rows.forEach((r, i) => { const k = r.d + '|' + r.문항ID; if (seen[k]) return; seen[k] = 1; if (i > lf && r.정오 && r.확신 === '확실') per[r.d] = (per[r.d] || 0) + 1; });
+  const days = Object.keys(per).filter(d => per[d] >= need).sort();
+  const dn = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
+  if (days.length >= 2 && dn(days[days.length - 1]) - dn(days[0]) >= gap) return { st: 'grad' };
+  if (days.length) return { st: 'one' };
+  return { st: lf >= 0 ? 'fail' : 'try' };
+}
+const CO_TX = { ge: '≥', le: '≤', ne: '≠', sim: '~', to: '→', Rightarrow: '⇒', Leftrightarrow: '⇔', cdot: '·', times: '×', in: '∈', notin: '∉', subset: '⊂', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', infty: '∞', pm: '±', le: '≤', leq: '≤', geq: '≥' };
+const coPlain = s => String(s || '').replace(/\$/g, '').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2').replace(/\\([a-zA-Z]+)/g, (m, w) => CO_TX[w] != null ? CO_TX[w] : '').replace(/\\([{}%,;! ])/g, '$1').replace(/[{}]/g, '').replace(/\^/g, '^').replace(/\s+/g, ' ').trim();
+const CO_ST = { new: '—', try: '하는 중', fail: '다시', one: '1회', grad: '졸업' };
+
+function coDraw() {
+  const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
+  const R = CO.rows || [], B = CO.bank, T = coToday();
+  const bans = [...new Set(R.map(r => r.반).concat(CO.stu.filter(s => s.ban.startsWith(CO_SETS[CO.set].slice(0, 2))).map(s => s.ban)))].filter(Boolean).sort();
+  const days = [...new Set(R.map(r => r.d))].sort().reverse(); if (!days.includes(T)) days.unshift(T);
+  bar.innerHTML = Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
+    + '<span class="sep">│</span>' + ['*', ...bans].map(b => `<button class="chip${CO.ban === b ? ' on' : ''}" data-cb="${E(b)}">${b === '*' ? '반 전체' : E(b)}</button>`).join('')
+    + '<span class="sep">│</span>' + `<select id="co-day">${days.map(d => `<option value="${d}"${d === CO.day ? ' selected' : ''}>${d === T ? '오늘 ' : ''}${d.slice(5).replace('-', '/')}</option>`).join('')}</select>`
+    + `<label class="co-auto"><input type="checkbox" id="co-auto"${CO.auto ? ' checked' : ''}> 15초마다 새로고침</label>`
+    + `<button class="chip" id="co-re">새로고침</button><span class="dim co-at">${CO.loadedAt ? coHM(CO.loadedAt) + ' 기준' : ''}</span>`;
+  bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.ban = '*'; CO.rows = null; coLoad(); });
+  bar.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => { CO.ban = b.dataset.cb; coDraw(); });
+  $('co-day').onchange = e => { CO.day = e.target.value; coDraw(); coTick(); };
+  $('co-auto').onchange = e => { CO.auto = e.target.checked; coTick(); };
+  $('co-re').onclick = () => coLoad(true);
+
+  const inBan = r => CO.ban === '*' || r.반 === CO.ban;
+  const dayR = R.filter(r => r.d === CO.day && inBan(r));
+  const name = {}; CO.stu.forEach(s => name[s.sid] = s);
+  const roster = CO.stu.filter(s => CO.ban === '*' ? bans.includes(s.ban) : s.ban === CO.ban);
+  const by = {}; dayR.forEach(r => (by[r.학생ID] = by[r.학생ID] || []).push(r));
+  Object.keys(by).forEach(sid => { if (!roster.find(s => s.sid === sid)) roster.push({ sid, name: (name[sid] || {}).name || sid, ban: by[sid][0].반 }); });
+  const okN = dayR.filter(r => r.정오).length, sureOk = dayR.filter(r => r.정오 && r.확신 === '확실').length, unsure = dayR.filter(r => r.확신 === '애매').length;
+  const live = Object.values(by).filter(rs => Date.now() - new Date(rs[rs.length - 1].시각).getTime() < 5 * 60000).length;
+  $('co-cnt').textContent = `${CO.day.slice(5).replace('-', '/')} · ${Object.keys(by).length}/${roster.length}명`;
+
+  const H = [CO_CSS];
+  if (!B) H.push('<div class="card dim" style="padding:10px 14px;margin-bottom:12px">문항 본문을 못 읽었습니다(/dashboard/core/). 기록만 보여요.</div>');
+  H.push(`<div class="co-kpi">
+<div><div class="k">푼 학생</div><div class="v">${Object.keys(by).length}<small>/ ${roster.length}명</small></div><div class="s">지금 푸는 중(5분 안) ${live}명</div></div>
+<div><div class="k">푼 문항</div><div class="v">${dayR.length}</div><div class="s">리뷰 ${dayR.filter(r => r.모드 === '리뷰').length} · 루프 ${dayR.filter(r => r.모드 === '루프').length}</div></div>
+<div><div class="k">정답률</div><div class="v">${dayR.length ? Math.round(okN / dayR.length * 100) : 0}<small>%</small></div><div class="s">확실+정답 ${dayR.length ? Math.round(sureOk / dayR.length * 100) : 0}%</div></div>
+<div><div class="k">애매</div><div class="v">${unsure}</div><div class="s">${dayR.length ? Math.round(unsure / dayR.length * 100) : 0}% — 0이면 '확실'만 누르는 것</div></div>
+</div>`);
+
+  // ① 학생별 흐름
+  H.push(`<h3 class="co-h">학생별 풀이 흐름</h3><p class="co-sub">칸 하나 = 문항 하나(푼 순서). <span class="co-lg"><i class="g"></i>확실·정답 <i class="y"></i>애매·정답 <i class="r"></i>틀림 <i class="ry"></i>애매·틀림</span> · 칸을 누르면 문항·학생 답·정답·해설. 굵은 테두리 = 유형.</p>`);
+  const order = roster.slice().sort((a, b) => {
+    const la = by[a.sid] ? new Date(by[a.sid][by[a.sid].length - 1].시각).getTime() : 0, lb = by[b.sid] ? new Date(by[b.sid][by[b.sid].length - 1].시각).getTime() : 0;
+    return lb - la || (a.ban + a.name).localeCompare(b.ban + b.name);
+  });
+  H.push('<div class="co-flow">' + order.map(s => {
+    const rs = by[s.sid] || [];
+    if (!rs.length) return `<div class="co-row none"><div class="nm"><b>${E(s.name)}</b><span>${E(s.ban)}</span></div><div class="dim">${CO.day === T ? '아직 안 함' : '기록 없음'}</div></div>`;
+    const last = rs[rs.length - 1], recent = CO.day === T && Date.now() - new Date(last.시각).getTime() < 5 * 60000;
+    const seg = []; let cur = null;
+    rs.forEach((r, i) => { if (!cur || cur.m !== r.모드) { cur = { m: r.모드, items: [] }; seg.push(cur); } cur.items.push([r, i]); });
+    const okc = rs.filter(r => r.정오).length;
+    return `<div class="co-row${recent ? ' live' : ''}"><div class="nm"><b>${E(s.name)}</b><span>${E(s.ban)}</span>
+<em>${recent ? '● 푸는 중' : coHM(last.시각)}</em><small>${okc}/${rs.length} 정답</small></div>
+<div class="segs">${seg.map(g => `<div class="seg"><span class="md">${E(g.m)}</span>${g.items.map(([r, i]) =>
+      `<button class="cc ${r.정오 ? (r.확신 === '확실' ? 'g' : 'y') : (r.확신 === '확실' ? 'r' : 'ry')}${r.키[0] === 'T' ? ' t' : ''}" data-co="${E(s.sid)}|${i}" title="${E(coHM(r.시각) + ' ' + ((B && B.title[r.키]) || r.키))}">${E(r.키.replace(/^[CT][a-z0-9]+-/, (r.키[0] === 'C' ? 'C' : 'T')))}</button>`).join('')}</div>`).join('')}</div></div>`;
+  }).join('') + '</div>');
+
+  // ② 문항별
+  const byItem = {}; dayR.forEach(r => { const x = byItem[r.문항ID] = byItem[r.문항ID] || { id: r.문항ID, key: r.키, n: 0, ok: 0, un: 0, who: [] }; x.n++; if (r.정오) x.ok++; if (r.확신 === '애매') x.un++; x.who.push(((name[r.학생ID] || {}).name || r.학생ID) + (r.정오 ? '' : '✗')); });
+  const items = Object.values(byItem).sort((a, b) => (a.ok / a.n) - (b.ok / b.n) || b.n - a.n);
+  H.push(`<h3 class="co-h">문항별 — 많이 틀린 순</h3><div class="co-scroll"><table class="co-t"><thead><tr><th>문항</th><th>칸</th><th>문제</th><th>푼 수</th><th>정답률</th><th>애매</th><th>학생 (✗ 틀림)</th></tr></thead><tbody>`
+    + (items.length ? items.map(x => { const it = B && B.items[x.id]; return `<tr data-ci="${E(x.id)}"><td>${E(x.id)}</td><td>${E((B && B.title[x.key]) || x.key)}</td><td class="q">${E(it ? coPlain(it.q).slice(0, 70) : '')}</td><td data-v="${x.n}">${x.n}</td><td data-v="${x.ok / x.n}"><b class="${x.ok / x.n < .6 ? 'bad' : ''}">${Math.round(x.ok / x.n * 100)}%</b></td><td data-v="${x.un}">${x.un}</td><td class="w">${E(x.who.join(', '))}</td></tr>`; }).join('')
+      : `<tr><td colspan="7" class="dim">이 날 기록이 없습니다.</td></tr>`) + '</tbody></table></div>');
+
+  // ③ 단원 지도 (전체 기록 기준, 이 날까지)
+  if (B && B.sets[CO.set]) {
+    const S = B.sets[CO.set], keys = [];
+    S.units.forEach(U => U.concepts.forEach(c => { keys.push(c.key); c.themes.forEach(th => keys.push(th.key)); }));
+    const upto = R.filter(r => r.d <= CO.day && inBan(r)); const sk = {};
+    upto.forEach(r => ((sk[r.학생ID] = sk[r.학생ID] || {})[r.키] = sk[r.학생ID][r.키] || []).push(r));
+    const stuL = roster.filter(s => sk[s.sid]);
+    H.push(`<h3 class="co-h">단원 지도 — ${CO.day.slice(5).replace('-', '/')}까지</h3><p class="co-sub">학생 화면의 칸 상태와 같은 규칙. 빈칸 = 아직 안 푼 칸(잠김 포함).</p>`
+      + (stuL.length ? `<div class="co-scroll"><table class="co-m tk-nosort"><thead><tr><th class="fz">학생</th>${keys.map(k => `<th class="${k[0] === 'C' ? 'c' : ''}" title="${E(B.title[k] || k)}">${E(k.replace(/^[CT][a-z0-9]+-/, k[0]))}</th>`).join('')}<th>졸업</th></tr></thead><tbody>`
+        + stuL.map(s => { let g = 0; return `<tr><td class="fz"><b>${E(s.name)}</b> <span class="dim">${E(s.ban)}</span></td>` + keys.map(k => { const rr = (sk[s.sid] || {})[k]; if (!rr) return '<td></td>'; const st = coState(rr).st; if (st === 'grad') g++; return `<td><span class="ms ${st}" title="${E((B.title[k] || k) + ' · ' + CO_ST[st] + ' · 시도 ' + rr.length)}">${E(CO_ST[st])}</span></td>`; }).join('') + `<td data-v="${g}">${g}</td></tr>`; }).join('') + '</tbody></table></div>'
+        : '<div class="dim">아직 기록이 없습니다.</div>'));
+  }
+  body.innerHTML = H.join('');
+  body.querySelectorAll('[data-co]').forEach(b => b.onclick = () => { const [sid, i] = b.dataset.co.split('|'); coOpen(by[sid][+i], by[sid]); });
+  body.querySelectorAll('tr[data-ci]').forEach(tr => tr.onclick = () => { const r = dayR.find(x => x.문항ID === tr.dataset.ci); if (r) coOpen(r, null, dayR.filter(x => x.문항ID === tr.dataset.ci)); });
+}
+
+function coKatex(cb) {
+  if (window.katex && window.renderMathInElement) return cb();
+  if (!document.getElementById('co-kx')) {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'; l.id = 'co-kx'; document.head.appendChild(l);
+    const s1 = document.createElement('script'); s1.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+    s1.onload = () => { const s2 = document.createElement('script'); s2.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js'; s2.onload = cb; document.head.appendChild(s2); };
+    document.head.appendChild(s1);
+  } else setTimeout(() => coKatex(cb), 200);
+}
+function coOpen(r, rs, same) {
+  const dr = $('co-dr'), B = CO.bank, it = B && B.items[r.문항ID], nm = ((CO.stu.find(s => s.sid === r.학생ID) || {}).name) || r.학생ID;
+  const txt = s => E(s || '').replace(/\n/g, '<br>');
+  const ch = it && it.c ? `<div class="co-ch">${it.c.map(c => `<span class="${c === it.a ? 'a' : ''}${c === r.답 ? ' me' : ''}">${txt(c)}</span>`).join('')}</div>` : '';
+  dr.innerHTML = `<button class="co-close" id="co-x">닫기</button>
+<h4>${E(nm)} · ${E(r.문항ID)}</h4><div class="meta">${E(coHM(r.시각))} · ${E(r.모드)} · ${E((B && B.title[r.키]) || r.키)}${r.ms ? ' · ' + Math.round(r.ms / 1000) + '초' : ''}</div>
+<div class="co-res ${r.정오 ? 'ok' : 'no'}">${r.정오 ? '정답' : '틀림'} · ${E(r.확신)}</div>
+${it ? `<div class="co-q">${txt(it.q)}</div>${ch}` : '<div class="dim">문항 본문 없음</div>'}
+<div class="co-ans"><div><span>학생 답</span><b>${txt(r.답 || '—')}</b></div><div><span>정답</span><b>${txt(it ? it.a : '?')}</b></div></div>
+${it && it.w ? `<div class="co-w"><span>해설</span>${txt(it.w)}</div>` : ''}
+${same && same.length > 1 ? `<div class="co-w"><span>이 문항을 푼 학생</span>${same.map(x => E(((CO.stu.find(s => s.sid === x.학생ID) || {}).name || x.학생ID) + ' ' + (x.정오 ? 'O' : 'X') + (x.확신 === '애매' ? '(애매)' : '') + ' — ' + (x.답 || ''))).join('<br>')}</div>` : ''}`;
+  dr.classList.add('on'); dr.setAttribute('aria-hidden', 'false');
+  $('co-x').onclick = () => { dr.classList.remove('on'); dr.setAttribute('aria-hidden', 'true'); };
+  coKatex(() => { try { renderMathInElement(dr, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {} });
+}
+
+const CO_CSS = `<style>
+#v-core .co-tool select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:4px 8px}
+#v-core .co-tool .sep{color:var(--dim);margin:0 2px}#v-core .co-auto{font-size:12.5px;color:var(--tx2);margin-left:6px}#v-core .co-at{font-size:12px;margin-left:6px}
+#v-core .co-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:2px 0 18px}
+#v-core .co-kpi>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:11px 14px}
+#v-core .co-kpi .k{font-size:12px;color:var(--dim)}#v-core .co-kpi .v{font-size:22px;font-weight:800;margin-top:2px}#v-core .co-kpi .v small{font-size:12px;font-weight:500;color:var(--dim);margin-left:4px}#v-core .co-kpi .s{font-size:12px;color:var(--tx2);margin-top:3px}
+#v-core h3.co-h{font-size:14px;margin:22px 0 4px}#v-core .co-sub{font-size:12px;color:var(--dim);margin:0 0 10px;line-height:1.6}
+#v-core .co-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 3px 0 8px;vertical-align:-1px}
+#v-core .g{background:#5fd3a0}#v-core .y{background:#f2b45a}#v-core .r{background:#ff6b7f}#v-core .ry{background:repeating-linear-gradient(45deg,#ff6b7f 0 3px,#f2b45a 3px 6px)}
+#v-core .co-flow{display:flex;flex-direction:column;gap:6px}
+#v-core .co-row{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px}
+#v-core .co-row.live{border-color:rgba(95,211,160,.55)}#v-core .co-row.none{opacity:.55;align-items:center}
+#v-core .co-row .nm{min-width:120px;display:flex;flex-direction:column;gap:1px}#v-core .co-row .nm b{font-size:14px}#v-core .co-row .nm span,#v-core .co-row .nm small{font-size:11.5px;color:var(--dim)}
+#v-core .co-row .nm em{font-style:normal;font-size:12px;color:var(--tx2)}#v-core .co-row.live .nm em{color:#5fd3a0}
+#v-core .segs{display:flex;flex-wrap:wrap;gap:10px}#v-core .seg{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+#v-core .seg .md{font-size:11px;color:var(--dim);margin-right:3px}
+#v-core .cc{border:none;border-radius:6px;min-width:34px;height:26px;padding:0 5px;font-size:11px;font-weight:700;color:#14141b;cursor:pointer}
+#v-core .cc.t{outline:2px solid rgba(255,255,255,.75);outline-offset:-2px}
+#v-core .co-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#v-core table.co-t{width:100%;border-collapse:collapse;font-size:12.5px}#v-core table.co-t th,#v-core table.co-t td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+#v-core table.co-t td.q,#v-core table.co-t td.w{white-space:normal;max-width:340px}#v-core table.co-t tbody tr{cursor:pointer}#v-core table.co-t tbody tr:hover{background:rgba(255,255,255,.03)}
+#v-core b.bad{color:#ff6b7f}
+#v-core table.co-m{border-collapse:separate;border-spacing:0;font-size:11.5px}#v-core table.co-m th,#v-core table.co-m td{padding:5px 4px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
+#v-core table.co-m th.c{color:#f5a0a0}#v-core table.co-m .fz{position:sticky;left:2.6em;background:#14141b;text-align:left;z-index:1}
+#v-core .ms{display:inline-block;border-radius:5px;padding:1px 5px;font-size:10.5px}
+#v-core .ms.try{background:rgba(255,255,255,.08)}#v-core .ms.fail{background:rgba(255,107,127,.2);color:#ffc2cb}#v-core .ms.one{background:rgba(242,180,90,.2);color:#ffe0b0}#v-core .ms.grad{background:rgba(95,211,160,.22);color:#c4f3dc}
+#v-core .co-dr{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:#111118;border-left:1px solid var(--bd);transform:translateX(102%);transition:transform .22s ease;z-index:80;overflow-y:auto;padding:18px 18px 40px;box-shadow:-20px 0 40px rgba(0,0,0,.4)}
+#v-core .co-dr.on{transform:none}#v-core .co-close{float:right;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:4px 12px;cursor:pointer}
+#v-core .co-dr h4{margin:0 0 2px;font-size:17px}#v-core .co-dr .meta{font-size:12px;color:var(--dim);margin-bottom:10px}
+#v-core .co-res{display:inline-block;border-radius:8px;padding:3px 10px;font-weight:700;font-size:13px;margin-bottom:10px}#v-core .co-res.ok{background:rgba(95,211,160,.18);color:#c4f3dc}#v-core .co-res.no{background:rgba(255,107,127,.18);color:#ffc2cb}
+#v-core .co-q{font-size:15px;line-height:1.75;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px}
+#v-core .co-ch{display:flex;flex-direction:column;gap:4px;margin-top:8px}#v-core .co-ch span{border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:14px}
+#v-core .co-ch span.a{border-color:#5fd3a0}#v-core .co-ch span.me{background:rgba(242,180,90,.12)}#v-core .co-ch span.me:not(.a){border-color:#ff6b7f}
+#v-core .co-ans{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}#v-core .co-ans>div{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px}
+#v-core .co-ans span,#v-core .co-w span{display:block;font-size:11.5px;color:var(--dim);margin-bottom:3px}#v-core .co-ans b{font-size:15px}
+#v-core .co-w{font-size:13.5px;line-height:1.7;color:var(--tx2);margin-top:10px}
+</style>`;
 
 </script>
 <!-- 수업 콘솔 스크립트 — console.js. app.js 가 먼저 실행돼 sb·$ 를 만들어 두고, 로그인이 끝나면 csBoot(prof) 을 부른다. -->
