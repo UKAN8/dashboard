@@ -651,7 +651,7 @@ function partsOf(d){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
     const curl=`https://ukan8.github.io/dashboard/core/?t=${encodeURIComponent(tk)}`;
     P.core=`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
-      +`<span class="t"><b>CORE 루프</b><span class="dim"> 수업 리뷰 · 오늘의 루프 · 단원 지도</span></span>`
+      +`<span class="t"><b>CORE 루프</b><span class="dim"> 리뷰테스트 · 루프 과제 · 단원 지도</span></span>`
       +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`;
   }
   // ⓪-2 개념의 탑 (0930) — 지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만.
@@ -860,7 +860,7 @@ async function mountReady(c,tok,today){
     +`<div class="fx-lg"><i style="background:var(--fx-g)"></i>졸업<i style="background:var(--fx-o)"></i>1회 통과<i style="background:var(--fx-r)"></i>다시</div>`
     +(weak.length?`<div class="fx-weak">먼저 잡을 것 ${weak.slice(0,3).map(x=>`<b>${E(x.t)}</b>`).join(' · ')}</div>`:'')
     +`<div class="note">${anyLog?'졸업 = 서로 다른 날 두 번 이상, 확실하게 맞힌 개념·유형이에요. 단원 칸 수 중 졸업한 비율이에요.'
-      :'수업 리뷰·오늘의 루프를 시작하면 단원별 졸업 비율이 여기에 쌓여요.'}</div>`;
+      :'리뷰테스트·루프 과제를 시작하면 단원별 졸업 비율이 여기에 쌓여요.'}</div>`;
 }
 function mockCard(c,G,today){
   const R=G.회차||[];
@@ -880,7 +880,7 @@ function renderFinal(d,parts){
   H.push(parts.head);
   H.push(heroCard(d,c,today));
   const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
-  H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 수업 리뷰·기출 모의 날 여기에 버튼이 떠요.</div>`)
+  H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
     +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`
     +`<div id="hw-host"></div>`);
   H.push(readyCardShell(c));
@@ -951,7 +951,8 @@ function drawLib(host,opt){
   const sc=LIB.school.replace(/고$/,''), gr=ban.slice(0,2);
   const hb=(D.학습||[]).filter(x=>sc&&x.학교&&sc.startsWith(x.학교)&&(!x.학년||x.학년===gr));
   const hc=$('hb-card');
-  if(hc&&hb.length){
+  const HB_ON=false;   // (1019 유강) 타겟 트레이닝 카드 내림 — 다시 열 때 true
+  if(HB_ON&&hc&&hb.length){
     const tk=new URLSearchParams(location.search).get('t')||'', tq=tk?'?t='+encodeURIComponent(tk):'';
     hc.innerHTML=`<div class="row"><span class="t"><b>타겟 트레이닝</b><span class="dim"> ${E(hb[0].학교명)} 시험 범위 · 단원을 골라 시작</span></span></div>`
       +`<div id="hb-list" style="margin-top:8px">`
