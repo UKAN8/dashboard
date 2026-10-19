@@ -8649,19 +8649,21 @@ async function hwList(){
   const [{data:as,error},{data:pg}]=await Promise.all([
     sb.from('hw_assign').select('*').eq('반',HWS.cls).gte('날짜',since).order('날짜',{ascending:false}).order('id'),
     sb.from('hw_progress').select('*').eq('반',HWS.cls).gte('날짜',since)]);
+  const {data:dn}=await sb.from('hw_done').select('assign_id');
+  const dcnt={}; (dn||[]).forEach(r=>{ dcnt[r.assign_id]=(dcnt[r.assign_id]||0)+1; });
   if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
   if(!as||!as.length){ box.innerHTML='<div class="loadout">최근 28일에 낸 써킷 과제가 없다.</div>'; return; }
   const by={}; (pg||[]).forEach(r=>{ (by[r.assign_id]=by[r.assign_id]||[]).push(r); });
   const uname=a=>{ const m=(HWS.map||[]).find(r=>r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:a['단원코드']; };
   const avg=(xs,k)=>{ const v=xs.map(x=>+x[k]).filter(x=>!isNaN(x)); return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):'—'; };
-  box.innerHTML=`<table><thead><tr><th>수업일</th><th>과제</th><th>범위</th><th>문항</th><th>체크한 학생</th><th>이행률</th><th>해결률</th><th>자력</th><th>질문</th><th>상태</th><th data-nosort></th></tr></thead><tbody>`
+  box.innerHTML=`<table><thead><tr><th>수업일</th><th>과제</th><th>범위</th><th>문항</th><th>체크한 학생</th><th>제출</th><th>이행률</th><th>해결률</th><th>자력</th><th>질문</th><th>상태</th><th data-nosort></th></tr></thead><tbody>`
     +as.map(a=>{ const ps=by[a.id]||[], n=ps[0]?ps[0]['전체']:'—', started=ps.filter(p=>+p['체크']>0).length;
       const th=hwThemes(a), lo=a['시작THEME']??(th?th[0]:''), hi=a['끝THEME']??(th?th[1]:'');
       const q=ps.reduce((s,p)=>s+(+p.n5||0),0);
       return `<tr><td>${esc(a['날짜'])}</td><td>${esc(hwName(a))}${a['이월원']?' <span class="badge">이월</span>':''}</td><td>${th?`THEME ${lo}~${hi}`:'전체'}</td><td>${n}</td>`
-        +`<td>${started}/${ps.length}</td><td>${avg(ps,'이행률')}%</td><td>${avg(ps,'해결률')}%</td><td>${avg(ps,'자력해결률')}%</td><td>${q||''}</td><td>${esc(a['상태'])}</td>`
+        +`<td>${started}/${ps.length}</td><td>${dcnt[a.id]||0}</td><td>${avg(ps,'이행률')}%</td><td>${avg(ps,'해결률')}%</td><td>${avg(ps,'자력해결률')}%</td><td>${q||''}</td><td>${esc(a['상태'])}</td>`
         +`<td style="white-space:nowrap"><button class="ghost" onclick="hwTrimOpen(${a.id},${th?th[0]:0},${hi||0})">진도 줄이기</button> <button class="ghost" onclick="hwStu(${a.id})">학생별</button> <button class="ghost" onclick="hwClose(${a.id},'${a['상태']==='열림'?'닫힘':'열림'}')">${a['상태']==='열림'?'닫기':'다시 열기'}</button></td></tr>`
-        +`<tr class="hidden" id="hw_x${a.id}"><td colspan="11"></td></tr>`; }).join('')+`</tbody></table>`;
+        +`<tr class="hidden" id="hw_x${a.id}"><td colspan="12"></td></tr>`; }).join('')+`</tbody></table>`;
   HWS.prog=by; hwItems();
 }
 function hwTrimOpen(id,lo,hi){
@@ -8690,23 +8692,27 @@ function hwStu(id){
 }
 async function hwQueue(){
   const box=$('hw_queue'), all=$('hw_qall').checked;
-  let q=sb.from('hw_question').select('id,assign_id,"학생ID",반,번호,문항ID,메모,시각,hw_assign(세트키,과목,단원코드,라운드,날짜)').eq('상태','대기').order('시각');
+  let q=sb.from('hw_question').select('id,assign_id,"학생ID",반,번호,문항ID,메모,시각,상태,대면,재질문,조교메모,hw_assign(세트키,과목,단원코드,라운드,날짜)').in('상태',['대기','답변']).order('시각');
   if(!all&&HWS.cls) q=q.eq('반',HWS.cls);
   const {data,error}=await q;
   if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
-  $('hw_qcnt').textContent=(data||[]).length+'건';
+  const wait=(data||[]).filter(r=>r['상태']==='대기');
+  $('hw_qcnt').textContent=wait.length+'건 대기'+((data||[]).length>wait.length?` · ${(data||[]).length-wait.length}건 학생 확인 중`:'');
   if(!data||!data.length){ box.innerHTML='<div class="loadout">대기 중인 질문이 없다.</div>'; return; }
   const uname=a=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:''; };
   const th=(a,no)=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['번호']===no); return m&&m['THEME']!=null?' · THEME '+m['THEME']:''; };
-  box.innerHTML=`<table><thead><tr><th>들어온 때</th><th>반</th><th>학생</th><th>문항</th><th>학생 메모</th><th data-nosort>해결 메모(학생에게 보임)</th><th data-nosort></th></tr></thead><tbody>`
+  box.innerHTML=`<table><thead><tr><th>들어온 때</th><th>반</th><th>학생</th><th>문항</th><th>학생 메모</th><th>상태</th><th data-nosort>답(학생에게 보임)</th><th data-nosort></th></tr></thead><tbody>`
     +data.map(r=>{ const a=r.hw_assign; return `<tr><td>${esc(String(r['시각']).slice(5,16).replace('T',' '))}</td><td>${esc(r['반'])}</td><td>${esc(String(r['학생ID']).split('_')[0])}</td>`
       +`<td>${esc(hwName(a))} <b>${r['번호']}번</b>${hwThOf(a,r['번호'])!=null?' · THEME '+hwThOf(a,r['번호']):''}</td><td>${esc(r['메모']||'')}</td>`
-      +`<td><input id="hw_m${r.id}" placeholder="한 줄 (선택)" style="width:100%"></td><td><button class="key" onclick="hwResolve(${r.id})">해결</button></td></tr>`; }).join('')+`</tbody></table>`;
+      +`<td>${r['상태']==='답변'?'<span class="lbl">답 보냄 · 학생 확인 대기</span>':(r['재질문']?`<b class="warn">다시 모름 ×${r['재질문']}</b>`:'대기')}${r['대면']?' <span class="badge">수업 때</span>':''}</td>`
+      +`<td><input id="hw_m${r.id}" placeholder="한 줄 답 (선택)" value="${esc(r['조교메모']||'')}" style="width:100%"><label class="ct-chk" style="font-size:12px"><input type="checkbox" id="hw_f${r.id}" ${r['대면']?'checked':''}> 수업 때 직접 설명</label></td>`
+      +`<td><button class="key" onclick="hwAnswer(${r.id})">${r['상태']==='답변'?'답 고치기':'답 보내기'}</button></td></tr>`; }).join('')+`</tbody></table>`
+    +`<div class="loadout">해결은 학생이 누른다 — 답을 보내면 학생 포털에 뜨고, 학생이 [이해했어요]를 누르면 ④ 질문해서 해결, [아직 모르겠어요]면 다시 대기로 돌아오고 '수업 때'로 표시된다.</div>`;
 }
-async function hwResolve(id){
-  const {data,error}=await sb.rpc('hw_resolve',{qid:id,p_memo:$('hw_m'+id).value||null});
-  if(error||!data||data['오류']) return toast('못 했다: '+((error&&error.message)||(data&&data['오류'])||''));
-  toast('해결 → 그 문항은 ④ 질문해서 해결'); hwQueue(); hwList();
+async function hwAnswer(id){
+  const {data,error}=await sb.rpc('hw_answer',{qid:id,p_memo:$('hw_m'+id).value||null,p_face:$('hw_f'+id).checked});
+  if(error||!data||data['오류']) return toast('못 보냈다: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast('답을 보냈다 — 학생이 확인하면 ④'); hwQueue();
 }
 async function hwItems(){
   const box=$('hw_items');
