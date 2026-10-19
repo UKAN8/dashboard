@@ -5715,6 +5715,11 @@ async function coLoad(force) {
   if (!CO.rows) body.innerHTML = '<div class="dim">불러오는 중…</div>';
   try {
     await coBank(force && !CO.bank);
+    // (1019) 명단 = students 표의 재원생만 — 조회 데이터(daily_log 14일 활동) 명단엔 퇴원생(변하율)이 섞였다
+    if (!CO.roster) {
+      const { data: sd, error: se } = await sb.from('students').select('학생ID,이름,학년,반').eq('상태', '재원');
+      if (!se && sd && sd.length) { CO.roster = true; CO.stu = sd.map(r => ({ sid: r.학생ID, name: r.이름, ban: String((r.학년 || '') + (r.반 || '')).trim() })); }
+    }
     let all = [], from = 0;
     for (;;) {
       const { data, error } = await sb.from('mastery_log').select('id,세트키,학생ID,반,키,문항id,모드,답,정오,확신,ms,시각')
