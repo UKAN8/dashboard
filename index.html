@@ -646,7 +646,7 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="학생">타겟 트레이닝</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#core" data-v="core" data-g="루프">CORE 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
@@ -874,6 +874,41 @@ body.cs-on #boot{display:none}
     <div class="card">
       <h2>여기서 낸 작업 — 최근 14일 <button class="ghost" style="margin-left:8px" onclick="ctJobs()">새로고침</button></h2>
       <div id="ct_jobs">불러오는 중…</div>
+    </div>
+  </section>
+
+  <!-- 써킷 과제 점검 (1019) — 고정 책자로 낸 써킷 과제의 문항별 해결 기록.
+       학생은 포털에서 문항마다 ①~⑥ 을 탭한다(hw_mark). 여기서는 과제 내기 · 진도 줄이기(이월) · 질문 대기열 · 이행률.
+       DB = schema_v41_hw_check.sql (hw_assign·hw_check·hw_question·circuit_map). 정본 console.js 의 hw* 함수. -->
+  <section id="view-hw" class="hidden">
+    <div class="card">
+      <h2>과제 내기 <span class="badge">써킷 책자 그대로</span></h2>
+      <div class="cs-info-row" style="align-items:flex-end">
+        <div class="f" style="flex:0 0 100px"><label class="lbl">반</label><select id="hw_cls" onchange="hwClsChanged()"></select></div>
+        <div class="f" style="flex:0 0 150px"><label class="lbl">수업일</label><input type="date" id="hw_date"></div>
+        <div class="f" style="flex:0 0 120px"><label class="lbl">과목</label><select id="hw_course" onchange="hwUnits()"><option>공통수학2</option><option>미적분1</option></select></div>
+        <div class="f" style="flex:0 0 170px"><label class="lbl">단원</label><select id="hw_unit"></select></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">라운드</label><div class="ct-mode" id="hw_rounds">
+          <button type="button" data-r="0" onclick="this.classList.toggle('on')">R0</button><button type="button" data-r="1" class="on" onclick="this.classList.toggle('on')">R1</button><button type="button" data-r="2" class="on" onclick="this.classList.toggle('on')">R2</button><button type="button" data-r="3" onclick="this.classList.toggle('on')">R3</button></div></div>
+        <div class="f" style="flex:0 0 190px"><label class="lbl">마감</label><input type="datetime-local" id="hw_due"></div>
+        <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" type="button" onclick="hwCreate()">내기</button></div>
+      </div>
+      <div id="hw_out" class="loadout">책자 한 라운드 = 과제 한 줄. 범위는 책자 전체로 낸다 — 수업 뒤 진도를 덜 나갔으면 아래 목록에서 <b>진도 줄이기</b>로 "THEME n 까지"를 고르면 나머지가 다음 수업 과제로 이월된다.</div>
+    </div>
+
+    <div class="card">
+      <h2>이 반 과제 — 최근 28일 <button class="ghost" style="margin-left:8px" onclick="hwList()">새로고침</button></h2>
+      <div id="hw_list">반을 고르면 뜬다.</div>
+    </div>
+
+    <div class="card">
+      <h2>질문 대기열 <span class="badge" id="hw_qcnt"></span> <label class="ct-chk" style="margin-left:10px;font-weight:400"><input type="checkbox" id="hw_qall" onchange="hwQueue()"> 전체 반</label></h2>
+      <div id="hw_queue">불러오는 중…</div>
+    </div>
+
+    <div class="card">
+      <h2>문항 점검 — 이 반에서 ③해설·⑤모름이 몰린 문항</h2>
+      <div id="hw_items" class="loadout">과제를 내고 학생들이 체크하면 쌓인다.</div>
     </div>
   </section>
 
@@ -4476,7 +4511,7 @@ document.addEventListener('click', e => {
 });
 function csRoute() {
   const m = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-  if (!/^cs-(console|clinic|load|staff|ct)$/.test(m)) {
+  if (!/^cs-(console|clinic|load|staff|ct|hw)$/.test(m)) {
     // 콘솔에서 나갈 때는 여기서 접는다. 조회 라우터(route)는 wire() 안에 있어서
     // 조회 로딩이 실패한 날에는 아예 안 돈다 — 그러면 콘솔 화면이 그대로 남아 버린다.
     document.body.classList.remove('cs-on');
@@ -5804,6 +5839,8 @@ function coViewBtns() {
   return `<span class="co-vw"><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">풀이 현황</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button></span><span class="sep">│</span>`;
 }
 function coViewWire(bar) { bar.querySelectorAll('[data-cv]').forEach(b => b.onclick = () => { CO.view = b.dataset.cv; coDraw(); coTick(); }); }
+// 문항 원문의 <br> 는 학생 화면(T())처럼 줄바꿈으로, <b> 는 굵게 — 글자 그대로 찍히지 않게 (1019)
+const coTxt = s => E(s || '').replace(/&lt;br\s*\/?&gt;/gi, '<br>').replace(/&lt;(\/?)b&gt;/gi, '<$1b>').replace(/\n/g, '<br>');
 const CO_KIND = { ox: 'OX', c4: '4지선다', c5: '5지선다', num: '단답' };
 function coDrawBank() {
   const body = $('co-body'), bar = $('co-bar'), B = CO.bank, R = CO.rows || [];
@@ -5821,12 +5858,12 @@ function coDrawBank() {
   const kw = CO.bq.trim().toLowerCase();
   const pass = x => (CO.bk === '*' || x.key[0] === CO.bk) && (!kw || (x.id + ' ' + x.q + ' ' + (x.c || []).join(' ')).toLowerCase().includes(kw));
   const card = x => {
-    const s = st[x.id], ch = x.c ? `<div class="bk-ch">${x.c.map((c, j) => `<span class="${c === x.a ? 'a' : ''}"><em>${x.k === 'ox' ? '' : '①②③④⑤'[j]}</em>${E(c)}</span>`).join('')}</div>` : '';
+    const s = st[x.id], ch = x.c ? `<div class="bk-ch">${x.c.map((c, j) => `<span class="${c === x.a ? 'a' : ''}"><em>${x.k === 'ox' ? '' : '①②③④⑤'[j]}</em>${coTxt(c)}</span>`).join('')}</div>` : '';
     return `<div class="bk-it"><div class="bk-m"><b>${E(x.id)}</b><span>${CO_KIND[x.k] || x.k}</span>${x.lvl ? `<span>난도 ${x.lvl}</span>` : ''}${x.벌 ? `<span>${x.벌}벌</span>` : ''}`
       + `<span class="bk-s">${s ? `${s.n}회 · 정답 ${Math.round(s.ok / s.n * 100)}%` : '아직 안 나감'}</span></div>`
-      + `<div class="bk-q">${E(x.q).replace(/\n/g, '<br>')}</div>${ch}`
+      + `<div class="bk-q">${coTxt(x.q)}</div>${ch}`
       + `<div class="bk-a">정답 <b>${E(x.k === 'ox' ? x.a : x.a)}</b></div>`
-      + (x.w ? `<details class="bk-w"><summary>해설</summary><div>${E(x.w).replace(/\n/g, '<br>')}</div></details>` : '') + '</div>';
+      + (x.w ? `<details class="bk-w"><summary>해설</summary><div>${coTxt(x.w)}</div></details>` : '') + '</div>';
   };
   const H = [CO_CSS, `<p class="co-sub">학생 화면에 나가는 문항 전체예요. 개념 = 수업 리뷰 앞부분·루프(OX·4지), 유형 = 리뷰 뒷부분·루프(단답·5지). 칸 오른쪽 숫자는 지금까지 나간 횟수·정답률.</p>`];
   let total = 0;
@@ -5859,7 +5896,7 @@ function coKatex(cb) {
 }
 function coOpen(r, rs, same) {
   const dr = $('co-dr'), B = CO.bank, it = B && B.items[r.문항ID], nm = ((CO.stu.find(s => s.sid === r.학생ID) || {}).name) || r.학생ID;
-  const txt = s => E(s || '').replace(/\n/g, '<br>');
+  const txt = coTxt;
   const ch = it && it.c ? `<div class="co-ch">${it.c.map(c => `<span class="${c === it.a ? 'a' : ''}${c === r.답 ? ' me' : ''}">${txt(c)}</span>`).join('')}</div>` : '';
   dr.innerHTML = `<button class="co-close" id="co-x">닫기</button>
 <h4>${E(nm)} · ${E(r.문항ID)}</h4><div class="meta">${E(coHM(r.시각))} · ${E(r.모드)} · ${E((B && B.title[r.키]) || r.키)}${r.ms ? ' · ' + Math.round(r.ms / 1000) + '초' : ''}</div>
@@ -8517,8 +8554,132 @@ async function ctJobs(){
   if(active&&!$('view-ct').classList.contains('hidden'))CTTIMER=setTimeout(()=>{if(document.visibilityState==='visible')ctJobs();else CTTIMER=setTimeout(ctJobs,10000);},10000);
 }
 
+/* ── 써킷 과제 점검 (1019 유강) ───────────────────────────────────────────────
+ * 고정 책자(써킷 N라)를 과제로 낸다 → 학생은 포털에서 문항마다 ①~⑥ 탭 → 여기서 이행률·질문 처리.
+ * 상태: 1 한 번에 · 2 고쳐서(해설 없이) · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름(질문 대기) · 6 안 풀었음
+ * 진도 줄이기 = hw_trim(id, THEME 컷, 이월날짜) — 범위 밖 THEME 는 다음 수업 과제로(체크도 따라간다).
+ * DB = schema_v41_hw_check.sql. 표는 직원 RLS 로 직접 읽고, 줄이기·해결은 함수로. */
+const HWS={stu:[],map:null,cls:''};
+const HW_NAME=['','① 한 번에','② 고쳐서','③ 해설','④ 질문','⑤ 모름','⑥ 안 풂'];
+function hwToday(){ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); }
+async function hwInit(){
+  if(!HWS.stu.length){
+    const {data}=await sb.from('students').select('학생ID,이름,학년,반').eq('상태','재원');
+    HWS.stu=data||[];
+    const sel=$('hw_cls'); sel.innerHTML='';
+    [...new Set(HWS.stu.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{ const o=document.createElement('option'); o.textContent=c; sel.appendChild(o); });
+    if(CLS&&[...sel.options].some(o=>o.value===CLS)) sel.value=CLS;
+    $('hw_date').value=hwToday();
+  }
+  if(!HWS.map){
+    const {data,error}=await sb.from('circuit_map').select('과목,단원코드,단원명,라운드,"THEME"').limit(5000);
+    if(error){ $('hw_out').innerHTML='<span class="warn">circuit_map 을 못 읽었다 — schema_v41·v41b SQL 을 먼저 Run 해야 한다. ('+esc(error.message)+')</span>'; return; }
+    HWS.map=data||[];
+  }
+  hwClsChanged();
+}
+function hwClsChanged(){
+  HWS.cls=$('hw_cls').value;
+  $('hw_course').value=HWS.cls.startsWith('고1')?'공통수학2':'미적분1';
+  hwUnits(); hwList(); hwQueue();
+}
+function hwUnits(){
+  const c=$('hw_course').value, sel=$('hw_unit'), seen={};
+  sel.innerHTML='';
+  (HWS.map||[]).filter(r=>r['과목']===c).forEach(r=>{ if(seen[r['단원코드']]) return; seen[r['단원코드']]=1;
+    const o=document.createElement('option'); o.value=r['단원코드']; o.textContent=r['단원코드']+' '+(r['단원명']||''); sel.appendChild(o); });
+}
+function hwThemes(a){
+  const t=(HWS.map||[]).filter(r=>r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['THEME']!=null).map(r=>r['THEME']);
+  return t.length?[Math.min(...t),Math.max(...t)]:null;
+}
+async function hwCreate(){
+  const rs=[...$('hw_rounds').querySelectorAll('button.on')].map(b=>+b.dataset.r);
+  if(!rs.length) return toast('라운드를 하나 이상 고르세요');
+  const due=$('hw_due').value;
+  const rows=rs.map(r=>({반:HWS.cls,날짜:$('hw_date').value,과목:$('hw_course').value,단원코드:$('hw_unit').value,라운드:r,마감:due?new Date(due).toISOString():null}));
+  const {error}=await sb.from('hw_assign').insert(rows);
+  if(error){ $('hw_out').innerHTML='<span class="warn">못 냈다: '+esc(error.message)+'</span>'; return; }
+  toast(`${HWS.cls} ${rows.length}개 과제를 냈다`); hwList();
+}
+async function hwList(){
+  const box=$('hw_list'); if(!HWS.cls){ box.textContent='반을 고르세요.'; return; }
+  const since=new Date(Date.now()-28*864e5).toISOString().slice(0,10);
+  const [{data:as,error},{data:pg}]=await Promise.all([
+    sb.from('hw_assign').select('*').eq('반',HWS.cls).gte('날짜',since).order('날짜',{ascending:false}).order('id'),
+    sb.from('hw_progress').select('*').eq('반',HWS.cls).gte('날짜',since)]);
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  if(!as||!as.length){ box.innerHTML='<div class="loadout">최근 28일에 낸 써킷 과제가 없다.</div>'; return; }
+  const by={}; (pg||[]).forEach(r=>{ (by[r.assign_id]=by[r.assign_id]||[]).push(r); });
+  const uname=a=>{ const m=(HWS.map||[]).find(r=>r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:a['단원코드']; };
+  const avg=(xs,k)=>{ const v=xs.map(x=>+x[k]).filter(x=>!isNaN(x)); return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):'—'; };
+  box.innerHTML=`<table><thead><tr><th>수업일</th><th>과제</th><th>범위</th><th>문항</th><th>체크한 학생</th><th>이행률</th><th>해결률</th><th>자력</th><th>질문</th><th>상태</th><th data-nosort></th></tr></thead><tbody>`
+    +as.map(a=>{ const ps=by[a.id]||[], n=ps[0]?ps[0]['전체']:'—', started=ps.filter(p=>+p['체크']>0).length;
+      const th=hwThemes(a), lo=a['시작THEME']??(th?th[0]:''), hi=a['끝THEME']??(th?th[1]:'');
+      const q=ps.reduce((s,p)=>s+(+p.n5||0),0);
+      return `<tr><td>${esc(a['날짜'])}</td><td>${esc(uname(a))} R${a['라운드']}${a['이월원']?' <span class="badge">이월</span>':''}</td><td>${th?`THEME ${lo}~${hi}`:'전체'}</td><td>${n}</td>`
+        +`<td>${started}/${ps.length}</td><td>${avg(ps,'이행률')}%</td><td>${avg(ps,'해결률')}%</td><td>${avg(ps,'자력해결률')}%</td><td>${q||''}</td><td>${esc(a['상태'])}</td>`
+        +`<td style="white-space:nowrap"><button class="ghost" onclick="hwTrimOpen(${a.id},${th?th[0]:0},${hi||0})">진도 줄이기</button> <button class="ghost" onclick="hwStu(${a.id})">학생별</button> <button class="ghost" onclick="hwClose(${a.id},'${a['상태']==='열림'?'닫힘':'열림'}')">${a['상태']==='열림'?'닫기':'다시 열기'}</button></td></tr>`
+        +`<tr class="hidden" id="hw_x${a.id}"><td colspan="11"></td></tr>`; }).join('')+`</tbody></table>`;
+  HWS.prog=by; hwItems();
+}
+function hwTrimOpen(id,lo,hi){
+  const tr=$('hw_x'+id); tr.classList.remove('hidden');
+  const opts=[]; for(let t=lo;t<=hi;t++) opts.push(`<option ${t===hi-1?'selected':''}>${t}</option>`);
+  tr.firstElementChild.innerHTML=`<div class="cs-info-row" style="align-items:flex-end">`
+    +(hi?`<div class="f" style="flex:0 0 150px"><label class="lbl">어디까지 나갔나 — THEME</label><select id="hw_cut${id}">${opts.join('')}</select></div>`
+        :`<div class="f" style="flex:0 0 150px"><label class="lbl">어디까지 나갔나 — 번호</label><input type="number" id="hw_cutn${id}" min="1"></div>`)
+    +`<div class="f" style="flex:0 0 160px"><label class="lbl">나머지 이월할 수업일</label><input type="date" id="hw_carry${id}"></div>`
+    +`<div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" onclick="hwTrim(${id})">줄이기</button></div>`
+    +`<div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><span class="lbl">이월 날짜를 비우면 나머지는 과제에서 그냥 빠진다</span></div></div>`;
+}
+async function hwTrim(id){
+  const cut=$('hw_cut'+id)?+$('hw_cut'+id).value:null, cutn=$('hw_cutn'+id)?+$('hw_cutn'+id).value||null:null;
+  const carry=$('hw_carry'+id).value||null;
+  const {data,error}=await sb.rpc('hw_trim',{aid:id,cut,'이월날짜':carry,cut_no:cutn});
+  if(error||!data||data['오류']) return toast('못 줄였다: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(`남은 ${data['남은문항']}문항`+(data['이월과제']?` · 나머지 ${carry} 로 이월`:'')); hwList();
+}
+async function hwClose(id,st){ const {error}=await sb.from('hw_assign').update({상태:st}).eq('id',id); if(error) return toast(error.message); hwList(); }
+function hwStu(id){
+  const tr=$('hw_x'+id); tr.classList.toggle('hidden'); if(tr.classList.contains('hidden')) return;
+  const ps=(HWS.prog[id]||[]).slice().sort((a,b)=>(+a['이행률'])-(+b['이행률']));
+  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th></tr></thead><tbody>`
+    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td></tr>`).join('')+`</tbody></table>`;
+}
+async function hwQueue(){
+  const box=$('hw_queue'), all=$('hw_qall').checked;
+  let q=sb.from('hw_question').select('id,assign_id,"학생ID",반,번호,문항ID,메모,시각,hw_assign(과목,단원코드,라운드,날짜)').eq('상태','대기').order('시각');
+  if(!all&&HWS.cls) q=q.eq('반',HWS.cls);
+  const {data,error}=await q;
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  $('hw_qcnt').textContent=(data||[]).length+'건';
+  if(!data||!data.length){ box.innerHTML='<div class="loadout">대기 중인 질문이 없다.</div>'; return; }
+  const uname=a=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:''; };
+  const th=(a,no)=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['번호']===no); return m&&m['THEME']!=null?' · THEME '+m['THEME']:''; };
+  box.innerHTML=`<table><thead><tr><th>들어온 때</th><th>반</th><th>학생</th><th>문항</th><th>학생 메모</th><th data-nosort>해결 메모(학생에게 보임)</th><th data-nosort></th></tr></thead><tbody>`
+    +data.map(r=>{ const a=r.hw_assign; return `<tr><td>${esc(String(r['시각']).slice(5,16).replace('T',' '))}</td><td>${esc(r['반'])}</td><td>${esc(String(r['학생ID']).split('_')[0])}</td>`
+      +`<td>${esc(uname(a))} R${a?a['라운드']:''} <b>${r['번호']}번</b>${th(a,r['번호'])}</td><td>${esc(r['메모']||'')}</td>`
+      +`<td><input id="hw_m${r.id}" placeholder="한 줄 (선택)" style="width:100%"></td><td><button class="key" onclick="hwResolve(${r.id})">해결</button></td></tr>`; }).join('')+`</tbody></table>`;
+}
+async function hwResolve(id){
+  const {data,error}=await sb.rpc('hw_resolve',{qid:id,p_memo:$('hw_m'+id).value||null});
+  if(error||!data||data['오류']) return toast('못 했다: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast('해결 → 그 문항은 ④ 질문해서 해결'); hwQueue(); hwList();
+}
+async function hwItems(){
+  const box=$('hw_items');
+  const {data,error}=await sb.from('hw_item_stat').select('*').eq('반',HWS.cls);
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  const rows=(data||[]).filter(r=>(+r['해설'])+(+r['모름'])>0).sort((a,b)=>((+b['해설'])+2*(+b['모름']))-((+a['해설'])+2*(+a['모름']))).slice(0,20);
+  if(!rows.length){ box.innerHTML='<div class="loadout">아직 ③·⑤가 몰린 문항이 없다.</div>'; return; }
+  const uname=r=>{ const m=(HWS.map||[]).find(x=>x['과목']===r['과목']&&x['단원코드']===r['단원코드']); return m?m['단원명']:r['단원코드']; };
+  box.innerHTML=`<table><thead><tr><th>문항</th><th>응답</th><th>자력(①②)</th><th>③ 해설</th><th>④ 질문</th><th>⑤ 모름</th></tr></thead><tbody>`
+    +rows.map(r=>`<tr><td>${esc(uname(r))} R${r['라운드']} ${r['번호']}번 <span class="lbl">${esc(r['문항ID'])}</span></td><td>${r['응답']}</td><td>${r['자력']}</td><td>${r['해설']}</td><td>${r['질문']}</td><td>${r['모름']}</td></tr>`).join('')+`</tbody></table>`;
+}
+
 /* ── 뷰 전환 ── */
-const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리',ct:'커스텀 트레이닝'};
+const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리',ct:'커스텀 트레이닝',hw:'써킷 과제'};
 function showView(v){
   Object.keys(VIEWS).forEach(k=>{
     $('view-'+k).classList.toggle('hidden',k!==v);
@@ -8529,6 +8690,7 @@ function showView(v){
   if(v==='load')loadXlsx().catch(()=>{});
   if(v==='staff')staffLoad();
   if(v==='ct')ctInit();
+  if(v==='hw')hwInit();
 }
 /* 통합 셸(/dashboard/)에서는 주소(#cs-console)가 진실원이다 — 콘솔 안에서 부른 showView 도
    해시를 거쳐 돌아오게 해서 뒤로가기·새로고침이 같은 화면을 연다. 단독 콘솔에선 그대로 동작. */
