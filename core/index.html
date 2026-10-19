@@ -331,10 +331,10 @@ function drawHome(){
     +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업한 칸</span></div>`
     +`<div><b>${open}</b><span>열린 칸</span></div>`
     +`<div><b>${loop.length}</b><span>오늘 돌아온 문항</span></div></div>`);
-  H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>수업 리뷰 ${rDone?'· 오늘 완료':''}</b>`
+  H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>오늘의 루프 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:'· 오늘은 끝'}</b>`
-    +`<span>${lLock?'수업 중에는 [수업 리뷰]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 칸만 골랐어요`:'돌아온 칸이 없어요. 내일 다시 와요'}</span></button>`);
+  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:'· 오늘은 끝'}</b>`
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 칸만 골랐어요`:'돌아온 칸이 없어요. 내일 다시 와요'}</span></button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 칸을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 칸은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
@@ -386,7 +386,7 @@ function drawItem(){
     A=`<div class="chs" id="ans">${order.map((c,j)=>`<button data-a="${E(c)}"><em>${'①②③④⑤'[j]}</em>${T(c)}</button>`).join('')}</div>`;
   } else A=`<div class="num" id="ans"><input id="numIn" inputmode="numeric" autocomplete="off" placeholder="답"><button class="k" data-k="-">−</button><button class="k" data-k="/">/</button><button class="ok" id="numOk">답 넣기</button></div>`;
   const dots=S.q.map((_,j)=>`<i class="${j<S.res.length?(S.res[j].ok?'o':'x'):''}${j===S.i?' cur':''}"></i>`).join('');
-  $('app').innerHTML=`<div class="top"><button class="back" id="bk">그만하기</button><div class="fname"><b>${S.mode==='리뷰'?'수업 리뷰':'오늘의 루프'}</b> · ${S.i+1}/${n}${S.mode==='리뷰'&&!S.typeBuilt?' + 유형':''}</div></div>`
+  $('app').innerHTML=`<div class="top"><button class="back" id="bk">그만하기</button><div class="fname"><b>${S.mode==='리뷰'?'리뷰테스트':'루프 과제'}</b> · ${S.i+1}/${n}${S.mode==='리뷰'&&!S.typeBuilt?' + 유형':''}</div></div>`
     +`<div class="dots">${dots}</div>`
     +(S.note?`<div class="note">${S.note}</div>`:'')
     +`<div class="qcard"><div class="kind"><span>${E(kl)}</span><span>${E(kn)}</span></div><div class="q">${T(x.q)}</div>`
