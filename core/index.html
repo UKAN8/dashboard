@@ -328,15 +328,15 @@ function drawHome(){
   H.push(`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
     +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
-    +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업한 칸</span></div>`
-    +`<div><b>${open}</b><span>열린 칸</span></div>`
+    +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업</span></div>`
+    +`<div><b>${open}</b><span>열림</span></div>`
     +`<div><b>${loop.length}</b><span>오늘 돌아온 문항</span></div></div>`);
   H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:'· 오늘은 끝'}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 칸만 골랐어요`:'돌아온 칸이 없어요. 내일 다시 와요'}</span></button>`);
-  H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 칸을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
-    +`틀리거나 <b>애매</b>했던 칸은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
+  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:''}</b>`
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요`:'다시 볼 개념·유형이 없어요. 내일 다시 와요'}</span></button>`);
+  H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
+    +`틀리거나 <b>애매</b>했던 개념·유형은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
   SET.units.forEach(U=>{
     H.push(`<div class="unit">${E(U.name)}</div>`);
@@ -349,7 +349,7 @@ function drawHome(){
   });
   H.push(`<div class="foot">${DEMO?'<b>미리보기</b>예요. 기록이 저장되지 않아요.<br>'
     :`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>`}`
-    +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 칸을 0개</b>로 만드는 게 목표예요.</div>`);
+    +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 개념·유형을 0개</b>로 만드는 게 목표예요.</div>`);
   $('app').innerHTML=H.join('');
   $('goR').onclick=()=>{ if(lc.length && inClass() && !reviewDone()) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=rOpen;
@@ -390,7 +390,7 @@ function drawItem(){
     +`<div class="dots">${dots}</div>`
     +(S.note?`<div class="note">${S.note}</div>`:'')
     +`<div class="qcard"><div class="kind"><span>${E(kl)}</span><span>${E(kn)}</span></div><div class="q">${T(x.q)}</div>`
-    +(x.key[0]==='T'?`<div class="sheet">✎ 연습지 ${S.q.slice(0,S.i+1).filter(z=>z.key[0]==='T').length}번 칸에 풀고 답만 넣어요</div>`:'')+`</div>`
+    +(x.key[0]==='T'?`<div class="sheet">✎ 연습지 ${S.q.slice(0,S.i+1).filter(z=>z.key[0]==='T').length}번에 풀고 답만 넣어요</div>`:'')+`</div>`
     +A
     +`<div class="conf" id="conf"><p>이 답, 얼마나 확실해요?</p><div class="row2"><button class="sure" data-c="확실">확실해요</button><button class="unsure" data-c="애매">애매해요</button></div></div>`
     +`<div class="res" id="res"></div><div id="cbx"></div>`
@@ -463,7 +463,7 @@ async function finish(early){
   const L=res.map(r=>{ const [kl,kn]=kindLabel(r.x); const cls=r.ok?'lo':r.raw?'lu':'lx';
     return `<div class="${cls}"><em>${r.ok?'확실':r.raw?'애매':'다시'}</em>${E(kl)} · ${E(kn)}</div>`; }).join('');
   $('app').innerHTML=`<div class="done"><b>${early?'여기까지':'끝'} — 확실히 맞힌 것 ${okN}/${res.length}</b>`
-    +`<p>${okN===res.length?'전부 확실해요. 이 칸들은 며칠 뒤 한 번 더 보면 졸업이에요.':'틀리거나 애매했던 칸은 다음 루프에 다시 와요.'}</p>`
+    +`<p>${okN===res.length?'전부 확실해요. 이 개념·유형들은 며칠 뒤 한 번 더 보면 졸업이에요.':'틀리거나 애매했던 건 다음 루프에 다시 와요.'}</p>`
     +`<div class="save" id="sv">기록 보내는 중…</div></div><div class="list">${L}</div>`
     +`<div class="btns"><button class="p" id="home">단원 지도 보기</button></div>`;
   if(S.mode==='리뷰' && !early) lset('rdone_'+TODAY,true);
