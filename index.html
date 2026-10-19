@@ -5632,7 +5632,7 @@ function hbDraw() {
  * 상태 규칙은 학생 페이지 keyState 와 같다: 성공 = 정답+확실, 마지막 실패 뒤만, 그날 같은 문항 첫 시도만, 성공일 1 → 1회, 3일 이상 떨어진 두 성공일 → 졸업.
  */
 const CO_SETS = { core_m2: '고1 · 공통수학2 (07 명제~)', core_c1: '고2 · 미적분Ⅰ (05~)' };
-let CO = { rows: null, bank: null, set: 'core_m2', ban: '*', day: '', auto: true, timer: null, open: null, loadedAt: null };
+let CO = { rows: null, bank: null, set: 'core_m2', ban: '*', day: '', dayPick: false, auto: true, timer: null, open: null, loadedAt: null };
 
 function viewCore(st) {
   CO.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: String(s.ban || '').trim() }));
@@ -5669,7 +5669,6 @@ async function coBank(force) {
 
 async function coLoad(force) {
   const body = $('co-body'); if (!body) return;
-  if (!CO.day) CO.day = coToday();
   if (CO.rows && !force) { coDraw(); coTick(); return; }
   if (!CO.rows) body.innerHTML = '<div class="dim">불러오는 중…</div>';
   try {
@@ -5685,6 +5684,8 @@ async function coLoad(force) {
     }
     all.forEach(r => { r.문항ID = r.문항ID || r.문항id; r.d = coKST(r.시각).slice(0, 10); });
     CO.rows = all; CO.loadedAt = Date.now();
+    // (1019) 날짜를 직접 고르지 않았으면 '기록이 있는 가장 최근 날'을 연다 — 오늘 기록이 생기면 오늘로 넘어간다
+    if (!CO.dayPick) { const ds = all.map(r => r.d).filter(d => d <= coToday()).sort(); CO.day = ds.length ? ds[ds.length - 1] : coToday(); }
   } catch (e) {
     const m = String(e && e.message || e);
     body.innerHTML = `<div class="card dim" style="padding:14px">불러오지 못함: ${E(m)}`
@@ -5695,7 +5696,7 @@ async function coLoad(force) {
 }
 function coTick() {
   clearTimeout(CO.timer);
-  if (!CO.auto || CO.day !== coToday()) return;
+  if (!CO.auto || (CO.dayPick && CO.day !== coToday())) return;
   CO.timer = setTimeout(() => { if (document.getElementById('v-core')?.classList.contains('on')) coLoad(true); }, 15000);
 }
 
@@ -5724,12 +5725,12 @@ function coDraw() {
   const days = [...new Set(R.map(r => r.d))].sort().reverse(); if (!days.includes(T)) days.unshift(T);
   bar.innerHTML = Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
     + '<span class="sep">│</span>' + ['*', ...bans].map(b => `<button class="chip${CO.ban === b ? ' on' : ''}" data-cb="${E(b)}">${b === '*' ? '반 전체' : E(b)}</button>`).join('')
-    + '<span class="sep">│</span>' + `<select id="co-day">${days.map(d => `<option value="${d}"${d === CO.day ? ' selected' : ''}>${d === T ? '오늘 ' : ''}${d.slice(5).replace('-', '/')}</option>`).join('')}</select>`
+    + '<span class="sep">│</span>' + `<select id="co-day">${days.map(d => `<option value="${d}"${d === CO.day ? ' selected' : ''}>${d === T ? '오늘 ' : ''}${d.slice(5).replace('-', '/')} · ${R.filter(r => r.d === d).length}문항</option>`).join('')}</select>`
     + `<label class="co-auto"><input type="checkbox" id="co-auto"${CO.auto ? ' checked' : ''}> 15초마다 새로고침</label>`
     + `<button class="chip" id="co-re">새로고침</button><span class="dim co-at">${CO.loadedAt ? coHM(CO.loadedAt) + ' 기준' : ''}</span>`;
   bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.ban = '*'; CO.rows = null; coLoad(); });
   bar.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => { CO.ban = b.dataset.cb; coDraw(); });
-  $('co-day').onchange = e => { CO.day = e.target.value; coDraw(); coTick(); };
+  $('co-day').onchange = e => { CO.day = e.target.value; CO.dayPick = true; coDraw(); coTick(); };
   $('co-auto').onchange = e => { CO.auto = e.target.checked; coTick(); };
   $('co-re').onclick = () => coLoad(true);
 
@@ -5744,6 +5745,7 @@ function coDraw() {
   $('co-cnt').textContent = `${CO.day.slice(5).replace('-', '/')} · ${Object.keys(by).length}/${roster.length}명`;
 
   const H = [CO_CSS];
+  if (CO.day !== T) H.push(`<div class="card co-note">오늘(${T.slice(5).replace('-', '/')})은 아직 기록이 없어서 <b>마지막 기록 날(${CO.day.slice(5).replace('-', '/')})</b>을 보여 줘요. 오늘 누가 풀기 시작하면 자동으로 오늘로 넘어가요.</div>`);
   if (!B) H.push('<div class="card dim" style="padding:10px 14px;margin-bottom:12px">문항 본문을 못 읽었습니다(/dashboard/core/). 기록만 보여요.</div>');
   H.push(`<div class="co-kpi">
 <div><div class="k">푼 학생</div><div class="v">${Object.keys(by).length}<small>/ ${roster.length}명</small></div><div class="s">지금 푸는 중(5분 안) ${live}명</div></div>
@@ -5841,7 +5843,7 @@ const CO_CSS = `<style>
 #v-core .co-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
 #v-core table.co-t{width:100%;border-collapse:collapse;font-size:12.5px}#v-core table.co-t th,#v-core table.co-t td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
 #v-core table.co-t td.q,#v-core table.co-t td.w{white-space:normal;max-width:340px}#v-core table.co-t tbody tr{cursor:pointer}#v-core table.co-t tbody tr:hover{background:rgba(255,255,255,.03)}
-#v-core b.bad{color:#ff6b7f}
+#v-core b.bad{color:#ff6b7f}#v-core .co-note{padding:10px 14px;margin-bottom:12px;font-size:13px;border-color:rgba(242,180,90,.45)}
 #v-core table.co-m{border-collapse:separate;border-spacing:0;font-size:11.5px}#v-core table.co-m th,#v-core table.co-m td{padding:5px 4px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 #v-core table.co-m th.c{color:#f5a0a0}#v-core table.co-m .fz{position:sticky;left:2.6em;background:#14141b;text-align:left;z-index:1}
 #v-core .ms{display:inline-block;border-radius:5px;padding:1px 5px;font-size:10.5px}
