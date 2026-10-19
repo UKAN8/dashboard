@@ -193,6 +193,18 @@ svg.spark{display:block;margin-top:6px}
 .hw .q input::placeholder{color:var(--dim)}
 .hw .q .re{margin-top:4px;padding-left:10px;border-left:2px solid rgba(200,240,218,.35);color:var(--good);overflow-wrap:anywhere}
 .hwerr{font-size:13px;margin:0 2px 8px}
+.hw .acts{display:flex;gap:6px;margin-top:8px}
+.hw .acts button,.hwp button.b{flex:1;border-radius:9px;padding:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:none;color:var(--tx2)}
+.hw .acts button.go,.hwp button.go{background:var(--acc);color:#1a0d0d;border-color:var(--acc)}
+.hw .done{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}
+.hw .done .dim{font-size:12px}
+.hwp .row{border-bottom:none;cursor:pointer}
+.hwp .fold{display:none;margin-top:10px}.hwp .fold.open{display:block}
+.hwp label{display:block;color:var(--dim);font-size:11.5px;letter-spacing:.04em;margin:10px 0 4px}
+.hwp .two{display:flex;gap:8px;align-items:center}
+.hwp select{flex:1;color-scheme:dark;background:#15151c;border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px}
+.hwp select option{background:#15151c;color:var(--tx)}
+.hwp .seg{margin:0}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -987,7 +999,7 @@ const HW={tok:'',list:[],pen:1};
 async function mountHW(tok){
   const host=$('hw-host'); if(!host||!tok) return;
   HW.tok=tok;
-  try{ const r=await sb.rpc('hw_open',{tok}); if(r.error||!r.data) return; HW.list=r.data.과제||[]; }catch(e){ return; }
+  try{ const r=await sb.rpc('hw_open',{tok}); if(r.error||!r.data) return; HW.list=r.data.과제||[]; HW.pref=r.data.설정||null; }catch(e){ return; }
   if(!HW.list.length){ host.innerHTML=''; return; }
   drawHW();
 }
@@ -997,16 +1009,41 @@ function hwRange(a){
   const lo=Math.min(...th), hi=Math.max(...th);
   return lo===hi?`THEME ${lo}`:`THEME ${lo}~${hi}`;
 }
+const HW_LV={자동:'자동 (추천)',기본:'기본 다지기',표준:'표준',도전:'도전'};
+function prefCard(){
+  const p=HW.pref||{최소:25,최대:50,난이도:'자동'};
+  const mins=[], maxs=[]; for(let i=25;i<=60;i+=5) mins.push(i); for(let i=25;i<=120;i+=5) maxs.push(i);
+  return `<div class="card hwp"><div class="row" data-popen="1"><span class="t"><b>내 개별과제 설정</b>`
+    +`<span class="dim"> ${p.최소}~${p.최대}문항 · ${E(HW_LV[p.난이도]||p.난이도)}</span></span><a class="n dim" href="#" style="text-decoration:none">바꾸기</a></div>`
+    +`<div class="fold" id="hwp-f"><div class="dim" style="font-size:12px">다음 수업에 받을 개별과제를 이 설정대로 만들어요. 최소는 25문항보다 줄일 수 없어요. 과제를 다 맞히면 남는 자리를 더 어려운 문제로 채워요.</div>`
+    +`<label>문항 수</label><div class="two"><select id="hwp-min">${mins.map(v=>`<option ${v===p.최소?'selected':''}>${v}</option>`).join('')}</select><span class="dim">~</span>`
+    +`<select id="hwp-max">${maxs.map(v=>`<option ${v===p.최대?'selected':''}>${v}</option>`).join('')}</select><span class="dim">문항</span></div>`
+    +`<label>난이도</label><div class="seg">${Object.keys(HW_LV).map(k=>`<button type="button" data-lv="${k}" class="${k===p.난이도?'on':''}">${HW_LV[k]}</button>`).join('')}</div>`
+    +`<div class="acts"><button type="button" class="b go" id="hwp-save">저장</button></div><div id="hwp-msg" class="dim" style="font-size:12px;margin-top:6px"></div></div></div>`;
+}
+function wirePref(host){
+  const r=host.querySelector('[data-popen]'); if(!r) return;
+  r.onclick=ev=>{ ev.preventDefault(); $('hwp-f').classList.toggle('open'); };
+  let lv=(HW.pref||{}).난이도||'자동';
+  host.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ lv=b.dataset.lv; host.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('on',x===b)); });
+  $('hwp-save').onclick=async()=>{
+    const mn=+$('hwp-min').value, mx=+$('hwp-max').value, msg=$('hwp-msg');
+    if(mx<mn){ msg.className='bad'; msg.textContent='최대는 최소보다 크거나 같아야 해요.'; return; }
+    try{ const r=await sb.rpc('hw_pref_set',{tok:HW.tok,p_min:mn,p_max:mx,p_lv:lv});
+      if(r.error||!r.data||r.data.오류){ msg.className='bad'; msg.textContent=(r.data&&r.data.오류)||'저장하지 못했어요.'; return; }
+      HW.pref={최소:mn,최대:mx,난이도:lv}; HW.popen=true; drawHW(); }catch(e){ msg.className='bad'; msg.textContent='저장하지 못했어요.'; }
+  };
+}
 function drawHW(){
   const host=$('hw-host'); if(!host) return;
-  host.innerHTML=HW.list.map((a,ai)=>{
+  host.innerHTML=prefCard()+HW.list.map((a,ai)=>{
     const c=a.체크||{}, n=a.문항.length, done=a.문항.filter(x=>c[x.n]).length;
     const cnt=[0,0,0,0,0,0,0]; a.문항.forEach(x=>{ if(c[x.n]) cnt[c[x.n]]++; });
     const due=a.마감?new Date(a.마감):null;
     const dueT=due?` · 마감 ${due.getMonth()+1}/${due.getDate()} ${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`:'';
     const o=a.문항.filter(x=>!x.v), v=a.문항.filter(x=>x.v);
     const btn=x=>`<button type="button" data-a="${ai}" data-n="${x.n}" class="${c[x.n]?'s'+c[x.n]:''}" aria-label="${x.n}번">${x.n}</button>`;
-    const qs=Object.entries(a.질문||{}).filter(([k,q])=>q.상태==='대기'||q.상태==='해결');
+    const qs=Object.entries(a.질문||{}).filter(([k,q])=>['대기','답변','해결'].includes(q.상태));
     const name=`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
     const all=done===n&&n>0;
     return `<div class="card hw" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)">`
@@ -1021,15 +1058,33 @@ function drawHW(){
       +(v.length?`<div class="sub">원본</div>`:'')+`<div class="grid">${o.map(btn).join('')}</div>`
       +(v.length?`<div class="sub">변형</div><div class="grid">${v.map(btn).join('')}</div>`:'')
       +(done?`<div class="sum">${HW_ST.slice(1).map((t,i)=>cnt[i+1]?`<span class="chip">${t[0]} ${t[1]} ${cnt[i+1]}</span>`:'').join('')}</div>`:'')
-      +(qs.length?`<div class="sub">질문</div>${qs.map(([k,q])=>`<div class="q"><b>${E(k)}번</b> · ${q.상태==='해결'?'<span class="good">해결됨</span>':'<span class="mid">조교쌤 확인 대기</span>'}`
-        +(q.상태==='대기'?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
-        +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')+`</div>`).join('')}`:'')
-      +`</div></div>`;
+      +(qs.length?`<div class="sub">질문</div>${qs.map(([k,q])=>`<div class="q"><b>${E(k)}번</b> · `
+        +(q.상태==='해결'?'<span class="good">해결됨</span>':q.상태==='답변'?'<span class="good">조교쌤 답이 왔어요</span>':q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
+        +(q.상태==='대기'&&!q.대면?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
+        +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')
+        +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
+        +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
+        +`</div>`).join('')}`:'')
+      +`<div class="done">`+(a.제출
+        ?`<div class="row" style="border-bottom:none;padding:0"><span class="t"><b class="good">제출 완료</b><span class="dim"> 개별과제를 준비하고 있어요</span></span><a class="n dim" href="#" data-unsub="${ai}" style="text-decoration:none">제출 취소</a></div>`
+        :`<div class="dim">다 했으면 제출하세요. 제출하면 개별과제를 바로 만들기 시작해요.${n-done?` 체크 안 한 ${n-done}문항은 '안 풀었음'으로 세요.`:''}</div>`
+         +`<div class="acts"><button type="button" class="go" data-sub="${ai}">다 했어요 · 제출</button></div>`)
+      +`</div></div></div>`;
   }).join('');
   host.querySelectorAll('[data-open]').forEach(r=>r.onclick=ev=>{ ev.preventDefault(); const f=$('hw-f'+r.dataset.open); f.classList.toggle('open'); HW.open=f.classList.contains('open')?r.dataset.open:null; });
   if(HW.open!=null){ const f=$('hw-f'+HW.open); if(f) f.classList.add('open'); }
   host.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>{ HW.pen=+b.dataset.pen; host.querySelectorAll('[data-pen]').forEach(x=>x.classList.toggle('on',+x.dataset.pen===HW.pen)); });
   host.querySelectorAll('.grid button').forEach(b=>b.onclick=()=>hwTap(b));
+  wirePref(host); if(HW.popen){ const f=$('hwp-f'); if(f) f.classList.add('open'); HW.popen=false; }
+  host.querySelectorAll('[data-ack]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    try{ const r=await sb.rpc('hw_ack',{tok:HW.tok,qid:+b.dataset.ack,ok:b.dataset.ok==='1'}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
+    await mountHW(HW.tok);
+  });
+  host.querySelectorAll('[data-sub],[data-unsub]').forEach(b=>b.onclick=async ev=>{
+    ev.preventDefault(); const undo=!!b.dataset.unsub, a=HW.list[+(b.dataset.sub||b.dataset.unsub)];
+    try{ const r=await sb.rpc('hw_submit',{tok:HW.tok,aid:a.id,undo}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); return; } a.제출=!undo; drawHW(); }catch(e){ alertHW(); }
+  });
   host.querySelectorAll('[data-memo]').forEach(i=>i.onchange=async()=>{
     const [ai,k]=i.dataset.memo.split(':'), a=HW.list[+ai];
     try{ await sb.rpc('hw_mark',{tok:HW.tok,aid:a.id,no:+k,st:5,memo:i.value}); i.value=''; i.placeholder='저장됐어요 — 조교쌤이 확인해요'; }catch(e){}
@@ -1044,7 +1099,8 @@ async function hwTap(b){
     if(r.error||!r.data||r.data.오류){ b.classList.remove('busy'); alertHW(r.data&&r.data.오류); return; }
     a.체크=a.체크||{}; if(st) a.체크[no]=st; else delete a.체크[no];
     a.질문=a.질문||{};
-    if(st===5) a.질문[no]={상태:'대기'}; else if(cur===5&&a.질문[no]&&a.질문[no].상태==='대기') delete a.질문[no];
+    if(st===5){ if(!a.질문[no]||!['대기','답변'].includes(a.질문[no].상태)) a.질문[no]={상태:'대기'}; }
+    else if(cur===5&&a.질문[no]&&['대기','답변'].includes(a.질문[no].상태)){ if(st===4) a.질문[no].상태='해결'; else delete a.질문[no]; }
     drawHW();
   }catch(e){ b.classList.remove('busy'); alertHW(); }
 }
