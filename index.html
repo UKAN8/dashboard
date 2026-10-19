@@ -5632,7 +5632,7 @@ function hbDraw() {
  * 상태 규칙은 학생 페이지 keyState 와 같다: 성공 = 정답+확실, 마지막 실패 뒤만, 그날 같은 문항 첫 시도만, 성공일 1 → 1회, 3일 이상 떨어진 두 성공일 → 졸업.
  */
 const CO_SETS = { core_m2: '고1 · 공통수학2 (07 명제~)', core_c1: '고2 · 미적분Ⅰ (05~)' };
-let CO = { rows: null, bank: null, set: 'core_m2', ban: '*', day: '', dayPick: false, auto: true, timer: null, open: null, loadedAt: null };
+let CO = { view: 'live', bq: '', bk: '*', rows: null, bank: null, set: 'core_m2', ban: '*', day: '', dayPick: false, auto: true, timer: null, open: null, loadedAt: null };
 
 function viewCore(st) {
   CO.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: String(s.ban || '').trim() }));
@@ -5696,7 +5696,7 @@ async function coLoad(force) {
 }
 function coTick() {
   clearTimeout(CO.timer);
-  if (!CO.auto || (CO.dayPick && CO.day !== coToday())) return;
+  if (!CO.auto || CO.view === 'bank' || (CO.dayPick && CO.day !== coToday())) return;
   CO.timer = setTimeout(() => { if (document.getElementById('v-core')?.classList.contains('on')) coLoad(true); }, 15000);
 }
 
@@ -5720,15 +5720,17 @@ const CO_ST = { new: '—', try: '하는 중', fail: '다시', one: '1회', grad
 
 function coDraw() {
   const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
+  if (CO.view === 'bank') return coDrawBank();
   const R = CO.rows || [], B = CO.bank, T = coToday();
   const bans = [...new Set(R.map(r => r.반).concat(CO.stu.filter(s => s.ban.startsWith(CO_SETS[CO.set].slice(0, 2))).map(s => s.ban)))].filter(Boolean).sort();
   const days = [...new Set(R.map(r => r.d))].sort().reverse(); if (!days.includes(T)) days.unshift(T);
-  bar.innerHTML = Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
+  bar.innerHTML = coViewBtns() + Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
     + '<span class="sep">│</span>' + ['*', ...bans].map(b => `<button class="chip${CO.ban === b ? ' on' : ''}" data-cb="${E(b)}">${b === '*' ? '반 전체' : E(b)}</button>`).join('')
     + '<span class="sep">│</span>' + `<select id="co-day">${days.map(d => `<option value="${d}"${d === CO.day ? ' selected' : ''}>${d === T ? '오늘 ' : ''}${d.slice(5).replace('-', '/')} · ${R.filter(r => r.d === d).length}문항</option>`).join('')}</select>`
     + `<label class="co-auto"><input type="checkbox" id="co-auto"${CO.auto ? ' checked' : ''}> 15초마다 새로고침</label>`
     + `<button class="chip" id="co-re">새로고침</button><span class="dim co-at">${CO.loadedAt ? coHM(CO.loadedAt) + ' 기준' : ''}</span>`;
   bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.ban = '*'; CO.rows = null; coLoad(); });
+  coViewWire(bar);
   bar.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => { CO.ban = b.dataset.cb; coDraw(); });
   $('co-day').onchange = e => { CO.day = e.target.value; CO.dayPick = true; coDraw(); coTick(); };
   $('co-auto').onchange = e => { CO.auto = e.target.checked; coTick(); };
@@ -5797,6 +5799,55 @@ function coDraw() {
   body.querySelectorAll('tr[data-ci]').forEach(tr => tr.onclick = () => { const r = dayR.find(x => x.문항ID === tr.dataset.ci); if (r) coOpen(r, null, dayR.filter(x => x.문항ID === tr.dataset.ci)); });
 }
 
+/* (1019) 문항 전체 보기 — 유강 "학생들이 눈으로 풀던데 문제가 어떤 문제인지 내가 볼 수 있게" */
+function coViewBtns() {
+  return `<span class="co-vw"><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">풀이 현황</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button></span><span class="sep">│</span>`;
+}
+function coViewWire(bar) { bar.querySelectorAll('[data-cv]').forEach(b => b.onclick = () => { CO.view = b.dataset.cv; coDraw(); coTick(); }); }
+const CO_KIND = { ox: 'OX', c4: '4지선다', c5: '5지선다', num: '단답' };
+function coDrawBank() {
+  const body = $('co-body'), bar = $('co-bar'), B = CO.bank, R = CO.rows || [];
+  bar.innerHTML = coViewBtns() + Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
+    + '<span class="sep">│</span>' + [['*', '전체'], ['C', '개념'], ['T', '유형']].map(([k, l]) => `<button class="chip${CO.bk === k ? ' on' : ''}" data-bk="${k}">${l}</button>`).join('')
+    + `<input id="co-bq" class="co-bq" placeholder="문항 검색 (번호·내용)" value="${E(CO.bq)}">`;
+  bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.rows = null; coLoad(); });
+  bar.querySelectorAll('[data-bk]').forEach(b => b.onclick = () => { CO.bk = b.dataset.bk; coDrawBank(); });
+  coViewWire(bar);
+  const q = $('co-bq'); q.oninput = () => { CO.bq = q.value; clearTimeout(CO.bqT); CO.bqT = setTimeout(() => { coDrawBank(); const n = $('co-bq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 300); };
+  if (!B || !B.sets[CO.set]) { body.innerHTML = CO_CSS + '<div class="card dim" style="padding:14px">문항을 못 읽었습니다(/dashboard/core/).</div>'; return; }
+  const st = {}; R.forEach(r => { const x = st[r.문항ID] = st[r.문항ID] || { n: 0, ok: 0 }; x.n++; if (r.정오) x.ok++; });
+  const by = {}; Object.values(B.items).forEach(x => (by[x.key] = by[x.key] || []).push(x));
+  Object.values(by).forEach(a => a.sort((x, y) => x.id.localeCompare(y.id)));
+  const kw = CO.bq.trim().toLowerCase();
+  const pass = x => (CO.bk === '*' || x.key[0] === CO.bk) && (!kw || (x.id + ' ' + x.q + ' ' + (x.c || []).join(' ')).toLowerCase().includes(kw));
+  const card = x => {
+    const s = st[x.id], ch = x.c ? `<div class="bk-ch">${x.c.map((c, j) => `<span class="${c === x.a ? 'a' : ''}"><em>${x.k === 'ox' ? '' : '①②③④⑤'[j]}</em>${E(c)}</span>`).join('')}</div>` : '';
+    return `<div class="bk-it"><div class="bk-m"><b>${E(x.id)}</b><span>${CO_KIND[x.k] || x.k}</span>${x.lvl ? `<span>난도 ${x.lvl}</span>` : ''}${x.벌 ? `<span>${x.벌}벌</span>` : ''}`
+      + `<span class="bk-s">${s ? `${s.n}회 · 정답 ${Math.round(s.ok / s.n * 100)}%` : '아직 안 나감'}</span></div>`
+      + `<div class="bk-q">${E(x.q).replace(/\n/g, '<br>')}</div>${ch}`
+      + `<div class="bk-a">정답 <b>${E(x.k === 'ox' ? x.a : x.a)}</b></div>`
+      + (x.w ? `<details class="bk-w"><summary>해설</summary><div>${E(x.w).replace(/\n/g, '<br>')}</div></details>` : '') + '</div>';
+  };
+  const H = [CO_CSS, `<p class="co-sub">학생 화면에 나가는 문항 전체예요. 개념 = 수업 리뷰 앞부분·루프(OX·4지), 유형 = 리뷰 뒷부분·루프(단답·5지). 칸 오른쪽 숫자는 지금까지 나간 횟수·정답률.</p>`];
+  let total = 0;
+  B.sets[CO.set].units.forEach(U => {
+    H.push(`<h3 class="co-h">${E(U.name)}</h3>`);
+    U.concepts.forEach(c => {
+      const ci = (by[c.key] || []).filter(pass);
+      const th = c.themes.map(t => [t, (by[t.key] || []).filter(pass)]).filter(([, a]) => a.length);
+      if (!ci.length && !th.length) return;
+      H.push(`<details class="bk-c" open><summary><b>개념 ${E(c.no)} ${E(c.title)}</b><span class="dim">개념 ${ci.length} · 유형 ${th.reduce((s, [, a]) => s + a.length, 0)}</span></summary>`);
+      if (ci.length) { total += ci.length; H.push(`<div class="bk-sec">개념 문항</div><div class="bk-grid">${ci.map(card).join('')}</div>`); }
+      th.forEach(([t, a]) => { total += a.length; H.push(`<div class="bk-sec">유형 ${E(t.no)} ${E(t.name)}</div><div class="bk-grid">${a.map(card).join('')}</div>`); });
+      H.push('</details>');
+    });
+  });
+  if (!total) H.push('<div class="dim">맞는 문항이 없습니다.</div>');
+  $('co-cnt').textContent = `문항 ${total}개`;
+  body.innerHTML = H.join('');
+  coKatex(() => { try { renderMathInElement(body, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {} });
+}
+
 function coKatex(cb) {
   if (window.katex && window.renderMathInElement) return cb();
   if (!document.getElementById('co-kx')) {
@@ -5843,7 +5894,20 @@ const CO_CSS = `<style>
 #v-core .co-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
 #v-core table.co-t{width:100%;border-collapse:collapse;font-size:12.5px}#v-core table.co-t th,#v-core table.co-t td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
 #v-core table.co-t td.q,#v-core table.co-t td.w{white-space:normal;max-width:340px}#v-core table.co-t tbody tr{cursor:pointer}#v-core table.co-t tbody tr:hover{background:rgba(255,255,255,.03)}
-#v-core b.bad{color:#ff6b7f}#v-core .co-note{padding:10px 14px;margin-bottom:12px;font-size:13px;border-color:rgba(242,180,90,.45)}
+#v-core b.bad{color:#ff6b7f}
+#v-core .co-vw .chip{font-weight:700}#v-core .co-bq{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:4px 10px;margin-left:6px;min-width:200px}
+#v-core details.bk-c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;margin-bottom:10px}
+#v-core details.bk-c>summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;font-size:14.5px}#v-core details.bk-c>summary span{font-size:12px}
+#v-core .bk-sec{font-size:12.5px;color:#f5a0a0;font-weight:700;margin:14px 0 6px}
+#v-core .bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:8px}
+#v-core .bk-it{border:1px solid var(--bd);border-radius:10px;padding:9px 11px;background:rgba(255,255,255,.02)}
+#v-core .bk-m{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px;color:var(--dim);margin-bottom:5px}#v-core .bk-m b{color:var(--tx2);font-size:12px}
+#v-core .bk-m>span{background:rgba(255,255,255,.06);border-radius:5px;padding:0 6px}#v-core .bk-m .bk-s{margin-left:auto;background:none}
+#v-core .bk-q{font-size:14px;line-height:1.7}
+#v-core .bk-ch{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:13.5px}#v-core .bk-ch>span{padding:2px 6px;border-radius:6px}
+#v-core .bk-ch>span.a{background:rgba(95,211,160,.14);color:#c4f3dc}#v-core .bk-ch>span>em{font-style:normal;color:var(--dim);margin-right:6px}
+#v-core .bk-a{font-size:12.5px;color:var(--tx2);margin-top:6px}#v-core .bk-a b{color:#5fd3a0}
+#v-core details.bk-w{margin-top:4px;font-size:13px;color:var(--tx2);line-height:1.7}#v-core details.bk-w>summary{cursor:pointer;color:var(--dim);font-size:12px}#v-core .co-note{padding:10px 14px;margin-bottom:12px;font-size:13px;border-color:rgba(242,180,90,.45)}
 #v-core table.co-m{border-collapse:separate;border-spacing:0;font-size:11.5px}#v-core table.co-m th,#v-core table.co-m td{padding:5px 4px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 #v-core table.co-m th.c{color:#f5a0a0}#v-core table.co-m .fz{position:sticky;left:2.6em;background:#14141b;text-align:left;z-index:1}
 #v-core .ms{display:inline-block;border-radius:5px;padding:1px 5px;font-size:10.5px}
