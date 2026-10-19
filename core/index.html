@@ -331,6 +331,22 @@ function buildLoop(){
   dueTypes(new Set()).slice(0,LOOP_T).forEach(k=>pickItems(k,1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   return out;
 }
+// (1020 유강 (가)) 루프 과제는 하루 1회 — 그날 처음 연 세트를 고정하고, 다 풀면 내일까지 닫는다.
+//   틀린 것은 다음 날 루프로 돌아온다(같은 날 같은 유형을 끝없이 다시 내지 않는다 — 1019 T06 11회 사고).
+//   세트는 이 기기 localStorage(lset_날짜)에 둔다. 다른 기기·저장소가 비었는데 오늘 루프 기록이 있으면 '오늘 완료'.
+function loopToday(){
+  const k='lset_'+TODAY, ids=lget(k,null);
+  const done=new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]==='루프').map(r=>r[1]));
+  if(ids){
+    const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean);
+    return {items:rest, started:done.size>0, finished:!rest.length};
+  }
+  if(done.size) return {items:[], started:true, finished:true};
+  const fresh=buildLoop();
+  if(fresh.length) lset(k, fresh.map(x=>x.id));
+  return {items:fresh, started:false, finished:false};
+}
+function loopAdd(id){ const k='lset_'+TODAY, ids=lget(k,[]); if(!ids.includes(id)){ ids.push(id); lset(k,ids); } }
 function todayRows(mode){ return LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]===mode).length; }
 
 /* ── 홈: 버튼 + 단원 지도 ── */
@@ -344,8 +360,8 @@ function drawHome(){
   document.body.classList.remove('sess');
   let tot=0, grad=0, open=0;
   CONCEPTS.forEach(c=>[c.key,...c.themes.map(t=>t.key)].forEach(k=>{ tot++; const s=cellState(k); if(s==='grad') grad++; if(s!=='lock') open++; }));
-  const lc=lastClassConcepts(); const loop=buildLoop();
-  const rDone=reviewDone(), lDone=todayRows('루프')>0 && !loop.length, rOpen=inClass(), lLock=CLASS!==null && inClass();
+  const lc=lastClassConcepts(); const LT=(CLASS!==null && inClass())?{items:buildLoop(),started:false,finished:false}:loopToday(); const loop=LT.items;
+  const rDone=reviewDone(), lDone=LT.finished, rOpen=inClass(), lLock=CLASS!==null && inClass();
   const H=[];
   H.push(`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
@@ -355,8 +371,8 @@ function drawHome(){
     +`<div><b>${loop.length}</b><span>오늘 돌아온 문항</span></div></div>`);
   H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':loop.length?`· ${loop.length}문항`:''}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요`:'다시 볼 개념·유형이 없어요. 내일 다시 와요'}</span></button>`);
+  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?'· 오늘 완료':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?'루프는 하루 한 번이에요. 틀리거나 애매했던 건 내일 루프에 다시 와요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요 · 하루 한 번`:'다시 볼 개념·유형이 없어요. 내일 다시 와요'}</span></button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 개념·유형은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
@@ -481,7 +497,7 @@ function grade(conf){
   // 유형을 놓치면 그 개념으로 되돌림 — 개념 문항 하나 덧붙임(루프만, 최대 BACK_C)
   if(!succ && x.key[0]==='T' && S.mode==='루프' && S.back<BACK_C){
     const ck=TKEY2C[x.key]; const p=pickItems(ck,1,S.used);
-    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; }
+    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; loopAdd(p[0].id); }
   }
   // 리뷰: 개념 파트를 끝내면 그 자리에서 유형을 고른다(방금 열린 유형 포함)
   if(S.mode==='리뷰' && !S.typeBuilt && S.i===S.q.length-1){
