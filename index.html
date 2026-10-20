@@ -8684,11 +8684,18 @@ async function hwTrim(id){
   toast(`남은 ${data['남은문항']}문항`+(data['이월과제']?` · 나머지 ${carry} 로 이월`:'')); hwList();
 }
 async function hwClose(id,st){ const {error}=await sb.from('hw_assign').update({상태:st}).eq('id',id); if(error) return toast(error.message); hwList(); }
-function hwStu(id){
+async function hwStu(id){
   const tr=$('hw_x'+id); tr.classList.toggle('hidden'); if(tr.classList.contains('hidden')) return;
   const ps=(HWS.prog[id]||[]).slice().sort((a,b)=>(+a['이행률'])-(+b['이행률']));
-  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th></tr></thead><tbody>`
-    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td></tr>`).join('')+`</tbody></table>`;
+  // (1020) 개별과제 잡 — 이 과제가 들어간 묶음의 학생별 상태(요청·처리중·완료·실패)와 처방 요약
+  const {data:jobs}=await sb.from('job_queue').select('id,상태,메시지,파라미터,결과').eq('종류','개별과제').order('id',{ascending:false}).limit(300);
+  const J={}; (jobs||[]).forEach(j=>{ const p=j['파라미터']||{}; if((p['과제']||[]).map(Number).includes(id) && !J[p['학생ID']]) J[p['학생ID']]=j; });
+  const jcell=sid=>{ const j=J[sid]; if(!j) return '<span class="lbl">—</span>';
+    const r=(j['결과']||{})['개별']||{}; const st=j['상태'];
+    return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
+  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th></tr></thead><tbody>`
+    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
+    +`<div class="loadout">개별과제는 학생이 묶음(같은 마감의 과제)을 전부 [제출]하면 바로, 아니면 마감 때 자동으로 만들어진다. 다 만든 PDF 는 📂 과제 파일 페이지(커스텀트레이닝 묶음)에 뜬다.</div>`;
 }
 async function hwQueue(){
   const box=$('hw_queue'), all=$('hw_qall').checked;
