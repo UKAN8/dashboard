@@ -1042,30 +1042,33 @@ function drawHW(){
     const due=a.마감?new Date(a.마감):null;
     const dueT=due?` · 마감 ${due.getMonth()+1}/${due.getDate()} ${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`:'';
     const o=a.문항.filter(x=>!x.v), v=a.문항.filter(x=>x.v);
-    const btn=x=>`<button type="button" data-a="${ai}" data-n="${x.n}" class="${c[x.n]?'s'+c[x.n]:''}" aria-label="${x.n}번">${x.n}</button>`;
+    const lock=!!a.지남;   // (1021) 마감(학생별·연장 반영)이 지나면 체크 잠금 — 서버 hw_mark 도 막는다(v42b)
+    const btn=x=>`<button type="button" data-a="${ai}" data-n="${x.n}" class="${c[x.n]?'s'+c[x.n]:''}" aria-label="${x.n}번"${lock?' disabled':''}>${x.n}</button>`;
     const qs=Object.entries(a.질문||{}).filter(([k,q])=>['대기','답변','해결'].includes(q.상태));
     const name=`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
     const all=done===n&&n>0;
     return `<div class="card hw" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)">`
       +`<div class="row" data-open="${ai}"><span class="t"><b>${E(name)}</b>${a.이월?'<span class="dim"> (이월)</span>':''}`
       +`<span class="dim"> ${E(hwRange(a))} · ${done}/${n}</span></span>`
-      +`<a class="n ${all?'good':'mid'}" href="#" style="text-decoration:none;font-weight:800">${all?'완료':done?'이어서 →':'체크 →'}</a></div>`
-      +`<div class="sub2">${E([a.제목,dueT.replace(/^ · /,'')].filter(Boolean).join(' · '))}</div>`
+      +`<a class="n ${all?'good':lock?'dim':'mid'}" href="#" style="text-decoration:none;font-weight:800">${all?'완료':lock?'마감':done?'이어서 →':'체크 →'}</a></div>`
+      +`<div class="sub2">${E([a.제목,dueT.replace(/^ · /,'')+(lock?' (지남)':'')+(a.연장&&!lock?' (연장)':'')].filter(Boolean).join(' · '))}</div>`
       +`<div class="bar"><i style="width:${n?Math.round(100*done/n):0}%"></i></div>`
       +`<div class="fold" id="hw-f${ai}">`
-      +`<div class="pal">${HW_ST.slice(1).map((t,i)=>`<button type="button" data-pen="${i+1}" class="${HW.pen===i+1?'on':''}"><i class="k${i+1}"></i>${t[0]} ${t[1]}</button>`).join('')}</div>`
-      +`<div class="hint">해설까지 보고 공부를 마친 뒤, 위에서 고르고 번호를 누르세요. 같은 걸 한 번 더 누르면 지워져요. ② = 해설 없이 다시 풀어 맞음 · ⑤ = 조교쌤 질문으로 등록</div>`
+      +(lock?`<div class="hint">마감이 지나서 체크가 잠겼어요. 개별과제는 마감 때까지의 체크로 만들어져요.</div>`:`<div class="pal">${HW_ST.slice(1).map((t,i)=>`<button type="button" data-pen="${i+1}" class="${HW.pen===i+1?'on':''}"><i class="k${i+1}"></i>${t[0]} ${t[1]}</button>`).join('')}</div>`
+      +`<div class="hint">해설까지 보고 공부를 마친 뒤, 위에서 고르고 번호를 누르세요. 같은 걸 한 번 더 누르면 지워져요. ② = 해설 없이 다시 풀어 맞음 · ⑤ = 조교쌤 질문으로 등록</div>`)
       +(v.length?`<div class="sub">원본</div>`:'')+`<div class="grid">${o.map(btn).join('')}</div>`
       +(v.length?`<div class="sub">변형</div><div class="grid">${v.map(btn).join('')}</div>`:'')
       +(done?`<div class="sum">${HW_ST.slice(1).map((t,i)=>cnt[i+1]?`<span class="chip">${t[0]} ${t[1]} ${cnt[i+1]}</span>`:'').join('')}</div>`:'')
       +(qs.length?`<div class="sub">질문</div>${qs.map(([k,q])=>`<div class="q"><b>${E(k)}번</b> · `
         +(q.상태==='해결'?'<span class="good">해결됨</span>':q.상태==='답변'?'<span class="good">조교쌤 답이 왔어요</span>':q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
-        +(q.상태==='대기'&&!q.대면?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
+        +(q.상태==='대기'&&!q.대면&&!lock?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
         +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')
         +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
         +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
         +`</div>`).join('')}`:'')
-      +`<div class="done">`+(a.제출
+      +`<div class="done">`+(lock
+        ?`<div class="dim">${a.제출?'<b class="good">제출 완료</b> · ':''}마감 지남${n-done?` · 체크 안 한 ${n-done}문항은 '안 풀었음'으로 셌어요`:''}</div>`
+        :a.제출
         ?`<div class="row" style="border-bottom:none;padding:0"><span class="t"><b class="good">제출 완료</b><span class="dim"> 개별과제를 준비하고 있어요</span></span><a class="n dim" href="#" data-unsub="${ai}" style="text-decoration:none">제출 취소</a></div>`
         :`<div class="dim">다 했으면 제출하세요. 제출하면 개별과제를 바로 만들기 시작해요.${n-done?` 체크 안 한 ${n-done}문항은 '안 풀었음'으로 세요.`:''}</div>`
          +`<div class="acts"><button type="button" class="go" data-sub="${ai}">다 했어요 · 제출</button></div>`)
@@ -1092,11 +1095,12 @@ function drawHW(){
 }
 async function hwTap(b){
   const a=HW.list[+b.dataset.a], no=+b.dataset.n, cur=(a.체크||{})[no]||0;
+  if(a.지남){ alertHW('마감이 지나 체크를 바꿀 수 없어요.'); return; }
   const st=cur===HW.pen?0:HW.pen;
   b.classList.add('busy');
   try{
     const r=await sb.rpc('hw_mark',{tok:HW.tok,aid:a.id,no,st});
-    if(r.error||!r.data||r.data.오류){ b.classList.remove('busy'); alertHW(r.data&&r.data.오류); return; }
+    if(r.error||!r.data||r.data.오류){ b.classList.remove('busy'); if(r.data&&r.data.지남){ a.지남=true; drawHW(); } alertHW(r.data&&r.data.오류); return; }
     a.체크=a.체크||{}; if(st) a.체크[no]=st; else delete a.체크[no];
     a.질문=a.질문||{};
     if(st===5){ if(!a.질문[no]||!['대기','답변'].includes(a.질문[no].상태)) a.질문[no]={상태:'대기'}; }
