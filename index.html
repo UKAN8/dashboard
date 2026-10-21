@@ -6218,6 +6218,8 @@ let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
    자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
    옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
 let AUTO={}, AUTOB=null;
+/* (1021 유강) '최근 점수' 누적은 이번 내신대비(정규수업 v2, 10/19~) 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
+const CYCLE_START='2026-10-19';
 async function loadAuto(cls,day){
   AUTO={};AUTOB=null;
   try{
@@ -6242,14 +6244,18 @@ function autoRate(id){
 }
 function autoReview(id){const a=AUTO[id];return (!isGT()&&a&&a['리뷰'])?a['리뷰']:null;}
 /* 리뷰 만점 = 오늘 반에서 가장 많이 푼 문항 수(A안 7). 문항 칸을 쓰면 그 칸 수×2. */
-function autoReviewFull(){return Math.max(0,...Object.values(AUTO).map(a=>(a['리뷰']&&a['리뷰'].n)||0));}
+/* (1021 유강) 리뷰테스트 점수는 10점 만점으로 환산 — 확실 정답 ÷ 7(A안 문항 수) × 10, 소수 한 자리.
+   개념을 놓쳐 4문항으로 끝난 학생도 7로 나눈다(못 연 유형 3문항은 못 맞힌 것). */
+const REVIEW_N=7;
+function reviewScore(r){return r?Math.round(Math.min(r.ok,REVIEW_N)/REVIEW_N*100)/10:null;}
+function autoReviewFull(){return Object.values(AUTO).some(a=>a['리뷰'])?10:0;}
 function reviewFull(){const nq=Math.max(0,parseInt($('c_nq').value)||0);return nq?nq*2:autoReviewFull();}
 function autoLine(id){
   const a=AUTO[id];if(!a)return '';
   const out=[],B=AUTOB&&AUTOB['묶음'];
   if(!isGT()){
     const r=a['리뷰'];
-    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 확실히 맞힌 문항 / 푼 문항 (문항별 첫 시도)">리뷰 ${r.ok}/${r.n}</span>`
+    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 10점 환산 (확실히 맞힌 문항 / 7, 문항별 첫 시도) · 푼 문항 ${r.n}">리뷰 ${reviewScore(r)}점 (${r.ok}/${REVIEW_N})</span>`
              :`<span class="ac none" title="오늘 리뷰테스트 기록 없음">리뷰 —</span>`);
   }
   const h=a['써킷'];
@@ -6279,8 +6285,9 @@ function applyAuto(){
     }
     const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
     if(sc&&r&&!c.classList.contains('na')&&sc.value.trim()===''&&!(Math.max(0,parseInt($('c_nq').value)||0))){
-      sc.value=String(r.ok);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 확실 정답 '+r.ok+'/'+r.n;
-      const sm=c.querySelector('.sum');if(sm)sm.textContent=r.ok;
+      const v10=reviewScore(r);
+      sc.value=String(v10);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 10점 환산 (확실 정답 '+r.ok+'/'+REVIEW_N+')';
+      const sm=c.querySelector('.sum');if(sm)sm.textContent=v10;
       put=true;
     }
     if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
@@ -6413,7 +6420,7 @@ async function selectClass(cls){
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
   const since14=new Date(Date.parse(today)-14*864e5).toISOString().slice(0,10);   // (1021) 특이사항 이력은 2주만 — 옛 표시가 오래 남는다
   RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
-    if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
+    if(r['점수']&&String(r['날짜']||'')>=CYCLE_START)(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
     if(r['특이사항']&&String(r['날짜']||'')>=since14)(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
     if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
   });
