@@ -6276,9 +6276,14 @@ function autoLine(id){
       ?`<span class="ac ${h['이행률']>=100?'ok':h['이행률']<50?'bad':''}" title="${esc(t)}">써킷 ${h['이행률']}% · 자력 ${h['자력']}%</span>`
       :`<span class="ac none" title="${esc(t)}">써킷 마감 전 ${h['체크']}/${h['전체']}</span>`);
   }
-  const l=a['루프']||{}, ln=loopSpan(), ld=Math.min(l.days||0,ln||0);
-  if(!ln)out.push(`<span class="ac none" title="이 반 루프 과제 시작 전">루프 시작 전</span>`);
-  else out.push(`<span class="ac ${ld>=Math.max(1,ln-1)?'ok':(ln>=3&&ld*3<=ln)?'bad':''}" title="루프 과제를 한 날 / 시작한 뒤 지난 날(최근 7일까지)${l.last?' · 마지막 '+l.last:''}">루프 ${ld}/${ln}일</span>`);
+  /* (1022 유강) 루프 과제 = 수업당 1회 — 지난 수업 끝 ~ 이 수업 시작(console_auto '루프회차')에 푼 문항 */
+  const l=a['루프']||{}, LR=AUTOB&&AUTOB['루프회차'];
+  if(!LR)out.push(`<span class="ac none" title="시간표로 지난 수업을 못 찾았다">루프 —</span>`);
+  else{
+    const rt=`지난 수업 뒤 루프 ${String(LR['시작']).slice(5).replace('T',' ')} ~ ${String(LR['끝']).slice(5).replace('T',' ')}${l.last?' · 마지막 '+String(l.last).slice(5).replace('T',' '):''}`;
+    out.push(l.n?`<span class="ac ok" title="${esc(rt)} · 확실 ${l.ok}/${l.n}">루프 ✓ ${l.n}문항</span>`
+                :`<span class="ac bad" title="${esc(rt)}">루프 ✗</span>`);
+  }
   if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
   return `<div class="recent autoline">${out.join('')}</div>`;
 }
