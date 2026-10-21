@@ -187,6 +187,7 @@ const REVIEW_C=4, REVIEW_T=3,   // (1019 유강 A안) 리뷰 = 지난 수업 개
 let TOK='', DEMO=false, NAME='', BAN='', TODAY='', SET=null, SKEY='';
 let LOG=[];                      // [키, 문항ID, 정오, 확신, 모드, 'YYYY-MM-DDTHH:MM:SS'] 시간순
 let UNL={};                      // 서버 mastery_unlock (키→날짜)
+let ROUND='', NEXTC='';           // (1022 유강) 루프 회차 = 직전 수업 끝(서버 mastery_round, KST 'YYYY-MM-DDTHH:MM:SS') · 다음 수업 시작. 비면 옛 규칙(하루)
 let CLASS=null, SKEW=0, HOME_OPEN=null;          // (1018) 오늘 우리 반 수업 [[시작,끝],…] · 서버-기기 시계 차(ms). CLASS=null 이면 미리보기(항상 열림)
 const ITEMS=BANK.items;
 const BYKEY={}; Object.values(ITEMS).forEach(x=>(BYKEY[x.key]=BYKEY[x.key]||[]).push(x));
@@ -209,6 +210,12 @@ function inClass(){ if(CLASS===null) return true; const n=nowMin(); return CLASS
 function afterClass(){ if(CLASS===null||!CLASS.length) return true; const n=nowMin(); return n>Math.max(...CLASS.map(([a,b])=>hm(b))); }
 function reviewCN(){ const k=lastClassConcepts().length; return k?2*k:REVIEW_C; }   // (1019) 개념마다 2문항 — 두 날을 합친 리뷰(고1T 10/24: 개념 4개 → 8문항)도 같은 규칙
 function reviewDone(){ const n=todayRows('리뷰'), c=reviewCN(); return n>=c+REVIEW_T || lget('rdone_'+TODAY,false) || (n>=c && !reviewTypeKeys().length); }   // (1018) 리뷰는 하루 한 번
+/* (1022) 다음 수업 안내 — 루프 완료 문구 꼬리. '· 다음 수업 10/23(금) 20:00 뒤에 새 루프' */
+function nextClassText(){
+  if(!ROUND||!NEXTC) return '';
+  const d=NEXTC.slice(0,10), w='일월화수목금토'[new Date(d+'T00:00:00Z').getUTCDay()];
+  return ` · 다음 루프는 ${+d.slice(5,7)}/${+d.slice(8,10)}(${w}) 수업 끝나고`;
+}
 function classText(){
   if(!CLASS||!CLASS.length) return '오늘은 수업이 없는 날이에요. 수업 시간에 열려요';
   return '수업 시간에 열려요 · 오늘 '+CLASS.map(([a,b])=>a+'~'+b).join(', ');
@@ -345,25 +352,29 @@ function buildLoop(){
   reserveNew(dueTypes(new Set()),LOOP_T).forEach(k=>pickItems(k,1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   return out;
 }
-// (1020 유강 (가)) 루프 과제는 하루 1회 — 그날 처음 연 세트를 고정하고, 다 풀면 내일까지 닫는다.
-//   틀린 것은 다음 날 루프로 돌아온다(같은 날 같은 유형을 끝없이 다시 내지 않는다 — 1019 T06 11회 사고).
-//   세트는 이 기기 localStorage(lset_날짜)에 둔다. 다른 기기·저장소가 비었는데 오늘 루프 기록이 있으면 '오늘 완료'.
+// (1022 유강 "루프는 수업하고 나서 다음 수업 전까지 한 번") 루프 과제는 **수업당 1회** — 회차(직전 수업 끝 ~ 다음 수업 시작)에
+//   처음 연 세트를 고정하고, 다 풀면 다음 수업이 끝날 때까지 닫는다. 틀린 것은 다음 회차 루프로 돌아온다.
+//   (1020 '하루 1회'를 대신한다. 서버 회차를 못 받으면 옛 규칙(하루)으로 돈다.)
+//   세트는 이 기기 localStorage(lset_회차)에 둔다. 다른 기기·저장소가 비었는데 이번 회차 루프 기록이 있으면 남은 것만.
+const inRound=r=>r[4]==='루프' && (ROUND ? r[5]>ROUND : r[5].slice(0,10)===TODAY);
+const roundKey=()=>'lset_'+(ROUND||TODAY);
+function withoutRound(fn){ const sv=LOG; LOG=LOG.filter(r=>!inRound(r)); try{ return fn(); } finally{ LOG=sv; } }
 function loopToday(){
-  const k='lset_'+TODAY, ids=lget(k,null);
-  const done=new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]==='루프').map(r=>r[1]));
+  const k=roundKey(), ids=lget(k,null);
+  const done=new Set(LOG.filter(inRound).map(r=>r[1]));
   if(ids){
     const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean);
     return {items:rest, started:done.size>0, finished:!rest.length};
   }
   if(done.size){   // (1021) 다른 기기·브라우저(카톡 인앱↔크롬): 오늘 처음 세트를 다시 만들어 남은 것만 낸다(전엔 '오늘 완료'로 잘렸다)
-    const again=withoutToday('루프', buildLoop); lset(k, again.map(x=>x.id));
+    const again=withoutRound(buildLoop); lset(k, again.map(x=>x.id));
     const rest=again.filter(x=>!done.has(x.id)); return {items:rest, started:true, finished:!rest.length};
   }
   const fresh=buildLoop();
   if(fresh.length) lset(k, fresh.map(x=>x.id));
   return {items:fresh, started:false, finished:false};
 }
-function loopAdd(id){ const k='lset_'+TODAY, ids=lget(k,[]); if(!ids.includes(id)){ ids.push(id); lset(k,ids); } }
+function loopAdd(id){ const k=roundKey(), ids=lget(k,[]); if(!ids.includes(id)){ ids.push(id); lset(k,ids); } }
 function todayRows(mode){ return LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]===mode).length; }
 
 /* ── 홈: 버튼 + 단원 지도 ── */
@@ -385,11 +396,12 @@ function drawHome(){
     +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
     +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업</span></div>`
     +`<div><b>${open}</b><span>열림</span></div>`
-    +`<div><b>${loop.length}</b><span>오늘 돌아온 문항</span></div></div>`);
+    +`<div><b>${loop.length}</b><span>이번에 돌아온 문항</span></div></div>`);
   H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?'· 오늘 완료':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?'루프는 하루 한 번이에요. 틀리거나 애매했던 건 내일 루프에 다시 와요':loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요 · 하루 한 번`:'다시 볼 개념·유형이 없어요. 내일 다시 와요'}</span></button>`);
+  const once=ROUND?'수업마다 한 번':'하루 한 번', nextT=ROUND?'다음 수업 뒤':'내일', nx=nextClassText();
+  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요 · ${once}${ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span></button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 개념·유형은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
@@ -588,6 +600,7 @@ async function boot(){
   if(DEMO){
     NAME='미리보기'; BAN=P.get('ban')||'고1A'; SKEY=pickSet(BAN); if(!SKEY) SKEY='core_m2';
     TODAY=(P.get('today')||nowKST()).slice(0,10); setup();
+    ROUND=P.get('round')||''; NEXTC=P.get('next')||'';   // 미리보기: &round=2026-10-21T22:00:00&next=2026-10-23T20:00:00
     if(P.get('class')) CLASS=P.get('class').split(',').map(x=>x.split('-'));   // 미리보기: &class=15:00-17:00
     LOG=lget('demo_log',[]);
   } else {
@@ -601,6 +614,7 @@ async function boot(){
     CLASS=Array.isArray(d.수업)?d.수업:[];    // 서버가 시간표를 안 주면(v40 전) 리뷰는 닫힌다
     if(d.지금){ const t=Date.parse(d.지금+'+09:00'); if(!isNaN(t)) SKEW=t-Date.now(); }
     if(!SKEY){ $('msg').innerHTML='<b>아직 이 반은 CORE 루프가 없어요</b>'; return; }
+    try{ const r=await sb.rpc('mastery_round',{tok:TOK}); if(r&&r.data&&r.data.회차){ ROUND=r.data.회차; NEXTC=r.data.다음||''; } }catch(e){}   // (1022) 루프 회차 — 못 받으면 옛 규칙(하루)
     if(SKEY!=='core_m2'){ try{ const r=await sb.rpc('mastery_open',{tok:TOK,skey:SKEY}); d=r.data||d; }catch(e){} }
     setup();
     LOG=(d.기록||[]).map(r=>[r[0],r[1],r[2],r[3],r[4],r[5]]); UNL=d.열림||{};
