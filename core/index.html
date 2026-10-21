@@ -182,7 +182,7 @@ const E=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 const $=id=>document.getElementById(id);
 const REVIEW_C=4, REVIEW_T=3,   // (1019 유강 A안) 리뷰 = 지난 수업 개념 4(개념마다 2) → 유형 3, 항상 7문항
-      LOOP_C_ITEMS=3, LOOP_C_KEYS=2, LOOP_T=3, BACK_C=2;
+      LOOP_C_ITEMS=3, LOOP_C_KEYS=99, LOOP_T=99, BACK_C=2;   // (1022 유강) 루프는 수업당 1회 — 밀린 개념·유형을 전부 한 세트에 (전엔 개념 2·유형 3으로 잘렸다)
 
 let TOK='', DEMO=false, NAME='', BAN='', TODAY='', SET=null, SKEY='';
 let LOG=[];                      // [키, 문항ID, 정오, 확신, 모드, 'YYYY-MM-DDTHH:MM:SS'] 시간순
@@ -357,7 +357,7 @@ function buildLoop(){
 //   (1020 '하루 1회'를 대신한다. 서버 회차를 못 받으면 옛 규칙(하루)으로 돈다.)
 //   세트는 이 기기 localStorage(lset_회차)에 둔다. 다른 기기·저장소가 비었는데 이번 회차 루프 기록이 있으면 남은 것만.
 const inRound=r=>r[4]==='루프' && (ROUND ? r[5]>ROUND : r[5].slice(0,10)===TODAY);
-const roundKey=()=>'lset_'+(ROUND||TODAY);
+const roundKey=()=>'lset2_'+(ROUND||TODAY);   // (1022) lset2 — '전부 모으기' 전에 고정된 잘린 세트(lset_)는 버린다
 function withoutRound(fn){ const sv=LOG; LOG=LOG.filter(r=>!inRound(r)); try{ return fn(); } finally{ LOG=sv; } }
 function loopToday(){
   const k=roundKey(), ids=lget(k,null);
@@ -401,7 +401,7 @@ function drawHome(){
     +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
   const once=ROUND?'수업마다 한 번':'하루 한 번', nextT=ROUND?'다음 수업 뒤':'내일', nx=nextClassText();
   H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 때가 된 것만 골랐어요 · ${once}${ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span></button>`);
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span></button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 개념·유형은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
