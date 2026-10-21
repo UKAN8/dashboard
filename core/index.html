@@ -199,7 +199,7 @@ const lset=(k,v)=>{ try{ localStorage.setItem(LK(k),JSON.stringify(v)); }catch(e
 
 /* ── 날짜 ── */
 const dnum=s=>{ const [y,m,d]=s.slice(0,10).split('-').map(Number); return Math.round(Date.UTC(y,m-1,d)/864e5); };
-function nowKST(){ const d=new Date(Date.now()+9*36e5).toISOString().slice(0,19);
+function nowKST(){ const d=new Date(Date.now()+SKEW+9*36e5).toISOString().slice(0,19);   // (1021) 폰 시계가 틀려도 서버 시계로 찍는다
   return (DEMO&&TODAY)? TODAY+d.slice(10) : d; }   // 미리보기는 &today= 날짜로 찍는다
 
 /* ── 수업 시간 (1018) — [수업 리뷰]는 수업 시작~끝에만 연다. 서버도 그 시간 밖의 리뷰 기록은 안 받는다(schema_v40) ── */
@@ -272,6 +272,14 @@ function isDue(k){
 }
 const PRI={fail:0,try:1,one:2,new:3};
 
+/* (1021) 오늘 그 모드로 푼 기록을 빼고 계산 — 리뷰·루프 세트를 '오늘 처음 열었을 때'와 똑같이 다시 만든다 */
+function withoutToday(mode, fn){ const sv=LOG; LOG=LOG.filter(r=>!(r[5].slice(0,10)===TODAY && r[4]===mode)); try{ return fn(); } finally{ LOG=sv; } }
+const todayIds=mode=>new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]===mode).map(r=>r[1]));
+// (1021) 루프 칸 나누기 — 늘 틀리는 칸에 밀려 새로 열린 칸이 몇 주씩 안 나오던 것(하위권 시뮬: 열린 유형 5~7개가 기말까지 0회)
+//   상위 n 칸에 '처음 보는 칸'이 하나도 없으면 마지막 자리를 가장 앞 번호의 새 칸에 준다
+function reserveNew(list,n){ const top=list.slice(0,n); if(top.length<n || top.some(k=>keyState(k).st==='new')) return top;
+  const nw=list.find(k=>keyState(k).st==='new'); if(nw) top[n-1]=nw; return top; }
+
 /* 문항 고르기 — 안 본 것 먼저, 오래전에 본 것, 같은 벌 연속 피하기. seed 가 있으면 반 공통 순서 */
 function hash(s){ let h=2166136261; for(const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619);} return h>>>0; }
 function tier(x){ return x.fix?(x.lvl||2):0; }   // CORE 자체 = 0, 외부 = 난이도 1~3
@@ -303,7 +311,8 @@ function dueConcepts(){
   return CONCEPTS.filter(c=>cOpen(c.key) && isDue(c.key)).map(c=>c.key)
     .sort((a,b)=>PRI[keyState(a).st]-PRI[keyState(b).st] || a.localeCompare(b));
 }
-function buildReviewConcept(){
+function buildReviewConcept(){ return withoutToday('리뷰', buildReviewConcept0); }   // (1021) 그만하기 뒤 다시 열어도 같은 세트
+function buildReviewConcept0(){
   const lc=lastClassConcepts(); const used=new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY).map(r=>r[1])), out=[];
   if(!lc.length) return out;
   // 반 공통: 날짜 seed. 개념이 둘이면 하나씩
@@ -315,23 +324,25 @@ function buildReviewConcept(){
 }
 // (1019 A안) 유형 3칸 = 지난 수업 개념의 열린 유형을 개념마다 번갈아. 모자라면 다른 열린 유형(다시 볼 때 된 것).
 // 개념 문항으로 채우지 않는다 — 개념을 놓친 학생은 리뷰가 개념 4로 끝나고 그 개념은 저녁 루프로 간다.
-function reviewTypeKeys(){
+function reviewTypeKeys(N=REVIEW_T){
   const rank=k=>{ const st=keyState(k).st; return (isDue(k)?0:10)+(PRI[st]!=null?PRI[st]:5); };
   const groups=lastClassConcepts().map(ck=>(CBYKEY[ck]?CBYKEY[ck].themes:[]).map(t=>t.key).filter(tOpen).sort((a,b)=>rank(a)-rank(b)||a.localeCompare(b)));
   const out=[];
-  for(let i=0;out.length<REVIEW_T && groups.some(g=>g.length);i++){ const g=groups[i%groups.length]; if(g.length) out.push(g.shift()); }
-  if(out.length<REVIEW_T) for(const k of dueTypes(new Set(out))){ if(out.length>=REVIEW_T) break; out.push(k); }
+  for(let i=0;out.length<N && groups.some(g=>g.length);i++){ const g=groups[i%groups.length]; if(g.length) out.push(g.shift()); }
+  if(out.length<N) for(const k of dueTypes(new Set(out))){ if(out.length>=N) break; out.push(k); }
   return out;
 }
 function buildReviewType(usedIds){
-  const out=[];
-  for(const k of reviewTypeKeys()){ const p=pickItems(k,1,usedIds); if(p[0]){ usedIds.add(p[0].id); out.push(p[0]); } }
+  // (1021) 오늘 리뷰에서 이미 푼 유형은 빼고 남은 칸만 — 그만하기 뒤 다시 열어도 유형은 합쳐 3문항
+  const doneK=new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]==='리뷰' && r[0][0]==='T').map(r=>r[0]));
+  const left=REVIEW_T-doneK.size, out=[];
+  for(const k of reviewTypeKeys(REVIEW_T+doneK.size).filter(k=>!doneK.has(k))){ if(out.length>=left) break; const p=pickItems(k,1,usedIds); if(p[0]){ usedIds.add(p[0].id); out.push(p[0]); } }
   return out;
 }
 function buildLoop(){
   const out=[], used=new Set();
-  dueConcepts().slice(0,LOOP_C_KEYS).forEach(k=>pickItems(k,LOOP_C_ITEMS,used).forEach(x=>{ used.add(x.id); out.push(x); }));
-  dueTypes(new Set()).slice(0,LOOP_T).forEach(k=>pickItems(k,1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
+  reserveNew(dueConcepts(),LOOP_C_KEYS).forEach(k=>pickItems(k,LOOP_C_ITEMS,used).forEach(x=>{ used.add(x.id); out.push(x); }));
+  reserveNew(dueTypes(new Set()),LOOP_T).forEach(k=>pickItems(k,1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   return out;
 }
 // (1020 유강 (가)) 루프 과제는 하루 1회 — 그날 처음 연 세트를 고정하고, 다 풀면 내일까지 닫는다.
@@ -344,7 +355,10 @@ function loopToday(){
     const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean);
     return {items:rest, started:done.size>0, finished:!rest.length};
   }
-  if(done.size) return {items:[], started:true, finished:true};
+  if(done.size){   // (1021) 다른 기기·브라우저(카톡 인앱↔크롬): 오늘 처음 세트를 다시 만들어 남은 것만 낸다(전엔 '오늘 완료'로 잘렸다)
+    const again=withoutToday('루프', buildLoop); lset(k, again.map(x=>x.id));
+    const rest=again.filter(x=>!done.has(x.id)); return {items:rest, started:true, finished:!rest.length};
+  }
   const fresh=buildLoop();
   if(fresh.length) lset(k, fresh.map(x=>x.id));
   return {items:fresh, started:false, finished:false};
@@ -402,7 +416,8 @@ function drawHome(){
 let S=null;   // {mode, q:[item], i, res:[], phase, used:Set}
 function startSession(mode, preset){
   if(mode==='리뷰'){
-    const c=buildReviewConcept(); S={mode,q:c,i:0,res:[],used:new Set(c.map(x=>x.id)),typeBuilt:false,back:0};
+    const all=buildReviewConcept(), done=todayIds('리뷰'), c=all.filter(x=>!done.has(x.id));   // (1021) 이어서 — 같은 세트의 남은 문항만
+    S={mode,q:c,i:0,res:[],used:new Set([...all.map(x=>x.id),...done]),typeBuilt:false,back:0};
     if(!c.length){ S.typeBuilt=true; S.q=buildReviewType(S.used); }
   } else S={mode,q:preset,i:0,res:[],used:new Set(preset.map(x=>x.id)),typeBuilt:true,back:0};
   if(!S.q.length){ drawHome(); return; }
@@ -493,9 +508,11 @@ function grade(conf){
   // 틀리거나 애매하면 교재를 바로 펼쳐 둔다 — 개념은 개념 정리, 유형은 교재 예제(시선·풀이)
   if(!succ){ if(x.key[0]==='C'){ $('cbx').innerHTML=cardHTML(c); tex($('cbx')); } else if(th&&th.book){ $('bbx').innerHTML=bookHTML(th); tex($('bbx')); } }
   tex(r);
-  const row={k:x.key,i:x.id,m:S.mode,a:String(S.pick).slice(0,40),o:ok,c:conf,ms:Math.min(ms,9999999)};
+  // (1021) 자정을 넘겨 풀어도 연 날의 기록으로(23:55 시작 → 00:05 끝이 다음 날 루프를 '오늘 완료'로 지우던 것)
+  const tNow=nowKST(), tRow=tNow.slice(0,10)>TODAY?TODAY+'T23:59:59':tNow;
+  const row={k:x.key,i:x.id,m:S.mode,a:String(S.pick).slice(0,40),o:ok,c:conf,ms:Math.min(ms,9999999),t:tRow};
   S.res.push({x,ok:succ,raw:ok,conf});
-  LOG.push([x.key,x.id,ok,conf,S.mode,nowKST()]);
+  LOG.push([x.key,x.id,ok,conf,S.mode,tRow]);
   queue([row]);
   // 유형을 놓치면 그 개념으로 되돌림 — 개념 문항 하나 덧붙임(루프만, 최대 BACK_C)
   if(!succ && x.key[0]==='T' && S.mode==='루프' && S.back<BACK_C){
@@ -527,7 +544,8 @@ async function finish(early){
   if(S.mode==='리뷰' && !early) lset('rdone_'+TODAY,true);
   $('home').onclick=drawHome; S=null;
   const ok=await flush();
-  const sv=$('sv'); if(sv){ sv.textContent=ok?'기록 저장됨':'인터넷이 불안정해서 이 기기에 보관했어요. 다음에 열면 자동으로 보내요'; if(!ok) sv.classList.add('bad'); }
+  const drop=lget('dropped',0); if(drop) lset('dropped',0);
+  const sv=$('sv'); if(sv){ sv.textContent=ok?(drop?`기록 저장됨 · ${drop}문항은 수업 시간 밖이라 저장되지 않았어요`:'기록 저장됨'):'인터넷이 불안정해서 이 기기에 보관했어요. 다음에 열면 자동으로 보내요'; if(!ok) sv.classList.add('bad'); }
 }
 
 /* ── 보내기(대기열) ── */
@@ -546,6 +564,7 @@ async function flush(){
       const chunk=q.slice(0,30);
       const {data,error}=await sb.rpc('mastery_submit',{tok:TOK,skey:SKEY,recs:chunk});
       if(error||!data) return false;
+      if(data.버림) lset('dropped', lget('dropped',0)+data.버림);   // (1021 v42) 수업 시간 밖 리뷰 등 서버가 안 받은 행
       const sent=new Set(chunk.map(r=>r.u));
       lset('queue',lget('queue',[]).filter(r=>!sent.has(r.u)));
     }
