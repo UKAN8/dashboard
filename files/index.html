@@ -70,7 +70,7 @@ async function load() {
     return;
   }
   const { data, error } = await sb.from('job_queue').select('id,종류,상태,요청자,파라미터,결과,메시지,요청시각,완료시각')
-    .in('종류', ['기출과제', '커스텀트레이닝']).order('id', { ascending: false }).limit(400);   // (0924) 커스텀은 따로 묶는다
+    .in('종류', ['기출과제', '커스텀트레이닝', '개별과제']).order('id', { ascending: false }).limit(400);   // (0924) 커스텀은 따로 묶는다
   if (error) { $('#left').innerHTML = '<div class="msg">작업 현황을 못 읽었다: ' + E(error.message) + '</div>'; return; }
   JOBS = data || [];
   GROUPS = {};
@@ -79,8 +79,9 @@ async function load() {
     if (!p['반'] || !p['날짜']) continue;
     const ct = j['종류'] === '커스텀트레이닝';          // 같은 날 같은 학생의 PT 를 덮지 않게 묶음을 가른다
     const rp = /리플레이/.test(p['시험지명'] || '');    // (1005) 리플레이 트레이닝도 따로 — 1002 누적판이 같은 반·날짜 PT 를 이름으로 덮었다
-    const k = p['반'] + ' · ' + p['날짜'] + (ct ? ' · 커스텀' : rp ? ' · 리플레이' : '');
-    (GROUPS[k] = GROUPS[k] || { 반: p['반'], 날짜: p['날짜'], 시험지명: ct ? '커스텀 트레이닝' : (p['시험지명'] || ''), jobs: [] }).jobs.push(j);
+    const hw = j['종류'] === '개별과제';               // (1021) 써킷 개별과제 — 잡 종류가 따로라 안 보였다
+    const k = p['반'] + ' · ' + p['날짜'] + (hw ? ' · 개별과제' : ct ? ' · 커스텀' : rp ? ' · 리플레이' : '');
+    (GROUPS[k] = GROUPS[k] || { 반: p['반'], 날짜: p['날짜'], 시험지명: hw ? '개별과제' : ct ? '커스텀 트레이닝' : (p['시험지명'] || ''), jobs: [] }).jobs.push(j);
   }
   const keys = Object.keys(GROUPS).sort((a, b) => GROUPS[b].날짜.localeCompare(GROUPS[a].날짜) || a.localeCompare(b));
   const sel = $('#grp');
