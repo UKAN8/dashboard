@@ -6217,13 +6217,16 @@ let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
    자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
    옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
-let AUTO={}, AUTOB=null;
-/* (1021 유강) '최근 점수' 누적은 이번 내신대비(정규수업 v2, 10/19~) 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
-const CYCLE_START='2026-10-19';
+let AUTO={}, AUTOB=null, LOOPSTART=null;
+/* (1021 유강) '최근 점수' 누적은 새 체계 시작일 이후 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
+const CYCLE_START='2026-10-21';   // (1022 유강 "오늘이 스타트") 새 체계 시작일 — 리포트 HISTORY_START 와 같다
 async function loadAuto(cls,day){
-  AUTO={};AUTOB=null;
+  AUTO={};AUTOB=null;LOOPSTART=null;
   try{
-    const {data,error}=await sb.rpc('console_auto',{p_cls:cls,p_day:day});
+    const [ra,rl]=await Promise.all([sb.rpc('console_auto',{p_cls:cls,p_day:day}),
+                                     Promise.resolve(sb.rpc('console_loop_start',{p_cls:cls,p_day:day})).catch(()=>null)]);
+    LOOPSTART=(rl&&!rl.error&&rl.data)?String(rl.data).slice(0,10):null;
+    const {data,error}=ra;
     if(error){console.warn('console_auto',error.message);return;}
     if(!data)return;
     AUTOB=data;(data['학생']||[]).forEach(r=>AUTO[r['학생ID']]=r);
@@ -6250,12 +6253,19 @@ function reviewN(){return Math.max(0,...Object.values(AUTO).map(a=>(a['리뷰']&
 function reviewScore(r){const N=reviewN();return r?Math.round(Math.min(r.ok,N)/N*100)/10:null;}
 function autoReviewFull(){return Object.values(AUTO).some(a=>a['리뷰'])?10:0;}
 function reviewFull(){const nq=Math.max(0,parseInt($('c_nq').value)||0);return nq?nq*2:autoReviewFull();}
+/* (1022) 루프 '한 날 / 지난 날' 의 분모 — 반 루프 시작일(console_loop_start)과 새 체계 시작일 중 늦은 날부터 오늘까지, 최대 7.
+   리포트 report_v4 의 루프 달력과 같은 규칙. 0 = 시작 전. */
+function loopSpan(){
+  const st=[LOOPSTART||'',CYCLE_START].sort().pop(), d=vDay();
+  if(!LOOPSTART||st>d)return 0;
+  return Math.min(7,Math.round((Date.parse(d)-Date.parse(st))/864e5)+1);
+}
 function autoLine(id){
   const a=AUTO[id];if(!a)return '';
   const out=[],B=AUTOB&&AUTOB['묶음'];
   if(!isGT()){
     const r=a['리뷰'];
-    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 10점 환산 (확실히 맞힌 문항 / 반 리뷰 문항 수, 문항별 첫 시도) · 푼 문항 ${r.n}">리뷰 ${reviewScore(r)}점 (${r.ok}/${reviewN()})</span>`
+    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 10점 환산 (확실히 맞힌 문항 / 반 리뷰 문항 수, 문항별 첫 시도) · 푼 문항 ${r.n}">리뷰 ${reviewScore(r).toFixed(1)}점 (${r.ok}/${reviewN()})</span>`
              :`<span class="ac none" title="오늘 리뷰테스트 기록 없음">리뷰 —</span>`);
   }
   const h=a['써킷'];
@@ -6266,8 +6276,9 @@ function autoLine(id){
       ?`<span class="ac ${h['이행률']>=100?'ok':h['이행률']<50?'bad':''}" title="${esc(t)}">써킷 ${h['이행률']}% · 자력 ${h['자력']}%</span>`
       :`<span class="ac none" title="${esc(t)}">써킷 마감 전 ${h['체크']}/${h['전체']}</span>`);
   }
-  const l=a['루프']||{};
-  out.push(`<span class="ac ${l.days>=5?'ok':l.days<=1?'bad':''}" title="최근 7일 중 루프 과제를 한 날${l.last?' · 마지막 '+l.last:''}">루프 ${l.days||0}/7일</span>`);
+  const l=a['루프']||{}, ln=loopSpan(), ld=Math.min(l.days||0,ln||0);
+  if(!ln)out.push(`<span class="ac none" title="이 반 루프 과제 시작 전">루프 시작 전</span>`);
+  else out.push(`<span class="ac ${ld>=Math.max(1,ln-1)?'ok':(ln>=3&&ld*3<=ln)?'bad':''}" title="루프 과제를 한 날 / 시작한 뒤 지난 날(최근 7일까지)${l.last?' · 마지막 '+l.last:''}">루프 ${ld}/${ln}일</span>`);
   if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
   return `<div class="recent autoline">${out.join('')}</div>`;
 }
@@ -6286,8 +6297,8 @@ function applyAuto(){
     const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
     if(sc&&r&&!c.classList.contains('na')&&sc.value.trim()===''&&!(Math.max(0,parseInt($('c_nq').value)||0))){
       const v10=reviewScore(r);
-      sc.value=String(v10);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 10점 환산 (확실 정답 '+r.ok+'/'+reviewN()+')';
-      const sm=c.querySelector('.sum');if(sm)sm.textContent=v10;
+      sc.value=v10.toFixed(1);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 10점 환산 (확실 정답 '+r.ok+'/'+reviewN()+')';
+      const sm=c.querySelector('.sum');if(sm)sm.textContent=v10.toFixed(1);
       put=true;
     }
     if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
