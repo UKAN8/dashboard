@@ -605,6 +605,15 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .ct-job .lbl{margin:3px 0 0}
 #cs .short{color:var(--bad)}
 
+/* (1021) 확인 기반 — 이름칸 자동 확인 줄(리뷰·써킷·루프·질문) + 자동으로 채운 칸 */
+#cs .cs-grid .autoline{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+#cs .cs-grid .ac{font-size:10.5px;padding:0 5px;border-radius:8px;border:1px solid var(--line,#3a3f4a);color:var(--dim);white-space:nowrap}
+#cs .cs-grid .ac.ok{color:#5fd39a;border-color:#2f6f52}
+#cs .cs-grid .ac.bad{color:#ff5c8a;border-color:#7a2f47}
+#cs .cs-grid .ac.ext{color:#e0b04c;border-color:#7a6230}
+#cs .cs-grid .ac.none{opacity:.65}
+#cs .cs-grid input.autov{color:#7fb8ff;font-style:italic}
+
 /* 2단 메뉴 (0908) */
 #nav{flex-direction:column;gap:4px;align-items:flex-start}
 #nav .ng{display:flex;gap:4px}
@@ -6205,33 +6214,76 @@ async function initClassButtons(){
   if(m&&set.includes(m[1])&&!CLS)selectClass(m[1]);
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
-/* (0902 유강) 지난 수업 루프 미제출 = 과제 미흡. 반을 열 때 loop_overdue(schema_v15) 로 받아
-   이름 옆 배지 + 이행률 빈칸이면 0 으로 채워 저장한다(조교가 고치면 그 값이 남는다). 재촉은 없다. */
-let LOOPMISS={};
-function loopMissLine(id){
-  const m=LOOPMISS[id]; if(!m||!m.length)return '';
-  const d=(m[0]['수업일']||'').slice(5).replace('-','/');
-  return `<div class="recent" style="margin-left:0;color:#ff5c8a">⛔ 루프 미제출 (${d} ${esc(m[0]['단원']||'루프')}${m.length>1?' 외 '+(m.length-1):''}) → 이행률 0</div>`;
-}
-async function loadLoopMiss(cls,today){
-  LOOPMISS={};
+/* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
+   자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
+   옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
+let AUTO={}, AUTOB=null;
+async function loadAuto(cls,day){
+  AUTO={};AUTOB=null;
   try{
-    const {data,error}=await sb.rpc('loop_overdue',{p_cls:cls,p_day:today});
-    if(error){console.warn('loop_overdue',error.message);return;}
-    (data||[]).forEach(r=>{(LOOPMISS[r['학생ID']]=LOOPMISS[r['학생ID']]||[]).push(r);});
-  }catch(e){console.warn('loop_overdue',e);}
+    const {data,error}=await sb.rpc('console_auto',{p_cls:cls,p_day:day});
+    if(error){console.warn('console_auto',error.message);return;}
+    if(!data)return;
+    AUTOB=data;(data['학생']||[]).forEach(r=>AUTO[r['학생ID']]=r);
+  }catch(e){console.warn('console_auto',e);}
 }
-/* 그려진 뒤 — 미제출 학생의 이행률이 비어 있으면 0 을 채운다. 이미 값이 있으면 손대지 않는다.
-   ⚠ (0904) 여기서 무조건 save() 하면 안 된다 — 반 버튼만 눌러도(수업 없는 날, 수업 전, 구경)
-   출결 없는 '이행률 0' 행이 그 날짜로 생겨 대시보드 이행률 추이가 0%로 꺾였다
-   (0903 고1T 3행·0904 고1A 김현조 실사고). 오늘 행이 이미 있는 학생(LOGMAP)만 저장하고,
-   나머지는 칸에만 채워 둔다 — 조교가 출결을 찍는 순간 그 카드의 save 가 0 을 같이 올린다. */
-function applyLoopMiss(){
+function kstDay(iso){return iso?new Date(Date.parse(iso)+9*3600e3).toISOString().slice(0,10):'';}
+function fmtDue(iso){
+  if(!iso)return '';
+  const d=new Date(Date.parse(iso)+9*3600e3).toISOString();
+  return (+d.slice(5,7))+'/'+(+d.slice(8,10))+' '+d.slice(11,16);
+}
+/* 오늘 검사할 써킷 묶음 = 반 마감이 오늘(보는 날)인 묶음. 마감이 지났어야 값이 확정이다. */
+function autoHwDue(){const B=AUTOB&&AUTOB['묶음'];return !!(B&&kstDay(B['마감'])===vDay());}
+function autoRate(id){
+  const a=AUTO[id],B=AUTOB&&AUTOB['묶음'];
+  if(!a||!autoHwDue()||!B['지남']||a['연장']||!a['써킷'])return null;
+  const v=a['써킷']['이행률'];return (v===null||v===undefined)?null:v;
+}
+function autoReview(id){const a=AUTO[id];return (!isGT()&&a&&a['리뷰'])?a['리뷰']:null;}
+/* 리뷰 만점 = 오늘 반에서 가장 많이 푼 문항 수(A안 7). 문항 칸을 쓰면 그 칸 수×2. */
+function autoReviewFull(){return Math.max(0,...Object.values(AUTO).map(a=>(a['리뷰']&&a['리뷰'].n)||0));}
+function reviewFull(){const nq=Math.max(0,parseInt($('c_nq').value)||0);return nq?nq*2:autoReviewFull();}
+function autoLine(id){
+  const a=AUTO[id];if(!a)return '';
+  const out=[],B=AUTOB&&AUTOB['묶음'];
+  if(!isGT()){
+    const r=a['리뷰'];
+    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 확실히 맞힌 문항 / 푼 문항 (문항별 첫 시도)">리뷰 ${r.ok}/${r.n}</span>`
+             :`<span class="ac none" title="오늘 리뷰테스트 기록 없음">리뷰 —</span>`);
+  }
+  const h=a['써킷'];
+  if(a['연장'])out.push(`<span class="ac ext" title="써킷 과제 학생별 연장 — 써킷 과제 화면에서 취소">써킷 연장 ~${fmtDue(a['연장'])}</span>`);
+  else if(h&&B&&autoHwDue()){
+    const t=`써킷 ${(B['세트']||[]).join('+')} · 마감 ${fmtDue(B['마감'])} · 체크 ${h['체크']}/${h['전체']} · ①${h.n1} ②${h.n2} ③${h.n3} ④${h.n4} ⑤${h.n5} ⑥${h.n6} · 자력 ${h['자력']}%`;
+    out.push(B['지남']
+      ?`<span class="ac ${h['이행률']>=100?'ok':h['이행률']<50?'bad':''}" title="${esc(t)}">써킷 ${h['이행률']}% · 자력 ${h['자력']}%</span>`
+      :`<span class="ac none" title="${esc(t)}">써킷 마감 전 ${h['체크']}/${h['전체']}</span>`);
+  }
+  const l=a['루프']||{};
+  out.push(`<span class="ac ${l.days>=5?'ok':l.days<=1?'bad':''}" title="최근 7일 중 루프 과제를 한 날${l.last?' · 마지막 '+l.last:''}">루프 ${l.days||0}/7일</span>`);
+  if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
+  return `<div class="recent autoline">${out.join('')}</div>`;
+}
+/* 빈 칸 자동 채움 — 손으로 적은 값은 건드리지 않는다.
+   이행률 = 오늘 마감 써킷 묶음의 이행률(마감 지남 · 연장 아님). 점수(리뷰 모드) = 리뷰 확실 정답 수.
+   ⚠ (0904 규칙 그대로) 오늘 행이 이미 있는 학생(출결 찍힘)만 저장한다 — 반 버튼만 눌러도 행이 생기면
+   대시보드 추이가 꺾인다. 나머지는 칸에만 채워 두고, 출결을 찍는 순간 그 카드의 save 가 같이 올린다. */
+function applyAuto(){
   csRoot().querySelectorAll('#students .stu').forEach(c=>{
-    const id=c.dataset.id; if(!LOOPMISS[id])return;
-    const inp=c.querySelector('[data-f="이행률"]'); if(!inp||inp.value.trim()!=='')return;
-    inp.value='0';
-    if(LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
+    const id=c.dataset.id;let put=false;
+    const inp=c.querySelector('[data-f="이행률"]'), v=autoRate(id);
+    if(inp&&v!==null){
+      inp.title='써킷 체크 자동값 '+v+'% — 손으로 고치면 그 값이 남는다';
+      if(inp.value.trim()===''){inp.value=String(v);inp.classList.add('autov');put=true;}
+    }
+    const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
+    if(sc&&r&&!c.classList.contains('na')&&sc.value.trim()===''&&!(Math.max(0,parseInt($('c_nq').value)||0))){
+      sc.value=String(r.ok);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 확실 정답 '+r.ok+'/'+r.n;
+      const sm=c.querySelector('.sum');if(sm)sm.textContent=r.ok;
+      put=true;
+    }
+    if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
   });
 }
 /* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
@@ -6359,14 +6411,15 @@ async function selectClass(cls){
   }
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
+  const since14=new Date(Date.parse(today)-14*864e5).toISOString().slice(0,10);   // (1021) 특이사항 이력은 2주만 — 옛 표시가 오래 남는다
   RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
     if(r['점수'])(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
-    if(r['특이사항'])(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
+    if(r['특이사항']&&String(r['날짜']||'')>=since14)(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
     if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
   NEXT=await nextClinic(cls);
-  await loadLoopMiss(cls,today);
+  await loadAuto(cls,today);
   $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
   const isClosed=(sess&&sess[0]&&sess[0]['상태']==='closed');
   $('sessionstate').textContent=isClosed?'마감됨':'진행중';
@@ -6414,6 +6467,8 @@ async function selectClass(cls){
       return s?(s.includes(':')?0:s.split(',').length):0;
     }));
     if(w>0)$('c_nq').value=w;
+    /* (1021) 리뷰테스트는 폰으로 자동 채점 — 오늘 리뷰 기록이 있고 손 채점이 없으면 문항 칸을 접는다 */
+    else if(Object.values(AUTO).some(a=>a['리뷰']))$('c_nq').value=0;
   }
   // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
   gtRestore(cl&&cl[0]);
@@ -6770,7 +6825,7 @@ function wireRow(d,id){
     }
   });
   d.querySelectorAll('input,textarea').forEach(el=>{
-    el.addEventListener('input',()=>rowState(d,'dirty'));
+    el.addEventListener('input',()=>{el.classList.remove('autov');rowState(d,'dirty');});
     el.addEventListener('change',()=>save(id,d));
     el.addEventListener('blur',()=>{if(d.classList.contains('dirty'))save(id,d);});
   });
@@ -6785,7 +6840,7 @@ function renderStudents(){
     if(!c.classList.contains('na'))gtRecalc(c);
   });
   box.addEventListener('input',updateAvgs);   // 타이핑하는 동안 바로 따라온다
-  applyLoopMiss();                             // (0902) 지난 루프 미제출 → 이행률 0
+  applyAuto();                                 // (1021) 써킷 이행률·리뷰 점수 자동 채움 (빈 칸만)
   updateAvgs();
 }
 /* 반 평균 점수·이행률 — 채점 중에 화면에 떠 있어야 한다(0814 유강).
@@ -6801,7 +6856,7 @@ function updateAvgs(){
   const ihs=cards.map(c=>num(c,'이행률')).filter(v=>!isNaN(v));
   const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
   const na=cards.length-live.length,
-        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
   const out=['<span class="t">반 평균</span>'];
   cards.forEach(c=>c.classList.remove('below'));
   if(scored.length>=1){
@@ -6844,7 +6899,7 @@ function renderGrid(box,nq){
     tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${loopMissLine(id)}</td>
+      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
@@ -7199,7 +7254,7 @@ async function genComments(){
   const {data:clin}=await sb.from('clinic_roster').select('*').eq('날짜',today);
   const clinMap={};(clin||[]).forEach(r=>clinMap[r['학생ID']]=r);
   const nq=Math.max(0,parseInt($('c_nq').value)||0),
-        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):nq*2;
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
   const tname=$('c_test').value||'테스트';
   let n=0,man=0;
   csAll('.stu').forEach(card=>{
@@ -7320,7 +7375,7 @@ async function setupClinic(){
       return 1;
     };
     const tname=$('c_test').value||'테스트';
-    const full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):(Math.max(0,parseInt($('c_nq').value)||0))*2;
+    const full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
     const why={};   // 학생 카드별 사유 — 두 조건에 다 걸리면 한 줄로 합친다
     const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
     /* (0825 유강) 기출(모의)테스트는 반평균 이하 지정 제외 — 타교 시험이라 평균이 잣대가 아니다.
@@ -8690,13 +8745,43 @@ async function hwStu(id){
   // (1020) 개별과제 잡 — 이 과제가 들어간 묶음의 학생별 상태(요청·처리중·완료·실패)와 처방 요약
   const {data:jobs}=await sb.from('job_queue').select('id,상태,메시지,파라미터,결과').eq('종류','개별과제').order('id',{ascending:false}).limit(300);
   const J={}; (jobs||[]).forEach(j=>{ const p=j['파라미터']||{}; if((p['과제']||[]).map(Number).includes(id) && !J[p['학생ID']]) J[p['학생ID']]=j; });
+  // (1021) 학생별 연장 — hw_extend(schema_v41g). 연장된 학생은 그 마감까지 ⑥으로 안 잡히고, 같은 마감의 다음 과제와 한 부로 묶인다
+  const {data:exts}=await sb.from('hw_extend').select('"학생ID",마감,사유').eq('assign_id',id);
+  const X={}; (exts||[]).forEach(e=>X[e['학생ID']]=e);
+  const xcell=sid=>{ const e=X[sid];
+    return e?`<span class="badge" title="${esc(e['사유']||'')}">~${esc(fmtDue(e['마감']))}</span> <button class="ghost" onclick="hwExtClear(${id},'${esc(sid)}')">취소</button>`
+            :`<button class="ghost" onclick="hwExtSet(${id},'${esc(sid)}')">연장</button>`; };
   const jcell=sid=>{ const j=J[sid]; if(!j) return '<span class="lbl">—</span>';
     const r=(j['결과']||{})['개별']||{}; const st=j['상태'];
     return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
-  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th></tr></thead><tbody>`
-    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
+  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th><th data-nosort>연장</th></tr></thead><tbody>`
+    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td><td style="white-space:nowrap">${xcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
+    +`<div class="loadout">연장 = 그 학생만 마감을 미룬다. 날짜를 비우면 이 반의 다음 과제 마감으로 — 다음 과제와 개별과제 한 부로 묶인다. 이미 만들어진 개별과제가 있으면 연장할 수 없다.</div>`
     +`<div class="loadout">개별과제는 학생이 묶음(같은 마감의 과제)을 전부 [제출]하면 바로, 아니면 마감 때 자동으로 만들어진다. 다 만든 PDF 는 📂 과제 파일 페이지(커스텀트레이닝 묶음)에 뜬다.</div>`;
 }
+/* (1021) 학생별 과제 연장 — hw_extend_set/clear(schema_v42, 직원 함수). 빈 날짜 = 다음 과제 마감. */
+async function hwExtSet(aid,sid){
+  const name=((HWS.stu||[]).find(x=>x['학생ID']===sid)||{})['이름']||sid;
+  const d=prompt(name+' — 언제까지 미룰까?\n비우면 이 반 다음 과제 마감(다음 과제와 한 부로 묶임)\n직접 넣으려면 예: 2026-10-23 19:00','');
+  if(d===null)return;
+  let due=null;
+  if(d.trim()){ const m=d.trim().match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/);
+    if(!m) return toast('형식: 2026-10-23 19:00');
+    due=new Date(`${m[1]}T${String(m[2]||'19').padStart(2,'0')}:${m[3]||'00'}:00+09:00`).toISOString(); }
+  const why=prompt('사유 (선택)','');
+  if(why===null)return;
+  const {data,error}=await sb.rpc('hw_extend_set',{aid,sid,p_due:due,p_why:why||null});
+  if(error||!data||data['오류']) return toast('연장 못 함: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(name+' 연장 ~'+fmtDue(data['마감'])); hwRefreshStu(aid);
+}
+async function hwExtClear(aid,sid){
+  const name=((HWS.stu||[]).find(x=>x['학생ID']===sid)||{})['이름']||sid;
+  if(!confirm(name+' 연장을 취소할까? 원래 마감으로 돌아간다(이미 지났으면 바로 미이행으로 잡힌다).'))return;
+  const {data,error}=await sb.rpc('hw_extend_clear',{aid,sid});
+  if(error||!data||data['오류']) return toast('취소 못 함: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(name+' 연장 취소'); hwRefreshStu(aid);
+}
+async function hwRefreshStu(aid){ await hwList(); hwStu(aid); }
 async function hwQueue(){
   const box=$('hw_queue'), all=$('hw_qall').checked;
   let q=sb.from('hw_question').select('id,assign_id,"학생ID",반,번호,문항ID,메모,시각,상태,대면,재질문,조교메모,hw_assign(세트키,과목,단원코드,라운드,날짜)').in('상태',['대기','답변']).order('시각');
