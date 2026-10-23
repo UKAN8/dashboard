@@ -2967,51 +2967,114 @@ const META_INT = ['학년', '시행년', '학기', '문항수', '총점', '등�
   '등급컷4', '등급컷5하한', '응시자수'];
 const metaFind = (st, r) => metaFindIn(st.raw.exam_meta, r);
 
-/* 뷰 8: 내신 — 학교 시험 원점수에 등급을 붙여서 본다 */
+/* 뷰 8: 내신 — 시험 하나를 골라 반·학생별로 본다 (1023 개편 — 유강 "내신시험 결과를 볼 수 있는 페이지")
+ * 원천 둘: school_exam(확보 기록, 1학기까지) + 시험 후 설문(ex26m2_s — 2학기 중간 점수가 여기에만 있다).
+ * 설문 시험은 재원 학생 전원을 깔고 미응답을 드러낸다. 등급은 exam_meta 가 있을 때만(컷은 예상 추정치).
+ * 반 표기는 마스터(학년+반)로 푼다 — school_exam 의 반은 '1'·'T' 같은 축약이었다.
+ * 새 시험 설문을 만들면 EXM_SURVEYS 에 한 줄 더한다.
+ */
+const EXM_SURVEYS = [{ key: 'ex26m2_s', y: 2026, sem: 2, kind: '중간' }];
+let EXM = { st: null, ex: null, ban: '*', sv: null };
 function viewExam(st) {
-  const rows = st.raw.school_exam.filter(r => (r['상태'] || '확보') === '확보' && r['점수'] !== '' && r['점수'] != null)
-    .map(r => {
-      const m = metaFind(st, r), sc = Number(r['점수']);
-      const real = String(r['등급'] || '').trim();
-      const g = real ? Math.round(Number(real)) : metaGrade(sc, m);
-      return {
-        r, m, sc, g, src: real ? '실측' : (g != null ? '추정' : null),
-        read: real ? `${g}등급 (실측${m && mi(m, '등급컷1') != null ? ' · 예상컷 ' + mi(m, '등급컷1') : ''})` : metaRead(sc, m),
-        gap: m && mi(m, '등급컷1') != null ? Math.round((sc - mi(m, '등급컷1')) * 10) / 10 : null,
-        key: [r['시행년'], r['학기'], r['시험구분'] === '중간' ? 0 : 1].join('-'),
-      };
-    })
-    .sort((a, b) => (b.key + b.r['이름']).localeCompare(a.key + a.r['이름'], 'ko'));
-  const g1 = rows.filter(x => x.g === 1).length;
-  const cut = rows.filter(x => x.m).length;
-  const label = x => `${x.r['시행년']} ${x.r['학기']}학기 ${x.r['시험구분']}`;
-
-  // 내신.csv 의 반은 축약(A·S·T·미적)이라 마스터의 반(고1A…)을 우선 쓴다
-  const row = x => `<div class="cl-row"><b>${E(String(x.sc))}점</b> `
-    + `${st.byName[x.r['이름']] ? slink(st.byName[x.r['이름']]) : `<span class="nm">${E(x.r['이름'])}</span>`}`
-    + ` <span class="ban">${E((st.byName[x.r['이름']] || {}).ban || x.r['반'] || '')}</span>`
-    + `${x.g != null ? chip(gradeCls(x.g), `${x.g}등급 ${x.src}`) : chip('na', '등급 미상')}`
-    + `<span class="dim">${E(x.r['학교'] || '')} · ${E(x.read)}`
-    + `${x.gap != null ? ` · 1등급컷 ${x.gap >= 0 ? '+' : ''}${x.gap}` : ''}</span></div>`;
-
-  let out = '', cur = null;
-  rows.forEach(x => {
-    const L = label(x);
-    if (L !== cur) { if (cur !== null) out += '</div></div>'; out += `<div class="card cl-day"><div class="cl-date">${E(L)}</div><div>`; cur = L; }
-    out += row(x);
-  });
-  out = rows.length ? out + '</div></div>' : '<div class="dim">확보된 내신 기록이 없다</div>';
-
-  return '<section class="view" id="v-exam">'
-    + `<h2>내신 — 학교 시험 <span class="cnt">${rows.length}</span>`
-    + '<span class="dim" style="font-size:12px"> 원점수만 보면 오독한다. 등급컷은 예상 추정치다</span></h2>'
-    + '<div class="kpis">'
-    + `<div class="kpi"><div class="lbl">확보 기록</div><div class="big">${rows.length}<small>건</small></div></div>`
-    + `<div class="kpi"><div class="lbl">1등급권</div><div class="big">${g1}<small>건</small></div></div>`
-    + `<div class="kpi"><div class="lbl">컷 붙은 기록</div><div class="big">${cut}<small>/${rows.length}</small></div></div>`
-    + `<div class="kpi"><div class="lbl">학교</div><div class="big">${new Set(rows.map(x => 학교키(x.r['학교']))).size}<small>곳</small></div></div></div>`
-    + `<div class="grid one-grid">${out}</div></section>`;
+  EXM.st = st;
+  return '<section class="view" id="v-exam"><h2>내신 결과 <span class="cnt" id="exm-cnt"></span>'
+    + '<span class="dim" style="font-size:12px"> 등급컷은 예상 추정치</span></h2>'
+    + '<div class="toolbar" id="exm-bar"></div><div id="exm-body"><div class="dim">불러오는 중…</div></div></section>';
 }
+async function exmLoad() {
+  if (EXM.sv === null) {
+    EXM.sv = [];
+    try {
+      const keys = EXM_SURVEYS.map(x => x.key);
+      const { data, error } = await sb.from('survey_response').select('설문키,학생ID,반,답,제출시각').in('설문키', keys).limit(5000);
+      if (!error) EXM.sv = data || [];
+    } catch (e) {}
+  }
+  exmDraw();
+}
+function exmBuild() {
+  const st = EXM.st, raw = st.raw;
+  const mid = {}, mnm = {};                                   // 마스터: 학생ID·이름 → {반, 학교, 학년, 재원}
+  (raw.students || []).forEach(r => {
+    const o = { ban: ((r['학년'] || '') + (r['반'] || '')).trim(), sch: (r['학교'] || '').trim(), gr: String(r['학년'] || '').replace(/\D/g, ''), on: (r['상태'] || '') === '재원', sid: r['학생ID'], name: (r['이름'] || '').trim() };
+    if (r['학생ID']) mid[r['학생ID']] = o;
+    if (o.name && (!mnm[o.name] || o.on)) mnm[o.name] = o;
+  });
+  const exams = {};                                           // key → {label, rows:{이름→row}}
+  const keyOf = (y, sem, kind) => `${y}-${sem}-${kind === '중간' ? 0 : 1}`;
+  const ex = (y, sem, kind, src) => { const k = keyOf(y, sem, kind); return exams[k] || (exams[k] = { k, label: `${y} ${sem}학기 ${kind}`, src, rows: {} }); };
+  const grade = (sc, info, y, sem, kind) => {
+    const m = metaFindIn(raw.exam_meta, { 학교: info.sch, 학년: info.gr, 시행년: y, 학기: sem, 시험구분: kind });
+    const g = metaGrade(sc, m), c1 = m ? mi(m, '등급컷1') : null;
+    return { g, gap: c1 != null && sc != null ? Math.round((sc - c1) * 10) / 10 : null };
+  };
+  raw.school_exam.filter(r => (r['상태'] || '확보') === '확보' && r['점수'] !== '' && r['점수'] != null).forEach(r => {
+    const nm = (r['이름'] || '').trim(), info = mnm[nm] || { ban: r['반'] || '', sch: r['학교'] || '', gr: String(r['학년'] || '').replace(/\D/g, '') };
+    const y = r['시행년'], sem = r['학기'], kind = r['시험구분'], sc = Number(r['점수']);
+    const real = String(r['등급'] || '').trim();
+    const gg = grade(sc, { ...info, sch: r['학교'] || info.sch, gr: String(r['학년'] || info.gr).replace(/\D/g, '') }, y, sem, kind);
+    ex(y, sem, kind, '내신 기록').rows[nm] = { nm, sid: info.sid, ban: info.ban || r['반'] || '', sch: r['학교'] || info.sch, sc, g: real ? Math.round(Number(real)) : gg.g, gsrc: real ? '실측' : '추정', gap: gg.gap };
+  });
+  EXM_SURVEYS.forEach(S => {
+    const E2 = ex(S.y, S.sem, S.kind, '시험 후 설문');
+    EXM.sv.filter(r => r['설문키'] === S.key).forEach(r => {
+      const a = r['답'] || {}, info = mid[r['학생ID']] || mnm[String(r['학생ID'] || '').split('_')[0]] || { ban: r['반'] || '' };
+      const nm = info.name || String(r['학생ID'] || '').split('_')[0];
+      const sc = a['점수'] !== '' && a['점수'] != null && isFinite(Number(a['점수'])) ? Number(a['점수']) : null;
+      const gg = grade(sc, info, S.y, S.sem, S.kind);
+      E2.rows[nm] = { nm, sid: r['학생ID'], ban: info.ban || r['반'] || '', sch: info.sch || '', sc, band: a['점수대'] || '', g: gg.g, gsrc: '추정', gap: gg.gap,
+        prevSv: a['지난점수'] !== '' && a['지난점수'] != null && isFinite(Number(a['지난점수'])) ? Number(a['지난점수']) : null,
+        chg: a['변화'] || '', guess: a['찍음'] || '', miss: [].concat(a['놓친이유'] || []).join(', '), sat: a['만족'] || '' };
+    });
+    Object.values(mid).filter(o => o.on).forEach(o => { if (!E2.rows[o.name]) E2.rows[o.name] = { nm: o.name, sid: o.sid, ban: o.ban, sch: o.sch, sc: null, none: true }; });
+  });
+  const list = Object.values(exams).sort((x, y) => y.k.localeCompare(x.k));
+  list.forEach((e, i) => {                                    // 지난 시험 점수 = 바로 앞 시험의 같은 학생
+    const prev = list[i + 1];
+    Object.values(e.rows).forEach(r => { const p = prev && prev.rows[r.nm]; r.prev = p && p.sc != null ? p.sc : (r.prevSv != null ? r.prevSv : null); });
+  });
+  return list;
+}
+function exmDraw() {
+  const bar = $('exm-bar'), body = $('exm-body'); if (!bar || !body || !EXM.st) return;
+  const list = exmBuild();
+  if (!list.length) { body.innerHTML = '<div class="dim">내신 기록이 없다</div>'; return; }
+  if (!EXM.ex || !list.some(e => e.k === EXM.ex)) EXM.ex = list[0].k;
+  const e = list.find(x => x.k === EXM.ex);
+  const all = Object.values(e.rows);
+  const bans = [...new Set(all.map(r => r.ban).filter(b => /^고\d/.test(b)))].sort();
+  const fb = (attr, v, l, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${attr}="${E(v)}">${E(l)}</button>`;
+  bar.innerHTML = list.map(x => fb('exm', x.k, x.label, EXM.ex)).join('')
+    + '<span class="dim" style="margin:0 6px">│</span>' + fb('exb', '*', '반 전체', EXM.ban) + bans.map(b => fb('exb', b, b, EXM.ban)).join('');
+  const rows = all.filter(r => EXM.ban === '*' || r.ban === EXM.ban);
+  const got = rows.filter(r => !r.none), nums = got.filter(r => r.sc != null).map(r => r.sc);
+  const up = got.filter(r => r.sc != null && r.prev != null && r.sc > r.prev).length, dn = got.filter(r => r.sc != null && r.prev != null && r.sc < r.prev).length;
+  const avg = nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length * 10) / 10 : '—';
+  const kpi = (l, v, sub) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  const sv = e.src === '시험 후 설문';
+  $('exm-cnt').textContent = got.length;
+  let html = `<div class="kpis">${kpi(sv ? '응답' : '기록', got.length, sv ? ' / ' + rows.length + '명' : '명')}${kpi('평균', avg, nums.length ? '점' : '')}`
+    + `${kpi('지난 시험보다 오름', up, '명')}${kpi('내림', dn, '명')}${kpi('1등급권', got.filter(r => r.g === 1).length, '명')}</div>`
+    + `<div class="dim" style="margin:4px 0 8px">출처 · ${E(e.src)}${sv ? ' (가채점 포함 · 정확한 점수를 안 적은 학생은 점수대로 표시)' : ''}</div>`;
+  const nmCell = r => { const s = EXM.st.byName[r.nm]; return s ? slink(s) : `<span class="nm">${E(r.nm)}</span>`; };
+  const scCell = r => r.none ? `<td data-sv="-1">${chip('na', '미응답')}</td>` : r.sc != null ? `<td class="n" data-sv="${r.sc}"><b>${E(String(r.sc))}</b></td>` : `<td class="dim" data-sv="-1">${E(r.band || '—')}</td>`;
+  const dl = r => r.sc != null && r.prev != null ? Math.round((r.sc - r.prev) * 10) / 10 : null;
+  const dCell = r => { const d = dl(r); return d == null ? `<td class="dim" data-sv="-999">${E(r.chg || '—')}</td>` : `<td class="n" data-sv="${d}" style="color:${d > 0 ? 'var(--ok,#9be3b0)' : d < 0 ? 'var(--bad,#f08a9a)' : 'inherit'}">${d > 0 ? '+' : ''}${d}</td>`; };
+  html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학교</th><th class="n">점수</th><th>등급</th><th class="n">1등급컷 대비</th><th class="n">지난 시험</th><th class="n">변화</th>`
+    + (sv ? '<th>찍은 수</th><th>놓친 이유</th><th>만족</th>' : '') + '</tr></thead><tbody>'
+    + rows.sort((x, y) => (y.sc == null ? -1 : y.sc) - (x.sc == null ? -1 : x.sc) || (x.none ? 1 : 0) - (y.none ? 1 : 0)).map(r => `<tr${r.none ? ' style="opacity:.55"' : ''}><td>${nmCell(r)}</td><td>${E(r.ban)}</td><td class="dim">${E(r.sch || '')}</td>${scCell(r)}`
+      + `<td data-sv="${r.g == null ? 99 : r.g}">${r.g != null ? chip(gradeCls(r.g), `${r.g}등급 ${r.gsrc}`) : '<span class="dim">—</span>'}</td>`
+      + `<td class="n" data-sv="${r.gap == null ? -999 : r.gap}">${r.gap == null ? '<span class="dim">—</span>' : (r.gap >= 0 ? '+' : '') + r.gap}</td>`
+      + `<td class="n" data-sv="${r.prev == null ? -1 : r.prev}">${r.prev == null ? '<span class="dim">—</span>' : E(String(r.prev))}</td>${dCell(r)}`
+      + (sv ? `<td class="dim">${E(r.guess || '')}</td><td class="dim">${E(r.miss || '')}</td><td class="dim">${E(r.sat || '')}</td>` : '') + '</tr>').join('')
+    + '</tbody></table></div>';
+  body.innerHTML = html;
+}
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('#exm-bar [data-exm],#exm-bar [data-exb]'); if (!b) return;
+  if (b.dataset.exm) { EXM.ex = b.dataset.exm; EXM.ban = '*'; } else EXM.ban = b.dataset.exb;
+  exmDraw();
+});
 
 /* 뷰 9: 클리닉 실시기록 — 지정(추가학습 탭)이 아니라 **실제로 한 것** */
 function viewClinicLog(st) {
@@ -4512,6 +4575,7 @@ function wire(st) {
     (document.getElementById(id) || document.getElementById('v-today')).classList.add('on');
     navSync(main);
     if (main === 'visits') vsLoad();
+    if (main === 'exam') exmLoad();
     if (main === 'survey') svLoad();
     if (main === 'tower') twLoad();
     if (main === 'apply') exLoad();
