@@ -661,9 +661,9 @@ body.cs-on #boot{display:none}
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="시험" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
-<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a><a href="#cs-load" data-v="cs-load" data-g="보관">성적 적재</a>
+<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a>
 </div></nav>
 <span id="state"><span id="seasonbar" title="시즌 — 고른 기간의 기록만 보인다(1023)"></span><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
@@ -3023,9 +3023,11 @@ function exmBuild() {
       let sc = a['점수'] !== '' && a['점수'] != null && isFinite(Number(a['점수'])) ? Number(a['점수']) : null, bad = '';
       if (sc != null && (sc > 100 || sc < 0)) { bad = String(a['점수']); sc = null; }   // 951·737 같은 오타 — 통계에서 빼고 '확인' 표시
       const gg = grade(sc, info, S.y, S.sem, S.kind);
+      const ex0 = E2.rows[nm];
+      if (ex0) { Object.assign(ex0, { chg: a['변화'] || '', guess: a['찍음'] || '', miss: [].concat(a['놓친이유'] || []).join(', '), sat: a['만족'] || '', sv: true }); return; }   // 성적표 점수가 정본 — 설문은 곁가지만
       E2.rows[nm] = { nm, sid: r['학생ID'], ban: info.ban || r['반'] || '', sch: info.sch || '', sc, bad, band: a['점수대'] || '', g: gg.g, gsrc: '추정', gap: gg.gap,
         prevSv: a['지난점수'] !== '' && a['지난점수'] != null && isFinite(Number(a['지난점수'])) ? Number(a['지난점수']) : null,
-        chg: a['변화'] || '', guess: a['찍음'] || '', miss: [].concat(a['놓친이유'] || []).join(', '), sat: a['만족'] || '' };
+        chg: a['변화'] || '', guess: a['찍음'] || '', miss: [].concat(a['놓친이유'] || []).join(', '), sat: a['만족'] || '', sv: true, svOnly: true };
     });
     Object.values(mid).filter(o => o.on).forEach(o => { if (!E2.rows[o.name]) E2.rows[o.name] = { nm: o.name, sid: o.sid, ban: o.ban, sch: o.sch, sc: null, none: true }; });
   });
@@ -3052,13 +3054,13 @@ function exmDraw() {
   const up = got.filter(r => r.sc != null && r.prev != null && r.sc > r.prev).length, dn = got.filter(r => r.sc != null && r.prev != null && r.sc < r.prev).length;
   const avg = nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length * 10) / 10 : '—';
   const kpi = (l, v, sub) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
-  const sv = e.src === '시험 후 설문';
+  const sv = e.src === '시험 후 설문' || all.some(r => r.sv || r.guess);
   $('exm-cnt').textContent = got.length;
   let html = `<div class="kpis">${kpi(sv ? '응답' : '기록', got.length, sv ? ' / ' + rows.length + '명' : '명')}${kpi('평균', avg, nums.length ? '점' : '')}`
     + `${kpi('지난 시험보다 오름', up, '명')}${kpi('내림', dn, '명')}${kpi('1등급권', got.filter(r => r.g === 1).length, '명')}</div>`
-    + `<div class="dim" style="margin:4px 0 8px">출처 · ${E(e.src)}${sv ? ' (가채점 포함 · 정확한 점수를 안 적은 학생은 점수대로 표시)' : ''}</div>`;
+    + `<div class="dim" style="margin:4px 0 8px">출처 · ${E(e.src)}${sv ? ' · 찍은 수·놓친 이유·만족은 시험 후 설문' : ''}${got.some(r => r.svOnly) ? ' · 성적표에 없는 학생은 설문 가채점(*)' : ''}</div>`;
   const nmCell = r => { const s = EXM.st.byName[r.nm]; return s ? slink(s) : `<span class="nm">${E(r.nm)}</span>`; };
-  const scCell = r => r.none ? `<td data-sv="-1">${chip('na', '미응답')}</td>` : r.sc != null ? `<td class="n" data-sv="${r.sc}"><b>${E(String(r.sc))}</b></td>` : r.bad ? `<td class="n" data-sv="-1" title="설문에 적은 값 — 오타로 보여 통계에서 뺐다">${chip('mid', r.bad + ' 확인')}</td>` : `<td class="dim" data-sv="-1">${E(r.band || '—')}</td>`;
+  const scCell = r => r.none ? `<td data-sv="-1">${chip('na', '미응답')}</td>` : r.sc != null ? `<td class="n" data-sv="${r.sc}"><b>${E(String(r.sc))}</b>${r.svOnly ? '<span class="dim">*</span>' : ''}</td>` : r.bad ? `<td class="n" data-sv="-1" title="설문에 적은 값 — 오타로 보여 통계에서 뺐다">${chip('mid', r.bad + ' 확인')}</td>` : `<td class="dim" data-sv="-1">${E(r.band || '—')}</td>`;
   const dl = r => r.sc != null && r.prev != null ? Math.round((r.sc - r.prev) * 10) / 10 : null;
   const dCell = r => { const d = dl(r); return d == null ? `<td class="dim" data-sv="-999">${E(r.chg || '—')}</td>` : `<td class="n" data-sv="${d}" style="color:${d > 0 ? 'var(--ok,#9be3b0)' : d < 0 ? 'var(--bad,#f08a9a)' : 'inherit'}">${d > 0 ? '+' : ''}${d}</td>`; };
   html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학교</th><th class="n">점수</th><th>등급</th><th class="n">1등급컷 대비</th><th class="n">지난 시험</th><th class="n">변화</th>`
