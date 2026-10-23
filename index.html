@@ -3020,9 +3020,10 @@ function exmBuild() {
     EXM.sv.filter(r => r['설문키'] === S.key).forEach(r => {
       const a = r['답'] || {}, info = mid[r['학생ID']] || mnm[String(r['학생ID'] || '').split('_')[0]] || { ban: r['반'] || '' };
       const nm = info.name || String(r['학생ID'] || '').split('_')[0];
-      const sc = a['점수'] !== '' && a['점수'] != null && isFinite(Number(a['점수'])) ? Number(a['점수']) : null;
+      let sc = a['점수'] !== '' && a['점수'] != null && isFinite(Number(a['점수'])) ? Number(a['점수']) : null, bad = '';
+      if (sc != null && (sc > 100 || sc < 0)) { bad = String(a['점수']); sc = null; }   // 951·737 같은 오타 — 통계에서 빼고 '확인' 표시
       const gg = grade(sc, info, S.y, S.sem, S.kind);
-      E2.rows[nm] = { nm, sid: r['학생ID'], ban: info.ban || r['반'] || '', sch: info.sch || '', sc, band: a['점수대'] || '', g: gg.g, gsrc: '추정', gap: gg.gap,
+      E2.rows[nm] = { nm, sid: r['학생ID'], ban: info.ban || r['반'] || '', sch: info.sch || '', sc, bad, band: a['점수대'] || '', g: gg.g, gsrc: '추정', gap: gg.gap,
         prevSv: a['지난점수'] !== '' && a['지난점수'] != null && isFinite(Number(a['지난점수'])) ? Number(a['지난점수']) : null,
         chg: a['변화'] || '', guess: a['찍음'] || '', miss: [].concat(a['놓친이유'] || []).join(', '), sat: a['만족'] || '' };
     });
@@ -3057,7 +3058,7 @@ function exmDraw() {
     + `${kpi('지난 시험보다 오름', up, '명')}${kpi('내림', dn, '명')}${kpi('1등급권', got.filter(r => r.g === 1).length, '명')}</div>`
     + `<div class="dim" style="margin:4px 0 8px">출처 · ${E(e.src)}${sv ? ' (가채점 포함 · 정확한 점수를 안 적은 학생은 점수대로 표시)' : ''}</div>`;
   const nmCell = r => { const s = EXM.st.byName[r.nm]; return s ? slink(s) : `<span class="nm">${E(r.nm)}</span>`; };
-  const scCell = r => r.none ? `<td data-sv="-1">${chip('na', '미응답')}</td>` : r.sc != null ? `<td class="n" data-sv="${r.sc}"><b>${E(String(r.sc))}</b></td>` : `<td class="dim" data-sv="-1">${E(r.band || '—')}</td>`;
+  const scCell = r => r.none ? `<td data-sv="-1">${chip('na', '미응답')}</td>` : r.sc != null ? `<td class="n" data-sv="${r.sc}"><b>${E(String(r.sc))}</b></td>` : r.bad ? `<td class="n" data-sv="-1" title="설문에 적은 값 — 오타로 보여 통계에서 뺐다">${chip('mid', r.bad + ' 확인')}</td>` : `<td class="dim" data-sv="-1">${E(r.band || '—')}</td>`;
   const dl = r => r.sc != null && r.prev != null ? Math.round((r.sc - r.prev) * 10) / 10 : null;
   const dCell = r => { const d = dl(r); return d == null ? `<td class="dim" data-sv="-999">${E(r.chg || '—')}</td>` : `<td class="n" data-sv="${d}" style="color:${d > 0 ? 'var(--ok,#9be3b0)' : d < 0 ? 'var(--bad,#f08a9a)' : 'inherit'}">${d > 0 ? '+' : ''}${d}</td>`; };
   html += `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>학생</th><th>반</th><th>학교</th><th class="n">점수</th><th>등급</th><th class="n">1등급컷 대비</th><th class="n">지난 시험</th><th class="n">변화</th>`
