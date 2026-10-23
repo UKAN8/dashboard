@@ -3056,7 +3056,7 @@ function exmDraw() {
   const kpi = (l, v, sub) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
   const sv = e.src === '시험 후 설문' || all.some(r => r.sv || r.guess);
   $('exm-cnt').textContent = got.length;
-  let html = `<div class="kpis">${kpi(sv ? '응답' : '기록', got.length, sv ? ' / ' + rows.length + '명' : '명')}${kpi('평균', avg, nums.length ? '점' : '')}`
+  let html = `<div class="kpis">${kpi(e.src === '시험 후 설문' ? '응답' : '기록', got.length, ' / ' + rows.length + '명')}${kpi('평균', avg, nums.length ? '점' : '')}`
     + `${kpi('지난 시험보다 오름', up, '명')}${kpi('내림', dn, '명')}${kpi('1등급권', got.filter(r => r.g === 1).length, '명')}</div>`
     + `<div class="dim" style="margin:4px 0 8px">출처 · ${E(e.src)}${sv ? ' · 찍은 수·놓친 이유·만족은 시험 후 설문' : ''}${got.some(r => r.svOnly) ? ' · 성적표에 없는 학생은 설문 가채점(*)' : ''}</div>`;
   const nmCell = r => { const s = EXM.st.byName[r.nm]; return s ? slink(s) : `<span class="nm">${E(r.nm)}</span>`; };
