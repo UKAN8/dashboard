@@ -618,6 +618,7 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #nav{flex-direction:column;gap:4px;align-items:flex-start}
 #nav .ng{display:flex;gap:4px}
 #nav .ng button{font:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer}
+#nav .ng button.arch{margin-left:14px;font-weight:500;font-size:13px;opacity:.6} #nav .ng button.arch.on{opacity:1}
 #nav .ng button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
 #nav .nt{display:flex;gap:2px;flex-wrap:wrap}
 #nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav:not(:has(#nav-g button.on)) .nt a{display:none} #nav .nt a[hidden]{display:none} #nav .nt a.ext{color:var(--acc)}
@@ -648,18 +649,18 @@ body.cs-on #boot{display:none}
 
 <div id="app" class="hidden">
 <div class="topbar"><span class="brand">수학은유강<small id="hdr-date">학습현황</small></span>
-<!-- (0908 대공사) 2단 메뉴 — 위 줄은 묶음 5개, 아래 줄은 그 묶음의 탭만. navSync(app.js)가 맞춘다.
+<!-- (0908 대공사) 2단 메뉴 — 위 줄은 묶음 5개(1023 재편: 수업·학생·시험·관리·보관함), 아래 줄은 그 묶음의 탭만. navSync(app.js)가 맞춘다.
      cs-* 는 입력(콘솔, console.js·console_body.html), 나머지는 조회(app.js). -->
 <nav id="nav">
 <div class="ng" id="nav-g">
-<button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="루프">루프·추가학습</button><button data-g="자료">자료</button>
+<button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="관리">관리</button><button data-g="보관" class="arch" title="지금 운영에서 안 쓰는 탭 — 지우지 않고 모아 둠(1023)">보관함</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#today" data-v="today" data-g="수업">오늘</a><a href="#cs-clinic" data-v="cs-clinic" data-g="수업">추가학습 지정</a><a href="#cs-ct" data-v="cs-ct" data-g="수업">커스텀 트레이닝</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#cs-load" data-v="cs-load" data-g="수업">성적 적재</a><a href="#cs-staff" data-v="cs-staff" data-g="수업">조교 관리</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
-<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a><a href="#weak" data-v="weak" data-g="학생">약점</a><a href="#report" data-v="report" data-g="학생">리포트</a><a href="#visits" data-v="visits" data-g="학생">방문 기록</a><a href="#survey" data-v="survey" data-g="학생">설문</a><a href="#tower" data-v="tower" data-g="학생">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="학생">타겟 트레이닝</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#exammeta" data-v="exammeta" data-g="시험">시험메타</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
-<a href="#loop" data-v="loop" data-g="루프">루프</a><a href="#loopstu" data-v="loopstu" data-g="루프">학생별 루프</a><a href="#core" data-v="core" data-g="루프">CORE 루프</a><a href="#clinic" data-v="clinic" data-g="루프">추가학습 현황</a><a href="#apply" data-v="apply" data-g="루프">추가학습 신청</a><a href="#cliniclog" data-v="cliniclog" data-g="루프">클리닉 기록</a>
-<a href="#typemap" data-v="typemap" data-g="자료">유형맵</a><a href="#video" data-v="video" data-g="자료">영상</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
+<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exam" data-v="exam" data-g="보관">내신</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a><a href="#cs-load" data-v="cs-load" data-g="보관">성적 적재</a>
 </div></nav>
 <span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
@@ -1863,7 +1864,7 @@ async function boot(session) {
   // 0930 — 조회 로딩 중에도 아래 줄 탭을 현재 묶음만 보이게(전엔 로딩 끝날 때까지 탭 30개가 한 줄로 늘어졌다)
   if (!document.body.classList.contains('cs-on')) {
     const m0 = decodeURIComponent(location.hash || '').slice(1).split('/')[0];
-    navSync(document.querySelector(`#nav-t a[data-v="${m0}"]`) ? m0 : 'today');
+    navSync(document.querySelector(`#nav-t a[data-v="${m0}"]`) ? m0 : 'cs-console');
   }
   try {
     const raw = await loadAll();
@@ -4437,7 +4438,8 @@ function wire(st) {
     } catch (e) { host.innerHTML = `<div class="dim">불러오지 못함: ${E(String(e && e.message || e))}</div>`; delete host.dataset.loaded; }
   }
   function route() {
-    let h = decodeURIComponent(location.hash || '#today').slice(1);
+    if (!location.hash || location.hash === '#') { location.replace('#cs-console'); return; }   // 1023 첫 화면 = 수업 콘솔(오늘 탭은 보관함)
+    let h = decodeURIComponent(location.hash).slice(1);
     let [main, sub] = h.split('/');
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
@@ -4519,6 +4521,8 @@ function navSync(v) {
   const g = cur ? cur.dataset.g : (document.querySelector('#nav-g button.on') || {}).dataset?.g;
   document.querySelectorAll('#nav-g button').forEach(b => b.classList.toggle('on', b.dataset.g === g));
   document.querySelectorAll('#nav-t a').forEach(a => { a.hidden = a.dataset.g !== g; a.classList.toggle('on', a.dataset.v === v); });
+  // 1023 — 역할 때문에 탭이 다 지워진 묶음(조교의 관리 등)은 묶음 버튼도 숨긴다
+  document.querySelectorAll('#nav-g button').forEach(b => { b.hidden = !document.querySelector(`#nav-t a[data-g="${b.dataset.g}"]`); });
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('#nav-g button'); if (!b) return;
