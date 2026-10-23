@@ -937,6 +937,10 @@ async function mountLib(host,ban,school,opt){
     const r=await fetch(LIB_URL+'lib.json?v='+Math.floor(Date.now()/6e5),{cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
     LIB.data=await r.json();
+    // (1023) 내 개별과제·커스텀·퍼스널 트레이닝 PDF — 학생 토큰 RPC(schema_v44). 함수가 아직 없으면 조용히 건너뛴다.
+    LIB.mine=[];
+    try{ const tk=new URLSearchParams(location.search).get('t')||'';
+      if(tk&&typeof sb!=='undefined'){ const q=await sb.rpc('portal_hw_files',{tok:tk}); if(!q.error&&Array.isArray(q.data)) LIB.mine=q.data; } }catch(_){}
   }catch(e){ host.innerHTML='<div class="none">자료 목록을 지금은 못 불러왔어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
   drawLib(host,host._opt);
 }
@@ -956,7 +960,10 @@ function drawLib(host,opt){
     rows.push({d:d[d.length-1],ds:d.filter((x,i,a)=>a.indexOf(x)===i),t:`${g.학교} ${g.학년} ${g.종류}`,sub:g.과목,g,vs});
   });
   // (1023) 정규수업 영상 — 기말 모드에 자료실이 비던 것. 날짜 = 진도표의 수업일
-  (D.정규||[]).forEach(v=>{ if(!(v.반||[]).includes(ban)) return; rows.push({d:v.날짜,ds:[v.날짜],t:v.제목,sub:v.과목,reg:true,vs:[v]}); });
+  // (1023) 정규수업 행 = 수업 영상 + 그날 나간 써킷(문제·해설) · 단원 첫 수업일에 수업교재(문제·해설)
+  (D.정규||[]).forEach(r=>{ if(r.반!==ban) return; rows.push({d:r.날짜,ds:[r.날짜],t:r.제목,sub:r.과목,reg:true,vs:r.영상||[],ck:r.써킷}); });
+  (D.교재||[]).forEach(b=>{ if(b.반!==ban) return; rows.push({d:b.날짜,ds:[b.날짜],t:`${b.단원.replace(/^\d+\s*/,'')} 수업교재`,sub:b.과목,book:b,vs:[]}); });
+  (LIB.mine||[]).forEach(m=>{ rows.push({d:m.날짜,ds:[m.날짜],t:m.종류+(m.문항수?` · ${m.문항수}문항`:''),sub:'나만의 과제',mine:m,vs:[]}); });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   if(opt.from) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)>=opt.from));
   if(opt.to) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)<opt.to));
@@ -981,13 +988,18 @@ function drawLib(host,opt){
     const n=Math.min(rows.length,LIB.showN);
     H.push(rows.slice(0,n).map(r=>{
       const vbtn=r.vs.map(v=>`<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 수업 영상${r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':''}</a>`).join('');
-      if(r.reg) return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div><div class="rp">${vbtn}</div></div>`;
+      const lk=(u,t)=>u?`<a href="${LIB_URL+u}" target="_blank" rel="noopener">${t}</a>`:'';
+      const hd=`<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`;
+      const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
+      if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
+      if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
+      if(r.reg) return hd+`<div class="rp">${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div></div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
         +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
         +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
     if(rows.length>n) H.push(`<button type="button" class="lib-more">더 보기 (${rows.length-n}개 남음)</button>`);
   }
-  H.push(`<div class="note">${E(ban)} 수업 영상과 수업에서 본 기출테스트 시험지·해설이 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
+  H.push(`<div class="note">${E(ban)} 수업 영상 · 수업교재 · 써킷 과제 · 내 개별과제 · 수업에서 본 기출테스트 시험지·해설이 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   host.innerHTML=H.join('');
   const m=host.querySelector('.lib-more'); if(m) m.onclick=()=>{LIB.showN+=20; drawLib(host,opt);};
 }
