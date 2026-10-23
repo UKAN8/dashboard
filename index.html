@@ -619,6 +619,9 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #nav .ng{display:flex;gap:4px}
 #nav .ng button{font:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer}
 #nav .ng button.arch{margin-left:14px;font-weight:500;font-size:13px;opacity:.6} #nav .ng button.arch.on{opacity:1}
+#seasonbar{display:inline-flex;gap:2px;margin-right:8px;padding:2px;border:1px solid var(--line,rgba(255,255,255,.12));border-radius:10px}
+#seasonbar button{font:inherit;font-size:12px;padding:3px 9px;border-radius:8px;border:0;background:transparent;color:var(--tx2);cursor:pointer}
+#seasonbar button.on{background:rgba(245,160,160,.14);color:#ffd9d9}
 #nav .ng button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
 #nav .nt{display:flex;gap:2px;flex-wrap:wrap}
 #nav .nt a{padding:4px 12px;font-size:13px;border-radius:8px} #nav:not(:has(#nav-g button.on)) .nt a{display:none} #nav .nt a[hidden]{display:none} #nav .nt a.ext{color:var(--acc)}
@@ -658,11 +661,11 @@ body.cs-on #boot{display:none}
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
-<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exam" data-v="exam" data-g="보관">내신</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a><a href="#cs-load" data-v="cs-load" data-g="보관">성적 적재</a>
+<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a><a href="#cs-load" data-v="cs-load" data-g="보관">성적 적재</a>
 </div></nav>
-<span id="state"><span class="pill" id="freshness"></span><span id="who"></span>
+<span id="state"><span id="seasonbar" title="시즌 — 고른 기간의 기록만 보인다(1023)"></span><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
 <button onclick="reload()">새로고침</button><button onclick="logout()">로그아웃</button></span></div>
 <div id="boot">데이터를 불러오는 중…</div>
@@ -1867,8 +1870,9 @@ async function boot(session) {
     navSync(document.querySelector(`#nav-t a[data-v="${m0}"]`) ? m0 : 'cs-console');
   }
   try {
-    const raw = await loadAll();
+    const raw = seasonCut(await loadAll());     // 1023 시즌 — 고른 시즌 기간의 기록만 남긴다
     const st = compute(raw);
+    seasonBar();
     render(st);
     wire(st);
     $('boot').classList.add('hidden');
@@ -1918,6 +1922,54 @@ async function fetchAll(table) {
     from += page;
   }
 }
+/* ───────── 시즌 (1023 유강 "시험 한 번·한 과정이 끝나면 리셋 — 시즌별 버튼으로 감추기") ─────────
+ * 데이터는 지우지 않는다. 화면이 고른 시즌 기간의 기록만 읽는다(기본 = 맨 끝 시즌 = 지금).
+ * 새 시즌이 시작되면 SEASONS 맨 끝에 한 줄 더하고, 바로 앞 시즌의 to 를 채운다. 경계는 수업 기록 공백(시험기간)으로 잡았다.
+ * 고른 시즌은 이 브라우저에만 기억(localStorage) — 바꾸면 페이지를 다시 읽는다(render·wire 를 두 번 돌리지 않으려고).
+ */
+const SEASONS = [
+  { k: '26여름',   name: '여름방학',      from: '2026-07-01', to: '2026-08-31' },
+  { k: '26-2중간', name: '2학기 중간 대비', from: '2026-09-01', to: '2026-10-10' },
+  { k: '26-2기말', name: '2학기 기말 대비', from: '2026-10-11', to: '' },
+];
+function seasonCur() {
+  let k = null; try { k = localStorage.getItem('season'); } catch (e) {}
+  if (k === '*') return null;                                  // 전체
+  return SEASONS.find(s => s.k === k) || SEASONS[SEASONS.length - 1];
+}
+// 주간고사는 날짜 칸이 없다 — round_date(확정분) + 4회(08/16)부터 매주 일요일로 메운다(8회 0913·9회 0920 실제와 맞음)
+function wkRoundDate(raw, rd) {
+  const n = parseInt(String(rd).replace(/\D/g, '')); if (!n) return '';
+  const hit = (raw.round_date || []).find(r => parseInt(String(r['회차']).replace(/\D/g, '')) === n);
+  if (hit && hit['날짜']) return hit['날짜'];
+  return n >= 4 ? ds(new Date(D('2026-08-16').getTime() + (n - 4) * 7 * 86400000)) : '';
+}
+function seasonCut(raw) {
+  const s = seasonCur(); window.SEASON = s; window.SEASON_END = s && s.to || '';
+  if (!s) return raw;
+  const inS = d => { d = String(d || '').slice(0, 10); return !!d && d >= s.from && (!s.to || d <= s.to); };
+  const o = Object.assign({}, raw);
+  const by = (t, f) => { if (o[t]) o[t] = o[t].filter(f); };
+  by('daily_log', r => inS(r['날짜']));
+  by('class_log', r => inS(r['날짜']));
+  by('clinic_roster', r => inS(r['날짜'] || r['지정일']));
+  by('loop_submit', r => inS(r['제출시각']));
+  by('weekly_exam', r => inS(wkRoundDate(raw, r['회차'])));
+  by('wrong_answers', r => inS(r['날짜'] || (/주간/.test(r['시험종류'] || '') ? wkRoundDate(raw, r['시험명']) : '')));
+  return o;
+}
+function seasonBar() {
+  const host = document.getElementById('seasonbar'); if (!host) return;
+  const cur = window.SEASON ? window.SEASON.k : '*';
+  host.innerHTML = SEASONS.map(s => `<button data-season="${E(s.k)}" class="${s.k === cur ? 'on' : ''}" title="${E(s.from)} ~ ${E(s.to || '지금')}">${E(s.name)}</button>`).join('')
+    + `<button data-season="*" class="${cur === '*' ? 'on' : ''}" title="모든 기록">전체</button>`;
+  host.onclick = e => {
+    const b = e.target.closest('[data-season]'); if (!b || b.classList.contains('on')) return;
+    try { localStorage.setItem('season', b.dataset.season); } catch (err) {}
+    location.reload();
+  };
+}
+
 async function loadAll() {
   const res = await Promise.all(TABLES.map(fetchAll));
   const o = {};
@@ -1936,7 +1988,7 @@ function compute(raw) {
   const journal = raw.daily_log.filter(r => String(r['날짜'] || '').startsWith('20') && !ghost(r));
   const dates = [...new Set(journal.map(r => r['날짜']))].sort();
   const LAST = dates[dates.length - 1];
-  const TODAY = ds(new Date());
+  const TODAY = (window.SEASON_END && window.SEASON_END < ds(new Date())) ? window.SEASON_END : ds(new Date());   // 1023 지난 시즌은 시즌 끝날 기준
   const NEXT = ds(new Date(D(LAST).getTime() + 86400000));
   const REF = TODAY > NEXT ? TODAY : NEXT;
   const refdt = D(REF), anchor = D(LAST);
@@ -4576,6 +4628,9 @@ let VS = { rows: null, days: 7, ban: '*', mode: 'stu', stu: [] };
 
 function viewVisits(st) {
   VS.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: s.ban }));
+  // 1023 — page_visit 의 반은 축약(A·S·T)이다. 명단 밖 학생(고1T 등)이 'T' 로 찍혔다 → 마스터로 '고1T' 로 푼다
+  VS.mban = {}; (st.raw.students || []).forEach(r => { const c = ((r['학년'] || '') + (r['반'] || '')).trim(); if (r['학생ID'] && c) VS.mban[r['학생ID']] = c; });
+  VS.stu.forEach(x => { if (x.sid && !VS.mban[x.sid] && x.ban) VS.mban[x.sid] = x.ban; });
   return `<section class="view" id="v-visits">
 <h2>방문 기록 <span class="cnt" id="vs-cnt"></span></h2>
 <div class="toolbar" id="vs-bar"></div>
@@ -4601,6 +4656,7 @@ async function vsLoad(force) {
       if (data.length < 1000) break;
     }
   } catch (e) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(e.message || e)}</div>`; return; }
+  rows.forEach(r => { const c = VS.mban && VS.mban[r.학생ID]; if (c) r.반 = c; else if (/^[A-Z]$/.test(r.반 || '')) { const m = String(r.학생ID || '').match(/_(고\d[A-Z])_/); if (m) r.반 = m[1]; } });
   VS.rows = rows; vsDraw();
 }
 
