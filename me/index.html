@@ -209,6 +209,13 @@ svg.spark{display:block;margin-top:6px}
 /* 1024 조교 손풀이 */
 .qimg{margin-top:8px;display:flex;flex-direction:column;gap:6px}
 .qimg img{width:100%;max-width:520px;border-radius:10px;border:1px solid rgba(127,127,127,.25);display:block}
+
+/* 1024 쌤 답에 댓글 */
+.hw .q .rpl{margin-top:8px}
+.hw .q .rc{padding:3px 0 3px 10px;border-left:2px solid rgba(245,160,160,.35);margin-bottom:3px;overflow-wrap:anywhere}
+.hw .q .rf{display:flex;gap:6px;margin-top:4px}
+.hw .q .rf input{flex:1;margin-top:0}
+.hw .q .rf button{background:rgba(245,160,160,.12);border:1px solid rgba(245,160,160,.35);color:var(--tx);border-radius:9px;padding:0 12px;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -1091,6 +1098,8 @@ function drawHW(){
         +(hwFiles(q.id).length?`<div class="qimg"><div class="dim" style="font-size:12px">${E(hwWho(q.id)||'조교쌤')} 손풀이 · 누르면 크게 보여요</div>${hwFiles(q.id).map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
         +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
         +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
+        +(hwAns(q.id)&&!Array.isArray(hwAns(q.id))?`<div class="rpl">${(hwAns(q.id).댓글||[]).map(c=>`<div class="rc"><span class="dim">나</span> ${E(c.내용)}</div>`).join('')}`
+          +`<div class="rf"><input data-rpl="${q.id}" maxlength="300" placeholder="${E(hwWho(q.id)||'쌤')}에게 한마디 (고마워요 · 여기가 또 궁금해요)"><button type="button" data-rplgo="${q.id}">보내기</button></div></div>`:'')
         +`</div>`).join('')}`:'')
       +`<div class="done">`+(lock
         ?`<div class="dim">${a.제출?'<b class="good">제출 완료</b> · ':''}마감 지남${n-done?` · 체크 안 한 ${n-done}문항은 '안 풀었음'으로 셌어요`:''}</div>`
@@ -1110,6 +1119,14 @@ function drawHW(){
     try{ const r=await sb.rpc('hw_ack',{tok:HW.tok,qid:+b.dataset.ack,ok:b.dataset.ok==='1'}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
     await mountHW(HW.tok);
   });
+  // (1024) 쌤 답에 댓글 — hw_reply(schema_v46c)
+  host.querySelectorAll('[data-rplgo]').forEach(b=>b.onclick=async()=>{
+    const i=host.querySelector(`[data-rpl="${b.dataset.rplgo}"]`), t=(i&&i.value||'').trim(); if(!t) return;
+    b.disabled=true;
+    try{ const r=await sb.rpc('hw_reply',{tok:HW.tok,qid:+b.dataset.rplgo,p_text:t}); if(r.error||!r.data||r.data.오류){ alertHW((r.data&&r.data.오류)||'보내지 못했어요.'); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
+    await mountHW(HW.tok);
+  });
+  host.querySelectorAll('[data-rpl]').forEach(i=>i.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); const b=host.querySelector(`[data-rplgo="${i.dataset.rpl}"]`); if(b) b.click(); } });
   host.querySelectorAll('[data-sub],[data-unsub]').forEach(b=>b.onclick=async ev=>{
     ev.preventDefault(); const undo=!!b.dataset.unsub, a=HW.list[+(b.dataset.sub||b.dataset.unsub)];
     try{ const r=await sb.rpc('hw_submit',{tok:HW.tok,aid:a.id,undo}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); return; } a.제출=!undo; drawHW(); }catch(e){ alertHW(); }
