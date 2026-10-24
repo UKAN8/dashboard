@@ -656,6 +656,30 @@ body.cs-on #boot{display:none}
 #v-qa .qa-done .qa-th img{height:44px}
 #v-qa .qa-done td{vertical-align:top}
 #v-qa .qa-msg{margin:6px 0 0 34px;font-size:12.5px}
+
+/* 1024 답변 기록 · 피드백 · 내 답변 */
+#v-qa .qa-rps,#v-qa .qa-fb{margin:6px 0 0 34px;font-size:13px}
+#v-qa .qa-done .qa-rps,#v-qa .qa-done .qa-fb{margin:0}
+.qa-rp{padding:2px 0}
+.qa-fb{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.qa-fbi{padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.06);font-size:12.5px}
+.qa-fbi.good{background:rgba(155,227,176,.12)} .qa-fbi.mid{background:rgba(245,200,120,.12)}
+.qa-fbt{font:inherit;font-size:12.5px;padding:4px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;min-width:140px}
+.qa-fbb{font:inherit;font-size:12px;padding:4px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:transparent;color:inherit;cursor:pointer}
+#v-qame .qm-hero{font-size:15px;line-height:1.7}
+#v-qame .qm-hi b{color:#ffd9d9}
+#v-qame .qm-st{font-weight:800;margin-bottom:8px}
+#v-qame .qm-bd{display:flex;gap:6px;flex-wrap:wrap}
+#v-qame .qm-b{padding:4px 10px;border-radius:999px;font-size:12.5px;background:rgba(255,255,255,.04);color:var(--tx2);opacity:.55}
+#v-qame .qm-b.on{opacity:1;background:rgba(245,160,160,.16);color:#ffd9d9}
+#v-qame .qm-nx{margin-top:10px;font-size:13px}
+#v-qame .qm-nx .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}
+#v-qame .qm-nx .bar i{display:block;height:100%;background:var(--acc)}
+#v-qame .qm-fb{padding:7px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.04);font-size:13.5px}
+#v-qame .qm-fb.good{background:rgba(155,227,176,.10)} #v-qame .qm-fb.mid{background:rgba(245,200,120,.10)}
+#v-qame .qm-new{font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;background:#f08a9a;color:#000;margin-right:6px}
+#v-qame .qm-fd{padding:4px 0;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,.05)}
+.qm-dot{display:inline-block;min-width:16px;padding:0 5px;border-radius:8px;background:#f08a9a;color:#000;font-size:11px;font-weight:800;text-align:center}
 </style></head><body>
 
 <div id="login">
@@ -684,7 +708,7 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="관리">관리</button><button data-g="보관" class="arch" title="지금 운영에서 안 쓰는 탭 — 지우지 않고 모아 둠(1023)">보관함</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#qame" data-v="qame" data-g="수업">내 답변</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
 <a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="시험" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
@@ -1872,6 +1896,7 @@ async function boot(session) {
   $('login').classList.add('hidden'); $('app').classList.remove('hidden');
   /* 0816 — 조교(staff)는 영상탭 비노출. 탭만 지우면 주소로 들어올 수 있어 route()도 같이 막는다. */
   window.ROLE = prof.role || 'staff';
+  window.ME_EMAIL = String(session.user.email || '').toLowerCase(); window.ME_NAME = prof.이름 || '';   // 1024 내 답변
   window.VS_OK = session.user.id === VS_OWNER;       // 0928 방문 기록 — 역할이 아니라 계정으로
   if (!window.VS_OK) { const vv = document.querySelector('#nav a[data-v="visits"]'); if (vv) vv.remove(); }
   if (window.ROLE !== 'admin') {
@@ -1888,6 +1913,7 @@ async function boot(session) {
      ⚠ 조회 데이터 로딩(loadAll)보다 **먼저** 부른다. 콘솔은 자기 표만 읽으므로 조회가
        느리거나 실패해도 입력은 살아 있어야 한다 — 수업 중에 못 쓰면 그게 사고다. */
   if (typeof csBoot === 'function') { try { csBoot(prof); } catch (e) { console.error('콘솔 기동 실패', e); } }
+  setTimeout(() => { try { qmBadge(); } catch (e) {} }, 2500);   // 1024 안 읽은 피드백
   csRoute();      // 주소가 이미 #cs-… 면 조회를 기다리지 않고 바로 연다
   // 0930 — 조회 로딩 중에도 아래 줄 탭을 현재 묶음만 보이게(전엔 로딩 끝날 때까지 탭 30개가 한 줄로 늘어졌다)
   if (!document.body.classList.contains('cs-on')) {
@@ -2169,6 +2195,7 @@ function render(st) {
     viewGichul(st),                                      // 0907 기출테스트 결과
     viewScore(st),                                       // 1005 점수표 (학생×시험지)
     viewQa(st),                                          // 1024 질문 모음 (조교)
+    viewQame(st),                                        // 1024 내 답변 (조교 본인)
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
     viewSurvey(st),                                      // 0930 설문 (관리자)
     viewTower(st),                                       // 0930 개념의 탑 등반 기록 (관리자)
@@ -4588,7 +4615,7 @@ function wire(st) {
     if (csRoute()) return;              // 0815 병합 — cs-* 는 수업 콘솔이 가져간다
     document.body.classList.remove('cs-on');
     if (!['today', 'class', 'student', 'clinic', 'loop', 'loopstu', 'report', 'weak',
-      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply', 'haebu', 'core', 'qa'].includes(main)) main = 'today';
+      'exam', 'cliniclog', 'exammeta', 'sched', 'typemap', 'video', 'gichul', 'score', 'visits', 'survey', 'tower', 'apply', 'haebu', 'core', 'qa', 'qame'].includes(main)) main = 'today';
     if ((main === 'survey' || main === 'tower') && window.ROLE !== 'admin') main = 'today';   // 0930 개념의 탑도 관리자만(tower_log admin_all)
     if ((main === 'apply' || main === 'haebu' || main === 'core') && window.ROLE !== 'admin') main = 'today';           // 1009 추가학습 신청은 관리자만(extra_study_apply admin_all)
     if (main === 'survey' && window.ROLE !== 'admin') main = 'today';          // 0930 설문 응답은 관리자만(학부모 답 포함)
@@ -4606,6 +4633,7 @@ function wire(st) {
     if (main === 'visits') vsLoad();
     if (main === 'exam') exmLoad();
     if (main === 'qa') qaLoad();
+    if (main === 'qame') qmLoad();
     if (main === 'survey') svLoad();
     if (main === 'tower') twLoad();
     if (main === 'apply') exLoad();
@@ -4742,6 +4770,7 @@ async function qaLoad() {
     (s1.data || []).forEach(s => QA.sets[s.세트키] = s);
     (s2.data || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
   }
+  await qaLoadExtra();
   qaDraw();
 }
 function qaGroups(rows) {
@@ -4813,6 +4842,7 @@ function qaDraw() {
       + (g.pdf && g.pdf.length ? `<div class="qa-pdf">${g.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : `<div class="qa-pdf dim">써킷 PDF 를 찾지 못함 — 책자에서 ${E(String(g.no))}번</div>`)
       + `<div class="qa-list">${stuList}</div>`
       + (g.files.length || g.memo || g.who ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(qaTime(g.at)) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
+      + (QA.show === 'sent' ? qaRepliesHtml(qs) + qaFbHtml(qaLastLog(qs[0].id)) : '')
       + `<div class="qa-form">`
       + `<label class="qa-up">📷 손풀이 사진 올리기<input type="file" accept="image/*" multiple data-qaf="${E(g.k)}" hidden></label>`
       + `${pend.length ? `<span class="qa-pend">${pend.map((f, j) => `<span><img src="${f.prev}"><button data-qax="${E(g.k)}|${j}" title="빼기">×</button></span>`).join('')}</span>` : ''}`
@@ -4835,11 +4865,12 @@ function qaDrawDone(body) {
     + '<div class="dim" style="margin:4px 0 8px">최근 30일 · 학생이 포털에서 [이해했어요]를 누른 질문 · 조교 칸 수 = 답한 질문 수(학생 확인 대기 포함)</div>';
   if (!rows.length) { body.innerHTML = html + '<div class="card"><div class="dim">해결된 질문이 없다.</div></div>'; return; }
   const nm = sid => String(sid || '').split('_')[0];
-  html += `<div class="card vs-wrap"><table class="vs-tbl qa-done"><thead><tr><th>문항</th><th>학생</th><th>반</th><th>답한 조교</th><th>답한 때</th><th>해결한 때</th><th class="n">다시 모름</th><th data-nosort>보낸 답</th><th data-nosort>PDF</th></tr></thead><tbody>`
+  html += `<div class="card vs-wrap"><table class="vs-tbl qa-done"><thead><tr><th>문항</th><th>학생</th><th>반</th><th>답한 조교</th><th>답한 때</th><th>해결한 때</th><th class="n">다시 모름</th><th data-nosort>보낸 답</th><th data-nosort>학생 댓글</th><th data-nosort>피드백</th><th data-nosort>PDF</th></tr></thead><tbody>`
     + gs.flatMap(g => g.qs.map(q => `<tr><td data-sv="${E(g.label + ' ' + String(g.no).padStart(3, '0'))}"><b>${E(g.label)} · ${E(String(g.no))}번</b>${g.qs.length > 1 ? ' ' + chip('bad', `공통 ${g.qs.length}`) : ''}</td>`
       + `<td>${E(nm(q['학생ID']))}</td><td>${E(q.반 || '')}</td><td>${E(q.답변자 || (q.해결자 ? String(q.해결자).split('@')[0] : '—'))}</td>`
       + `<td data-sv="${E(q.답변시각 || '')}">${tm(q.답변시각)}</td><td data-sv="${E(q.해결시각 || '')}">${tm(q.해결시각)}</td><td class="n">${q.재질문 || 0}</td>`
       + `<td>${q.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(q.조교메모 || '')}${Array.isArray(q.풀이) && q.풀이.length ? `<span class="qa-th">${q.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이"></a>`).join('')}</span>` : ''}</td>`
+      + `<td>${qaRepliesHtml([q])}</td><td>${qaFbHtml(qaLastLog(q.id))}</td>`
       + `<td>${(g.pdf || []).map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k}</a>`).join(' · ')}</td></tr>`)).join('')
     + '</tbody></table></div>';
   body.innerHTML = html;
@@ -4898,6 +4929,160 @@ document.addEventListener('change', async ev => {
   for (const file of [...inp.files]) { try { list.push(await qaShrink(file)); } catch (e) {} }
   qaDraw();
 });
+
+/* ───────── 답변 기록 · 학생 댓글 · 피드백 · 내 답변 (1024 유강 "조교 답변에 내가 피드백, 학생이 쌤 답에 다시 답,
+ * 피드백은 해당 조교만 본인 페이지에서, 누적 답변 현황·학생 대댓글 모음으로 긍정적 경험·성취감") ─────────
+ * 표 = schema_v46c: hw_qa_log(답 한 번 = 한 줄, 반응) · hw_qa_reply(학생 댓글) · hw_qa_feedback(유강 → 조교, 조교는 자기 것만 RLS).
+ */
+const QA_SHORT = n => { n = String(n || '').trim(); if (!n) return ''; if (/T$/.test(n)) return n; return (n.length >= 3 ? n.slice(1) : n) + 'T'; };
+function qaInfo(r) {
+  const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null, s = a.세트키 && QA.sets[a.세트키];
+  const o = { label: s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim(), no: r.번호, pdf: [] };
+  const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷);
+  if (lr) {
+    const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
+    o.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
+  }
+  return o;
+}
+async function qaEnsureMeta(rows) {
+  if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
+  const keys = [...new Set(rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
+  if (keys.length) {
+    const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
+    (s1.data || []).forEach(s => QA.sets[s.세트키] = s);
+    (s2.data || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
+  }
+}
+async function qaIn(table, col, ids, sel) {
+  const out = []; ids = [...new Set(ids)].filter(x => x != null);
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await sb.from(table).select(sel || '*').in(col, ids.slice(i, i + 200));
+    if (error) return { error }; out.push(...(data || []));
+  }
+  return { data: out };
+}
+// 질문 모음이 쓰는 기록 — 질문별 마지막 답 기록, 댓글, 피드백(관리자는 전부, 조교는 자기 것만)
+async function qaLoadExtra() {
+  const ids = (QA.rows || []).concat(QA.done || []).map(r => r.id);
+  QA.logs = {}; QA.replies = {}; QA.fb = {}; QA.v46c = false;
+  const L = await qaIn('hw_qa_log', 'qid', ids); if (L.error) return;
+  QA.v46c = true;
+  (L.data || []).sort((a, b) => a.id - b.id).forEach(l => (QA.logs[l.qid] = QA.logs[l.qid] || []).push(l));
+  const R = await qaIn('hw_qa_reply', 'qid', ids); (R.data || []).sort((a, b) => (a.시각 || '').localeCompare(b.시각 || '')).forEach(r => (QA.replies[r.qid] = QA.replies[r.qid] || []).push(r));
+  const F = await qaIn('hw_qa_feedback', 'log_id', (L.data || []).map(l => l.id)); (F.data || []).forEach(f => (QA.fb[f.log_id] = QA.fb[f.log_id] || []).push(f));
+}
+const qaLastLog = qid => { const a = (QA.logs || {})[qid]; return a && a.length ? a[a.length - 1] : null; };
+function qaRepliesHtml(qs) {
+  const nm = sid => String(sid || '').split('_')[0];
+  const all = qs.flatMap(q => ((QA.replies || {})[q.id] || []).map(r => ({ r, q })));
+  if (!all.length) return '';
+  return `<div class="qa-rps">${all.map(({ r, q }) => `<div class="qa-rp">💬 <b>${E(nm(q['학생ID']))}</b> ${E(r.내용)} <span class="dim">${E(qaTime(r.시각))}</span></div>`).join('')}</div>`;
+}
+const QA_FB_ICON = { 칭찬: '👍', 보완: '🛠', 메모: '📝' };
+function qaFbHtml(log) {
+  if (!log) return '';
+  const list = (QA.fb || {})[log.id] || [];
+  const shown = list.map(f => `<span class="qa-fbi ${f.평가 === '칭찬' ? 'good' : f.평가 === '보완' ? 'mid' : ''}">${QA_FB_ICON[f.평가] || ''} ${E(f.내용 || f.평가)}${f.확인시각 ? ' <span class="dim">· 읽음</span>' : ''}</span>`).join('');
+  if (window.ROLE !== 'admin') return shown ? `<div class="qa-fb">${shown}</div>` : '';
+  return `<div class="qa-fb" data-lid="${log.id}" data-tutor="${E(log.조교)}"><span class="dim">피드백 → ${E(log.답변자 || log.조교.split('@')[0])}</span>${shown}`
+    + `<input class="qa-fbt" placeholder="한 줄 (선택)">`
+    + ['칭찬', '보완', '메모'].map(k => `<button class="qa-fbb" data-fbk="${k}">${QA_FB_ICON[k]} ${k}</button>`).join('') + `</div>`;
+}
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('.qa-fbb'); if (!b || window.ROLE !== 'admin') return;
+  const box = b.closest('.qa-fb'), txt = box.querySelector('.qa-fbt').value.trim();
+  b.disabled = true;
+  const { error } = await sb.from('hw_qa_feedback').insert({ log_id: +box.dataset.lid, 조교: box.dataset.tutor, 평가: b.dataset.fbk, 내용: txt || null });
+  if (error) { b.disabled = false; alert('피드백 저장 실패: ' + error.message); return; }
+  await qaLoadExtra(); if (document.getElementById('v-qame') && document.getElementById('v-qame').classList.contains('on')) qmDraw(); else qaDraw();
+});
+
+/* 내 답변 — 조교 본인 페이지. 관리자는 조교를 골라 그 화면 그대로 본다(읽음 표시는 본인이 볼 때만). */
+let QM = { email: null, staff: null, d: null };
+const QM_BADGES = [
+  ['답', 1, '첫 답변'], ['답', 10, '답변 10'], ['답', 30, '답변 30'], ['답', 50, '답변 50'], ['답', 100, '답변 100'], ['답', 200, '답변 200'], ['답', 500, '답변 500'],
+  ['이해', 1, "첫 '이해했어요'"], ['이해', 10, "'이해했어요' 10"], ['이해', 30, "'이해했어요' 30"], ['이해', 100, "'이해했어요' 100"],
+  ['학생', 5, '학생 5명 도움'], ['학생', 10, '학생 10명 도움'], ['학생', 20, '학생 20명 도움'], ['학생', 40, '학생 40명 도움'],
+  ['연속', 3, '3일 연속'], ['연속', 7, '7일 연속'],
+];
+function viewQame(st) {
+  return `<section class="view" id="v-qame"><h2>내 답변 <span class="cnt" id="qm-cnt"></span></h2>`
+    + `<div class="toolbar" id="qm-bar"></div><div id="qm-body"><div class="dim">탭을 열면 불러옵니다.</div></div></section>`;
+}
+async function qmLoad() {
+  const body = $('qm-body'); if (!body) return;
+  if (window.ROLE === 'admin' && !QM.staff) {
+    const o = await sb.rpc('staff_overview');
+    QM.staff = (o.data || []).filter(x => x.role === 'staff').map(x => ({ email: String(x.email).toLowerCase(), name: x.이름 || x.email.split('@')[0] }));
+  }
+  if (!QM.email) QM.email = window.ROLE === 'admin' ? ((QM.staff || [])[0] || {}).email : window.ME_EMAIL;
+  if (!QM.email) { body.innerHTML = '<div class="dim">조교 명단이 비어 있다.</div>'; return; }
+  body.innerHTML = '<div class="dim">불러오는 중…</div>';
+  const L = await sb.from('hw_qa_log').select('*').eq('조교', QM.email).order('시각', { ascending: false }).limit(3000);
+  if (L.error) { body.innerHTML = `<div class="dim">답변 기록 표가 아직 없다 — schema_v46c 를 SQL Editor 에서 Run. (${E(L.error.message)})</div>`; return; }
+  const logs = L.data || [];
+  const Q = await qaIn('hw_question', 'id', logs.map(l => l.qid), 'id,번호,"문항ID",assign_id,반,"학생ID",상태,재질문,hw_assign(세트키,과목,단원코드,라운드,날짜,반)');
+  const qmap = {}; (Q.data || []).forEach(q => qmap[q.id] = q);
+  await qaEnsureMeta(Q.data || []);
+  const R = await qaIn('hw_qa_reply', 'log_id', logs.map(l => l.id));
+  const F = await sb.from('hw_qa_feedback').select('*').eq('조교', QM.email).order('시각', { ascending: false }).limit(500);
+  QM.d = { logs, qmap, replies: R.data || [], fb: F.error ? [] : (F.data || []) };
+  qmDraw();
+  const unread = QM.d.fb.filter(f => !f.확인시각).map(f => f.id);
+  if (unread.length && QM.email === window.ME_EMAIL) { await sb.rpc('qa_feedback_seen', { ids: unread }); qmBadge(); }
+}
+function qmDraw() {
+  const bar = $('qm-bar'), body = $('qm-body'); if (!bar || !body || !QM.d) return;
+  const { logs, qmap, replies, fb } = QM.d;
+  const who = (QM.staff || []).find(s => s.email === QM.email);
+  const fullName = (logs[0] && logs[0].답변자) || (who && who.name) || window.ME_NAME || QM.email.split('@')[0];
+  bar.innerHTML = window.ROLE === 'admin' ? (QM.staff || []).map(s => `<button class="fbtn${s.email === QM.email ? ' on' : ''}" data-qm="${E(s.email)}">${E(s.name)}</button>`).join('')
+    + '<span class="dim" style="margin-left:8px">관리자 보기 — 조교 본인 화면과 같다</span>' : '';
+  const nm = sid => String(sid || '').split('_')[0];
+  const stu = new Set(logs.map(l => l['학생ID'])).size, nOk = logs.filter(l => l.반응 === '이해').length, nNo = logs.filter(l => l.반응 === '모름').length;
+  const wk = Date.now() - 7 * 864e5, nWk = logs.filter(l => Date.parse(l.시각) >= wk).length;
+  const days = new Set(logs.map(l => { const d = new Date(l.시각); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }));
+  let streak = 0; for (let i = 0; i < 400; i++) { const d = new Date(Date.now() - i * 864e5), k = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); if (days.has(k)) streak++; else if (i > 0) break; }
+  const val = { 답: logs.length, 이해: nOk, 학생: stu, 연속: streak };
+  const got = QM_BADGES.filter(([k, n]) => val[k] >= n), next = ['답', '이해', '학생'].map(k => QM_BADGES.find(([k2, n]) => k2 === k && val[k] < n)).filter(Boolean);
+  $('qm-cnt').textContent = logs.length;
+  const kpi = (l, v, sub) => `<div class="kpi"><div class="lbl">${l}</div><div class="big">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let h = `<div class="card qm-hero"><div class="qm-hi">${logs.length ? `<b>${E(QA_SHORT(fullName))}</b>, 지금까지 학생 <b>${stu}명</b>의 막힌 문제 <b>${logs.length}개</b>를 풀어 줬어요.` : `<b>${E(QA_SHORT(fullName))}</b>, 첫 답변을 기다리고 있어요. 질문 모음 1번부터 시작해 보세요.`}</div>`
+    + `${nOk ? `<div class="dim">학생들이 ‘이해했어요’를 <b>${nOk}번</b> 눌렀어요.${nWk ? ` 이번 주에만 ${nWk}개 답했어요.` : ''}</div>` : ''}</div>`;
+  h += `<div class="kpis">${kpi('누적 답변', logs.length, '개')}${kpi('도와준 학생', stu, '명')}${kpi("'이해했어요'", nOk, nOk + nNo ? ` · ${Math.round(100 * nOk / (nOk + nNo))}%` : '')}${kpi('이번 주', nWk, '개')}${kpi('연속 답변', streak, '일')}</div>`;
+  h += `<div class="card"><div class="qm-st">배지</div><div class="qm-bd">${QM_BADGES.map(([k, n, t]) => `<span class="qm-b${val[k] >= n ? ' on' : ''}" title="${E(t)}">${val[k] >= n ? '🏅' : '🔒'} ${E(t)}</span>`).join('')}</div>`
+    + next.map(([k, n, t]) => `<div class="qm-nx"><span>다음 배지 <b>${E(t)}</b>까지 ${n - val[k]}</span><div class="bar"><i style="width:${Math.min(100, Math.round(100 * val[k] / n))}%"></i></div></div>`).join('') + `</div>`;
+  // 유강쌤 피드백 — 본인만 본다(RLS)
+  const qlab = qid => { const q = qmap[qid]; if (!q) return ''; const o = qaInfo(q); return `${o.label} · ${o.no}번`; };
+  const logById = {}; logs.forEach(l => logById[l.id] = l);
+  h += `<div class="card"><div class="qm-st">유강쌤 피드백 <span class="dim">· 나만 볼 수 있어요</span></div>`
+    + (fb.length ? fb.map(f => { const l = logById[f.log_id]; return `<div class="qm-fb ${f.평가 === '칭찬' ? 'good' : f.평가 === '보완' ? 'mid' : ''}">${!f.확인시각 && QM.email === window.ME_EMAIL ? '<span class="qm-new">NEW</span>' : ''}`
+      + `<b>${QA_FB_ICON[f.평가] || ''} ${E(f.평가)}</b> ${E(f.내용 || '')} <span class="dim">· ${E(qaTime(f.시각))}${l ? ' · ' + E(qlab(l.qid)) + ' · ' + E(nm(l['학생ID'])) : ''}</span></div>`; }).join('')
+      : '<div class="dim">아직 피드백이 없어요.</div>') + `</div>`;
+  // 학생 반응 — 댓글 + 이해했어요
+  const feed = replies.map(r => ({ t: r.시각, h: `💬 <b>${E(nm(r['학생ID']))}</b> “${E(r.내용)}”`, q: (logById[r.log_id] || {}).qid }))
+    .concat(logs.filter(l => l.반응 === '이해').map(l => ({ t: l.반응시각 || l.시각, h: `✅ <b>${E(nm(l['학생ID']))}</b> 이해했어요`, q: l.qid })))
+    .sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, 60);
+  h += `<div class="card"><div class="qm-st">학생 반응</div>` + (feed.length ? feed.map(x => `<div class="qm-fd">${x.h} <span class="dim">· ${E(qlab(x.q))} · ${E(qaTime(x.t))}</span></div>`).join('') : '<div class="dim">학생이 답을 확인하면 여기에 쌓여요.</div>') + `</div>`;
+  // 내 답변 기록
+  const rc = {}; replies.forEach(r => rc[r.log_id] = (rc[r.log_id] || 0) + 1);
+  const fc = {}; fb.forEach(f => (fc[f.log_id] = fc[f.log_id] || []).push(f));
+  h += `<div class="card vs-wrap"><div class="qm-st">답변 기록</div><table class="vs-tbl"><thead><tr><th>답한 때</th><th>문항</th><th>학생</th><th>반</th><th data-nosort>보낸 답</th><th>학생 반응</th><th class="n">댓글</th><th data-nosort>피드백</th></tr></thead><tbody>`
+    + logs.map(l => `<tr><td data-sv="${E(l.시각)}">${E(qaTime(l.시각))}</td><td>${E(qlab(l.qid))}</td><td>${E(nm(l['학생ID']))}</td><td>${E(l.반 || '')}</td>`
+      + `<td>${l.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(l.메모 || '')}${Array.isArray(l.풀이) && l.풀이.length ? ` <span class="dim">📷${l.풀이.length}</span>` : ''}</td>`
+      + `<td>${l.반응 === '이해' ? chip('good', '이해했어요') : l.반응 === '모름' ? chip('mid', '아직 모름') : '<span class="dim">확인 전</span>'}</td><td class="n">${rc[l.id] || 0}</td>`
+      + `<td>${(fc[l.id] || []).map(f => QA_FB_ICON[f.평가]).join(' ')}</td></tr>`).join('')
+    + `</tbody></table></div>`;
+  body.innerHTML = h;
+}
+document.addEventListener('click', ev => { const b = ev.target.closest('#qm-bar [data-qm]'); if (!b) return; QM.email = b.dataset.qm; QM.d = null; qmLoad(); });
+// 메뉴 '내 답변' 옆 안 읽은 피드백 수(조교 본인)
+async function qmBadge() {
+  const a = document.querySelector('#nav a[data-v="qame"]'); if (!a || window.ROLE !== 'staff') return;
+  const { count, error } = await sb.from('hw_qa_feedback').select('id', { count: 'exact', head: true }).eq('조교', window.ME_EMAIL).is('확인시각', null);
+  a.innerHTML = '내 답변' + (!error && count ? ` <span class="qm-dot">${count}</span>` : '');
+}
 
 /* ───────── 방문 기록 (0928, schema_v29 page_visit) ─────────
  * 학생·학부모가 포털·루프·자평·자료실을 얼마나 여는지. 데이터는 page_visit_v(보기)를 탭을 열 때 한 번 읽는다.
