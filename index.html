@@ -636,6 +636,8 @@ body.cs-on #boot{display:none}
 #v-qa .qa-g{margin-bottom:10px}
 #v-qa .qa-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #v-qa .qa-rk{min-width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:rgba(245,160,160,.16);color:#ffd9d9;font-weight:800}
+#v-qa .qa-pdf{margin:8px 0 0 34px;display:flex;gap:8px;flex-wrap:wrap;font-size:13px}
+#v-qa .qa-pdf a{padding:5px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);text-decoration:none;color:var(--acc)}
 #v-qa .qa-list{margin:8px 0 4px 34px;display:flex;flex-direction:column;gap:3px}
 #v-qa .qa-m{color:var(--tx2);margin-left:6px;font-size:13px}
 #v-qa .qa-prev{margin:6px 0 0 34px;font-size:13px}
@@ -4727,6 +4729,7 @@ async function qaLoad() {
     .in('상태', ['대기', '답변']).order('시각').limit(2000);
   if (error) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(error.message)}</div>`; return; }
   QA.rows = data || [];
+  if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
   const keys = [...new Set(QA.rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
     const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
@@ -4747,6 +4750,12 @@ function qaGroups() {
       const s = a.세트키 && QA.sets[a.세트키];
       g.label = s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim();
       g.no = r.번호; g.th = it && it.THEME; g.typ = (it && it.유형) || '';
+      // (1024 유강 "pdf 링크 — 패드로 받아서 풀어 준다") 그날 나간 써킷 PDF(자료실 lib.json 정규 행) + 그 문항 쪽
+      const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷);
+      if (lr) {
+        const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
+        g.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
+      }
     }
   });
   Object.values(G).forEach(g => {
@@ -4792,6 +4801,7 @@ function qaDraw() {
       + `<div class="qa-h"><span class="qa-rk">${QA.show === 'wait' ? i + 1 : '·'}</span><b>${E(g.label)} · ${E(String(g.no))}번</b>`
       + `${g.th != null ? `<span class="dim"> THEME ${E(String(g.th))}</span>` : ''}${g.typ ? `<span class="dim"> · ${E(g.typ)}</span>` : ''}`
       + `${g.qid ? `<span class="dim"> · ${E(g.qid)}</span>` : ''}<span style="margin-left:auto">${badges}</span></div>`
+      + (g.pdf && g.pdf.length ? `<div class="qa-pdf">${g.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : `<div class="qa-pdf dim">써킷 PDF 를 찾지 못함 — 책자에서 ${E(String(g.no))}번</div>`)
       + `<div class="qa-list">${stuList}</div>`
       + (g.files.length || g.memo ? `<div class="qa-prev"><span class="dim">보낸 답</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
       + `<div class="qa-form">`
