@@ -653,6 +653,8 @@ body.cs-on #boot{display:none}
 #v-qa .qa-face{font-size:12px;color:var(--tx2)}
 #v-qa .qa-go{font:inherit;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid rgba(245,160,160,.4);background:rgba(245,160,160,.16);color:#ffd9d9;cursor:pointer}
 #v-qa .qa-go:disabled{opacity:.5}
+#v-qa .qa-done .qa-th img{height:44px}
+#v-qa .qa-done td{vertical-align:top}
 #v-qa .qa-msg{margin:6px 0 0 34px;font-size:12.5px}
 </style></head><body>
 
@@ -4729,8 +4731,12 @@ async function qaLoad() {
     .in('상태', ['대기', '답변']).order('시각').limit(2000);
   if (error) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(error.message)}</div>`; return; }
   QA.rows = data || [];
+  // (1024) 해결됨 — 최근 30일. 학생이 [이해했어요]를 누른 것
+  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  const dn = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반)').eq('상태', '해결').gte('해결시각', since).order('해결시각', { ascending: false }).limit(1000);
+  QA.done = dn.error ? [] : (dn.data || []);
   if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
-  const keys = [...new Set(QA.rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
+  const keys = [...new Set(QA.rows.concat(QA.done).map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
     const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
     (s1.data || []).forEach(s => QA.sets[s.세트키] = s);
@@ -4738,9 +4744,9 @@ async function qaLoad() {
   }
   qaDraw();
 }
-function qaGroups() {
+function qaGroups(rows) {
   const now = Date.now(), G = {};
-  QA.rows.forEach(r => {
+  (rows || QA.rows).forEach(r => {
     const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null;
     const qid = r['문항ID'] || (it && it['문항ID']) || '';
     const k = qid || ('a' + r.assign_id + '#' + r.번호);
@@ -4769,6 +4775,8 @@ function qaGroups() {
     g.bans = [...new Set(g.qs.map(q => q.반).filter(Boolean))];
     g.files = (g.qs.find(q => Array.isArray(q.풀이) && q.풀이.length) || {}).풀이 || [];
     g.memo = (g.qs.find(q => q.조교메모) || {}).조교메모 || '';
+    const ans = g.qs.filter(q => q.답변시각).sort((x, y) => (y.답변시각 || '').localeCompare(x.답변시각 || ''))[0];
+    g.who = ans ? (ans.답변자 || String(ans.해결자 || '').split('@')[0]) : ''; g.at = ans ? ans.답변시각 : '';
   });
   return Object.values(G);
 }
@@ -4778,9 +4786,10 @@ function qaDraw() {
   const bans = [...new Set(QA.rows.map(r => r.반).filter(Boolean))].sort();
   const fb = (attr, v, l, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${attr}="${E(v)}">${E(l)}</button>`;
   const nWait = gs.filter(g => g.wait.length).length, nSent = gs.filter(g => !g.wait.length).length;
-  bar.innerHTML = fb('qas', 'wait', `답할 질문 ${nWait}`, QA.show) + fb('qas', 'sent', `답 보냄 · 학생 확인 대기 ${nSent}`, QA.show)
+  bar.innerHTML = fb('qas', 'wait', `답할 질문 ${nWait}`, QA.show) + fb('qas', 'sent', `답 보냄 · 학생 확인 대기 ${nSent}`, QA.show) + fb('qas', 'done', `해결됨 ${(QA.done || []).length}`, QA.show)
     + '<span class="dim" style="margin:0 6px">│</span>' + fb('qab', '*', '반 전체', QA.ban) + bans.map(b => fb('qab', b, b, QA.ban)).join('')
     + `<button class="fbtn" data-qar="1" style="margin-left:8px">새로고침</button>`;
+  if (QA.show === 'done') { $('qa-cnt').textContent = nWait; return qaDrawDone(body); }
   if (QA.ban !== '*') gs = gs.filter(g => g.bans.includes(QA.ban));
   gs = gs.filter(g => QA.show === 'wait' ? g.wait.length : !g.wait.length).sort((a, b) => b.score - a.score || b.stu - a.stu || a.k.localeCompare(b.k));
   $('qa-cnt').textContent = nWait;
@@ -4803,7 +4812,7 @@ function qaDraw() {
       + `${g.qid ? `<span class="dim"> · ${E(g.qid)}</span>` : ''}<span style="margin-left:auto">${badges}</span></div>`
       + (g.pdf && g.pdf.length ? `<div class="qa-pdf">${g.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : `<div class="qa-pdf dim">써킷 PDF 를 찾지 못함 — 책자에서 ${E(String(g.no))}번</div>`)
       + `<div class="qa-list">${stuList}</div>`
-      + (g.files.length || g.memo ? `<div class="qa-prev"><span class="dim">보낸 답</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
+      + (g.files.length || g.memo || g.who ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(String(g.at).slice(5, 16).replace('T', ' ')) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
       + `<div class="qa-form">`
       + `<label class="qa-up">📷 손풀이 사진 올리기<input type="file" accept="image/*" multiple data-qaf="${E(g.k)}" hidden></label>`
       + `${pend.length ? `<span class="qa-pend">${pend.map((f, j) => `<span><img src="${f.prev}"><button data-qax="${E(g.k)}|${j}" title="빼기">×</button></span>`).join('')}</span>` : ''}`
@@ -4812,6 +4821,26 @@ function qaDraw() {
       + `<button class="qa-go" data-qago="${E(g.k)}">${QA.show === 'wait' ? `${common}명에게 보내기` : '답 고쳐 다시 보내기'}</button>`
       + `</div><div class="qa-msg" id="qa-msg-${i}"></div></div>`;
   }).join('');
+}
+function qaDrawDone(body) {
+  const tm = t => t ? E(String(t).slice(5, 16).replace('T', ' ')) : '<span class="dim">—</span>';
+  let rows = QA.done || [];
+  if (QA.ban !== '*') rows = rows.filter(r => r.반 === QA.ban);
+  const gs = qaGroups(rows);
+  // 조교별 — 최근 30일에 답한 질문 수(해결 + 학생 확인 대기)
+  const cnt = {}; rows.concat(QA.rows.filter(r => r.상태 === '답변' && (QA.ban === '*' || r.반 === QA.ban))).forEach(r => { const w = r.답변자 || (r.해결자 ? String(r.해결자).split('@')[0] : ''); if (w) cnt[w] = (cnt[w] || 0) + 1; });
+  let html = `<div class="kpis">${Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([w, n]) => `<div class="kpi"><div class="lbl">${E(w)}</div><div class="big">${n}<small>건</small></div></div>`).join('') || '<div class="dim">최근 30일 답변 없음</div>'}</div>`
+    + '<div class="dim" style="margin:4px 0 8px">최근 30일 · 학생이 포털에서 [이해했어요]를 누른 질문 · 조교 칸 수 = 답한 질문 수(학생 확인 대기 포함)</div>';
+  if (!rows.length) { body.innerHTML = html + '<div class="card"><div class="dim">해결된 질문이 없다.</div></div>'; return; }
+  const nm = sid => String(sid || '').split('_')[0];
+  html += `<div class="card vs-wrap"><table class="vs-tbl qa-done"><thead><tr><th>문항</th><th>학생</th><th>반</th><th>답한 조교</th><th>답한 때</th><th>해결한 때</th><th class="n">다시 모름</th><th data-nosort>보낸 답</th><th data-nosort>PDF</th></tr></thead><tbody>`
+    + gs.flatMap(g => g.qs.map(q => `<tr><td data-sv="${E(g.label + ' ' + String(g.no).padStart(3, '0'))}"><b>${E(g.label)} · ${E(String(g.no))}번</b>${g.qs.length > 1 ? ' ' + chip('bad', `공통 ${g.qs.length}`) : ''}</td>`
+      + `<td>${E(nm(q['학생ID']))}</td><td>${E(q.반 || '')}</td><td>${E(q.답변자 || (q.해결자 ? String(q.해결자).split('@')[0] : '—'))}</td>`
+      + `<td data-sv="${E(q.답변시각 || '')}">${tm(q.답변시각)}</td><td data-sv="${E(q.해결시각 || '')}">${tm(q.해결시각)}</td><td class="n">${q.재질문 || 0}</td>`
+      + `<td>${q.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(q.조교메모 || '')}${Array.isArray(q.풀이) && q.풀이.length ? `<span class="qa-th">${q.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이"></a>`).join('')}</span>` : ''}</td>`
+      + `<td>${(g.pdf || []).map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k}</a>`).join(' · ')}</td></tr>`)).join('')
+    + '</tbody></table></div>';
+  body.innerHTML = html;
 }
 async function qaShrink(file) {
   const img = await createImageBitmap(file);
