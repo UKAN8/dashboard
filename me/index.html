@@ -205,6 +205,10 @@ svg.spark{display:block;margin-top:6px}
 .hwp select{flex:1;color-scheme:dark;background:#15151c;border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px}
 .hwp select option{background:#15151c;color:var(--tx)}
 .hwp .seg{margin:0}
+
+/* 1024 조교 손풀이 */
+.qimg{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.qimg img{width:100%;max-width:520px;border-radius:10px;border:1px solid rgba(127,127,127,.25);display:block}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -1015,6 +1019,7 @@ async function mountHW(tok){
   const host=$('hw-host'); if(!host||!tok) return;
   HW.tok=tok;
   try{ const r=await sb.rpc('hw_open',{tok}); if(r.error||!r.data) return; HW.list=r.data.과제||[]; HW.pref=r.data.설정||null; }catch(e){ return; }
+  try{ const r2=await sb.rpc('portal_hw_answers',{tok}); HW.ans=(r2&&!r2.error&&r2.data)||{}; }catch(e){ HW.ans={}; }   // 1024 조교 손풀이(schema_v46) — 함수가 없으면 사진만 빠진다
   if(!HW.list.length){ host.innerHTML=''; return; }
   drawHW();
 }
@@ -1078,6 +1083,7 @@ function drawHW(){
         +(q.상태==='해결'?'<span class="good">해결됨</span>':q.상태==='답변'?'<span class="good">조교쌤 답이 왔어요</span>':q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
         +(q.상태==='대기'&&!q.대면&&!lock?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
         +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')
+        +(((HW.ans||{})[q.id]||[]).length?`<div class="qimg"><div class="dim" style="font-size:12px">조교쌤 손풀이 · 누르면 크게 보여요</div>${HW.ans[q.id].map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
         +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
         +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
         +`</div>`).join('')}`:'')
