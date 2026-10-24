@@ -685,6 +685,16 @@ body.cs-on #boot{display:none}
 #v-links .lk-go{color:var(--acc);text-decoration:none;font-weight:700}
 #v-links .lk-cp{font:inherit;font-size:12px;padding:2px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.16);background:transparent;color:inherit;cursor:pointer}
 #v-links #lk-q{font:inherit;font-size:13px;padding:5px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit}
+
+/* 1024 내 답변 상세 */
+#v-qame tr.qm-row{cursor:pointer} #v-qame tr.qm-row.on td{background:rgba(245,160,160,.06)}
+#v-qame tr.qm-det td{background:rgba(255,255,255,.02);padding:12px 14px}
+#v-qame .qm-dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+#v-qame .qm-dt{font-size:12px;color:var(--tx2);margin-bottom:6px;font-weight:700}
+#v-qame .qm-memo{white-space:pre-wrap;line-height:1.6}
+#v-qame .qm-qm{margin-top:6px;color:var(--tx2)}
+#v-qame .qm-imgs{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+#v-qame .qm-imgs img{width:100%;max-width:520px;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
 </style></head><body>
 
 <div id="login">
@@ -5003,11 +5013,12 @@ document.addEventListener('click', async ev => {
   b.disabled = true;
   const { error } = await sb.from('hw_qa_feedback').insert({ log_id: +box.dataset.lid, 조교: box.dataset.tutor, 평가: b.dataset.fbk, 내용: txt || null });
   if (error) { b.disabled = false; alert('피드백 저장 실패: ' + error.message); return; }
-  await qaLoadExtra(); if (document.getElementById('v-qame') && document.getElementById('v-qame').classList.contains('on')) qmDraw(); else qaDraw();
+  if (document.getElementById('v-qame') && document.getElementById('v-qame').classList.contains('on')) { await qmLoad(); return; }
+  await qaLoadExtra(); qaDraw();
 });
 
 /* 내 답변 — 조교 본인 페이지. 관리자는 조교를 골라 그 화면 그대로 본다(읽음 표시는 본인이 볼 때만). */
-let QM = { email: null, staff: null, d: null };
+let QM = { email: null, staff: null, d: null, open: new Set() };
 const QM_BADGES = [
   ['답', 1, '첫 답변'], ['답', 10, '답변 10'], ['답', 30, '답변 30'], ['답', 50, '답변 50'], ['답', 100, '답변 100'], ['답', 200, '답변 200'], ['답', 500, '답변 500'],
   ['이해', 1, "첫 '이해했어요'"], ['이해', 10, "'이해했어요' 10"], ['이해', 30, "'이해했어요' 30"], ['이해', 100, "'이해했어요' 100"],
@@ -5030,7 +5041,7 @@ async function qmLoad() {
   const L = await sb.from('hw_qa_log').select('*').eq('조교', QM.email).order('시각', { ascending: false }).limit(3000);
   if (L.error) { body.innerHTML = `<div class="dim">답변 기록 표가 아직 없다 — schema_v46c 를 SQL Editor 에서 Run. (${E(L.error.message)})</div>`; return; }
   const logs = L.data || [];
-  const Q = await qaIn('hw_question', 'id', logs.map(l => l.qid), 'id,번호,"문항ID",assign_id,반,"학생ID",상태,재질문,hw_assign(세트키,과목,단원코드,라운드,날짜,반)');
+  const Q = await qaIn('hw_question', 'id', logs.map(l => l.qid), 'id,번호,"문항ID",assign_id,반,"학생ID",상태,재질문,메모,hw_assign(세트키,과목,단원코드,라운드,날짜,반)');
   const qmap = {}; (Q.data || []).forEach(q => qmap[q.id] = q);
   await qaEnsureMeta(Q.data || []);
   const R = await qaIn('hw_qa_reply', 'log_id', logs.map(l => l.id));
@@ -5077,14 +5088,40 @@ function qmDraw() {
   const rc = {}; replies.forEach(r => rc[r.log_id] = (rc[r.log_id] || 0) + 1);
   const fc = {}; fb.forEach(f => (fc[f.log_id] = fc[f.log_id] || []).push(f));
   h += `<div class="card vs-wrap"><div class="qm-st">답변 기록</div><table class="vs-tbl"><thead><tr><th>답한 때</th><th>문항</th><th>학생</th><th>반</th><th data-nosort>보낸 답</th><th>학생 반응</th><th class="n">댓글</th><th data-nosort>피드백</th></tr></thead><tbody>`
-    + logs.map(l => `<tr><td data-sv="${E(l.시각)}">${E(qaTime(l.시각))}</td><td>${E(qlab(l.qid))}</td><td>${E(nm(l['학생ID']))}</td><td>${E(l.반 || '')}</td>`
+    + logs.map(l => `<tr class="qm-row${QM.open.has(l.id) ? ' on' : ''}" data-qml="${l.id}" title="눌러서 상세"><td data-sv="${E(l.시각)}">${QM.open.has(l.id) ? '▾' : '▸'} ${E(qaTime(l.시각))}</td><td>${E(qlab(l.qid))}</td><td>${E(nm(l['학생ID']))}</td><td>${E(l.반 || '')}</td>`
       + `<td>${l.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(l.메모 || '')}${Array.isArray(l.풀이) && l.풀이.length ? ` <span class="dim">📷${l.풀이.length}</span>` : ''}</td>`
       + `<td>${l.반응 === '이해' ? chip('good', '이해했어요') : l.반응 === '모름' ? chip('mid', '아직 모름') : '<span class="dim">확인 전</span>'}</td><td class="n">${rc[l.id] || 0}</td>`
-      + `<td>${(fc[l.id] || []).map(f => QA_FB_ICON[f.평가]).join(' ')}</td></tr>`).join('')
+      + `<td>${(fc[l.id] || []).map(f => QA_FB_ICON[f.평가]).join(' ')}</td></tr>`
+      + (QM.open.has(l.id) ? `<tr class="qm-det"><td colspan="8">${qmDetail(l, qmap[l.qid], replies.filter(r => r.log_id === l.id), fc[l.id] || [])}</td></tr>` : '')).join('')
     + `</tbody></table></div>`;
   body.innerHTML = h;
 }
-document.addEventListener('click', ev => { const b = ev.target.closest('#qm-bar [data-qm]'); if (!b) return; QM.email = b.dataset.qm; QM.d = null; qmLoad(); });
+document.addEventListener('click', ev => { const b = ev.target.closest('#qm-bar [data-qm]'); if (!b) return; QM.email = b.dataset.qm; QM.d = null; QM.open = new Set(); qmLoad(); });
+// (1024 유강 "기록 누르면 손풀이 등 상세") 답변 기록 한 줄 → 아래에 상세 행
+function qmDetail(l, q, reps, fbs) {
+  const nm = sid => String(sid || '').split('_')[0];
+  const info = q ? qaInfo(q) : { pdf: [] };
+  const sec = (t, h) => `<div class="qm-ds"><div class="qm-dt">${t}</div>${h}</div>`;
+  let h = '<div class="qm-dg">';
+  h += sec('문항', `${E(info.label || '')}${info.no != null ? ' · ' + E(String(info.no)) + '번' : ''} · ${E(nm(l['학생ID']))} (${E(l.반 || '')})`
+    + (info.pdf.length ? `<div class="qa-pdf" style="margin:6px 0 0">${info.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : '')
+    + (q && q.메모 ? `<div class="qm-qm">학생 메모 “${E(q.메모)}”</div>` : '')
+    + (q && q.재질문 ? `<div class="dim">다시 모름 ×${q.재질문}</div>` : ''));
+  h += sec(`보낸 답 · ${E(l.답변자 || '')} · ${E(qaTime(l.시각))}`, `${l.대면 ? chip('acc', '수업 때 직접 설명') + ' ' : ''}${l.메모 ? `<div class="qm-memo">${E(l.메모)}</div>` : (!(l.풀이 || []).length && !l.대면 ? '<span class="dim">글 없음</span>' : '')}`
+    + ((l.풀이 || []).length ? `<div class="qm-imgs">${l.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>` : ''));
+  h += sec('학생 반응', (l.반응 === '이해' ? chip('good', '이해했어요') : l.반응 === '모름' ? chip('mid', '아직 모르겠어요') : '<span class="dim">아직 확인 전</span>')
+    + (l.반응시각 ? ` <span class="dim">${E(qaTime(l.반응시각))}</span>` : '')
+    + (reps.length ? reps.map(r => `<div class="qa-rp">💬 ${E(r.내용)} <span class="dim">${E(qaTime(r.시각))}</span></div>`).join('') : '<div class="dim" style="margin-top:4px">댓글 없음</div>'));
+  const fbList = fbs.map(f => `<div class="qm-fb ${f.평가 === '칭찬' ? 'good' : f.평가 === '보완' ? 'mid' : ''}"><b>${QA_FB_ICON[f.평가] || ''} ${E(f.평가)}</b> ${E(f.내용 || '')} <span class="dim">· ${E(qaTime(f.시각))}${f.확인시각 ? ' · 읽음' : ''}</span></div>`).join('');
+  h += sec('유강쌤 피드백', (fbList || '<div class="dim">아직 없음</div>')
+    + (window.ROLE === 'admin' ? `<div class="qa-fb" data-lid="${l.id}" data-tutor="${E(l.조교)}" style="margin-top:6px"><input class="qa-fbt" placeholder="한 줄 (선택)">${['칭찬', '보완', '메모'].map(k => `<button class="qa-fbb" data-fbk="${k}">${QA_FB_ICON[k]} ${k}</button>`).join('')}</div>` : ''));
+  return h + '</div>';
+}
+document.addEventListener('click', ev => {
+  if (ev.target.closest('a,button,input')) return;
+  const tr = ev.target.closest('#qm-body tr.qm-row'); if (!tr) return;
+  const id = +tr.dataset.qml; QM.open.has(id) ? QM.open.delete(id) : QM.open.add(id); qmDraw();
+});
 // 메뉴 '내 답변' 옆 안 읽은 피드백 수(조교 본인)
 async function qmBadge() {
   const a = document.querySelector('#nav a[data-v="qame"]'); if (!a || window.ROLE !== 'staff') return;
