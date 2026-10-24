@@ -1018,7 +1018,8 @@ const HW={tok:'',list:[],pen:1};
 // (1024) 조교 답 — portal_hw_answers 가 v46 은 [{url}], v46b 부터 {풀이:[{url}], 답변자} 를 준다. 둘 다 받는다.
 const hwAns=id=>(HW.ans||{})[id];
 const hwFiles=id=>{ const a=hwAns(id); return Array.isArray(a)?a:((a&&a.풀이)||[]); };
-const hwWho=id=>{ const a=hwAns(id); return a&&!Array.isArray(a)&&a.답변자?String(a.답변자):''; };
+// 학생에게는 성 빼고 'T' — 김동현 → 동현T (1024 유강). 두 글자 이름은 그대로 + T
+const hwWho=id=>{ const a=hwAns(id); let n=a&&!Array.isArray(a)&&a.답변자?String(a.답변자).trim():''; if(!n||n==='조교') return ''; if(/T$/.test(n)) return n; if(n.length>=3) n=n.slice(1); return n+'T'; };
 async function mountHW(tok){
   const host=$('hw-host'); if(!host||!tok) return;
   HW.tok=tok;
@@ -1084,10 +1085,10 @@ function drawHW(){
       +(v.length?`<div class="sub">변형</div><div class="grid">${v.map(btn).join('')}</div>`:'')
       +(done?`<div class="sum">${HW_ST.slice(1).map((t,i)=>cnt[i+1]?`<span class="chip">${t[0]} ${t[1]} ${cnt[i+1]}</span>`:'').join('')}</div>`:'')
       +(qs.length?`<div class="sub">질문</div>${qs.map(([k,q])=>`<div class="q"><b>${E(k)}번</b> · `
-        +(q.상태==='해결'?`<span class="good">해결됨${hwWho(q.id)?' · '+E(hwWho(q.id))+' 쌤이 답해 줬어요':''}</span>`:q.상태==='답변'?`<span class="good">${E(hwWho(q.id)?hwWho(q.id)+' 쌤':'조교쌤')} 답이 왔어요</span>`:q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
+        +(q.상태==='해결'?`<span class="good">해결됨${hwWho(q.id)?' · '+E(hwWho(q.id))+' 답변':''}</span>`:q.상태==='답변'?`<span class="good">${E(hwWho(q.id)||'조교쌤')} 답이 왔어요</span>`:q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
         +(q.상태==='대기'&&!q.대면&&!lock?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
         +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')
-        +(hwFiles(q.id).length?`<div class="qimg"><div class="dim" style="font-size:12px">${E(hwWho(q.id)?hwWho(q.id)+' 쌤':'조교쌤')} 손풀이 · 누르면 크게 보여요</div>${hwFiles(q.id).map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
+        +(hwFiles(q.id).length?`<div class="qimg"><div class="dim" style="font-size:12px">${E(hwWho(q.id)||'조교쌤')} 손풀이 · 누르면 크게 보여요</div>${hwFiles(q.id).map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
         +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
         +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
         +`</div>`).join('')}`:'')
