@@ -4812,7 +4812,7 @@ function qaDraw() {
       + `${g.qid ? `<span class="dim"> · ${E(g.qid)}</span>` : ''}<span style="margin-left:auto">${badges}</span></div>`
       + (g.pdf && g.pdf.length ? `<div class="qa-pdf">${g.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : `<div class="qa-pdf dim">써킷 PDF 를 찾지 못함 — 책자에서 ${E(String(g.no))}번</div>`)
       + `<div class="qa-list">${stuList}</div>`
-      + (g.files.length || g.memo || g.who ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(String(g.at).slice(5, 16).replace('T', ' ')) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
+      + (g.files.length || g.memo || g.who ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(qaTime(g.at)) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
       + `<div class="qa-form">`
       + `<label class="qa-up">📷 손풀이 사진 올리기<input type="file" accept="image/*" multiple data-qaf="${E(g.k)}" hidden></label>`
       + `${pend.length ? `<span class="qa-pend">${pend.map((f, j) => `<span><img src="${f.prev}"><button data-qax="${E(g.k)}|${j}" title="빼기">×</button></span>`).join('')}</span>` : ''}`
@@ -4822,8 +4822,10 @@ function qaDraw() {
       + `</div><div class="qa-msg" id="qa-msg-${i}"></div></div>`;
   }).join('');
 }
+// 한국 시각 'M/D HH:MM' — timestamptz 문자열은 UTC 라 잘라 쓰면 9시간 어긋난다
+function qaTime(t) { const d = new Date(t); if (isNaN(d)) return ''; return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 function qaDrawDone(body) {
-  const tm = t => t ? E(String(t).slice(5, 16).replace('T', ' ')) : '<span class="dim">—</span>';
+  const tm = t => t ? E(qaTime(t)) : '<span class="dim">—</span>';
   let rows = QA.done || [];
   if (QA.ban !== '*') rows = rows.filter(r => r.반 === QA.ban);
   const gs = qaGroups(rows);
