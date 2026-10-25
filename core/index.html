@@ -214,6 +214,8 @@ function reviewDone(){ const n=todayRows('리뷰'), c=reviewCN(); return n>=c+RE
 /* (1022) 다음 수업 안내 — 루프 완료 문구 꼬리. '· 다음 수업 10/23(금) 20:00 뒤에 새 루프' */
 /* (1024 유강 "다른 반들과 동일하게 수업 전 1시간에 마감") 루프 마감 — 지나면 다음 수업이 끝날 때까지 닫힌다 */
 const pastDue=()=>!!(DUE && nowKST()>=DUE);
+/* (1025 유강 '고1T 루프 7시까지 연장') 마감이 수업 중으로 연장되면 마감 전까진 수업 중에도 루프를 연다 */
+const loopLock=()=>CLASS!==null && inClass() && !(DUE && !pastDue() && DUE.slice(0,10)===nowKST().slice(0,10));
 function dueText(){ if(!DUE) return ''; const d=DUE.slice(0,10), w='일월화수목금토'[new Date(d+'T00:00:00Z').getUTCDay()];
   return `${+d.slice(5,7)}/${+d.slice(8,10)}(${w}) ${DUE.slice(11,16)}`; }
 function nextClassText(){
@@ -393,8 +395,8 @@ function drawHome(){
   document.body.classList.remove('sess');
   let tot=0, grad=0, open=0;
   CONCEPTS.forEach(c=>[c.key,...c.themes.map(t=>t.key)].forEach(k=>{ tot++; const s=cellState(k); if(s==='grad') grad++; if(s!=='lock') open++; }));
-  const lc=lastClassConcepts(); const LT=(CLASS!==null && inClass())?{items:buildLoop(),started:false,finished:false}:loopToday(); const loop=LT.items;
-  const rDone=reviewDone(), lDone=LT.finished, rOpen=inClass(), lLock=CLASS!==null && inClass(), lDue=!lLock && !lDone && pastDue();
+  const lc=lastClassConcepts(); const LT=loopLock()?{items:buildLoop(),started:false,finished:false}:loopToday(); const loop=LT.items;
+  const rDone=reviewDone(), lDone=LT.finished, rOpen=inClass(), lLock=loopLock(), lDue=!lLock && !lDone && pastDue();
   const H=[];
   H.push(`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
@@ -425,7 +427,7 @@ function drawHome(){
   $('app').innerHTML=H.join('');
   $('goR').onclick=()=>{ if(lc.length && inClass() && !reviewDone()) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=rOpen;
-  $('goL').onclick=()=>{ if((CLASS!==null && inClass()) || (!LT.finished && pastDue())){ drawHome(); return; } if(loop.length) startSession('루프', loop); };
+  $('goL').onclick=()=>{ if(loopLock() || (!LT.finished && pastDue())){ drawHome(); return; } if(loop.length) startSession('루프', loop); };
   window.scrollTo(0,0);
 }
 
