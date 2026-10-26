@@ -4791,6 +4791,17 @@ async function qaLoad() {
   await qaLoadExtra();
   qaDraw();
 }
+// 묶음 열쇠 — 같은 문항(문항ID, 없으면 과제+번호)
+function qaKey(r) {
+  const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null;
+  return r['문항ID'] || (it && it['문항ID']) || ('a' + r.assign_id + '#' + r.번호);
+}
+// (1026) 같은 문항에 예전에 보낸 답 — 대기·답변·해결 전부에서 가장 최근 것(사진이나 글이 있는 것)
+function qaPrevFor(k) {
+  const c = (QA.rows || []).concat(QA.done || []).filter(q => q.답변시각 && ((Array.isArray(q.풀이) && q.풀이.length) || q.조교메모) && qaKey(q) === k)
+    .sort((x, y) => String(y.답변시각).localeCompare(String(x.답변시각)))[0];
+  return c ? { qid: c.id, files: Array.isArray(c.풀이) ? c.풀이 : [], memo: c.조교메모 || '', face: !!c.대면, who: c.답변자 || String(c.해결자 || '').split('@')[0], at: c.답변시각, sid: c['학생ID'] } : null;
+}
 function qaGroups(rows) {
   const now = Date.now(), G = {};
   (rows || QA.rows).forEach(r => {
@@ -4824,6 +4835,8 @@ function qaGroups(rows) {
     g.memo = (g.qs.find(q => q.조교메모) || {}).조교메모 || '';
     const ans = g.qs.filter(q => q.답변시각).sort((x, y) => (y.답변시각 || '').localeCompare(x.답변시각 || ''))[0];
     g.who = ans ? (ans.답변자 || String(ans.해결자 || '').split('@')[0]) : ''; g.at = ans ? ans.답변시각 : '';
+    g.prev = qaPrevFor(g.k);
+    g.fresh = g.wait.filter(q => !q.답변시각 && !q.재질문);   // 아직 아무 답도 못 받은 학생 — 예전 답을 그대로 보내도 되는 대상
   });
   return Object.values(G);
 }
@@ -4850,7 +4863,7 @@ function qaDraw() {
       g.re ? chip('mid', `다시 모름 ×${g.re}`) : '', g.face ? chip('acc', '수업 때') : '',
       QA.show === 'wait' && g.hours >= 24 ? chip('mid', `${Math.floor(g.hours / 24)}일째 대기`) : QA.show === 'wait' ? `<span class="dim">${g.hours}시간 대기</span>` : ''].join(' ');
     const stuList = qs.map(q => `<div class="qa-s"><b>${E(nm(q['학생ID']))}</b> <span class="ban">${E(q.반 || '')}</span>`
-      + `${q.재질문 ? ' ' + chip('mid', '다시 모름') : ''}${q.상태 === '답변' ? ' <span class="dim">답 확인 대기</span>' : ''}`
+      + `${q.재질문 ? ' ' + chip('mid', '다시 모름') : ''}${QA.show === 'wait' && g.prev && !q.답변시각 && !q.재질문 ? ' <span class="dim">새로 물음</span>' : ''}${q.상태 === '답변' ? ' <span class="dim">답 확인 대기</span>' : ''}`
       + `${q.메모 ? `<span class="qa-m">“${E(q.메모)}”</span>` : ''}</div>`).join('');
     const pend = QA.files[g.k] || [];
     return `<div class="card qa-g" data-qg="${E(g.k)}">`
@@ -4859,7 +4872,13 @@ function qaDraw() {
       + `${g.qid ? `<span class="dim"> · ${E(g.qid)}</span>` : ''}<span style="margin-left:auto">${badges}</span></div>`
       + (g.pdf && g.pdf.length ? `<div class="qa-pdf">${g.pdf.map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k} PDF${x.p ? ` · ${x.p}쪽` : ''}</a>`).join('')}</div>` : `<div class="qa-pdf dim">써킷 PDF 를 찾지 못함 — 책자에서 ${E(String(g.no))}번</div>`)
       + `<div class="qa-list">${stuList}</div>`
-      + (g.files.length || g.memo || g.who ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(qaTime(g.at)) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
+      + (QA.show === 'wait' && g.prev ? `<div class="qa-prev qa-reuse"><span class="dim">이전 답 · ${E(g.prev.who)} · ${E(qaTime(g.prev.at))} · 같은 문항을 먼저 물은 ${E(nm(g.prev.sid))}에게 보낸 것</span>`
+          + `${g.prev.memo ? ` <span>${E(g.prev.memo)}</span>` : ''}${thumbs(g.prev.files)}`
+          + (g.fresh.length ? `<div style="margin-top:6px"><button class="qa-go" data-qareuse="${E(g.k)}">이 답 그대로 ${g.fresh.length}명에게 보내기</button>`
+            + `${g.fresh.length < g.wait.length ? ` <span class="dim">· 이 답을 받고도 '아직 모름'인 ${g.wait.length - g.fresh.length}명은 새 답이 필요해요</span>` : ''}</div>`
+            : `<div class="dim" style="margin-top:4px">남은 학생은 이 답을 받고도 '아직 모름' — 새로 답해 주세요</div>`)
+          + `<div class="qa-msg"></div></div>`
+        : (g.files.length || g.memo || g.who) && QA.show !== 'wait' ? `<div class="qa-prev"><span class="dim">보낸 답${g.who ? ' · ' + E(g.who) : ''}${g.at ? ' · ' + E(qaTime(g.at)) : ''}</span>${g.memo ? ` <span>${E(g.memo)}</span>` : ''}${thumbs(g.files)}</div>` : '')
       + (QA.show === 'sent' ? qaRepliesHtml(qs) + qaFbHtml(qaLastLog(qs[0].id)) : '')
       + `<div class="qa-form">`
       + `<label class="qa-up">📷 손풀이 사진 올리기<input type="file" accept="image/*" multiple data-qaf="${E(g.k)}" hidden></label>`
@@ -4901,6 +4920,18 @@ async function qaShrink(file) {
   const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
   return { blob, prev: c.toDataURL('image/jpeg', 0.5) };
 }
+async function qaReuse(k, btn) {
+  if (QA.busy) return;
+  const g = qaGroups().find(x => x.k === k); if (!g || !g.prev || !g.fresh.length) return;
+  const msg = btn.closest('.qa-reuse').querySelector('.qa-msg');
+  QA.busy = true; btn.disabled = true;
+  try {
+    const { data, error } = await sb.rpc('hw_answer_many', { qids: g.fresh.map(q => q.id), p_memo: g.prev.memo || null, p_face: g.prev.face, p_files: g.prev.files.length ? g.prev.files : null });
+    if (error || !data || data.오류) throw new Error((error && error.message) || (data && data.오류) || '보내지 못함');
+    msg.className = 'qa-msg'; msg.textContent = `${data.n}명에게 보냈다.`; setTimeout(qaLoad, 900);
+  } catch (e) { msg.className = 'qa-msg warn'; msg.textContent = String(e.message || e); btn.disabled = false; }
+  QA.busy = false;
+}
 async function qaSend(k, btn) {
   if (QA.busy) return; QA.busy = true;
   const card = btn.closest('.qa-g'), msg = card.querySelector('.qa-msg');
@@ -4937,6 +4968,7 @@ document.addEventListener('click', ev => {
   if (f) { if (f.dataset.qas) QA.show = f.dataset.qas; if (f.dataset.qab) QA.ban = f.dataset.qab; if (f.dataset.qar) return qaLoad(); return qaDraw(); }
   const x = t.closest('#qa-body [data-qax]');
   if (x) { const [k, j] = x.dataset.qax.split('|'); (QA.files[k] || []).splice(+j, 1); return qaDraw(); }
+  const ru = t.closest('#qa-body [data-qareuse]'); if (ru) return qaReuse(ru.dataset.qareuse, ru);
   const go = t.closest('#qa-body [data-qago]');
   if (go) qaSend(go.dataset.qago, go);
 });
