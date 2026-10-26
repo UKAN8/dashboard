@@ -654,6 +654,14 @@ function partsOf(d){
       +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 도함수의 활용~정적분 · 약 50분 · 이어서 하기 가능</span></span>`
       +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`;
   }
+  // (1026 유강) 고1S 오늘 수업 설문 — 설문키 cls1026_1s. 10/29까지만 보인다.
+  if(/^고1S/.test(String(d.학생.반||'').trim()) && Date.now() < new Date('2026-10-30T00:00:00+09:00').getTime()){
+    const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
+    const surl=`https://ukan8.github.io/dashboard/survey/?t=${encodeURIComponent(tk)}&s=cls1026_1s`;
+    P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
+      +`<span class="t"><b>오늘 수업 설문</b><span class="dim"> 10/26 수업 어땠는지 · 1분</span></span>`
+      +`<a class="n mid" href="${E(surl)}" style="text-decoration:none;font-weight:800">시작 →</a></div></div>`+P.diag;
+  }
   // ⓪ 오늘 기출테스트 자기평가 (0902) — 시험 직후 답안지 걷자마자 폰으로. 정보는 gt_eval_open 이 따로 준다.
   const G=d.자평||null, open=!!(G && !G.없음);
   P.eval=''; P.evalNone='';
