@@ -1006,7 +1006,7 @@ function drawLib(host,opt){
   else{
     const n=Math.min(rows.length,LIB.showN);
     H.push(rows.slice(0,n).map(r=>{
-      const vbtn=r.vs.map(v=>`<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 수업 영상${r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':''}</a>`).join('');
+      const vbtn=r.vs.slice().sort((a,b)=>String(a.부||'').localeCompare(String(b.부||''))).map(v=>`<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 수업 영상${v.부?' <small>'+E(v.부)+'</small>':(r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':'')}</a>`).join('');
       const lk=(u,t)=>u?`<a href="${LIB_URL+u}" target="_blank" rel="noopener">${t}</a>`:'';
       const hd=`<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`;
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
