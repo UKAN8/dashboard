@@ -982,7 +982,7 @@ function drawLib(host,opt){
   // (1023) 정규수업 행 = 수업 영상 + 그날 나간 써킷(문제·해설) · 단원 첫 수업일에 수업교재(문제·해설)
   (D.정규||[]).forEach(r=>{ if(r.반!==ban) return; rows.push({d:r.날짜,ds:[r.날짜],t:r.제목,sub:r.과목,reg:true,vs:r.영상||[],ck:r.써킷}); });
   (D.교재||[]).forEach(b=>{ if(b.반!==ban) return; rows.push({d:b.날짜,ds:[b.날짜],t:`${b.단원.replace(/^\d+\s*/,'')} 수업교재`,sub:b.과목,book:b,vs:[]}); });
-  (LIB.mine||[]).forEach(m=>{ rows.push({d:m.날짜,ds:[m.날짜],t:m.종류+(m.문항수?` · ${m.문항수}문항`:''),sub:'나만의 과제',mine:m,vs:[]}); });
+  (LIB.mine||[]).forEach(m=>{ rows.push({d:m.날짜,ds:[m.날짜],t:m.종류+(m.판?` No.${m.판}`:'')+(m.문항수?` · ${m.문항수}문항`:''),sub:'나만의 과제',mine:m,vs:[]}); });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   if(opt.from) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)>=opt.from));
   if(opt.to) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)<opt.to));
@@ -1085,13 +1085,16 @@ function drawHW(){
     const lock=!!a.지남;   // (1021) 마감(학생별·연장 반영)이 지나면 체크 잠금 — 서버 hw_mark 도 막는다(v42b)
     const btn=x=>`<button type="button" data-a="${ai}" data-n="${x.n}" class="${c[x.n]?'s'+c[x.n]:''}" aria-label="${x.n}번"${lock?' disabled':''}>${x.n}</button>`;
     const qs=Object.entries(a.질문||{}).filter(([k,q])=>['대기','답변','해결'].includes(q.상태));
-    const name=`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+    // (1027 v48) 개별과제 = 판(PDF 한 부) 단위. 종이 머리 No. 와 같은 번호를 보여 주고, 다르면 학생이 고른다(hw_ind_pick)
+    const name=a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+    const pans=(a.개별&&!lock&&(a.다른판||[]).length)?a.다른판:[];
     const all=done===n&&n>0;
     return `<div class="card hw" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)">`
       +`<div class="row" data-open="${ai}"><span class="t"><b>${E(name)}</b>${a.이월?'<span class="dim"> (이월)</span>':''}`
-      +`<span class="dim"> ${E(hwRange(a))} · ${done}/${n}</span></span>`
+      +`<span class="dim"> ${a.개별?'':E(hwRange(a))+' · '}${done}/${n}</span></span>`
       +`<a class="n ${all?'good':lock?'dim':'mid'}" href="#" style="text-decoration:none;font-weight:800">${all?'완료':lock?'마감':done?'이어서 →':'체크 →'}</a></div>`
       +`<div class="sub2">${E([a.제목,dueT.replace(/^ · /,'')+(lock?' (지남)':'')+(a.연장&&!lock?' (연장)':'')].filter(Boolean).join(' · '))}</div>`
+      +(a.개별?`<div class="sub2">받은 종이 맨 위의 No. 번호가 같은지 먼저 확인하세요${pans.length?` · <a href="#" data-pans="${ai}" style="text-decoration:underline">번호가 달라요</a>`:''}</div>`+(pans.length?`<div class="fold" id="hw-p${ai}"><div class="hint">내 종이에 찍힌 번호를 고르세요.</div><div class="acts">${pans.map(x=>`<button type="button" data-pick="${x.id}">No.${x.판}${x.체크?` (체크 ${x.체크})`:''}</button>`).join('')}</div></div>`:''):'')
       +`<div class="bar"><i style="width:${n?Math.round(100*done/n):0}%"></i></div>`
       +`<div class="fold" id="hw-f${ai}">`
       +(lock?`<div class="hint">마감이 지나서 체크가 잠겼어요. 개별과제는 마감 때까지의 체크로 만들어져요.</div>`:`<div class="pal">${HW_ST.slice(1).map((t,i)=>`<button type="button" data-pen="${i+1}" class="${HW.pen===i+1?'on':''}"><i class="k${i+1}"></i>${t[0]} ${t[1]}</button>`).join('')}</div>`
@@ -1119,6 +1122,12 @@ function drawHW(){
   }).join('');
   host.querySelectorAll('[data-open]').forEach(r=>r.onclick=ev=>{ ev.preventDefault(); const f=$('hw-f'+r.dataset.open); f.classList.toggle('open'); HW.open=f.classList.contains('open')?r.dataset.open:null; });
   if(HW.open!=null){ const f=$('hw-f'+HW.open); if(f) f.classList.add('open'); }
+  host.querySelectorAll('[data-pans]').forEach(x=>x.onclick=ev=>{ ev.preventDefault(); const f=$('hw-p'+x.dataset.pans); if(f) f.classList.toggle('open'); });
+  host.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    try{ const r=await sb.rpc('hw_ind_pick',{tok:HW.tok,aid:+b.dataset.pick}); if(r.error||!r.data||r.data.오류){ alertHW((r.data&&r.data.오류)||'바꾸지 못했어요.'); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
+    await mountHW(HW.tok);
+  });
   host.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>{ HW.pen=+b.dataset.pen; host.querySelectorAll('[data-pen]').forEach(x=>x.classList.toggle('on',+x.dataset.pen===HW.pen)); });
   host.querySelectorAll('.grid button').forEach(b=>b.onclick=()=>hwTap(b));
   wirePref(host); if(HW.popen){ const f=$('hwp-f'); if(f) f.classList.add('open'); HW.popen=false; }
