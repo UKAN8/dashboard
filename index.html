@@ -368,6 +368,19 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 .rp-lnk{display:inline-block;padding:4px 10px;border-radius:9px;font-size:12px;
  border:1px solid var(--bd);background:rgba(245,160,160,.08);color:#ffd9d9}
 .rp-lnk.none{opacity:.4;background:none}
+/* (1028) v5 링크 리포트 목록 */
+.thumbs.v5{display:flex;flex-direction:column;gap:0;flex-wrap:nowrap}
+.v5hd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.v5row{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.v5th img{display:block;width:120px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);background:#0c0b10}
+.v5m{display:flex;flex-direction:column;gap:1px;min-width:0;font-size:12px}
+.v5m b{font-size:13px;color:#fff}
+.v5m em{font-style:normal;font-weight:700}.v5m em.good{color:var(--good)}.v5m em.mid{color:var(--mid)}.v5m em.bad{color:var(--bad)}
+.v5b{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.v5b .rp-lnk{text-align:center;font:inherit;font-size:12px;cursor:pointer}
+.v5est{font-style:normal;color:var(--mid);font-size:11px;border:1px solid rgba(252,232,200,.35);border-radius:6px;padding:0 5px}
+.v5oldbox:not(:empty){display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+@media (max-width:520px){.v5row{grid-template-columns:96px minmax(0,1fr)}.v5th img{width:96px;height:48px}.v5b{grid-column:1/-1;flex-direction:row}}
 @media (hover:hover) and (pointer:fine){.rp-lnk:hover{border-color:var(--acc);background:rgba(245,160,160,.18)}}
 /* 전체 저장 — 이름 링크들과 같은 줄에 서되, 눌러야 할 것이라는 게 보이게 */
 .rp-save{font:inherit;font-size:12px;padding:4px 11px;border-radius:9px;cursor:pointer;
@@ -2952,7 +2965,7 @@ function viewReport(st) {
       + (miss.length ? `<div class="chips">${chip('mid', '미응시 ' + miss.join(' '))}</div>` : '')
       // 서버 렌더된 리포트 이미지 (정적판에 없는 기능 → class="dbonly" 로 표시해 패리티 게이트에서 뺀다)
       + (names.length ? `<details class="dbonly rp-imgs" data-date="${d}" data-ban="${E(ban)}" data-names="${E(names.join('|'))}">`
-        + `<summary>리포트 이미지 ${names.length}장</summary><div class="thumbs">불러오는 중…</div></details>` : '')
+        + `<summary>학생별 리포트 ${names.length}명</summary><div class="thumbs">불러오는 중…</div></details>` : '')
       + '</div>';
   };
   const allDays = [...new Set(Object.keys(dayRows).map(k => k.split('|')[0]))].sort().reverse().slice(0, 20);
@@ -2987,7 +3000,7 @@ function viewReport(st) {
   return '<section class="view" id="v-report"><h2>주간고사 회차별</h2>'
     + `<div class="grid ban-grid">${weekly}</div>`
     + '<h2>데일리 — 날짜별 반 요약 <span class="dim" style="font-size:12px">'
-    + '학생별 리포트 이미지는 카톡으로 나간 그대로 두고, 여기서는 수치만 다시 본다</span></h2>'
+    + '반 카드의 [학생별 리포트]를 펼치면 카톡으로 나간 링크 리포트(썸네일·상세)를 그대로 연다</span></h2>'
     + daily + '</section>';
 }
 
@@ -4453,12 +4466,56 @@ async function sha16(text) {
   const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 }
+/* ───────── v5 링크 리포트 (1028 유강 "대시보드에서 확인하게 하자") ─────────
+ * render_daily 가 report_v5 표에 학생별 (주소·키·리뷰·이행·내역·루프출처)를 넣는다(schema_v51).
+ * 썸네일 = 공개 r/<rid>.jpg(이름 없음), [열기] = 학부모가 받은 링크 그대로(# 뒤 키로 상세가 풀린다).
+ * v5 가 없는 날(1027 이전)은 옛 이미지판으로 떨어진다.
+ */
+const V5_BASE = 'https://ukan8.github.io/dashboard/r/';
 async function loadReportImages(el) {
   const box = el.querySelector('.thumbs');
   if (el.dataset.loaded) return;
   el.dataset.loaded = '1';
-  const date = el.dataset.date, names = el.dataset.names.split('|').filter(Boolean);
+  try {
+    const q = await sb.from('report_v5').select('이름,rid,url,리뷰,이행,내역,루프출처,썸네일바뀜,시각')
+      .eq('날짜', el.dataset.date).eq('반', el.dataset.ban);
+    if (!q.error && q.data && q.data.length) return drawV5(el, box, q.data);
+  } catch (e) { /* 표가 없거나 권한이 없으면 옛 이미지판 */ }
+  return loadReportImagesV4(el, box);
+}
+function drawV5(el, box, rows) {
+  const order = el.dataset.names.split('|').filter(Boolean);
+  const byName = Object.fromEntries(rows.map(r => [r.이름, r]));
+  const seen = order.filter(n => byName[n]);
+  rows.forEach(r => { if (!seen.includes(r.이름)) seen.push(r.이름); });
+  const miss = order.filter(n => !byName[n]);
+  const est = rows.filter(r => r.루프출처 === '추정').length;
+  const cls = (v, hi, lo) => v == null ? '' : v >= hi ? 'good' : v >= lo ? 'mid' : 'bad';
   const sum = el.querySelector('summary');
+  if (sum) sum.textContent = `학생별 리포트 ${rows.length}명`;
+  const item = n => {
+    const r = byName[n], d = r.내역 || {};
+    const parts = ['써킷', '개별과제', '루프'].filter(k => d[k]).map(k => `${k} ${d[k][0]}/${d[k][1]}`).join(' · ');
+    return `<div class="v5row"><a href="${E(r.url)}" target="_blank" rel="noopener" class="v5th"><img loading="lazy" src="${V5_BASE}${E(r.rid)}.jpg" alt=""></a>`
+      + `<div class="v5m"><b>${E(n)}</b>`
+      + `<span>리뷰 <em class="${cls(r.리뷰, 8, 5)}">${r.리뷰 != null ? Number(r.리뷰).toFixed(1) : '—'}</em>`
+      + ` · 이행 <em class="${cls(r.이행, 90, 60)}">${r.이행 != null ? r.이행 + '%' : '—'}</em></span>`
+      + (parts ? `<span class="dim">${E(parts)}${r.루프출처 === '추정' ? ' <i class="v5est" title="루프 세트 기록이 없어 규칙으로 센 값">루프 추정</i>' : ''}</span>` : '')
+      + (r.썸네일바뀜 ? '<span class="warn">썸네일 바뀜 — 새 링크로 다시 보내야 함</span>' : '')
+      + '</div><div class="v5b">'
+      + `<a class="rp-lnk" href="${E(r.url)}" target="_blank" rel="noopener">열기 ↗</a>`
+      + `<button type="button" class="rp-lnk v5copy" data-u="${E(r.url)}">링크 복사</button></div></div>`;
+  };
+  box.classList.add('v5');
+  box.innerHTML = `<div class="v5hd">카톡 미리보기 썸네일 · 눌러서 상세${est ? ` · <span class="v5est">루프 추정 ${est}명</span>` : ''}`
+    + ` <button type="button" class="rp-lnk v5old">옛 이미지판</button></div>`
+    + seen.map(item).join('')
+    + (miss.length ? `<div class="dim">· 링크 없는 학생: ${E(miss.join(', '))}</div>` : '')
+    + '<div class="v5oldbox"></div>';
+}
+async function loadReportImagesV4(el, box) {
+  const date = el.dataset.date, names = el.dataset.names.split('|').filter(Boolean);
+  const sum = box.classList.contains('v5oldbox') ? null : el.querySelector('summary');   // (1028) v5 밑 '옛 이미지판'은 제목을 안 바꾼다
   // 먼저 그 날짜 폴더에 **실제로 있는 파일**을 본다. 이름 수만 믿고 "N장"이라 적으면
   // 아직 렌더 안 한 날도 있는 것처럼 보인다(0811 실측).
   const ls = await sb.storage.from('reports').list(date, { limit: 300 });
@@ -4594,6 +4651,19 @@ function wire(st) {
     const el = e.target;
     if (el.tagName === 'DETAILS' && el.classList.contains('rp-imgs') && el.open) loadReportImages(el);
   }, true);
+  document.addEventListener('click', e => {        // (1028) v5 링크 리포트 — 링크 복사 · 옛 이미지판
+    const c = e.target.closest && e.target.closest('.v5copy');
+    if (c) {
+      const done = ok => { c.textContent = ok ? '복사됨' : '복사 실패'; setTimeout(() => { c.textContent = '링크 복사'; }, 1500); };
+      try { navigator.clipboard.writeText(c.dataset.u).then(() => done(true), () => done(false)); } catch (_) { done(false); }
+      return;
+    }
+    const o = e.target.closest && e.target.closest('.v5old');
+    if (o) {
+      const det = o.closest('details.rp-imgs'), sub = det && det.querySelector('.v5oldbox');
+      if (sub && !sub.dataset.loaded) { sub.dataset.loaded = '1'; sub.textContent = '불러오는 중…'; loadReportImagesV4(det, sub); }
+    }
+  });
 
   const tip = $('tip');
   document.addEventListener('mouseover', e => {
