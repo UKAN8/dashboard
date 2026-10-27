@@ -4770,16 +4770,26 @@ function viewQa(st) {
     + `<span class="dim" style="font-size:12px"> 써킷 과제에서 '해설 봐도 모름'으로 올라온 질문 · 같은 문항은 한 묶음 · 위에서부터 먼저</span></h2>`
     + `<div class="toolbar" id="qa-bar"></div><div id="qa-body"><div class="dim">탭을 열면 불러옵니다.</div></div></section>`;
 }
+// (1027 v48) 개별과제 판 PDF — 잡 결과의 문제·해설 주소(서명 URL). 판 = 개별과제 잡 id
+async function qaLoadPans(rows) {
+  QA.pan = QA.pan || {};
+  const ids = [...new Set((rows || []).map(r => r.hw_assign && r.hw_assign.판).filter(Boolean))].filter(x => !QA.pan[x]);
+  if (!ids.length) return;
+  const { data } = await sb.from('job_queue').select('id,결과').in('id', ids);
+  (data || []).forEach(j => { const u = ((j.결과 || {}).업로드 || [])[0] || {};
+    QA.pan[j.id] = [['문제', u.문제url || u.url], ['해설', u.해설url]].filter(x => x[1]).map(x => ({ k: x[0], url: x[1], p: null })); });
+}
+const qaPanPdf = a => (a && a.판 && QA.pan && QA.pan[a.판]) || null;
 async function qaLoad() {
   const body = $('qa-body'); if (!body) return;
   if (!QA.rows) body.innerHTML = '<div class="dim">불러오는 중…</div>';
-  const { data, error } = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반)')
+  const { data, error } = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)')
     .in('상태', ['대기', '답변']).order('시각').limit(2000);
   if (error) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(error.message)}</div>`; return; }
   QA.rows = data || [];
   // (1024) 해결됨 — 최근 30일. 학생이 [이해했어요]를 누른 것
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
-  const dn = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반)').eq('상태', '해결').gte('해결시각', since).order('해결시각', { ascending: false }).limit(1000);
+  const dn = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)').eq('상태', '해결').gte('해결시각', since).order('해결시각', { ascending: false }).limit(1000);
   QA.done = dn.error ? [] : (dn.data || []);
   if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
   const keys = [...new Set(QA.rows.concat(QA.done).map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
@@ -4788,6 +4798,7 @@ async function qaLoad() {
     (s1.data || []).forEach(s => QA.sets[s.세트키] = s);
     (s2.data || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
   }
+  await qaLoadPans(QA.rows.concat(QA.done));
   await qaLoadExtra();
   qaDraw();
 }
@@ -4812,11 +4823,12 @@ function qaGroups(rows) {
     g.qs.push(r);
     if (!g.label) {
       const s = a.세트키 && QA.sets[a.세트키];
-      g.label = s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim();
+      g.label = a.판 ? `개별과제 No.${a.판}` : s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim();
+      if (qaPanPdf(a)) g.pdf = qaPanPdf(a);
       g.no = r.번호; g.th = it && it.THEME; g.typ = (it && it.유형) || '';
       // (1024 유강 "pdf 링크 — 패드로 받아서 풀어 준다") 그날 나간 써킷 PDF(자료실 lib.json 정규 행) + 그 문항 쪽
       const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷);
-      if (lr) {
+      if (lr && !a.판) {
         const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
         g.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
       }
@@ -4987,15 +4999,17 @@ document.addEventListener('change', async ev => {
 const QA_SHORT = n => { n = String(n || '').trim(); if (!n) return ''; if (/T$/.test(n)) return n; return (n.length >= 3 ? n.slice(1) : n) + 'T'; };
 function qaInfo(r) {
   const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null, s = a.세트키 && QA.sets[a.세트키];
-  const o = { label: s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim(), no: r.번호, pdf: [] };
+  const o = { label: a.판 ? `개별과제 No.${a.판}` : s ? `${s.단원명 || s.단원코드} ${s.DAY || ''}`.trim() : `${a.과목 || ''} ${a.단원코드 || ''} ${a.라운드 != null ? a.라운드 + '라운드' : ''}`.trim(), no: r.번호, pdf: [] };
   const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷);
-  if (lr) {
+  if (qaPanPdf(a)) o.pdf = qaPanPdf(a);
+  if (lr && !a.판) {
     const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
     o.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
   }
   return o;
 }
 async function qaEnsureMeta(rows) {
+  await qaLoadPans(rows);
   if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
   const keys = [...new Set(rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
@@ -5073,7 +5087,7 @@ async function qmLoad() {
   const L = await sb.from('hw_qa_log').select('*').eq('조교', QM.email).order('시각', { ascending: false }).limit(3000);
   if (L.error) { body.innerHTML = `<div class="dim">답변 기록 표가 아직 없다 — schema_v46c 를 SQL Editor 에서 Run. (${E(L.error.message)})</div>`; return; }
   const logs = L.data || [];
-  const Q = await qaIn('hw_question', 'id', logs.map(l => l.qid), 'id,번호,"문항ID",assign_id,반,"학생ID",상태,재질문,메모,hw_assign(세트키,과목,단원코드,라운드,날짜,반)');
+  const Q = await qaIn('hw_question', 'id', logs.map(l => l.qid), 'id,번호,"문항ID",assign_id,반,"학생ID",상태,재질문,메모,hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)');
   const qmap = {}; (Q.data || []).forEach(q => qmap[q.id] = q);
   await qaEnsureMeta(Q.data || []);
   const R = await qaIn('hw_qa_reply', 'log_id', logs.map(l => l.id));
@@ -9381,7 +9395,7 @@ async function hwList(){
   const box=$('hw_list'); if(!HWS.cls){ box.textContent='반을 고르세요.'; return; }
   const since=new Date(Date.now()-28*864e5).toISOString().slice(0,10);
   const [{data:as,error},{data:pg}]=await Promise.all([
-    sb.from('hw_assign').select('*').eq('반',HWS.cls).gte('날짜',since).order('날짜',{ascending:false}).order('id'),
+    sb.from('hw_assign').select('*').eq('반',HWS.cls).is('학생ID',null).gte('날짜',since).order('날짜',{ascending:false}).order('id'),   // (1027 v48) 개별과제 판은 학생별 칸에서
     sb.from('hw_progress').select('*').eq('반',HWS.cls).gte('날짜',since)]);
   const {data:dn}=await sb.from('hw_done').select('assign_id');
   const dcnt={}; (dn||[]).forEach(r=>{ dcnt[r.assign_id]=(dcnt[r.assign_id]||0)+1; });
@@ -9424,6 +9438,10 @@ async function hwStu(id){
   // (1020) 개별과제 잡 — 이 과제가 들어간 묶음의 학생별 상태(요청·처리중·완료·실패)와 처방 요약
   const {data:jobs}=await sb.from('job_queue').select('id,상태,메시지,파라미터,결과').eq('종류','개별과제').order('id',{ascending:false}).limit(300);
   const J={}; (jobs||[]).forEach(j=>{ const p=j['파라미터']||{}; if((p['과제']||[]).map(Number).includes(id) && !J[p['학생ID']]) J[p['학생ID']]=j; });
+  // (1027 v48) 그 잡이 낸 판(PDF No.)의 학생 체크 — hw_progress.판 = 잡 id. 다시 만들어 판이 여럿이면 열린 판
+  const jids=Object.values(J).filter(j=>j['상태']==='완료').map(j=>j.id), P={};
+  if(jids.length){ const {data:pp}=await sb.from('hw_progress').select('판,"학생ID",전체,체크,n5,이행률,자력해결률,과제상태').in('판',jids);
+    (pp||[]).forEach(r=>{ if(!P[r['학생ID']]||r['과제상태']==='열림') P[r['학생ID']]=r; }); }
   // (1021) 학생별 연장 — hw_extend(schema_v41g). 연장된 학생은 그 마감까지 ⑥으로 안 잡히고, 같은 마감의 다음 과제와 한 부로 묶인다
   const {data:exts}=await sb.from('hw_extend').select('"학생ID",마감,사유').eq('assign_id',id);
   const X={}; (exts||[]).forEach(e=>X[e['학생ID']]=e);
@@ -9432,7 +9450,9 @@ async function hwStu(id){
             :`<button class="ghost" onclick="hwExtSet(${id},'${esc(sid)}')">연장</button>`; };
   const jcell=sid=>{ const j=J[sid]; if(!j) return '<span class="lbl">—</span>';
     const r=(j['결과']||{})['개별']||{}; const st=j['상태'];
-    return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
+    const pv=P[sid];
+    return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${st==='완료'?` <span class="lbl">No.${j.id}</span>`:''}${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}`
+      +(pv?` <span class="badge" title="개별과제 체크 ${pv['체크']}/${pv['전체']} · ⑤ ${pv.n5} · 자력 ${pv['자력해결률']}%">체크 ${pv['이행률']}%</span>`:'')+`${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
   tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th><th data-nosort>연장</th></tr></thead><tbody>`
     +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td><td style="white-space:nowrap">${xcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
     +`<div class="loadout">연장 = 그 학생만 마감을 미룬다. 날짜를 비우면 이 반의 다음 과제 마감으로 — 다음 과제와 개별과제 한 부로 묶인다. 이미 만들어진 개별과제가 있으면 연장할 수 없다.</div>`
