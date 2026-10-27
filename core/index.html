@@ -23,7 +23,13 @@ body{margin:0;background:var(--bg);color:var(--tx);
 main{max-width:620px;margin:0 auto}
 button{font:inherit;cursor:pointer}
 .katex{font-size:1.05em}
-.katex-display{overflow-x:auto;overflow-y:hidden}
+.katex .mpunct{margin-right:.16em}
+.sp-c{margin-right:.16em}.sp-e{display:inline-block;width:.22em}
+.qcard .q,.chs button,.res .w,.cbox .cl span,.bbox .sg,.bbox .eb,.bbox li{word-spacing:.1em}
+.qcard .q{line-height:1.95}
+.res .w,.cbox .cl span,.bbox .sg,.bbox .eb{line-height:1.85}
+.chs button{line-height:1.7}
+.katex-display{margin:.55em 0;overflow-x:auto;overflow-y:hidden;padding:.15em 0}
 .brand{font-weight:800;color:var(--acc);font-size:15px;letter-spacing:.02em}
 .who{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:6px 0 2px}
 .who b{font-size:23px}
@@ -238,9 +244,22 @@ function classText(){
 }
 
 /* ── 수식 ── */
+/* (1028 유강) 해부 루프·주간고사 루프와 같은 수식·띄어 읽기 규칙(build_tree 1014):
+   lim 은 늘 아래로 · \not= → \ne · 쉼표 뒤 +0.16em · 수식 바로 뒤 한글 0.22em · 낱말 사이 +0.1em(CSS) */
+function _walkText(el,fn){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentNode&&n.parentNode.closest&&n.parentNode.closest('.katex,script,style')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});const a=[];while(w.nextNode())a.push(w.currentNode);a.forEach(fn);}
 function tex(el){
   if(!el || typeof renderMathInElement!=='function') return;
-  try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false,strict:'ignore'}); }catch(e){}
+  _walkText(el,n=>{ if(n.nodeValue.indexOf('$')<0) return;
+    n.nodeValue=n.nodeValue.replace(/\\lim(?![a-zA-Z])(?!\s*\\limits)(?!\s*\\nolimits)/g,'\\lim\\limits').replace(/\\not=/g,'\\ne '); });
+  try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false,strict:'ignore',trust:true}); }catch(e){}
+  try{
+    _walkText(el,n=>{ const v=n.nodeValue; if(!/,/.test(v)) return;
+      const parts=v.split(/((?<!\d),(?=\s)|(?<=\D),(?=\D))/); if(parts.length<2) return;
+      const f=document.createDocumentFragment();
+      parts.forEach(t=>{ if(t===','){const s=document.createElement('span');s.className='sp-c';s.textContent=',';f.appendChild(s);} else if(t) f.appendChild(document.createTextNode(t)); });
+      n.parentNode.replaceChild(f,n); });
+    el.querySelectorAll('.katex').forEach(k=>{ const nx=k.nextSibling; if(nx&&nx.nodeType===3&&/^[가-힣]/.test(nx.nodeValue)&&!(k.nextElementSibling&&k.nextElementSibling.classList.contains('sp-e')&&k.nextElementSibling===nx)){ const s=document.createElement('span');s.className='sp-e';k.parentNode.insertBefore(s,nx);} });
+  }catch(e){}
 }
 function waitKatex(cb,n=0){ if(typeof renderMathInElement==='function'||n>40) cb(); else setTimeout(()=>waitKatex(cb,n+1),100); }
 /* 문항 글자: 이스케이프 후 줄바꿈만 살린다. ㄱ.·(가) 앞은 자동 줄바꿈 */
