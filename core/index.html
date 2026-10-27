@@ -40,6 +40,14 @@ button{font:inherit;cursor:pointer}
 .go.s{background:rgba(255,255,255,.06);color:var(--tx);border:1px solid var(--bd)}
 .go.s span{color:var(--dim);opacity:1}
 .go.done{background:rgba(126,224,163,.08);border:1px solid rgba(126,224,163,.3);color:var(--ok)}
+/* (1027) 눌러서 시작할 수 있는 카드 — 포털 '오늘 할 일'처럼 테두리 색 + 오른쪽 배지 */
+.go{position:relative}
+.go.act{background:rgba(245,160,160,.07);color:var(--tx);border:1px solid rgba(245,160,160,.55);padding-right:92px;box-shadow:0 0 0 1px rgba(245,160,160,.12) inset}
+.go.act span{color:var(--tx2);opacity:1}
+.go.act:active{background:rgba(245,160,160,.16)}
+.go .tap{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-style:normal;font-weight:800;font-size:16px;color:var(--acc);white-space:nowrap}
+.go.done .tap{color:var(--ok);font-size:15px}
+.go.done{padding-right:80px}
 .guide{color:var(--dim);font-size:12.5px;margin:6px 0 16px;line-height:1.7}
 .guide b{color:var(--tx2)}
 .unit{font-size:11px;letter-spacing:.16em;color:var(--dim);margin:18px 2px 8px}
@@ -408,11 +416,15 @@ function drawHome(){
     +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업</span></div>`
     +`<div><b>${open}</b><span>열림</span></div>`
     +`<div><b>${loop.length}</b><span>이번에 돌아온 문항</span></div></div>`);
-  H.push(`<button class="go${rDone?' done':lc.length&&rOpen?'':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
-    +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span></button>`);
+  const rAct=!rDone && lc.length && rOpen;
+  H.push(`<button class="go${rDone?' done':rAct?' act':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
+    +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span>`
+    +`${rAct?'<em class="tap">시작 →</em>':rDone?'<em class="tap">완료</em>':''}</button>`);
   const once=ROUND?'수업마다 한 번':'하루 한 번', nextT=ROUND?'다음 수업 뒤':'내일', nx=nextClassText();
-  H.push(`<button class="go s${lDone?' done':''}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):lDue?'· 마감됐어요':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span></button>`);
+  const lAct=!lLock && !lDone && !lDue && loop.length>0;
+  H.push(`<button class="go${lDone?' done':lAct?' act':' s'}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):lDue?'· 마감됐어요':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
+    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span>`
+    +`${lAct?`<em class="tap">${LT.started?'이어서':'시작'} →</em>`:lDone?'<em class="tap">완료</em>':''}</button>`);
   H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
     +`틀리거나 <b>애매</b>했던 개념·유형은 다시 돌아와요. 애매할 땐 애매하다고 눌러야 정확해져요.</div>`);
   H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
