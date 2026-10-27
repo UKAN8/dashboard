@@ -406,17 +406,26 @@ function loopToday(){
   if(ids){
     const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean)
       .filter(x=>x.key[0]==='C'?cOpen(x.key):tOpen(x.key));   // (1027) 고정된 세트라도 그 뒤 잠긴 칸(신규생 입원 전 진도)은 뺀다
+    saveLoopSet(ids);   // (1028) 첫 저장이 실패했어도 다시 열 때 서버에 남긴다
     return {items:rest, started:done.size>0, finished:!rest.length};
   }
   if(done.size){   // (1021) 다른 기기·브라우저(카톡 인앱↔크롬): 오늘 처음 세트를 다시 만들어 남은 것만 낸다(전엔 '오늘 완료'로 잘렸다)
-    const again=withoutRound(buildLoop); lset(k, again.map(x=>x.id));
+    const again=withoutRound(buildLoop); lset(k, again.map(x=>x.id)); saveLoopSet(again.map(x=>x.id));
     const rest=again.filter(x=>!done.has(x.id)); return {items:rest, started:true, finished:!rest.length};
   }
   const fresh=buildLoop();
-  if(fresh.length) lset(k, fresh.map(x=>x.id));
+  if(fresh.length){ lset(k, fresh.map(x=>x.id)); saveLoopSet(fresh.map(x=>x.id)); }
   return {items:fresh, started:false, finished:false};
 }
-function loopAdd(id){ const k=roundKey(), ids=lget(k,[]); if(!ids.includes(id)){ ids.push(id); lset(k,ids); } }
+function loopAdd(id){ const k=roundKey(), ids=lget(k,[]); if(!ids.includes(id)){ ids.push(id); lset(k,ids); saveLoopSet(ids); } }
+// (1028 유강 "루프 이행률 세트 크기 남기는 작업") 이번 회차 루프 세트(낸 문항)를 서버 loop_set 에 남긴다 — 리포트 과제 이행률의 분모.
+//   서버는 같은 회차면 문항을 합친다. 실패해도 루프는 그대로 돈다(리포트가 추정으로 대신한다).
+let LSET_SENT='';
+function saveLoopSet(ids){
+  if(DEMO||!sb||!TOK||!SKEY||!ids||!ids.length) return;
+  const rnd=ROUND||TODAY, key=rnd+'|'+ids.length; if(LSET_SENT===key) return; LSET_SENT=key;
+  try{ sb.rpc('loop_set_save',{tok:TOK,skey:SKEY,rnd:rnd,ids:ids.slice(0,200)}).then(r=>{ if(!r||r.error) LSET_SENT=''; },()=>{ LSET_SENT=''; }); }catch(e){ LSET_SENT=''; }
+}
 function todayRows(mode){ return LOG.filter(r=>r[5].slice(0,10)===TODAY && r[4]===mode).length; }
 
 /* ── 홈: 버튼 + 단원 지도 ── */
