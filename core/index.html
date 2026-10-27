@@ -24,7 +24,7 @@ main{max-width:620px;margin:0 auto}
 button{font:inherit;cursor:pointer}
 .katex{font-size:1.05em}
 .katex .mpunct{margin-right:.16em}
-.sp-c{margin-right:.16em}.sp-e{display:inline-block;width:.22em}
+.sp-c{margin-right:.16em}.sp-e{display:inline-block;width:.22em}.mw{white-space:nowrap}
 .qcard .q,.chs button,.res .w,.cbox .cl span,.bbox .sg,.bbox .eb,.bbox li{word-spacing:.1em}
 .qcard .q{line-height:1.95}
 .res .w,.cbox .cl span,.bbox .sg,.bbox .eb{line-height:1.85}
@@ -258,7 +258,11 @@ function tex(el){
       const f=document.createDocumentFragment();
       parts.forEach(t=>{ if(t===','){const s=document.createElement('span');s.className='sp-c';s.textContent=',';f.appendChild(s);} else if(t) f.appendChild(document.createTextNode(t)); });
       n.parentNode.replaceChild(f,n); });
-    el.querySelectorAll('.katex').forEach(k=>{ const nx=k.nextSibling; if(nx&&nx.nodeType===3&&/^[가-힣]/.test(nx.nodeValue)&&!(k.nextElementSibling&&k.nextElementSibling.classList.contains('sp-e')&&k.nextElementSibling===nx)){ const s=document.createElement('span');s.className='sp-e';k.parentNode.insertBefore(s,nx);} });
+    /* 수식 뒤에 붙는 쉼표·조사는 수식과 한 줄로 묶는다(줄 머리에 쉼표·조사가 떨어지지 않게) */
+    el.querySelectorAll('.katex').forEach(k=>{ if(k.parentNode.classList&&k.parentNode.classList.contains('mw')) return;
+      let nx=k.nextSibling; const w=document.createElement('span'); w.className='mw'; k.parentNode.insertBefore(w,k); w.appendChild(k);
+      if(nx&&nx.nodeType===1&&nx.classList.contains('sp-c')){ w.appendChild(nx); nx=w.nextSibling; }
+      if(nx&&nx.nodeType===3){ const m=/^([.)?!:;]*)([가-힣]*)/.exec(nx.nodeValue); if(m&&m[0]){ if(m[2]){ const s=document.createElement('span'); s.className='sp-e'; } nx.nodeValue=nx.nodeValue.slice(m[0].length); if(m[1]) w.appendChild(document.createTextNode(m[1])); if(m[2]){ const s=document.createElement('span'); s.className='sp-e'; w.appendChild(s); w.appendChild(document.createTextNode(m[2])); } } } });
   }catch(e){}
 }
 function waitKatex(cb,n=0){ if(typeof renderMathInElement==='function'||n>40) cb(); else setTimeout(()=>waitKatex(cb,n+1),100); }
