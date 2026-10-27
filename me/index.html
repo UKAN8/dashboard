@@ -1050,6 +1050,11 @@ function hwRange(a){
   return lo===hi?`THEME ${lo}`:`THEME ${lo}~${hi}`;
 }
 const HW_LV={자동:'자동 (추천)',기본:'기본 다지기',표준:'표준',도전:'도전'};
+// (1027 유강) 버튼별로 어떻게 나가는지 한 줄 — hw_plan.py 난이도 규칙과 같게
+const HW_LVD={자동:'내 체크에 맞춰 정해요. 혼자 푼 게 절반이 안 되면 막힌 유형은 쉬운 문제부터',
+  기본:'한 단계 쉽게 — 막힌 유형 하 · 나머지 중',
+  표준:'막힌 유형·나머지 중 · 다 맞힌 유형 중상',
+  도전:'한 단계 어렵게 — 나머지 중상 · 다 맞힌 유형 상'};
 function prefCard(){
   const p=HW.pref||{최소:25,최대:50,난이도:'자동'};
   const mins=[], maxs=[]; for(let i=25;i<=60;i+=5) mins.push(i); for(let i=25;i<=120;i+=5) maxs.push(i);
@@ -1059,13 +1064,16 @@ function prefCard(){
     +`<label>문항 수</label><div class="two"><select id="hwp-min">${mins.map(v=>`<option ${v===p.최소?'selected':''}>${v}</option>`).join('')}</select><span class="dim">~</span>`
     +`<select id="hwp-max">${maxs.map(v=>`<option ${v===p.최대?'selected':''}>${v}</option>`).join('')}</select><span class="dim">문항</span></div>`
     +`<label>난이도</label><div class="seg">${Object.keys(HW_LV).map(k=>`<button type="button" data-lv="${k}" class="${k===p.난이도?'on':''}">${HW_LV[k]}</button>`).join('')}</div>`
+    +`<div class="dim lvh" style="font-size:12px;line-height:1.75;margin-top:6px">${Object.keys(HW_LV).map(k=>`<div data-lvd="${k}"${k===p.난이도?' style="color:var(--tx)"':''}><b>${HW_LV[k]}</b> · ${HW_LVD[k]}</div>`).join('')}`
+    +`<div style="margin-top:4px">막힌 유형 = ③·⑤ 체크한 유형. 많이 막힌 유형일수록 문항이 더 많이 나가요.</div></div>`
     +`<div class="acts"><button type="button" class="b go" id="hwp-save">저장</button></div><div id="hwp-msg" class="dim" style="font-size:12px;margin-top:6px"></div></div></div>`;
 }
 function wirePref(host){
   const r=host.querySelector('[data-popen]'); if(!r) return;
   r.onclick=ev=>{ ev.preventDefault(); $('hwp-f').classList.toggle('open'); };
   let lv=(HW.pref||{}).난이도||'자동';
-  host.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ lv=b.dataset.lv; host.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('on',x===b)); });
+  host.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ lv=b.dataset.lv; host.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('on',x===b));
+    host.querySelectorAll('[data-lvd]').forEach(x=>x.style.color=x.dataset.lvd===lv?'var(--tx)':''); });
   $('hwp-save').onclick=async()=>{
     const mn=+$('hwp-min').value, mx=+$('hwp-max').value, msg=$('hwp-msg');
     if(mx<mn){ msg.className='bad'; msg.textContent='최대는 최소보다 크거나 같아야 해요.'; return; }
