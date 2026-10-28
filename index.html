@@ -6957,15 +6957,17 @@ let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
    자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
    옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
-let AUTO={}, AUTOB=null, LOOPSTART=null;
+let AUTO={}, AUTOB=null, LOOPSTART=null, HWR={}, HWRB=null;   // (1028) HWR = console_hw_rate 학생별
 /* (1021 유강) '최근 점수' 누적은 새 체계 시작일 이후 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
 const CYCLE_START='2026-10-21';   // (1022 유강 "오늘이 스타트") 새 체계 시작일 — 리포트 HISTORY_START 와 같다
 async function loadAuto(cls,day){
-  AUTO={};AUTOB=null;LOOPSTART=null;
+  AUTO={};AUTOB=null;LOOPSTART=null;HWR={};HWRB=null;
   try{
-    const [ra,rl]=await Promise.all([sb.rpc('console_auto',{p_cls:cls,p_day:day}),
-                                     Promise.resolve(sb.rpc('console_loop_start',{p_cls:cls,p_day:day})).catch(()=>null)]);
+    const [ra,rl,rh]=await Promise.all([sb.rpc('console_auto',{p_cls:cls,p_day:day}),
+                                     Promise.resolve(sb.rpc('console_loop_start',{p_cls:cls,p_day:day})).catch(()=>null),
+                                     Promise.resolve(sb.rpc('console_hw_rate',{p_cls:cls,p_day:day})).catch(()=>null)]);
     LOOPSTART=(rl&&!rl.error&&rl.data)?String(rl.data).slice(0,10):null;
+    if(rh&&!rh.error&&rh.data){HWRB=rh.data;(rh.data['학생']||[]).forEach(r=>HWR[r['학생ID']]=r);}   // (1028) 과제 이행 = 써킷+개별과제+루프 (schema_v52)
     const {data,error}=ra;
     if(error){console.warn('console_auto',error.message);return;}
     if(!data)return;
@@ -6980,7 +6982,17 @@ function fmtDue(iso){
 }
 /* 오늘 검사할 써킷 묶음 = 반 마감이 오늘(보는 날)인 묶음. 마감이 지났어야 값이 확정이다. */
 function autoHwDue(){const B=AUTOB&&AUTOB['묶음'];return !!(B&&kstDay(B['마감'])===vDay());}
+/* (1028 유강) 과제 이행 = 리포트 v5 와 같은 규칙 — 써킷 + 개별과제 + 루프 문항 총합(console_hw_rate, schema_v52).
+   확정(루프 마감 = 수업 1시간 전 지남) 뒤에만 채운다. 함수가 없을 때(SQL 전)만 옛 써킷 이행률. */
+function hwrParts(h){
+  return [['써킷',h&&h['써킷']],['개별과제',h&&h['개별과제']],['루프',h&&h['루프']]].filter(x=>x[1]).map(x=>`${x[0]} ${x[1][0]}/${x[1][1]}`).join(' · ');
+}
 function autoRate(id){
+  if(HWRB){
+    const h=HWR[id];
+    if(!HWRB['확정']||!h||h['이행률']===null||h['이행률']===undefined)return null;
+    return h['이행률'];
+  }
   const a=AUTO[id],B=AUTOB&&AUTOB['묶음'];
   if(!a||!autoHwDue()||!B['지남']||a['연장']||!a['써킷'])return null;
   const v=a['써킷']['이행률'];return (v===null||v===undefined)?null:v;
@@ -7024,6 +7036,11 @@ function autoLine(id){
     out.push(l.n?`<span class="ac ok" title="${esc(rt)} · 확실 ${l.ok}/${l.n}">루프 ✓ ${l.n}문항</span>`
                 :`<span class="ac bad" title="${esc(rt)}">루프 ✗</span>`);
   }
+  const hr=HWR[id];
+  if(HWRB&&hr&&hr['이행률']!==null&&hr['이행률']!==undefined){
+    const t=`과제 이행 = ${hwrParts(hr)}${hr['루프출처']&&hr['루프출처']!=='기록'?' (루프 낸 문항: '+hr['루프출처']+')':''}${HWRB['확정']?'':' · 아직 마감 전'}`;
+    out.push(`<span class="ac ${!HWRB['확정']?'none':hr['이행률']>=100?'ok':hr['이행률']<50?'bad':''}" title="${esc(t)}">과제 ${hr['이행률']}%</span>`);
+  }
   if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
   return `<div class="recent autoline">${out.join('')}</div>`;
 }
@@ -7036,7 +7053,7 @@ function applyAuto(){
     const id=c.dataset.id;let put=false;
     const inp=c.querySelector('[data-f="이행률"]'), v=autoRate(id);
     if(inp&&v!==null){
-      inp.title='써킷 체크 자동값 '+v+'% — 손으로 고치면 그 값이 남는다';
+      inp.title=(HWRB?'과제 이행 자동값 '+v+'% ('+hwrParts(HWR[id])+')':'써킷 체크 자동값 '+v+'%')+' — 손으로 고치면 그 값이 남는다';
       if(inp.value.trim()===''){inp.value=String(v);inp.classList.add('autov');put=true;}
     }
     const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
@@ -7651,7 +7668,7 @@ function renderGrid(box,nq){
   const t=document.createElement('table');t.className='cs-grid';
   const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
                   :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
-  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}<th>합</th><th>점수</th><th>이행률</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}<th>합</th><th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
