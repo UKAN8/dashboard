@@ -123,7 +123,9 @@ async function show(k) {
     (fails.length ? ` · <span style="color:var(--warn)">없음 ${fails.length}</span>` : '') +
     (pending.length ? ` · 만드는 중 ${pending.length}` : '') +
     (names.length ? ` <button class="pv" id="zipall" style="margin-left:8px">⤓ 전체 받기 (${names.length}명 · zip)</button>`
-      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs">문제+해설</option><option value="all">전체 파일</option></select>` : '') + '</p>';
+      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs">문제+해설</option><option value="all">전체 파일</option></select>`
+      + ` <button class="pv" id="printall" style="margin-left:6px">🖨 바로 인쇄</button>`
+      + ` <label style="font-size:11.5px;color:var(--dim)"><input type="checkbox" id="pdup" checked> 양면(학생 사이 빈쪽)</label>` : '') + '</p>';
   html += '<table><tr><th>학생</th><th>파일</th><th></th></tr>';
   for (const n of names) {
     const f = rows[n], u0 = urls[f['키']], u1 = f['문제키'] && urls[f['문제키']], u2 = f['해설키'] && urls[f['해설키']];
@@ -140,14 +142,73 @@ async function show(k) {
     fails.map(x => E(x.이름) + ' — ' + E((x.메시지 || '').slice(0, 90)) + ' <span style="opacity:.6">#' + x.잡 + '</span>').join('<br>') + '</div>';
   if (pending.length) html += '<div class="note">만드는 중: ' + pending.map(x => E(x.이름) + '(' + E(x.상태) + ')').join(', ') + ' — 1~2분 뒤 ↻</div>';
   html += '<div class="note">문제 파일과 해설 파일에 빠른정답 장이 둘 다 들어 있다. 파일명은 학생 이름으로 떨어진다. '
-    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. [전체 받기] zip 을 <b>폴더에 푼 뒤</b> <b>_print_all.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(압축 안에서 실행하면 PDF 0개. SumatraPDF 있으면 조용히 1부씩, 없으면 기본 PDF 앱). 자세한 건 zip 안 _읽어주세요.txt.</div>';
+    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. <b>[🖨 바로 인쇄]</b>는 고른 파일을 한 PDF 로 합쳐 Edge 인쇄창을 한 번 띄운다(부수 1 확인). [전체 받기] zip 을 <b>폴더에 푼 뒤</b> <b>_print_all.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(압축 안에서 실행하면 PDF 0개. SumatraPDF 있으면 조용히 1부씩, 없으면 기본 PDF 앱). 자세한 건 zip 안 _읽어주세요.txt.</div>';
   $('#left').innerHTML = html;
   document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
   const zb = $('#zipall'); if (zb) zb.onclick = () => zipAll(zb, g, names, rows, urls);
+  const pb = $('#printall'); if (pb) pb.onclick = () => printAll(pb, names, rows, urls);
 }
 
 /* ── 전체 받기 (0908 유강) — 서명 URL 로 하나씩 받아 무압축 zip 한 파일로. 파일명=학생이름_문제.pdf.
    조회(app.js) makeZip 과 같은 store zip. 브라우저 다운로드 한 번에 끝난다. */
+function wantList(names, rows, urls) {
+  const kind = ($('#zipkind') || {}).value || 'q';
+  const want = [];
+  for (const n of names) {
+    const f = rows[n];
+    const add = (key, suf) => { const u = f[key] && urls[f[key]]; if (u) want.push({ name: n + suf + '.pdf', url: u }); };
+    if (kind === 'q' || kind === 'qs') add('문제키', '_문제');
+    if (kind === 's' || kind === 'qs') add('해설키', '_해설');
+    if (kind === 'all' || (kind !== 'all' && !f['문제키'] && !f['해설키'])) add('키', '');
+  }
+  return want;
+}
+/* ── 바로 인쇄 (1028 유강 "엣지에서 돌아가게") — zip·bat·SumatraPDF 없이 브라우저에서 끝낸다.
+   고른 파일을 받아 pdf-lib 로 한 PDF 로 합치고(양면이면 홀수쪽 파일 뒤에 빈쪽 → 다음 학생이 새 장에서 시작),
+   숨은 iframe 에서 print() → 인쇄창 한 번. 부수는 인쇄창에서 1 확인.
+   Edge 를 --kiosk-printing 으로 띄우면 인쇄창도 없이 기본 프린터로 바로 나간다. */
+let _pdfLib = null;
+function loadPdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  return _pdfLib || (_pdfLib = new Promise((ok, no) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    sc.onload = () => ok(window.PDFLib); sc.onerror = () => { _pdfLib = null; no(new Error('pdf-lib 로드 실패')); };
+    document.head.appendChild(sc);
+  }));
+}
+async function printAll(btn, names, rows, urls) {
+  const want = wantList(names, rows, urls);
+  if (!want.length) { btn.textContent = '인쇄할 파일이 없다'; return; }
+  const dup = ($('#pdup') || {}).checked;
+  const orig = btn.textContent; btn.disabled = true;
+  const done = (msg) => { btn.disabled = false; btn.textContent = msg; setTimeout(() => { btn.textContent = orig; }, 8000); };
+  let L; try { L = await loadPdfLib(); } catch (e) { return done('pdf-lib 못 받음 — zip 으로'); }
+  const out = await L.PDFDocument.create(), failed = [];
+  for (let i = 0; i < want.length; i++) {
+    btn.textContent = `합치는 중… ${i + 1}/${want.length}`;
+    try {
+      const r = await fetch(want[i].url); if (!r.ok) throw new Error(r.status);
+      const src = await L.PDFDocument.load(await r.arrayBuffer(), { ignoreEncryption: true });
+      const pages = await out.copyPages(src, src.getPageIndices());
+      pages.forEach(p => out.addPage(p));
+      if (dup && pages.length % 2 && i < want.length - 1) { const { width, height } = pages[pages.length - 1].getSize(); out.addPage([width, height]); }
+    } catch (e) { failed.push(want[i].name); }
+  }
+  if (!out.getPageCount()) return done('하나도 못 받았다 — 링크 만료면 ↻');
+  btn.textContent = '인쇄창 여는 중…';
+  const url = URL.createObjectURL(new Blob([await out.save()], { type: 'application/pdf' }));
+  const old = document.getElementById('printframe'); if (old) old.remove();
+  const fr = document.createElement('iframe');
+  fr.id = 'printframe'; fr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+  fr.onload = () => setTimeout(() => {
+    try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+    catch (e) { window.open(url, '_blank'); }   // 막히면 새 탭으로 열어 Ctrl+P
+  }, 600);
+  fr.src = url; document.body.appendChild(fr);
+  setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+  done(failed.length ? `${want.length - failed.length}개 인쇄 · 실패 ${failed.join(', ')}` : `${want.length}개 · ${out.getPageCount()}쪽 인쇄창 ✓`);
+}
 async function zipAll(btn, g, names, rows, urls) {
   const kind = ($('#zipkind') || {}).value || 'q';
   const want = [];
@@ -186,7 +247,7 @@ async function zipAll(btn, g, names, rows, urls) {
    → ★ bat 안에는 한글을 한 글자도 넣지 않는다(파일명도 ASCII). 안내문은 zip 안 _읽어주세요.txt 로 따로 넣는다.
       %ProgramFiles(x86)% 도 for in-list 안에서 괄호로 파싱이 깨질 수 있어 if exist 나열로 풀었다.
       PDF 0개면(압축 안에서 실행) 이유를 찍고 멈춘다. 어떤 경로로 끝나든 :end 의 pause 를 지난다. */
-const PRINT_BAT = `@echo off
+const PRINT_BAT = String.raw`@echo off
 setlocal enableextensions
 cd /d "%~dp0"
 set "N=0"
