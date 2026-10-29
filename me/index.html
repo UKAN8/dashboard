@@ -687,6 +687,10 @@ function partsOf(d){
       +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`;
   }
   // ⓪-2 개념의 탑 (0930) — 지금 세트는 고1 공수2(평면좌표~집합의 연산)뿐이라 고1 에게만.
+  // (1029 유강) 주간고사·클리닉 예약 시스템 바로가기 — 학생 폰에 연결된 예약 앱 화면으로
+  P.clinic=`<div class="card" style="border-color:rgba(120,180,255,.45)"><div class="row">`
+    +`<span class="t"><b>주간고사 · 클리닉</b><span class="dim"> 예약 · 결과 · 오답 루프 · 클리닉 질문 (학생 폰에서 열려요)</span></span>`
+    +`<a class="n mid" href="https://clinic-booking-black-phi.vercel.app/me" target="_blank" rel="noopener" style="text-decoration:none;font-weight:800">열기 →</a></div></div>`;
   P.tower='';
   if(/^고1/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
@@ -734,6 +738,7 @@ function render(d){
   H.push(P.diag);
   // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — 맨 위 카드. lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
   H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
+  H.push(P.clinic);
   H.push(P.eval||P.evalNone);
   H.push(`<div id="hw-host"></div>`);
   H.push(P.core);
@@ -911,6 +916,7 @@ function renderFinal(d,parts){
   const H=[];
   H.push(parts.head);
   H.push(heroCard(d,c,today));
+  H.push(parts.clinic);
   const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
   H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
     +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`
