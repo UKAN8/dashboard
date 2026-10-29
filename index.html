@@ -738,9 +738,9 @@ body.cs-on #boot{display:none}
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#qame" data-v="qame" data-g="수업">내 답변</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="시험" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="보관" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#links" data-v="links" data-g="관리">학생 포털 링크</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
-<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><a href="#cs-clinic" data-v="cs-clinic" data-g="보관">추가학습 지정</a><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a>
+<a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><!-- (1029) 추가학습 지정 탭 메뉴에서 뺌 — 클리닉 예약 서비스로 옮길 예정. #cs-clinic 주소로는 열린다 --><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a>
 </div></nav>
 <span id="state"><span id="seasonbar" title="시즌 — 고른 기간의 기록만 보인다(1023)"></span><span class="pill" id="freshness"></span><span id="who"></span>
 <button class="pill" id="jobpill" onclick="csJobs()" title="서버 작업 현황 — 버튼으로 시킨 일이 어디까지 갔는지">⚙ 작업</button>
@@ -789,8 +789,7 @@ body.cs-on #boot{display:none}
         <div class="cs-info-row">
           <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
           <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
-          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 없음</option><option>리뷰테스트</option><option>기출테스트</option></select></div>
-          <div class="f" style="flex:0 0 64px"><label class="lbl">문항</label><input id="c_nq" inputmode="numeric" value="5" onchange="renderStudents();saveClassLog()"></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>기출테스트</option></select><input id="c_nq" type="hidden" value="0"></div>
           <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
         </div>
         <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
@@ -828,37 +827,11 @@ body.cs-on #boot{display:none}
           <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="#report">리포트 탭</a>에서 확인<br>
           <b>추가학습만 고칠 땐 재마감하지 말 것</b> — 칸을 고치면 명단은 알아서 따라간다. 자동 지정을 다시 돌리려면 사유 칸을 비우고 <b>[② 추가학습 세팅]</b><br>
           <b>재마감</b> — 점수·진도 같은 걸 고쳤을 때만. 그날 데이터를 리셋하고 다시 적재·렌더한다(몇 분 걸린다)<br>
-          <b>직접</b> — 복습 루프: 아래 <b>복습 루프</b>에서 [루프 만들기]→[보내기] · 추가학습 출석: <b>[추가학습 지정]</b> 탭<br>
+          <b>다음날 9시</b> — 링크 리포트가 학생별 팀톡으로 나간다(보내기 전에 확인 질문이 먼저 온다)<br>
           진행 상황은 상단 <b>⚙ 작업</b>에서 본다
         </div>
       </div>
 
-      <!-- 루프·오늘 물을 것 — 마감 뒤에 쓰는 것이라 접어 둔다 -->
-      <details class="cs-more"><summary>오늘 물을 것 <span class="badge" id="pl_state"></span></summary>
-        <div class="card">
-          <div class="cs-info-row">
-            <div class="f grow"><label class="lbl">문항 풀</label><select id="pl_pool" onchange="planPool()"></select></div>
-            <div class="f" style="flex:0 0 148px"><label class="lbl">수업일</label><input id="pl_date" type="date"></div>
-            <div class="f" style="flex:0 0 190px"><label class="lbl">마감 (학생 화면 문구)</label><input id="pl_due" placeholder="8월 12일(수) 21시"></div>
-            <div class="f grow"><label class="lbl">오늘 부제 (학생이 읽는다)</label><input id="pl_sub" placeholder="8월 12일 · 도함수의 활용(3) 파트2"></div>
-          </div>
-          <div id="pl_list" class="loadout">반을 고르면 그 학년 풀에서 문항을 불러온다. 진도에 가까운 3개가 미리 체크된다.</div>
-          <div class="row" style="margin-top:10px"><button class="key" id="pl_go" onclick="planJob()">오늘 물을 것 확정 → 만들기</button></div>
-        </div>
-      </details>
-      <details class="cs-more"><summary>복습 루프 <span class="badge" id="loopfresh"></span></summary>
-        <div class="card">
-          <div class="cs-info-row">
-            <div class="f grow"><label class="lbl">문항 풀 (단원)</label><select id="lp_unit"></select></div>
-            <div class="f" style="flex:0 0 auto;display:flex;gap:8px;align-self:flex-end">
-              <button class="ghost" id="lp_make" onclick="loopJob('build_sets')">루프 만들기</button>
-              <button class="key" id="lp_send" disabled onclick="loopSend()">보내기</button>
-            </div>
-          </div>
-          <div id="lp_out" class="loadout">오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.</div>
-          <div class="lbl" style="margin-top:10px">누가 냈고 누가 안 냈나 → <a href="#loop">루프 탭 · 발송 현황</a></div>
-        </div>
-      </details>
       <div class="cs-foot" style="justify-content:flex-end"><button class="ghost danger sm" onclick="resetToday()">오늘 입력 전체 리셋</button></div>
     </div>
   </section>
@@ -7020,9 +6993,9 @@ function autoLine(id){
     out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 10점 환산 (확실히 맞힌 문항 / 반 리뷰 문항 수, 문항별 첫 시도) · 푼 문항 ${r.n}">리뷰 ${reviewScore(r).toFixed(1)}점 (${r.ok}/${reviewN()})</span>`
              :`<span class="ac none" title="오늘 리뷰테스트 기록 없음">리뷰 —</span>`);
   }
-  const h=a['써킷'];
+  const h=a['써킷'], hr0=HWR[id], merged=!!(HWRB&&hr0&&hr0['이행률']!==null&&hr0['이행률']!==undefined);   // (1029 리뉴얼)
   if(a['연장'])out.push(`<span class="ac ext" title="써킷 과제 학생별 연장 — 써킷 과제 화면에서 취소">써킷 연장 ~${fmtDue(a['연장'])}</span>`);
-  else if(h&&B&&autoHwDue()){
+  else if(!merged&&h&&B&&autoHwDue()){
     const t=`써킷 ${(B['세트']||[]).join('+')} · 마감 ${fmtDue(B['마감'])} · 체크 ${h['체크']}/${h['전체']} · ①${h.n1} ②${h.n2} ③${h.n3} ④${h.n4} ⑤${h.n5} ⑥${h.n6} · 자력 ${h['자력']}%`;
     out.push(B['지남']
       ?`<span class="ac ${h['이행률']>=100?'ok':h['이행률']<50?'bad':''}" title="${esc(t)}">써킷 ${h['이행률']}% · 자력 ${h['자력']}%</span>`
@@ -7030,7 +7003,8 @@ function autoLine(id){
   }
   /* (1022 유강) 루프 과제 = 수업당 1회 — 지난 수업 끝 ~ 이 수업 시작(console_auto '루프회차')에 푼 문항 */
   const l=a['루프']||{}, LR=AUTOB&&AUTOB['루프회차'];
-  if(!LR)out.push(`<span class="ac none" title="시간표로 지난 수업을 못 찾았다">루프 —</span>`);
+  if(merged){}
+  else if(!LR)out.push(`<span class="ac none" title="시간표로 지난 수업을 못 찾았다">루프 —</span>`);
   else{
     const rt=`지난 수업 뒤 루프 ${String(LR['시작']).slice(5).replace('T',' ')} ~ ${String(LR['끝']).slice(5).replace('T',' ')}${l.last?' · 마지막 '+String(l.last).slice(5).replace('T',' '):''}`;
     out.push(l.n?`<span class="ac ok" title="${esc(rt)} · 확실 ${l.ok}/${l.n}">루프 ✓ ${l.n}문항</span>`
@@ -7238,32 +7212,11 @@ async function selectClass(cls){
     }
   }
   autoGrow($('c_progress'));autoGrow($('c_hw'));
-  /* 문항 수는 class_log 에 칸이 없다 → 오늘 채점된 문항점수의 최대 길이로 되살린다.
-     4문항으로 채점한 반이 재진입 때 5로 돌아가면 빈 5번칸이 0점으로 잡힌다. */
-  {
-    // 저장 형식은 버튼 수만큼의 자리를 갖는다("2,1,,," = 5문항 중 2개 채점) → 자리 수를 센다
-    const w=Math.max(0,...(logs||[]).map(r=>{
-      const s=(r['문항점수']||'').trim();
-      return s?(s.includes(':')?0:s.split(',').length):0;
-    }));
-    if(w>0)$('c_nq').value=w;
-    /* (1021) 리뷰테스트는 폰으로 자동 채점 — 오늘 리뷰 기록이 있고 손 채점이 없으면 문항 칸을 접는다 */
-    else if(Object.values(AUTO).some(a=>a['리뷰']))$('c_nq').value=0;
-  }
+  /* (1029 리뉴얼) 종이 리뷰 채점 폐지 — 리뷰는 폰 자동. 문항 칸은 기출테스트(정답표)에서만 생긴다. */
+  $('c_nq').value=0;
   // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
   gtRestore(cl&&cl[0]);
   $('clogmark').style.display='none';
-  // 루프 카드는 반이 바뀌면 처음부터 — 앞 반의 완성 상태로 [보내기]가 켜져 있으면 사고다
-  clearInterval(LOOPTIMER);LOOPJOB=null;LOOPBUILT=null;
-  $('lp_send').disabled=true;$('lp_make').disabled=false;
-  loopSay('오늘 물을 것(문항)은 제작 세션이 쓴다. 여기서는 <b>누구에게 무엇이 나갈지</b>를 만들고 보낸다.');
-  loopIndex().then(idx=>{
-    planInit();
-    const tpl=idx&&idx['반']&&idx['반'][CLS];
-    if(tpl)loopSay('<b>'+CLS+'</b> 오늘 문항 '+tpl['문항수']+'개 · 수업일 '+tpl['수업일']+' · 마감 '+tpl['마감']+
-      '\n[루프 만들기] 를 누르면 서버가 학생별로 쪼개 만든다.');
-    else loopSay('<span class="warn">'+CLS+' 의 오늘 물을 것(_반_'+CLS+'.json)이 아직 없다 — 제작 세션에서 쓴 뒤에 만들 수 있다.</span>');
-  }).catch(e=>loopSay('<span class="warn">목록을 못 읽었다: '+e.message+'</span>'));
   renderStudents();
 }
 function allPresent(){
@@ -7668,7 +7621,7 @@ function renderGrid(box,nq){
   const t=document.createElement('table');t.className='cs-grid';
   const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
                   :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
-  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}<th>합</th><th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>개별 과제</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -7683,12 +7636,11 @@ function renderGrid(box,nq){
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
-      <td class="sum">${isNA(log)?'미응시':(log['점수']||'—')}</td>
+      ${gtMode?`<td class="sum">${isNA(log)?'미응시':(log['점수']||'—')}</td>`:''}
       <td><div class="scorecell"><input data-f="점수" value="${isNA(log)?'':esc(log['점수']||'')}">${naBtnHtml(log)}</div></td>
       <td><input data-f="이행률" style="width:56px" value="${esc(log['이행률']||'')}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${esc(log['코멘트']||'')}</textarea></td>
       <td><input data-f="특이사항" value="${esc(log['특이사항']||'')}" style="min-width:140px"></td>
-      <td><textarea data-f="개별과제" rows="1" oninput="autoGrow(this)" placeholder="비우면 공통" style="min-width:140px">${esc((log['이번과제']&&log['이번과제'].trim()!==CHW)?log['이번과제']:'')}</textarea></td>
       <td><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
       <td><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
       <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
@@ -8335,18 +8287,7 @@ async function resetToday(){
 }
 
 
-/* ══════════════════════════════════════════════════════════════════════
- * 복습 루프 손잡이 — 버튼은 요청만 쓰고, 크론이 주워 실행한다
- *
- * 콘솔은 정적 페이지라 PAT 를 들고 있을 수 없어 Actions 를 직접 못 깨운다.
- * 그래서 job_queue 에 한 줄 쓰고 이 화면이 그 줄을 폴링한다(데일리 렌더와 같은 패턴).
- * 버튼을 누르면 끝나는 게 아니라 **화면이 진행을 보여 준다** — 그게 이 코드의 절반이다.
- * ════════════════════════════════════════════════════════════════════ */
-let LOOPIDX=null, LOOPJOB=null, LOOPTIMER=null, LOOPBUILT=null;
-
-/* 기다림이 길어지면 그렇다고 말한다. 0812 오전 GitHub 예약 실행이 4시간 밀렸는데
-   화면은 "기다린다"만 띄웠다 — 사람이 고장인지 대기인지 구분할 수 없었다.
-   (폴링은 6초 간격이라 n*6초가 곧 경과 시간이다) */
+/* 서버 작업 폴링 공용 — 기다림이 길면 그렇다고 말한다(추가학습 폴링이 쓴다). */
 function stallHint(n,st){
   const sec=n*6;
   if(sec<180)return '';
@@ -8361,210 +8302,7 @@ function stallHint(n,st){
  *   '주간_고2A'      반 주간 통  (반 이름이 이름 안에)
  *   '08정적분'       단원 통     (이름에 학년이 아예 없다 — 단원 설명의 '(고2)' 로 가린다)
  * 0813에 단원 통을 올렸는데 이름 규칙이 달라 화면에서 아래로 밀렸다. */
-function poolsFor(풀){
-  const g=(CLS||'').slice(0,2), items=((LOOPIDX||{})['풀문항']||{});
-  return 풀.filter(u=>{
-    if(u.endsWith('_'+g)||u.includes('_'+g)||(CLS&&u.includes(CLS))) return true;
-    const first=(items[u]||[])[0];
-    return !!(first&&(first['단원']||'').includes(g));
-  });
-}
-async function loopIndex(){
-  const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
-    .order('완료시각',{ascending:false}).limit(1);
-  LOOPIDX=(data&&data[0]&&data[0]['결과'])||null;
-  const sel=$('lp_unit');sel.innerHTML='';
-  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[];
-  const mine=poolsFor(풀);
-  [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
-    const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
-  });
-  const t=(LOOPIDX&&LOOPIDX['생성'])||'';
-  $('loopfresh').textContent=풀.length?('목록 '+(t?t.slice(5,16).replace('T',' '):'?')+' 기준'):'목록 없음';
-  return LOOPIDX;
-}
-function loopSay(html){$('lp_out').innerHTML=html;}
-
-/* ══ 오늘 물을 것 — 풀에서 고른다 ══════════════════════════════════════
- * 문항을 쓰는 일과 고르는 일을 갈랐다. 고르는 일은 화면이 한다.
- * 추천은 진도 문자열과 유형·발문의 **두 글자 겹침** 점수다(형태소 분석 없이도 잘 걸린다). */
-/* ⚠ 한글 두 글자만 센다. 숫자·영문을 넣었더니 풀 이름의 '20260808' 과 진도의 'OPT:08' 이
-   '08' 로 겹쳐 **모든 문항이 점수 1** 이 됐다(0812 실측). 코드·날짜는 내용이 아니다. */
-function planTokens(s){
-  const t=(s||'').replace(/[^가-힣]/g,' ').replace(/\s+/g,' ').trim();
-  const out=new Set();
-  t.split(' ').forEach(w=>{ for(let i=0;i<w.length-1;i++) out.add(w.slice(i,i+2)); });
-  return out;
-}
-function planScore(q,진도){
-  const a=planTokens(진도), b=planTokens((q['유형']||'')+' '+(q['단원']||''));
-  let n=0; b.forEach(x=>{ if(a.has(x))n++; });
-  return n;
-}
-function planProgress(){
-  // 오늘 입력한 진도가 있으면 그것, 없으면 직전 수업 진도(selectClass 가 이미 채워 둔다)
-  return ($('c_progress').value||'').trim();
-}
-function planInit(){
-  const 풀=(LOOPIDX&&LOOPIDX['풀'])||[];
-  const mine=poolsFor(풀);
-  const sel=$('pl_pool');sel.innerHTML='';
-  [...mine,...풀.filter(u=>!mine.includes(u))].forEach(u=>{
-    const o=document.createElement('option');o.textContent=u;sel.appendChild(o);
-  });
-  $('pl_date').value=vDay();     // 보는 날짜를 따른다 — 자정을 넘겨도 그 수업의 날짜로 찍힌다
-  // 마감 = 다음 수업일 21시. 학생 화면과 알림톡에 이 문구가 그대로 나간다.
-  nextClinic(CLS).then(nx=>{
-    if(nx){const d=new Date(nx.date);$('pl_due').value=(d.getMonth()+1)+'월 '+d.getDate()+'일('+nx.dow+') 21시';}
-  });
-  const p=planProgress();
-  const d=new Date();
-  $('pl_sub').value=(d.getMonth()+1)+'월 '+d.getDate()+'일'+(p?' · '+p.replace(/\n/g,' / '):'');
-  planPool();
-}
-function planPool(){
-  const pool=$('pl_pool').value;
-  const list=((LOOPIDX||{})['풀문항']||{})[pool]||[];
-  $('pl_state').textContent=list.length?(pool+' · '+list.length+'문항'):'풀 목록 없음';
-  if(!list.length){
-    $('pl_list').innerHTML='<span class="warn">이 풀의 문항 목록이 없다. 서버가 목록을 갱신하면(다음 실행) 보인다.</span>';
-    return;
-  }
-  const 진도=planProgress();
-  const scored=list.map(q=>({q,s:planScore(q,진도)})).sort((a,b)=>b.s-a.s);
-  const 맞는게있다=scored.length&&scored[0].s>0;
-  // 진도와 겹치는 게 하나도 없으면 **아무것도 체크하지 않는다.** 억지로 3개를 골라 주면
-  // 다른 단원 문항이 오늘 것으로 나간다(0812: 8/11 부정적분 수업에 극한 풀밖에 없었다).
-  const 추천=new Set(맞는게있다 ? scored.filter(x=>x.s>0).slice(0,3).map(x=>x.q['키']) : []);
-  const box=document.createElement('div');
-  if(!맞는게있다&&진도){
-    const w=document.createElement('div');
-    w.className='warn';
-    w.textContent='이 풀은 오늘 진도('+진도.replace(/\n/g,' / ')+')와 겹치는 유형이 없다 — 다른 단원 풀이다. '
-      +'맞는 풀이 없으면 그 단원 문항부터 만들어야 한다.';
-    box.appendChild(w);
-  }
-  list.forEach(q=>{
-    const row=document.createElement('label');
-    row.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);cursor:pointer';
-    const 슬롯=(q['슬롯']||[]).map(esc).join(' → ');
-    row.innerHTML=`<input type="checkbox" style="width:auto;margin-top:3px" data-k="${esc(q['키'])}" ${추천.has(q['키'])?'checked':''}>
-      <span><b>${esc(q['유형']||'')}</b> <span class="time">${esc(q['형식']||'')}${추천.has(q['키'])?' · 진도와 가까움':''}</span>
-      <div>${esc(q['발문']||'')}</div>${슬롯?'<div class="time">'+슬롯+'</div>':''}</span>`;
-    box.appendChild(row);
-  });
-  $('pl_list').innerHTML='';$('pl_list').appendChild(box);
-  // 발문이 $…$ 원문으로 보이면 고를 수가 없다 — 이 화면을 열 때만 KaTeX 를 받아 그린다
-  loadKatex().then(render=>render($('pl_list'),{
-    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
-    throwOnError:false})).catch(()=>{});
-}
-let KATEXP=null;
-function loadKatex(){
-  if(KATEXP)return KATEXP;
-  KATEXP=new Promise((res,rej)=>{
-    const css=document.createElement('link');
-    css.rel='stylesheet';css.href='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
-    document.head.appendChild(css);
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
-    s.onload=()=>{
-      const a=document.createElement('script');
-      a.src='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
-      a.onload=()=>res(window.renderMathInElement); a.onerror=rej;
-      document.head.appendChild(a);
-    };
-    s.onerror=rej; document.head.appendChild(s);
-  });
-  return KATEXP;
-}
-async function planJob(){
-  if(!CLS)return toast('반을 먼저 고를 것');
-  const keys=[...$('pl_list').querySelectorAll('input:checked')].map(b=>b.dataset.k);
-  if(!keys.length)return loopSay('<span class="warn">문항을 하나도 안 골랐다.</span>');
-  if(keys.length>6&&!confirm(keys.length+'문항이면 많다(보통 3개). 계속?'))return;
-  const 수업일=$('pl_date').value, 마감=$('pl_due').value.trim();
-  if(!(수업일&&마감))return loopSay('<span class="warn">수업일·마감을 채울 것 — 학생 화면에 그대로 나간다.</span>');
-  $('pl_go').disabled=true;$('lp_make').disabled=true;$('lp_send').disabled=true;
-  const {data,error}=await sb.from('job_queue').insert({'종류':'set_plan','상태':'요청','요청자':'콘솔',
-    '파라미터':{'반':CLS,'풀':$('pl_pool').value,'수업일':수업일,'마감':마감,
-                '부제':$('pl_sub').value.trim(),'문항':keys}}).select().single();
-  $('pl_go').disabled=false;
-  if(error){$('lp_make').disabled=false;return loopSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
-  LOOPJOB=data;
-  loopSay('오늘 물을 것 '+keys.length+'문항으로 정했다 — <b>'+CLS+' · '+수업일+'</b>\n이어서 학생별 세트까지 만든다. 진행은 여기 보인다.');
-  loopPoll();
-}
-async function loopJob(kind){
-  if(!CLS)return toast('반을 먼저 고를 것');
-  const unit=$('lp_unit').value;
-  if(!unit)return loopSay('<span class="warn">문항 풀이 없다. 제작 세션이 <b>_풀_*.json</b> 을 올려야 만들 수 있다.</span>');
-  const tpl=(LOOPIDX&&LOOPIDX['반']&&LOOPIDX['반'][CLS])||null;
-  if(kind==='build_sets'&&!tpl)
-    return loopSay('<span class="warn">'+CLS+' 의 오늘 물을 것(_반_'+CLS+'.json)이 아직 없다.\n문항은 사람이 쓴다 — 제작 세션에서 만든 뒤에 누를 것.</span>');
-  $('lp_make').disabled=true;$('lp_send').disabled=true;
-  const {data,error}=await sb.from('job_queue')
-    .insert({'종류':kind,'파라미터':{'반':CLS,'단원':unit},'상태':'요청','요청자':'콘솔'})
-    .select().single();
-  if(error){$('lp_make').disabled=false;return loopSay('<span class="warn">요청 실패: '+error.message+'</span>');}
-  LOOPJOB=data;
-  loopSay('요청했다 — <b>'+CLS+' · '+unit+'</b>\n요청이 들어가는 순간 DB 가 서버를 깨운다(보통 1분 안). 이 화면이 진행을 계속 보여 준다.');
-  loopPoll();
-}
-function loopPoll(){
-  clearInterval(LOOPTIMER);
-  let n=0;
-  const tick=async()=>{
-    if(!LOOPJOB)return;
-    const {data}=await sb.from('job_queue').select('*').eq('id',LOOPJOB.id).single();
-    if(!data)return;
-    const st=data['상태'];
-    if(st==='요청'||st==='처리중'){
-      const dots='.'.repeat(1+(n++%3));
-      loopSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+dots+
-        '\n<span style="opacity:.7">'+(data['메시지']||'')+'</span>'+stallHint(n,st));
-      return;
-    }
-    clearInterval(LOOPTIMER);
-    $('lp_make').disabled=false;
-    const r=data['결과']||{};
-    if(st==='실패'){LOOPBUILT=null;return loopSay('<span class="warn">실패 — '+(data['메시지']||'')+'</span>');}
-    if(data['종류']==='send_loop'){
-      LOOPBUILT=null;
-      return loopSay('<b>발송 완료</b> — '+(r['인원']||0)+'명 · 마감 '+(r['마감']||''));   // 재촉 안내 문구는 0906 제거(0902부터 재촉 끔, 미제출=이행률 0)
-    }
-    LOOPBUILT={반:r['반'],단원:r['단원'],수업일:r['수업일']||'',마감:r['마감']||'',인원:r['인원']||0};
-    $('lp_send').disabled=false;
-    const links=(r['링크']||[]).slice(0,40)
-      .map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+x['이름']+'</a> ('+x['문항수']+'문항)').join('\n');
-    loopSay('<b>'+r['반']+' '+(r['인원']||0)+'명분 완성</b> · 수업일 '+(r['수업일']||'')+' · 마감 '+(r['마감']||'')+
-      '\n하나 열어 보고 [보내기] — 발송 시각이 곧 마감 안내 시각이다.\n'+links);
-  };
-  tick();LOOPTIMER=setInterval(tick,6000);
-}
-/* ⛔ 0812 사고 — 이미 제출이 끝난 8/8 루프가 고2A 9명에게 다시 나갔다.
-   [보내기]를 누른 지 두 시간 뒤에 크론이 그 요청을 집어 간 것이다.
-   그래서 세 겹으로 막는다: ①여기서 무엇이 나가는지 보여 주고 ②지난 세트는 아예 막고
-   ③서버도 20분 지난 발송 요청과 지난 세트를 거절한다(jobs_worker). */
-function loopSend(){
-  if(!LOOPBUILT)return;
-  const d=LOOPBUILT['수업일']||'';
-  if(d && (Date.parse(todayStr())-Date.parse(d))/864e5 > 1)
-    return loopSay('<span class="warn">이 세트는 <b>'+d+' 수업</b> 것이다 — 지난 루프는 보내지 않는다.\n'+
-      '학생들은 이미 냈다. 오늘 물을 것을 새로 쓴 뒤에 만들어 보낼 것.</span>');
-  if(!confirm('지금 발송합니다.\n\n반: '+LOOPBUILT.반+' ('+LOOPBUILT.인원+'명)\n단원: '+LOOPBUILT.단원+
-              '\n수업일: '+(d||'—')+'\n마감: '+(LOOPBUILT.마감||'—')+
-              '\n\n오늘 보낼 것이 맞습니까?'))return;
-  loopJob('send_loop');
-}
-
-/* 학생 상태 보드(0818, loopStatus)는 조회 [루프] 탭 '발송 현황'으로 이사했다 — 0819 유강,
-   구현은 app.js viewLoop. 소스 겹쳐 읽기 원칙(loop_status+loop_submit)도 그쪽에 그대로. */
-
-/* ══════════════════════════════════════════════════════════════════════
- * 성적 적재 — xlsx 를 브라우저가 읽어 DB 로
- * ════════════════════════════════════════════════════════════════════ */
-
+/* (1029 리뉴얼) 옛 '오늘 물을 것'·'복습 루프'(set_plan·build_sets·send, 마지막 실행 0829) 코드를 걷어냈다 — CORE 루프(core.html)가 대체. 원본 = console.js.bak_1029_renew */
 /* xlsx 파서는 900KB 다. 적재 화면을 처음 열 때만 받는다. */
 let XLSXP=null;
 function loadXlsx(){
@@ -9403,7 +9141,7 @@ async function ctJobs(){
 
 /* ── 써킷 과제 점검 (1019 유강) ───────────────────────────────────────────────
  * 고정 책자(써킷 N라)를 과제로 낸다 → 학생은 포털에서 문항마다 ①~⑥ 탭 → 여기서 이행률·질문 처리.
- * 상태: 1 한 번에 · 2 고쳐서(해설 없이) · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름(질문 대기) · 6 안 풀었음
+ * 상태: 1 한 번에 · 2 고쳐서(해설 없이) · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름(질문 대기) · 6 안 풀었음 · 7 문항 오류(1029, 오류신고 자동 접수 · 이행률 분모에서 뺌)
  * 진도 줄이기 = hw_trim(id, THEME 컷, 이월날짜) — 범위 밖 THEME 는 다음 수업 과제로(체크도 따라간다).
  * DB = schema_v41_hw_check.sql. 표는 직원 RLS 로 직접 읽고, 줄이기·해결은 함수로. */
 const HWS={stu:[],map:null,cls:'',sets:[],sitems:[]};
@@ -9527,7 +9265,7 @@ async function hwStu(id){
   const J={}; (jobs||[]).forEach(j=>{ const p=j['파라미터']||{}; if((p['과제']||[]).map(Number).includes(id) && !J[p['학생ID']]) J[p['학생ID']]=j; });
   // (1027 v48) 그 잡이 낸 판(PDF No.)의 학생 체크 — hw_progress.판 = 잡 id. 다시 만들어 판이 여럿이면 열린 판
   const jids=Object.values(J).filter(j=>j['상태']==='완료').map(j=>j.id), P={};
-  if(jids.length){ const {data:pp}=await sb.from('hw_progress').select('판,"학생ID",전체,체크,n5,이행률,자력해결률,과제상태').in('판',jids);
+  if(jids.length){ const {data:pp}=await sb.from('hw_progress').select('판,"학생ID",전체,체크,n5,n7,이행률,자력해결률,과제상태').in('판',jids);
     (pp||[]).forEach(r=>{ if(!P[r['학생ID']]||r['과제상태']==='열림') P[r['학생ID']]=r; }); }
   // (1021) 학생별 연장 — hw_extend(schema_v41g). 연장된 학생은 그 마감까지 ⑥으로 안 잡히고, 같은 마감의 다음 과제와 한 부로 묶인다
   const {data:exts}=await sb.from('hw_extend').select('"학생ID",마감,사유').eq('assign_id',id);
@@ -9539,9 +9277,9 @@ async function hwStu(id){
     const r=(j['결과']||{})['개별']||{}; const st=j['상태'];
     const pv=P[sid];
     return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${st==='완료'?` <span class="lbl">No.${j.id}</span>`:''}${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}`
-      +(pv?` <span class="badge" title="개별과제 체크 ${pv['체크']}/${pv['전체']} · ⑤ ${pv.n5} · 자력 ${pv['자력해결률']}%">체크 ${pv['이행률']}%</span>`:'')+`${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
-  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th><th data-nosort>연장</th></tr></thead><tbody>`
-    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td><td style="white-space:nowrap">${xcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
+      +(pv?` <span class="badge" title="개별과제 체크 ${pv['체크']}/${pv['전체']} · ⑤ ${pv.n5}${pv.n7?` · ⑦ 오류 ${pv.n7}`:''} · 자력 ${pv['자력해결률']}%">체크 ${pv['이행률']}%</span>`:'')+`${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
+  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th title="문항 오류 — 이행률에서 뺌">⑦</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th><th data-nosort>연장</th></tr></thead><tbody>`
+    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p.n7||0}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td><td style="white-space:nowrap">${xcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
     +`<div class="loadout">연장 = 그 학생만 마감을 미룬다. 날짜를 비우면 이 반의 다음 과제 마감으로 — 다음 과제와 개별과제 한 부로 묶인다. 이미 만들어진 개별과제가 있으면 연장할 수 없다.</div>`
     +`<div class="loadout">개별과제는 학생이 묶음(같은 마감의 과제)을 전부 [제출]하면 바로, 아니면 마감 때 자동으로 만들어진다. 다 만든 PDF 는 📂 과제 파일 페이지(커스텀트레이닝 묶음)에 뜬다.</div>`;
 }
