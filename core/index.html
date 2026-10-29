@@ -203,7 +203,7 @@ let LOG=[];                      // [키, 문항ID, 정오, 확신, 모드, 'YYY
 let UNL={};                      // 서버 mastery_unlock (키→날짜) · (1027) 학생별 행이 덮음, null = 이 학생은 잠김
 let SUPP=new Set();              // (1027) 보충 칸 — 입원 전 진도를 따라잡는 칸. 성공일 1번이면 졸업
 let SRV_SET=null;                 // (1028 '카톡으로 연 루프가 달라요') 서버 loop_set 의 이번 회차 세트 — 이 브라우저에 세트가 없을 때 쓴다
-let ROUND='', NEXTC='', DUE='';   // (1024 유강) DUE = 루프 마감 = 다음 수업 시작 1시간 전(서버 mastery_round.마감)
+let ROUND='', NEXTC='', DUE='';   // (1024 유강) DUE = 루프 마감 = 다음 수업 시작 30분 전(1029 v50)(서버 mastery_round.마감)
            // (1022 유강) 루프 회차 = 직전 수업 끝(서버 mastery_round, KST 'YYYY-MM-DDTHH:MM:SS') · 다음 수업 시작. 비면 옛 규칙(하루)
 let CLASS=null, SKEW=0, HOME_OPEN=null;          // (1018) 오늘 우리 반 수업 [[시작,끝],…] · 서버-기기 시계 차(ms). CLASS=null 이면 미리보기(항상 열림)
 const ITEMS=BANK.items;
@@ -539,8 +539,11 @@ function drawItem(){
   const showConf=()=>{ $('conf').classList.add('show'); $('conf').scrollIntoView({block:'nearest',behavior:'smooth'}); };
   if(x.k==='num'){
     const inp=$('numIn');
-    $('ans').querySelectorAll('.k').forEach(b=>b.onclick=()=>{ inp.value+=b.dataset.k==='-'?'-':'/'; inp.focus(); });
-    const go=()=>{ const v=inp.value.trim(); if(!v) return; S.pick=v; inp.disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); showConf(); };
+    // 1029: [답 넣기] 뒤에도 확신 고르기 전까지는 답을 고칠 수 있다. 고치면 확신 버튼을 숨기고 다시 [답 넣기]
+    const unpick=()=>{ if($('conf').dataset.lock) return; if(S.pick!==null&&inp.value.trim()!==S.pick){ S.pick=null; $('conf').classList.remove('show'); } };
+    $('ans').querySelectorAll('.k').forEach(b=>b.onclick=()=>{ if($('conf').dataset.lock) return; inp.value+=b.dataset.k==='-'?'-':'/'; unpick(); inp.focus(); });
+    inp.oninput=unpick;
+    const go=()=>{ if($('conf').dataset.lock) return; const v=inp.value.trim(); if(!v) return; S.pick=v; showConf(); };
     $('numOk').onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter') go(); };
   } else {
     $('ans').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -558,10 +561,10 @@ function frac(s){
 }
 function same(a,b){ const p=frac(a), q=frac(b); return !!p&&!!q&&q[1]!==0&&p[1]!==0&&p[0]*q[1]===q[0]*p[1]; }
 function grade(conf){
-  const x=S.q[S.i]; if($('conf').dataset.lock) return; $('conf').dataset.lock='1';
+  const x=S.q[S.i]; if($('conf').dataset.lock||S.pick===null) return; $('conf').dataset.lock='1';
   const ok = x.k==='num' ? same(S.pick,x.a) : S.pick===x.a;
   const ms=Date.now()-S.t0;
-  if(x.k==='num'){ $('ans').classList.add(ok?'right':'wrong'); }
+  if(x.k==='num'){ $('numIn').value=S.pick; $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); $('ans').classList.add(ok?'right':'wrong'); }
   else $('ans').querySelectorAll('button').forEach(b=>{ b.disabled=true; if(b.dataset.a===x.a) b.classList.add('right'); else if(b.dataset.a===S.pick) b.classList.add('wrong'); });
   $('conf').querySelectorAll('button').forEach(b=>b.disabled=true);
   $('conf').style.display='none';
