@@ -182,6 +182,7 @@ svg.spark{display:block;margin-top:6px}
 .hw .grid button.s5,.hw .pal i.k5{background:rgba(255,92,138,.40);border-color:rgba(255,92,138,.75);color:#fff0f4}
 .hw .grid button.s6,.hw .pal i.k6{background:rgba(255,255,255,.02);border-color:var(--bd);color:var(--dim)}
 .hw .grid button.s6{text-decoration:line-through}
+.hw .grid button.s7,.hw .pal i.k7{background:rgba(180,140,255,.30);border-color:rgba(180,140,255,.70);color:#efe6ff}   /* (1029) ⑦ 문항 오류 */
 .hw .sub2{color:var(--dim);font-size:12px;margin-top:1px}
 .hw .pal button i{border:1px solid transparent}
 .hw .sum{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
@@ -1028,7 +1029,7 @@ function drawLib(host,opt){
  * 위 팔레트에서 상태를 고르고 번호를 누르면 칠해진다. 같은 상태로 한 번 더 누르면 지워진다.
  * ⑤ '해설 봐도 모름' = 조교 질문 대기열에 자동 등록. 조교가 풀어 주면 ④로 바뀐다.
  * DB = hw_open / hw_mark (schema_v41). 함수가 아직 없으면(미적용) 카드를 그리지 않는다. */
-const HW_ST=[null,['①','한 번에 맞음'],['②','고쳐서 맞음','해설 없이'],['③','해설 보고 해결'],['④','질문해서 해결'],['⑤','해설 봐도 모름','질문 등록'],['⑥','안 풀었음']];
+const HW_ST=[null,['①','한 번에 맞음'],['②','고쳐서 맞음','해설 없이'],['③','해설 보고 해결'],['④','질문해서 해결'],['⑤','해설 봐도 모름','질문 등록'],['⑥','안 풀었음'],['⑦','문항 오류','오류 신고']];   // (1029 유강) ⑦ = 문제가 이상함 → 오류신고 자동 접수, 이행률에서 뺀다
 const HW={tok:'',list:[],pen:1};
 // (1024) 조교 답 — portal_hw_answers 가 v46 은 [{url}], v46b 부터 {풀이:[{url}], 답변자} 를 준다. 둘 다 받는다.
 const hwAns=id=>(HW.ans||{})[id];
@@ -1085,8 +1086,10 @@ function wirePref(host){
 function drawHW(){
   const host=$('hw-host'); if(!host) return;
   host.innerHTML=prefCard()+HW.list.map((a,ai)=>{
-    const c=a.체크||{}, n=a.문항.length, done=a.문항.filter(x=>c[x.n]).length;
-    const cnt=[0,0,0,0,0,0,0]; a.문항.forEach(x=>{ if(c[x.n]) cnt[c[x.n]]++; });
+    const c=a.체크||{}, nAll=a.문항.length, doneAll=a.문항.filter(x=>c[x.n]).length;
+    const cnt=[0,0,0,0,0,0,0,0]; a.문항.forEach(x=>{ if(c[x.n]) cnt[c[x.n]]++; });
+    const n=nAll-cnt[7], done=doneAll-cnt[7];   // (1029) ⑦ 문항 오류는 셈에서 뺀다
+    const errs=a.문항.filter(x=>c[x.n]===7);
     const due=a.마감?new Date(a.마감):null;
     const dueT=due?` · 마감 ${due.getMonth()+1}/${due.getDate()} ${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`:'';
     const o=a.문항.filter(x=>!x.v), v=a.문항.filter(x=>x.v);
@@ -1106,10 +1109,12 @@ function drawHW(){
       +`<div class="bar"><i style="width:${n?Math.round(100*done/n):0}%"></i></div>`
       +`<div class="fold" id="hw-f${ai}">`
       +(lock?`<div class="hint">마감이 지나서 체크가 잠겼어요. 개별과제는 마감 때까지의 체크로 만들어져요.</div>`:`<div class="pal">${HW_ST.slice(1).map((t,i)=>`<button type="button" data-pen="${i+1}" class="${HW.pen===i+1?'on':''}"><i class="k${i+1}"></i>${t[0]} ${t[1]}</button>`).join('')}</div>`
-      +`<div class="hint">해설까지 보고 공부를 마친 뒤, 위에서 고르고 번호를 누르세요. 같은 걸 한 번 더 누르면 지워져요. ② = 해설 없이 다시 풀어 맞음 · ⑤ = 조교쌤 질문으로 등록</div>`)
+      +`<div class="hint">해설까지 보고 공부를 마친 뒤, 위에서 고르고 번호를 누르세요. 같은 걸 한 번 더 누르면 지워져요. ② = 해설 없이 다시 풀어 맞음 · ⑤ = 조교쌤 질문으로 등록 · ⑦ = 문제가 이상해요(오류 신고 · 이행률에서 빠져요)</div>`)
       +(v.length?`<div class="sub">원본</div>`:'')+`<div class="grid">${o.map(btn).join('')}</div>`
       +(v.length?`<div class="sub">변형</div><div class="grid">${v.map(btn).join('')}</div>`:'')
       +(done?`<div class="sum">${HW_ST.slice(1).map((t,i)=>cnt[i+1]?`<span class="chip">${t[0]} ${t[1]} ${cnt[i+1]}</span>`:'').join('')}</div>`:'')
+      +(errs.length?`<div class="sub">문항 오류 신고</div>${errs.map(x=>`<div class="q"><b>${x.n}번</b> · <span class="mid">접수됐어요 — 다시 검증해서 고쳐 드릴게요</span>`
+        +(!lock?`<input data-err="${ai}:${x.n}" maxlength="300" placeholder="어디가 이상한지 한 줄 (선택)">`:'')+`</div>`).join('')}`:'')
       +(qs.length?`<div class="sub">질문</div>${qs.map(([k,q])=>`<div class="q"><b>${E(k)}번</b> · `
         +(q.상태==='해결'?`<span class="good">해결됨${hwWho(q.id)?' · '+E(hwWho(q.id))+' 답변':''}</span>`:q.상태==='답변'?`<span class="good">${E(hwWho(q.id)||'조교쌤')} 답이 왔어요</span>`:q.대면?'<span class="mid">수업 때 직접 설명해 줄게요</span>':'<span class="mid">조교쌤 확인 대기</span>')
         +(q.상태==='대기'&&!q.대면&&!lock?`<input data-memo="${ai}:${k}" placeholder="어디서 막혔는지 한 줄 (선택)">`:'')
@@ -1155,6 +1160,10 @@ function drawHW(){
   host.querySelectorAll('[data-sub],[data-unsub]').forEach(b=>b.onclick=async ev=>{
     ev.preventDefault(); const undo=!!b.dataset.unsub, a=HW.list[+(b.dataset.sub||b.dataset.unsub)];
     try{ const r=await sb.rpc('hw_submit',{tok:HW.tok,aid:a.id,undo}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); return; } a.제출=!undo; drawHW(); }catch(e){ alertHW(); }
+  });
+  host.querySelectorAll('[data-err]').forEach(i=>i.onchange=async()=>{   // (1029) ⑦ 오류 내용 한 줄 → 신고 내용에 붙는다
+    const [ai,k]=i.dataset.err.split(':'), a=HW.list[+ai];
+    try{ await sb.rpc('hw_mark',{tok:HW.tok,aid:a.id,no:+k,st:7,memo:i.value}); i.value=''; i.placeholder='저장됐어요 — 확인해서 고쳐 드릴게요'; }catch(e){}
   });
   host.querySelectorAll('[data-memo]').forEach(i=>i.onchange=async()=>{
     const [ai,k]=i.dataset.memo.split(':'), a=HW.list[+ai];
