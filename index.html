@@ -5122,6 +5122,10 @@ async function qmLoad() {
   if (window.ROLE === 'admin' && !QM.staff) {
     const o = await sb.rpc('staff_overview');
     QM.staff = (o.data || []).filter(x => x.role === 'staff').map(x => ({ email: String(x.email).toLowerCase(), name: x.이름 || x.email.split('@')[0] }));
+    // (1031) 명단에서 빠진(퇴사) 조교도 기록은 남는다 — 답변 기록에 있는 이메일을 '(퇴사)'로 붙인다
+    const past = await sb.from('hw_qa_log').select('조교,답변자,시각').order('시각', { ascending: false }).limit(5000);
+    const seen = new Set(QM.staff.map(x => x.email).concat((o.data || []).map(x => String(x.email).toLowerCase())));
+    (past.data || []).forEach(l => { const e = String(l.조교 || '').toLowerCase(); if (e && !seen.has(e)) { seen.add(e); QM.staff.push({ email: e, name: (l.답변자 || e.split('@')[0]) + ' (퇴사)' }); } });
   }
   if (!QM.email) QM.email = window.ROLE === 'admin' ? ((QM.staff || [])[0] || {}).email : window.ME_EMAIL;
   if (!QM.email) { body.innerHTML = '<div class="dim">조교 명단이 비어 있다.</div>'; return; }
