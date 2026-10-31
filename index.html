@@ -4461,6 +4461,7 @@ function drawV5(el, box, rows) {
   const byName = Object.fromEntries(rows.map(r => [r.이름, r]));
   const seen = order.filter(n => byName[n]);
   rows.forEach(r => { if (!seen.includes(r.이름)) seen.push(r.이름); });
+  seen.sort((a, b) => a.localeCompare(b, 'ko'));   // (1031 유강) 이름순 — 카톡에서 방을 찾아 보내기 편하게
   const miss = order.filter(n => !byName[n]);
   const est = rows.filter(r => r.루프출처 === '추정').length;
   const cls = (v, hi, lo) => v == null ? '' : v >= hi ? 'good' : v >= lo ? 'mid' : 'bad';
