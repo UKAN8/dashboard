@@ -4474,14 +4474,12 @@ function drawV5(el, box, rows) {
       + `<span>리뷰 <em class="${cls(r.리뷰, 8, 5)}">${r.리뷰 != null ? Number(r.리뷰).toFixed(1) : '—'}</em>`
       + ` · 이행 <em class="${cls(r.이행, 90, 60)}">${r.이행 != null ? r.이행 + '%' : '—'}</em></span>`
       + (parts ? `<span class="dim">${E(parts)}${r.루프출처 === '추정' ? ' <i class="v5est" title="루프 세트 기록이 없어 규칙으로 센 값">루프 추정</i>' : ''}</span>` : '')
-      + (r.썸네일바뀜 ? '<span class="warn">썸네일 바뀜 — 새 링크로 다시 보내야 함</span>' : '')
       + '</div><div class="v5b">'
       + `<a class="rp-lnk" href="${E(r.url)}" target="_blank" rel="noopener">열기 ↗</a>`
       + `<button type="button" class="rp-lnk v5copy" data-u="${E(r.url)}">링크 복사</button></div></div>`;
   };
   box.classList.add('v5');
-  box.innerHTML = `<div class="v5hd">카톡 미리보기 썸네일 · 눌러서 상세${est ? ` · <span class="v5est">루프 추정 ${est}명</span>` : ''}`
-    + ` <button type="button" class="rp-lnk v5old">옛 이미지판</button></div>`
+  box.innerHTML = (est ? `<div class="v5hd"><span class="v5est">루프 추정 ${est}명</span></div>` : '')   // (1031) 설명 줄·옛 이미지판 버튼 뺌
     + seen.map(item).join('')
     + (miss.length ? `<div class="dim">· 링크 없는 학생: ${E(miss.join(', '))}</div>` : '')
     + '<div class="v5oldbox"></div>';
