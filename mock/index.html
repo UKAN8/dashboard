@@ -28,15 +28,21 @@ main{max-width:620px;margin:0 auto}
 .eye{font-family:'Paperlogy',sans-serif;color:var(--acc);font-weight:700;font-size:14px;margin:22px 0 2px}
 h1{font-family:'Paperlogy',sans-serif;font-weight:900;font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.02em}
 .lead{color:var(--tx2);font-size:14px;margin:0 0 16px}
-.ticket{display:grid;grid-template-columns:1fr 84px;background:#f4f1ec;color:#141418;border-radius:15px;overflow:hidden;margin-bottom:20px}
-.ticket dl{display:grid;grid-template-columns:44px 1fr;row-gap:7px;margin:0;padding:15px 16px}
-.ticket dt{font-size:12.5px;color:#8a7f78;font-weight:600;padding-top:1px}
-.ticket dd{margin:0;font-weight:800;font-size:14px;line-height:1.4}
-.ticket dd small{display:block;font-weight:500;font-size:12px;color:#6d655f}
-.stub{background:var(--acc);border-left:2px dashed #f4f1ec;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#160b0d}
-.stub small{font-size:11px;font-weight:700;color:#5a2c2b}
-.stub b{font-family:'Paperlogy',sans-serif;font-size:38px;font-weight:900;line-height:1.05}
-.stub span{font-weight:800;font-size:13px}
+.ticket{position:relative;display:grid;grid-template-columns:1fr 104px;background:#f4f1ec;color:#141418;border-radius:18px;overflow:hidden;margin-bottom:22px;font-family:'Paperlogy','Pretendard',sans-serif}
+.ticket .main{padding:18px 20px 18px}
+.ticket .ttl{font-size:11px;font-weight:700;letter-spacing:.14em;color:#8a7f78}
+.ticket .nm{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:2px 0 12px}
+.ticket dl{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:0;padding-top:12px;border-top:1.5px solid #e2ddd5}
+.ticket dt{font-size:11.5px;color:#8a7f78;font-weight:600;margin-bottom:2px}
+.ticket dd{margin:0;font-weight:800;font-size:15px;line-height:1.35;letter-spacing:-.01em}
+.ticket dd small{display:block;font-family:'Pretendard',sans-serif;font-weight:500;font-size:12px;color:#6d655f;margin-top:2px}
+.stub{background:var(--acc);border-left:3px dashed #f4f1ec;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#160b0d}
+.stub small{font-size:12px;font-weight:700;color:#5a2c2b}
+.stub b{font-size:52px;font-weight:900;line-height:1;margin:4px 0 2px}
+.stub span{font-weight:800;font-size:15px}
+.notch{position:absolute;right:93px;width:22px;height:22px;border-radius:50%;background:var(--bg)}
+.notch.a{top:-11px}.notch.b{bottom:-11px}
+@media (max-width:420px){.ticket dl{grid-template-columns:1fr}.ticket{grid-template-columns:1fr 88px}.notch{right:77px}.stub b{font-size:44px}}
 .q{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:15px 16px;margin-bottom:11px}
 .q .n{font-size:11px;letter-spacing:.14em;color:var(--acc);margin-bottom:5px}
 .q .t{font-weight:700;margin-bottom:3px}
@@ -75,11 +81,11 @@ footer{color:var(--dim);font-size:12px;text-align:center;margin-top:26px}
 const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
 /* 1101 고3 파이널 모의고사(11/13) 신청 — extra_study_submit RPC 재사용 (신청키 final1113)
- * 칸 대응: 반=수강생/외부 학생 · 단원=[선택과목] · 희망일=['11/13(금)'] · 메모='연락처 …' + 남길 말 */
+ * 칸 대응: 반=수강생/외부 학생 · 단원=[선택과목, 고3 재학/재수생] · 희망일=['11/13(금)'] · 메모='연락처 …' + 남길 말 */
 const KEY='final1113', CLOSE='2026-11-12';
 const app=document.getElementById('app');
 const $=s=>app.querySelector(s);
-const st={신청자:'',학생이름:'',학교:'',반:'',과목:'',연락처:'',메모:''};
+const st={신청자:'',학생이름:'',학교:'',반:'',구분:'',과목:'',연락처:'',메모:''};
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
@@ -95,12 +101,17 @@ function render(){
  <h1>파이널 모의고사 신청</h1>
  <p class="lead">수능 수학과 같은 시간에 진행합니다.</p>
  <div class="ticket">
-  <dl>
-   <dt>일시</dt><dd>11/13(금) 10:30 ~ 12:10<small>10:20까지 입실 완료</small></dd>
-   <dt>장소</dt><dd>필탑학원 신관</dd>
-   <dt>과목</dt><dd>공통 + 선택<small>미적분 · 확률과 통계 중 택1</small></dd>
-   <dt>풀이</dt><dd>시험 후 풀이 수업<small>수강생만 참여</small></dd>
-  </dl>
+  <div class="notch a"></div><div class="notch b"></div>
+  <div class="main">
+   <div class="ttl">ADMISSION</div>
+   <div class="nm">파이널 모의고사</div>
+   <dl>
+    <div><dt>일시</dt><dd>11/13(금) 10:30~12:10<small>10:20까지 입실 완료</small></dd></div>
+    <div><dt>장소</dt><dd>필탑학원 신관<small>응시는 누구나</small></dd></div>
+    <div><dt>과목</dt><dd>공통 + 선택<small>미적분 · 확률과 통계 중 택1</small></dd></div>
+    <div><dt>풀이 수업</dt><dd>시험 직후 진행<small>수강생만 참여</small></dd></div>
+   </dl>
+  </div>
   <div class="stub"><small>응시료</small><b>0</b><span>원</span></div>
  </div>
 
@@ -110,19 +121,22 @@ function render(){
  <div class="q"><div class="n">02</div><div class="t">학생 이름</div>
   <input class="tx" id="nm" maxlength="10" placeholder="예) 홍길동" autocomplete="off" value="${esc(st.학생이름)}"></div>
 
- <div class="q"><div class="n">03</div><div class="t">학교</div>
+ <div class="q"><div class="n">03</div><div class="t">학교</div><div class="s">재수생은 출신 고등학교를 적어 주세요.</div>
   <input class="tx" id="sc" maxlength="20" placeholder="예) 필탑고" autocomplete="off" value="${esc(st.학교)}"></div>
 
  <div class="q"><div class="n">04</div><div class="t">수강 여부</div>
   <div class="opts">${opt('반','수강생','필탑 수강생','풀이 수업 참여')}${opt('반','외부 학생','외부 학생','시험만 응시')}</div></div>
 
- <div class="q"><div class="n">05</div><div class="t">선택과목</div>
+ <div class="q"><div class="n">05</div><div class="t">재학생 / 재수생</div>
+  <div class="opts">${opt('구분','고3 재학','고3 재학생')}${opt('구분','재수생','재수생','N수 포함')}</div></div>
+
+ <div class="q"><div class="n">06</div><div class="t">선택과목</div>
   <div class="opts">${['미적분','확률과 통계'].map(v=>opt('과목',v,v)).join('')}</div></div>
 
- <div class="q"><div class="n">06</div><div class="t">연락처</div><div class="s">시험 안내를 보내 드릴 번호예요.</div>
+ <div class="q"><div class="n">07</div><div class="t">연락처</div><div class="s">시험 안내를 보내 드릴 번호예요.</div>
   <input class="tx" id="ph" type="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000" autocomplete="tel" value="${esc(st.연락처)}"></div>
 
- <div class="q"><div class="n">07</div><div class="t">남길 말 <span style="color:var(--dim);font-weight:400">(선택)</span></div>
+ <div class="q"><div class="n">08</div><div class="t">남길 말 <span style="color:var(--dim);font-weight:400">(선택)</span></div>
   <textarea id="memo" maxlength="300" placeholder="궁금한 점 등">${esc(st.메모)}</textarea></div>
  <footer>필탑학원 고등수학 · 수학은유강</footer>`;
  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;render()});
@@ -142,6 +156,7 @@ function missing(){
  if(st.학생이름.replace(/\s/g,'').length<2)m.push('이름');
  if(st.학교.trim().length<2)m.push('학교');
  if(!st.반)m.push('수강 여부');
+ if(!st.구분)m.push('재학/재수');
  if(!st.과목)m.push('선택과목');
  if(!phone())m.push('연락처');
  return m;
@@ -157,7 +172,7 @@ document.getElementById('send').onclick=async()=>{
  if(missing().length)return;
  const btn=document.getElementById('send');btn.disabled=true;btn.textContent='보내는 중…';
  const memo=('연락처 '+phone()+(st.메모.trim()?' · '+st.메모.trim():'')).slice(0,500);
- const p={신청키:KEY,신청자:st.신청자,학생이름:st.학생이름.replace(/\s/g,''),학교:st.학교.trim(),반:st.반,희망일:['11/13(금)'],단원:[st.과목],메모:memo};
+ const p={신청키:KEY,신청자:st.신청자,학생이름:st.학생이름.replace(/\s/g,''),학교:st.학교.trim(),반:st.반,희망일:['11/13(금)'],단원:[st.과목,st.구분],메모:memo};
  try{
   const {data,error}=await sb.rpc('extra_study_submit',{p});
   if(error||!data||!data.ok) throw error||new Error(data&&data.why||'실패');
@@ -171,7 +186,7 @@ function done(p,upd){
  document.getElementById('bar').style.display='none';
  app.innerHTML=`${head()}
  <div class="done"><div class="k">✓</div><b>${upd?'신청 내용이 수정되었습니다':'신청이 접수되었습니다'}</b>
- <p>${esc(p.학생이름)} · ${esc(p.학교)} · ${esc(st.과목)}</p>
+ <p>${esc(p.학생이름)} · ${esc(p.학교)} · ${esc(st.구분)} · ${esc(st.과목)}</p>
  <p style="margin-top:14px"><b style="display:inline;font-size:15px;color:var(--acc)">11/13(금) 10:20까지</b> 필탑학원 신관으로 와 주세요.</p>
  <button id="again">내용 고치기</button></div>`;
  document.getElementById('again').onclick=()=>{document.getElementById('bar').style.display='';const b=document.getElementById('send');b.textContent='신청하기';render()};
