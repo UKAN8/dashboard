@@ -789,7 +789,7 @@ body.cs-on #boot{display:none}
         <div class="cs-info-row">
           <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
           <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
-          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>기출테스트</option></select><input id="c_nq" type="hidden" value="0"></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>기출테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
           <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
         </div>
         <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
@@ -5892,7 +5892,6 @@ function twLog(rows, B, pool) {
 const EX_META = {
   mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18',
     단원: ['다항식의 연산', '항등식과 나머지정리', '인수분해', '복소수', '이차방정식', '이차방정식과 이차함수', '여러 가지 방정식', '여러 가지 부등식', '경우의 수', '행렬', '잘 모르겠어요 (선생님 판단)'] },
-  final1113: { 이름: '고3 파이널 모의고사 11/13', 마감: '2026-11-12', 단원: ['미적분', '확률과 통계', '고3 재학', '재수생'] },
 };
 // 학생별 표 머리글용 짧은 이름 (원래 이름은 마우스를 올리면 보인다)
 const EX_SHORT = { '다항식의 연산': '다항식 연산', '항등식과 나머지정리': '항등식·나머지', '이차방정식과 이차함수': '이차방정식·함수',
@@ -7185,7 +7184,7 @@ async function selectClass(cls){
   const setTest=v=>{
     const sel=$('c_test');
     if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o);}
-    sel.value=v||'';
+    sel.value=v||'';TESTPREV=sel.value;   // (1101) 미시행 켜고 끄기 비교 기준
   };
   CLPREV=(cl&&cl[0])?{'진도원문':cl[0]['진도원문']||'','이번과제':cl[0]['이번과제']||'','테스트유형':cl[0]['테스트유형']||''}:{};
   if(cl&&cl[0]){
@@ -7194,7 +7193,7 @@ async function selectClass(cls){
     // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
     $('c_progress').value=prev[0]['진도원문']||'';
     $('c_hw').value=prev[0]['이번과제']||'';
-    setTest(prev[0]['테스트유형']);
+    setTest(prev[0]['테스트유형']==='미시행'?'':prev[0]['테스트유형']);   // (1101) 미시행은 다음 수업 기본값으로 안 넘긴다
   }else{
     $('c_progress').value='';$('c_hw').value='';setTest('');
   }
@@ -7229,7 +7228,11 @@ function allPresent(){
     if(!d.querySelector('.seg button[class*=a]')) b.click();
   });
 }
-function isNA(log){return (log['테스트상태']||'')==='미응시';}
+function isNA(log){const t=log['테스트상태']||'';return t==='미응시'||t==='미시행';}
+/* (1101 유강) 테스트 칸 '미시행' = 반 전체가 오늘 테스트를 안 봤다. 학생 행은 미응시처럼 비우되 상태는 '미시행'으로 남겨
+   리포트가 '미응시'(학생 탓)가 아니라 '이번 수업 미시행'으로 그린다. 다음 수업 기본값으로 넘어가지 않는다. */
+function isNOTHELD(){return $('c_test').value.trim()==='미시행';}
+let TESTPREV='';
 /* ── 지각응시 (0910) ─────────────────────────────────────────────────────
    회차 수업일에 못 본 학생(결석·학교 시험 일정)이 나중에 같은 시험지를 본다.
    class_log 의 시험지명·기출정답은 반×날짜에 하나뿐이라 채점은 회차 날짜로 넣을 수밖에 없다.
@@ -7298,10 +7301,20 @@ function gtKeyUpdate(){
   gtStat();renderStudents();saveClassLog();
 }
 function testChanged(){
+  const was=TESTPREV==='미시행', now=isNOTHELD();
+  TESTPREV=$('c_test').value.trim();
   $('gt_setup').classList.toggle('hidden',!isGT());
   $('gt_done2row').classList.toggle('hidden',!isGT());   // (0831) 마감 위 같은 버튼
   if(isGT())gtFillPick();
   gtKeyUpdate();
+  /* (1101) 미시행 켜기 = 전원 미응시 토글 on(저장은 '미시행') · 끄기 = 미시행이던 행만 되돌린다 */
+  if(now||was)csAll('.stu').forEach(d=>{
+    const b=d.querySelector('[data-f="미응시"]');if(!b)return;
+    const on=b.dataset.on==='1';
+    if(now&&!on)b.click();
+    else if(now&&on)save(d.dataset.id,d);                       // 이미 미응시였던 학생도 '미시행'으로
+    else if(was&&on&&((LOGMAP[d.dataset.id]||{})['테스트상태']==='미시행'))b.click();
+  });
 }
 /* ── [채점 확정 → PT 만들기] (0831 개편 · 0902 자평 체인 · 0912 재제작)
  * 흐름: 이 버튼 → job_queue(진단발송) 를 넣으면 **v14 트리거가 가로채** 자평(gt_eval) 낸 학생마다
@@ -7798,7 +7811,7 @@ async function save(id,card){
       '지난과제':(PREVHW_MAP[id]||PREVHW)||null,
       '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):clr('','테스트유형')),
       // 미응시는 0점이 아니다 — 점수를 비우고 상태만 남긴다. gen10 이 점수 없음을 '미응시'로 그린다.
-      '테스트상태':na?'미응시':(score?'응시':clr('','테스트상태')),'점수':na?null:clr(score,'점수'),
+      '테스트상태':na?(isNOTHELD()?'미시행':'미응시'):(score?'응시':clr('','테스트상태')),'점수':na?null:clr(score,'점수'),
       // 기출: 키 형식("1:2;20-1:0"). 다 지운 상태는 ''(명시 삭제) — 리뷰: 자리 형식 그대로
       '문항점수':gt?(na?null:(itemStr!==null?itemStr:clr('','문항점수')))
                 :(itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null),
@@ -7818,7 +7831,7 @@ async function save(id,card){
     if(row['응시일']===null)delete row['응시일'];   // schema_v21 미적용 DB 에서도 저장이 안 죽는다
     /* 채점이 이번 저장에서 실제로 바뀌었나 — 오답 이벤트를 다시 쓸지 여기서 가른다.
        안 가르면 옛 채점이 떠 있는 남의 화면이 코멘트만 고쳐도 내 재채점 오답 이벤트를 옛 것으로 되돌린다. */
-    const wasNA=(prev['테스트상태']||'')==='미응시';
+    const wasNA=isNA(prev);
     const itemsChanged=(na!==wasNA)||(row['문항점수']!==null&&row['문항점수']!==undefined&&!sameVal(row['문항점수'],prev['문항점수']));
     dropUnchanged(row,prev,['학생ID','이름','반','날짜','요일','소스']);   // 동시 입력(0930) — 위 CLPREV 주석
     /* 머리칸 파생 칸: 머리를 안 고쳤으면 서버에 값이 있을 때 안 보낸다. 새 행이면 서버의 오늘 머리값을 쓴다. */
@@ -8012,7 +8025,7 @@ async function genComments(){
     const reason=val('결석사유').trim();
     /* ── 개입 필요 판정 — 기계는 여기서 손을 뗀다 ── */
     if(attV==='결석')return flag('결석'+(reason?'('+reason+')':''));
-    if(card.classList.contains('na'))return flag(tname+' 미응시');
+    if(card.classList.contains('na')&&!isNOTHELD())return flag(tname+' 미응시');
     const score=parseFloat(val('점수'));
     const ih=parseFloat(val('이행률'));
     const rec=recentOf(id).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
