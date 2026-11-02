@@ -74,6 +74,76 @@ h2 small{color:var(--dim);letter-spacing:0;font-size:12px;margin-left:8px;text-t
 @media (hover:hover) and (pointer:fine){.rp a:hover{border-color:var(--acc)}}
 svg.spark{display:block;margin-top:6px}
 
+
+/* ── 내 질문 모음 (1102 유강 "학생포털에 질문 등록했던 것 모두 확인할 수 있는 페이지") ──────────────
+ * 과제 카드 안 질문은 과제가 닫히면 사라진다 → 여기서는 내가 올린 질문 전부(최근 400일)를 본다.
+ * DB = portal_my_questions (schema_v56). 함수가 아직 없으면 카드를 그리지 않는다.
+ * 정렬 = 누른 순서대로 우선순위(1031 유강 공통 규칙). 다른 학생 정보는 없다(포털 원칙). */
+const MQ={tok:'',rows:[],f:'전체',sort:[],showN:20,open:false};
+const MQ_ST={대기:['mid','확인 대기'],답변:['good','답이 왔어요'],해결:['good','해결']};
+const MQ_SK={날짜:q=>q.시각||'',단원:q=>((q.과제||{}).과목||'')+'|'+((q.과제||{}).단원코드||'')+'|'+String(q.THEME==null?999:q.THEME).padStart(3,'0'),상태:q=>({대기:0,답변:1,해결:2})[q.상태]??3};
+const mqWho=q=>{ let n=String(q.답변자||'').trim(); if(!n||n==='조교') return ''; if(/T$/.test(n)) return n; if(n.length>=3) n=n.slice(1); return n+'T'; };
+async function mountMyQ(tok){
+  const host=$('myq-host'); if(!host||!tok) return;
+  MQ.tok=tok;
+  try{ const r=await sb.rpc('portal_my_questions',{tok}); if(r.error||!Array.isArray(r.data)) return; MQ.rows=r.data; }catch(e){ return; }
+  if(!MQ.rows.length){ host.innerHTML=''; return; }
+  if(MQ.rows.some(q=>!(q.과제||{}).판)&&!MQ.lib){ try{ const r=await fetch(LIB_URL+'lib.json?v='+Math.floor(Date.now()/6e5),{cache:'no-store'}); MQ.lib=r.ok?await r.json():{}; }catch(e){ MQ.lib={}; } }
+  drawMyQ();
+}
+function mqLabel(q){ const a=q.과제||{}; return a.판?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드||''} ${a.DAY||(a.라운드!=null?a.라운드+'라운드':'')}`.trim(); }
+// 써킷 PDF + 그 문항 쪽 — 대시보드 질문 모음(qaGroups)과 같은 규칙: 자료실 lib.json 정규 행의 써킷.쪽
+function mqPdf(q){
+  const a=q.과제||{};
+  if(a.판) return q.pdf?[['문제',q.pdf.문제],['해설',q.pdf.해설]].filter(x=>x[1]).map(x=>({k:x[0],url:x[1]})):[];
+  const lr=((MQ.lib||{}).정규||[]).find(x=>x.반===a.반&&x.날짜===a.날짜&&x.써킷); if(!lr) return [];
+  const pg=k=>{ const m=((lr.써킷.쪽||{})[k])||{}; if(m[q.번호]) return m[q.번호]; const lo=Object.keys(m).map(Number).filter(n=>n<q.번호).sort((x,y)=>y-x)[0]; return lo!=null?m[lo]:null; };
+  return ['문제','해설'].filter(k=>lr.써킷[k]).map(k=>({k,url:LIB_URL+lr.써킷[k]+(pg(k)?'#page='+pg(k):''),p:pg(k)}));
+}
+function drawMyQ(){
+  const host=$('myq-host'); if(!host) return;
+  const R=MQ.rows, cnt={대기:0,답변:0,해결:0}; R.forEach(q=>{ if(cnt[q.상태]!=null) cnt[q.상태]++; });
+  let L=R.filter(q=>MQ.f==='전체'||q.상태===MQ.f);
+  const keys=MQ.sort.length?MQ.sort:[{k:'날짜',d:-1}];
+  L=L.slice().sort((x,y)=>{ for(const s of keys){ const a=MQ_SK[s.k](x), b=MQ_SK[s.k](y); if(a<b) return -s.d; if(a>b) return s.d; } return 0; });
+  const D=t=>{ if(!t) return ''; const d=new Date(t); return `${d.getMonth()+1}/${d.getDate()}`; };
+  const row=(q,i)=>{
+    const st=MQ_ST[q.상태]||['dim',q.상태], who=mqWho(q), pdf=mqPdf(q);
+    return `<div class="q"><div class="qh"><span class="no">${i+1}</span><span class="tt"><b>${E(mqLabel(q))} ${E(q.번호)}번</b></span>`
+      +`<span class="st ${st[0]}">${q.상태==='답변'&&who?E(who)+' 답':E(st[1])}</span></div>`
+      +`<div class="meta">${E(D(q.시각))} 질문${q.유형?' · '+E(q.유형):''}${q.해결시각?' · '+E(D(q.해결시각))+' 해결':''}${who&&q.상태==='해결'?' · '+E(who):''}${q.재질문?` · 다시 물음 ${q.재질문}`:''}</div>`
+      +`<div class="body">`
+      +(q.메모?`<div class="dim" style="font-size:12.5px;margin-top:4px">내 메모 · ${E(q.메모)}</div>`:'')
+      +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:(q.대면&&q.상태!=='해결'?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:''))
+      +((q.풀이||[]).length?`<div class="qimg">${q.풀이.map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
+      +((q.댓글||[]).length?`<div class="rpl">${q.댓글.map(c=>`<div class="rc"><span class="dim">나</span> ${E(c.내용)}</div>`).join('')}</div>`:'')
+      +(pdf.length?`<div class="pdf">${pdf.map(x=>`<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k} PDF${x.p?' · '+x.p+'쪽':''}</a>`).join('')}</div>`:'')
+      +`</div></div>`;
+  };
+  const sortBtn=k=>{ const i=MQ.sort.findIndex(s=>s.k===k), s=MQ.sort[i]; return `<button type="button" data-msort="${k}" class="${s?'on':''}">${k}${s?(s.d>0?' ↑':' ↓')+`<b>${i+1}</b>`:''}</button>`; };
+  host.innerHTML=`<div class="card hw myq">`
+    +`<div class="row" data-mqopen="1"><span class="t"><b>내 질문 모음</b><span class="dim"> ${R.length}개${cnt.답변?` · 답 온 것 ${cnt.답변}`:''}${cnt.대기?` · 대기 ${cnt.대기}`:''}</span></span>`
+    +`<a class="n ${cnt.답변?'good':'dim'}" href="#" style="text-decoration:none;font-weight:800">${MQ.open?'접기':'보기 →'}</a></div>`
+    +`<div class="sub2">과제가 끝나도 여기 남아요 · 시험 전에 내가 막혔던 문제만 다시 보기</div>`
+    +`<div class="fold${MQ.open?' open':''}">`
+    +`<div class="seg sm">${['전체','대기','답변','해결'].map(k=>`<button type="button" data-mf="${k}" class="${MQ.f===k?'on':''}">${k==='답변'?'답 왔음':k}${k==='전체'?' '+R.length:cnt[k]?' '+cnt[k]:''}</button>`).join('')}</div>`
+    +`<div class="seg sm srt"><span class="dim" style="font-size:11.5px;align-self:center">정렬</span>${Object.keys(MQ_SK).map(sortBtn).join('')}${MQ.sort.length?`<button type="button" data-msort="">초기화</button>`:''}</div>`
+    +`<div class="hint">정렬은 누른 순서대로 1·2·3 순위가 붙어요. 한 번 더 누르면 방향이 바뀌고, 세 번째엔 빠져요.</div>`
+    +`<div class="lst">${L.length?L.slice(0,MQ.showN).map(row).join(''):'<div class="none">해당하는 질문이 없어요.</div>'}</div>`
+    +(L.length>MQ.showN?`<button type="button" class="more">더 보기 (${L.length-MQ.showN}개 남음)</button>`:'')
+    +`<div class="hint">답이 온 질문의 [이해했어요]·댓글은 위 과제 카드에서 할 수 있어요. 끝난 과제의 질문은 여기서 보기만 돼요.</div>`
+    +`</div></div>`;
+  host.querySelector('[data-mqopen]').onclick=ev=>{ ev.preventDefault(); MQ.open=!MQ.open; drawMyQ(); };
+  host.querySelectorAll('[data-mf]').forEach(b=>b.onclick=()=>{ MQ.f=b.dataset.mf; MQ.showN=20; drawMyQ(); });
+  host.querySelectorAll('[data-msort]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.msort; if(!k){ MQ.sort=[]; drawMyQ(); return; }
+    const i=MQ.sort.findIndex(s=>s.k===k);
+    if(i<0) MQ.sort.push({k,d:k==='날짜'?-1:1}); else if(MQ.sort[i].d===(k==='날짜'?-1:1)) MQ.sort[i].d*=-1; else MQ.sort.splice(i,1);
+    drawMyQ();
+  });
+  const m=host.querySelector('.more'); if(m) m.onclick=()=>{ MQ.showN+=20; drawMyQ(); };
+}
+
 /* ── 오류 신고 (0913) ── */
 .rpt-btn{display:block;width:100%;margin-top:6px;background:rgba(245,160,160,.10);border:1px solid rgba(245,160,160,.35);
  color:#ffd9d9;border-radius:13px;padding:11px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left}
@@ -206,6 +276,20 @@ svg.spark{display:block;margin-top:6px}
 .hwp select{flex:1;color-scheme:dark;background:#15151c;border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px}
 .hwp select option{background:#15151c;color:var(--tx)}
 .hwp .seg{margin:0}
+
+
+/* 1102 내 질문 모음 */
+.myq .lst .q{display:block}
+.myq .qh{display:flex;gap:8px;align-items:baseline}
+.myq .qh .no{flex:0 0 auto;min-width:22px;color:var(--dim);font-variant-numeric:tabular-nums;font-size:12px}
+.myq .qh .tt{flex:1;min-width:0;overflow-wrap:anywhere}
+.myq .qh .st{flex:0 0 auto;font-size:12px;font-weight:700}
+.myq .meta{color:var(--dim);font-size:12px;margin:2px 0 0 30px}
+.myq .body{margin-left:30px}
+.myq .pdf{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.myq .pdf a{font-size:12px;border:1px solid var(--bd);border-radius:8px;padding:3px 9px;color:var(--tx2);text-decoration:none}
+.myq .srt button b{font-size:10px;margin-left:3px;color:var(--acc)}
+.myq .more{width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:13px}
 
 /* 1024 조교 손풀이 */
 .qimg{margin-top:8px;display:flex;flex-direction:column;gap:6px}
@@ -742,6 +826,7 @@ function render(d){
   H.push(P.clinic);
   H.push(P.eval||P.evalNone);
   H.push(`<div id="hw-host"></div>`);
+  H.push(`<div id="myq-host"></div>`);   // (1102) 내 질문 모음
   H.push(P.core);
   H.push(P.tower);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
@@ -756,6 +841,7 @@ function render(d){
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
   mountHW(tok);
+  mountMyQ(tok);
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
   catch(e){ $('pr-host').innerHTML='<div class="none">기출테스트 기록을 그리지 못했습니다. 잠시 뒤 다시 열어 주세요.</div>'; }
@@ -921,7 +1007,7 @@ function renderFinal(d,parts){
   const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
   H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
     +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`
-    +`<div id="hw-host"></div>`);
+    +`<div id="hw-host"></div><div id="myq-host"></div>`);   // (1102) 내 질문 모음
   H.push(readyCardShell(c));
   const G=finalGichul(d.기출,c.시작);
   H.push(`<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''));
@@ -947,6 +1033,7 @@ function renderFinal(d,parts){
   if(G.회차.length){ try{ PR.mount($('fx-pr'),{...d,기출:G},{staff:false}); }catch(e){} }
   mountReady(c,tok,today);
   mountHW(tok);
+  mountMyQ(tok);
   return {from:c.시작};
 }
 
