@@ -211,6 +211,8 @@ svg.spark{display:block;margin-top:6px}
 .hwp .seg{margin:0}
 
 
+/* 1102 지난 과제 접기 */
+.hwold{display:block;width:100%;margin:0 0 10px;background:none;border:1px dashed var(--bd);color:var(--tx2);border-radius:12px;padding:10px;font:inherit;font-size:13px;cursor:pointer}
 /* 1102 내 질문 모음 */
 .myq .lst .q{display:block}
 .myq .qh{display:flex;gap:8px;align-items:baseline}
@@ -1180,7 +1182,7 @@ function wirePref(host){
 }
 function drawHW(){
   const host=$('hw-host'); if(!host) return;
-  host.innerHTML=prefCard()+HW.list.map((a,ai)=>{
+  const cards=HW.list.map((a,ai)=>{
     const c=a.체크||{}, nAll=a.문항.length, doneAll=a.문항.filter(x=>c[x.n]).length;
     const cnt=[0,0,0,0,0,0,0,0]; a.문항.forEach(x=>{ if(c[x.n]) cnt[c[x.n]]++; });
     const n=nAll-cnt[7], done=doneAll-cnt[7];   // (1029) ⑦ 문항 오류는 셈에서 뺀다
@@ -1227,7 +1229,17 @@ function drawHW(){
         :`<div class="dim">다 했으면 제출하세요. 제출하면 개별과제를 바로 만들기 시작해요.${n-done?` 체크 안 한 ${n-done}문항은 '안 풀었음'으로 세요.`:''}</div>`
          +`<div class="acts"><button type="button" class="go" data-sub="${ai}">다 했어요 · 제출</button></div>`)
       +`</div></div></div>`;
-  }).join('');
+  });  // (1102 유강 "예전 과제 숨기기") 마감 지난 과제는 아래 '지난 과제' 묶음으로 — 기본 숨김, 펼침 상태는 이 폰에 기억.
+  //   단, 답이 와서 [이해했어요]를 눌러야 하는 질문이 있으면 지나도 위에 둔다.
+  //   몇 개 보이나(1102): 마감 안 지난 과제 전부 + 마감 지난 지 48시간 안 된 것(방금 끝난 묶음 결과·제출 확인용). 나머지는 접힘.
+  const OLD_H=48, isOld=a=>a.지남&&!(a.마감&&Date.now()-new Date(a.마감)<OLD_H*36e5)&&!Object.values(a.질문||{}).some(q=>q.상태==='답변');
+  const now=[], old=[]; HW.list.forEach((a,ai)=>(isOld(a)?old:now).push(cards[ai]));
+  if(HW.showOld==null){ try{ HW.showOld=localStorage.getItem('hwShowOld')==='1'; }catch(e){ HW.showOld=false; } }
+  host.innerHTML=prefCard()+now.join('')
+    +(old.length?`<button type="button" class="hwold" data-hwold="1">${HW.showOld?'지난 과제 숨기기 ⌃':`지난 과제 ${old.length}개 보기 ⌄`}</button>`
+      +(HW.showOld?old.join(''):''):'');
+  const ob=host.querySelector('[data-hwold]'); if(ob) ob.onclick=()=>{ HW.showOld=!HW.showOld; try{ localStorage.setItem('hwShowOld',HW.showOld?'1':'0'); }catch(e){} drawHW(); };
+
   host.querySelectorAll('[data-open]').forEach(r=>r.onclick=ev=>{ ev.preventDefault(); const f=$('hw-f'+r.dataset.open); f.classList.toggle('open'); HW.open=f.classList.contains('open')?r.dataset.open:null; });
   if(HW.open!=null){ const f=$('hw-f'+HW.open); if(f) f.classList.add('open'); }
   host.querySelectorAll('[data-pans]').forEach(x=>x.onclick=ev=>{ ev.preventDefault(); const f=$('hw-p'+x.dataset.pans); if(f) f.classList.toggle('open'); });
