@@ -5890,7 +5890,6 @@ function twLog(rows, B, pool) {
  * 새 신청 회차를 열면 EX_META 에 한 줄(이름·마감) 더한다. 없어도 키 이름으로 보인다.
  */
 const EX_META = {
-  final1113: { 이름: '고3 파이널 모의고사 11/13', 마감: '2026-11-12', 단원: ['미적분', '확률과 통계', '고3 재학', '재수생'] },   // 1102 기본 회차(맨 위) — 신청 페이지 /dashboard/mock/
   mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18',
     단원: ['다항식의 연산', '항등식과 나머지정리', '인수분해', '복소수', '이차방정식', '이차방정식과 이차함수', '여러 가지 방정식', '여러 가지 부등식', '경우의 수', '행렬', '잘 모르겠어요 (선생님 판단)'] },
 };
@@ -6448,7 +6447,7 @@ async function coLoad(force) {
     }
     let all = [], from = 0;
     for (;;) {
-      const { data, error } = await sb.from('mastery_log').select('id,세트키,학생ID,반,키,문항id,모드,답,정오,확신,ms,시각')
+      const { data, error } = await sb.from('mastery_log').select('id,세트키,학생ID,반,키,문항id,모드,답,정오,확신,ms,시각,원인')
         .eq('세트키', CO.set).order('id', { ascending: true }).range(from, from + 999);
       if (error) throw error;
       all = all.concat(data || []);
@@ -6478,14 +6477,18 @@ function coState(rows) {
   if (!rows.length) return { st: 'new' };
   const need = (CO.bank && CO.bank.need && CO.bank.need[rows[0].키[0]]) || (rows[0].키[0] === 'C' ? 2 : 1);
   const gap = (CO.bank && CO.bank.gap) || 3;
-  let lf = -1; rows.forEach((r, i) => { if (!(r.정오 && r.확신 === '확실')) lf = i; });
-  const seen = {}, per = {};
-  rows.forEach((r, i) => { const k = r.d + '|' + r.문항ID; if (seen[k]) return; seen[k] = 1; if (i > lf && r.정오 && r.확신 === '확실') per[r.d] = (per[r.d] || 0) + 1; });
-  const days = Object.keys(per).filter(d => per[d] >= need).sort();
+  // (1103 유강) 규칙 v2 — core.html rowCls·resetAt·succDays 와 같다(S 성공 · H 보류 · F 실패 · X 시험 강등)
+  const cls = r => { const w = r.원인 || ''; if (r.모드 === '시험') return 'X'; if (r.정오 && r.확신 === '확실') return 'S'; if (r.정오) return w === '찍음' ? 'F' : 'H'; if (r.확신 === '확실' && w === '오터치') return 'H'; return 'F'; };
+  const isC = rows[0].키[0] === 'C'; let lf = -1, prev = '';
+  rows.forEach((r, i) => { const c = cls(r); if (c === 'H') return; if (c === 'X' || (c === 'F' && (!isC || prev === 'F'))) lf = i; prev = c === 'X' ? 'F' : c; });
+  const seen = {}, per = {}, bad = {}; let anyF = false;
+  rows.forEach((r, i) => { const k = r.d + '|' + r.문항ID; const f = !seen[k]; seen[k] = 1; if (i <= lf) return; const c = cls(r);
+    if (c === 'F' || c === 'X') { bad[r.d] = 1; anyF = true; } else if (f && c === 'S') per[r.d] = (per[r.d] || 0) + 1; });
+  const days = Object.keys(per).filter(d => per[d] >= need && !bad[d]).sort();
   const dn = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
   if (days.length >= 2 && dn(days[days.length - 1]) - dn(days[0]) >= gap) return { st: 'grad' };
   if (days.length) return { st: 'one' };
-  return { st: lf >= 0 ? 'fail' : 'try' };
+  return { st: (lf >= 0 || anyF) ? 'fail' : 'try' };
 }
 const CO_TX = { ge: '≥', le: '≤', ne: '≠', sim: '~', to: '→', Rightarrow: '⇒', Leftrightarrow: '⇔', cdot: '·', times: '×', in: '∈', notin: '∉', subset: '⊂', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', infty: '∞', pm: '±', le: '≤', leq: '≤', geq: '≥' };
 const coPlain = s => String(s || '').replace(/\$/g, '').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2').replace(/\\([a-zA-Z]+)/g, (m, w) => CO_TX[w] != null ? CO_TX[w] : '').replace(/\\([{}%,;! ])/g, '$1').replace(/[{}]/g, '').replace(/\^/g, '^').replace(/\s+/g, ' ').trim();
@@ -6494,6 +6497,7 @@ const CO_ST = { new: '—', try: '하는 중', fail: '다시', one: '1회', grad
 function coDraw() {
   const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
   if (CO.view === 'bank') return coDrawBank();
+  if (CO.view === 'why') return coDrawWhy();
   const R = CO.rows || [], B = CO.bank, T = coToday();
   const bans = [...new Set(R.map(r => r.반).concat(CO.stu.filter(s => s.ban.startsWith(CO_SETS[CO.set].slice(0, 2))).map(s => s.ban)))].filter(Boolean).sort();
   const days = [...new Set(R.map(r => r.d))].sort().reverse(); if (!days.includes(T)) days.unshift(T);
@@ -6574,12 +6578,43 @@ function coDraw() {
 
 /* (1019) 문항 전체 보기 — 유강 "학생들이 눈으로 풀던데 문제가 어떤 문제인지 내가 볼 수 있게" */
 function coViewBtns() {
-  return `<span class="co-vw"><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">풀이 현황</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button></span><span class="sep">│</span>`;
+  return `<span class="co-vw"><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">풀이 현황</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button><button class="chip${CO.view === 'why' ? ' on' : ''}" data-cv="why">확신·실수</button></span><span class="sep">│</span>`;
 }
 function coViewWire(bar) { bar.querySelectorAll('[data-cv]').forEach(b => b.onclick = () => { CO.view = b.dataset.cv; coDraw(); coTick(); }); }
 // 문항 원문의 <br> 는 학생 화면(T())처럼 줄바꿈으로, <b> 는 굵게 — 글자 그대로 찍히지 않게 (1019)
 const coTxt = s => E(s || '').replace(/&lt;br\s*\/?&gt;/gi, '<br>').replace(/&lt;(\/?)b&gt;/gi, '<$1b>').replace(/\n/g, '<br>');
 const CO_KIND = { ox: 'OX', c4: '4지선다', c5: '5지선다', num: '단답' };
+/* (1103 유강) 확신·실수 — 학생별 확신 정확도(최근 7일·전체), 확실+오답 원인, '실수'라고 한 것의 검증.
+   검증 = 계산·읽기·오터치라고 한 뒤 같은 칸의 다음 시도가 정답+확실이면 '실수 맞음', 또 틀리면 '개념 부족'. */
+const CO_WHY = { 계산: '계산', 읽기: '잘못 읽음', 조건: '조건 놓침', 떠올림: '떠올리지 못함', 헷갈림: '헷갈림', 모름: '몰랐음', 오터치: '잘못 누름', 찍음: '찍음', 자신없음: '자신 없음' };
+function coDrawWhy() {
+  const body = $('co-body'), bar = $('co-bar'), R = (CO.rows || []).filter(r => r.모드 === '루프' || r.모드 === '리뷰');
+  bar.innerHTML = coViewBtns() + Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('');
+  bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.rows = null; coLoad(); });
+  coViewWire(bar);
+  const T = coToday(), dn = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5, t0 = dn(T);
+  const by = {}; R.forEach(r => (by[r.학생ID] = by[r.학생ID] || []).push(r));
+  const nm = {}; CO.stu.forEach(s => nm[s.sid] = s);
+  const pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '—';
+  const rows = Object.entries(by).map(([sid, a]) => {
+    a.sort((x, y) => x.id - y.id);
+    const sure = a.filter(r => r.확신 === '확실'), s7 = sure.filter(r => t0 - dn(r.d) < 7);
+    const why = {}; a.forEach(r => { if (r.원인) why[r.원인] = (why[r.원인] || 0) + 1; });
+    let cl = 0, ok = 0, bad = 0;   // '실수'라고 한 것 검증
+    a.forEach((r, i) => { if (!['계산', '읽기', '오터치'].includes(r.원인)) return; cl++;
+      const nx = a.slice(i + 1).find(z => z.키 === r.키); if (!nx) return; if (nx.정오 && nx.확신 === '확실') ok++; else bad++; });
+    const sx = sure.filter(r => !r.정오).length;
+    const st = nm[sid] || { name: sid.split('_')[0], ban: sid.split('_')[1] || '' };
+    return { st, s7n: s7.length, s7: pc(s7.filter(r => r.정오).length, s7.length), all: pc(sure.filter(r => r.정오).length, sure.length), sx, why, cl, ok, bad,
+             key: (s7.length ? s7.filter(r => r.정오).length / s7.length : 2) };
+  }).filter(x => CO.ban === '*' || x.st.ban === CO.ban).sort((x, y) => x.st.ban.localeCompare(y.st.ban) || x.key - y.key);
+  const W = ['계산', '읽기', '조건', '떠올림', '헷갈림', '모름', '오터치', '찍음', '자신없음'];
+  body.innerHTML = CO_CSS + `<div class="card" style="padding:12px 14px;overflow:auto"><div class="dim" style="font-size:12px;margin-bottom:8px">확신 정확도 = '확실해요'로 답한 것 중 맞힌 비율. 원인은 11/3 부터 쌓인다(확실+오답·애매+정답에서 학생이 고른 것). 실수 검증 = 계산·잘못 읽음·잘못 누름이라고 한 뒤 같은 칸 다음 시도 결과.</div>`
+    + `<table class="co-t"><thead><tr><th class="fz">학생</th><th>확신 정확도<br><span class="dim">7일</span></th><th>전체</th><th>확실+오답</th>${W.map(w => `<th>${CO_WHY[w]}</th>`).join('')}<th>실수 검증<br><span class="dim">맞음 / 또 틀림</span></th></tr></thead><tbody>`
+    + rows.map(x => `<tr><td class="fz"><b>${E(x.st.name)}</b> <span class="dim">${E(x.st.ban)}</span></td><td>${x.s7}<span class="dim"> (${x.s7n})</span></td><td>${x.all}</td><td>${x.sx}</td>`
+      + W.map(w => `<td>${x.why[w] || ''}</td>`).join('') + `<td>${x.cl ? `${x.ok} / ${x.bad}${x.cl - x.ok - x.bad ? `<span class="dim"> · 대기 ${x.cl - x.ok - x.bad}</span>` : ''}` : ''}</td></tr>`).join('')
+    + '</tbody></table></div>';
+}
 function coDrawBank() {
   const body = $('co-body'), bar = $('co-bar'), B = CO.bank, R = CO.rows || [];
   bar.innerHTML = coViewBtns() + Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
