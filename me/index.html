@@ -150,6 +150,10 @@ svg.spark{display:block;margin-top:6px}
 .fx-lg{font-size:11px;color:var(--dim);margin-top:6px}
 .fx-lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 4px 0 9px}
 .fx-lg i:first-child{margin-left:0}
+.fx-cal .c1{display:flex;align-items:baseline;gap:12px}
+.fx-cal .c1 b{font-size:46px;font-weight:900;line-height:1;letter-spacing:-1px}.fx-cal .c1 b small{font-size:20px;margin-left:2px}
+.fx-cal .c1 em{font-style:normal;font-size:13px;font-weight:800}.fx-cal .c1 em.up{color:#8fe0b0}.fx-cal .c1 em.dn{color:#ff8fa8}
+.fx-cal .c2{font-size:13.5px;color:#d7d7de;margin-top:8px;line-height:1.7}
 .fx-weak{margin-top:9px;padding-top:9px;border-top:1px solid var(--bd);font-size:12.5px;color:#d7d7de;line-height:1.7}
 .fx-weak b{color:var(--acc)}
 .fx-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -912,17 +916,22 @@ function finalGichul(g,start){
     _충분:!!gr};
 }
 /* CORE 상태 — core.html keyState 와 같은 규칙 */
+/* (1103 유강) 규칙 v2 — S 성공(정답+확실) · H 보류(애매+정답 찍음 아님, 확실+오답 오터치) · F 실패 · 시험 강등은 늘 리셋.
+   리셋: 유형 = F 하나 / 개념 = F 연속 둘(H 건너뜀). 성공일 = 리셋 뒤 그날 첫 시도 S ≥ need, 그날 F 없음. */
+function coreCls(r){ const ok=r[2], c=r[3], w=r[6]||''; if(r[4]==='시험') return 'X'; if(ok&&c==='확실') return 'S'; if(ok) return w==='찍음'?'F':'H'; if(c==='확실'&&w==='오터치') return 'H'; return 'F'; }
 function coreState(log,k,need,gap){
   const rows=log.filter(r=>r[0]===k);
   if(!rows.length) return 'new';
-  let lf=-1; rows.forEach((r,i)=>{ if(!(r[2]&&r[3]==='확실')) lf=i; });
-  const first=new Set(), per={};
+  const isC=k[0]==='C'; let lf=-1, prev='';
+  rows.forEach((r,i)=>{ const c=coreCls(r); if(c==='H') return; if(c==='X'||(c==='F'&&(!isC||prev==='F'))) lf=i; prev=c==='X'?'F':c; });
+  const first=new Set(), per={}, bad={}; let anyF=false;
   rows.forEach((r,i)=>{ const d=String(r[5]).slice(0,10), id=d+'|'+r[1]; const f=!first.has(id); first.add(id);
-    if(i>lf && f && r[2] && r[3]==='확실') (per[d]=per[d]||new Set()).add(r[1]); });
-  const days=Object.keys(per).filter(d=>per[d].size>=need).sort();
+    if(i<=lf) return; const c=coreCls(r);
+    if(c==='F'||c==='X'){ bad[d]=1; anyF=true; } else if(f && c==='S') (per[d]=per[d]||new Set()).add(r[1]); });
+  const days=Object.keys(per).filter(d=>per[d].size>=need && !bad[d]).sort();
   if(days.length>=2 && dn(days[days.length-1])-dn(days[0])>=gap) return 'grad';
   if(days.length>=1) return 'one';
-  return lf>=0?'fail':'try';
+  return (lf>=0||anyF)?'fail':'try';
 }
 function roadmap(c,today){
   const units=c.진도.map(u=>({이름:u.단원,짧게:u.단원.replace(/\(.*\)/,'').replace(/^(\d+)\s*/,'$1 ').trim(),첫:u.날짜[0],끝:u.날짜[u.날짜.length-1]}));
@@ -960,7 +969,7 @@ function heroCard(d,c,today){
     +`</div>`;
 }
 function readyCardShell(c){
-  return `<h2>내 기말 준비도<small>개념·유형 졸업 비율</small></h2><div class="card" id="fx-ready">`
+  return `<div id="fx-cal"></div><h2>내 기말 준비도<small>개념·유형 졸업 비율</small></h2><div class="card" id="fx-ready">`
     +c.진도.map(u=>`<div class="fx-un"><span class="u">${E(u.단원.replace(/\(.*\)/,'').trim())}</span><div class="fx-bar"></div><span class="p">—</span></div>`).join('')
     +`<div class="note">불러오는 중…</div></div>`;
 }
@@ -986,11 +995,32 @@ async function mountReady(c,tok,today){
     return `<div class="fx-un"><span class="u">${E(name)}</span><div class="fx-bar"><i class="g" style="width:${w(cnt.grad)}"></i><i class="o" style="width:${w(cnt.one)}"></i><i class="r" style="width:${w(cnt.fail)}"></i></div>`
       +`<span class="p">${opened||cnt.grad+cnt.one+cnt.fail?pg+'%':'수업 후'}</span></div>`;
   });
+  mountCalib(log,today);
   box.innerHTML=rows.join('')
     +`<div class="fx-lg"><i style="background:var(--fx-g)"></i>졸업<i style="background:var(--fx-o)"></i>1회 통과<i style="background:var(--fx-r)"></i>다시</div>`
     +(weak.length?`<div class="fx-weak">먼저 잡을 것 ${weak.slice(0,3).map(x=>`<b>${E(x.t)}</b>`).join(' · ')}</div>`:'')
     +`<div class="note">${anyLog?'졸업 = 서로 다른 날 두 번 이상, 확실하게 맞힌 개념·유형이에요. 단원 칸 수 중 졸업한 비율이에요.'
       :'리뷰테스트·루프 과제를 시작하면 단원별 졸업 비율이 여기에 쌓여요.'}</div>`;
+}
+/* (1103 유강 "포털에 크게 지표") 확신 정확도 — 최근 7일 CORE 리뷰·루프에서 '확실해요'로 답한 것 중 맞힌 비율.
+   확실 답이 10개 이상일 때만. 지난 7일과 비교, 이번 주 '왜 틀렸어요?' 원인(확실+오답). */
+const CAL_W={계산:'계산 실수',읽기:'잘못 읽음',조건:'조건 놓침',떠올림:'떠올리지 못함',헷갈림:'헷갈림',모름:'몰랐음',오터치:'잘못 누름'};
+function mountCalib(log,today){
+  const host=$('fx-cal'); if(!host) return;
+  const t=dn(today), R=(log||[]).filter(r=>(r[4]==='루프'||r[4]==='리뷰') && r[3]==='확실');
+  const wk=(a,b)=>R.filter(r=>{ const x=t-dn(String(r[5]).slice(0,10)); return x>=a&&x<b; });
+  const cur=wk(0,7), prv=wk(7,14);
+  if(cur.length<10){ host.innerHTML=''; return; }
+  const pct=a=>Math.round(100*a.filter(r=>r[2]).length/a.length), p=pct(cur), q=prv.length>=10?pct(prv):null;
+  const x=cur.filter(r=>!r[2]);
+  const why={}; x.forEach(r=>{ if(r[6]&&CAL_W[r[6]]) why[r[6]]=(why[r[6]]||0)+1; });
+  const ws=Object.keys(CAL_W).filter(k=>why[k]).map(k=>`${CAL_W[k]} ${why[k]}`).join(' · ');
+  const col=p>=90?'#8fe0b0':p>=75?'#f0d58a':'#ff8fa8';
+  host.innerHTML=`<h2>확신 정확도<small>'확실해요'라고 한 답 중 맞힌 비율 · 최근 7일</small></h2>`
+    +`<div class="card fx-cal"><div class="c1"><b style="color:${col}">${p}<small>%</small></b>`
+    +(q==null?'':`<em class="${p>=q?'up':'dn'}">지난주보다 ${p>=q?'▲':'▼'} ${Math.abs(p-q)}</em>`)+`</div>`
+    +`<div class="c2">확실하다고 한 ${cur.length}개 중 <b>${x.length}개</b>가 틀렸어요${ws?` — ${E(ws)}`:''}</div>`
+    +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`;
 }
 function mockCard(c,G,today){
   const R=G.회차||[];
