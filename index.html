@@ -708,6 +708,13 @@ body.cs-on #boot{display:none}
 #v-qame .qm-qm{margin-top:6px;color:var(--tx2)}
 #v-qame .qm-imgs{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 #v-qame .qm-imgs img{width:100%;max-width:520px;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
+
+/* 1104 문항 오류 판정 */
+#v-qa .qa-errb{font:inherit;font-size:12.5px;padding:6px 11px;border-radius:10px;border:1px solid rgba(240,138,154,.4);background:transparent;color:#f5b3be;cursor:pointer}
+#v-qa .qa-errb.on{background:rgba(240,138,154,.14)}
+#v-qa .qa-errf{margin:8px 0 0 34px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(240,138,154,.06)}
+#v-qa .qa-errf input{flex:1;min-width:200px;font:inherit;font-size:13px;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit}
+#v-qa .qa-errgo{border-color:rgba(240,138,154,.5);background:rgba(240,138,154,.16);color:#ffd9de}
 </style></head><body>
 
 <div id="login">
@@ -4833,14 +4840,22 @@ async function qaLoad() {
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
   const dn = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)').eq('상태', '해결').gte('해결시각', since).order('해결시각', { ascending: false }).limit(1000);
   QA.done = dn.error ? [] : (dn.data || []);
+  // (1104) 문항 오류 판정 기록 — schema_v59. 칸이 없으면(SQL 전) null
+  const er = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)').not('오류사유', 'is', null).order('답변시각', { ascending: false }).limit(500);
+  QA.err = er.error ? null : (er.data || []);
+  QA.errSt = {};
+  if (QA.err && QA.err.length) {
+    const ids = [...new Set(QA.err.map(r => r.오류신고).filter(Boolean))];
+    if (ids.length) { const st = await sb.rpc('hw_qa_error_status', { ids }); (st.data || []).forEach(x => QA.errSt[x.id] = x); }
+  }
   if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
-  const keys = [...new Set(QA.rows.concat(QA.done).map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
+  const keys = [...new Set(QA.rows.concat(QA.done, QA.err || []).map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
     const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
     (s1.data || []).forEach(s => QA.sets[s.세트키] = s);
     (s2.data || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
   }
-  await qaLoadPans(QA.rows.concat(QA.done));
+  await qaLoadPans(QA.rows.concat(QA.done, QA.err || []));
   await qaLoadExtra();
   qaDraw();
 }
@@ -4901,9 +4916,11 @@ function qaDraw() {
   const fb = (attr, v, l, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${attr}="${E(v)}">${E(l)}</button>`;
   const nWait = gs.filter(g => g.wait.length).length, nSent = gs.filter(g => !g.wait.length).length;
   bar.innerHTML = fb('qas', 'wait', `답할 질문 ${nWait}`, QA.show) + fb('qas', 'sent', `답 보냄 · 학생 확인 대기 ${nSent}`, QA.show) + fb('qas', 'done', `해결됨 ${(QA.done || []).length}`, QA.show)
+    + (QA.err ? fb('qas', 'err', `⚠ 문항 오류${QA.err.some(r => !r.오류판정) ? ' ' + new Set(QA.err.filter(r => !r.오류판정).map(qaKey)).size : ''}`, QA.show) : '')
     + '<span class="dim" style="margin:0 6px">│</span>' + fb('qab', '*', '반 전체', QA.ban) + bans.map(b => fb('qab', b, b, QA.ban)).join('')
     + `<button class="fbtn" data-qar="1" style="margin-left:8px">새로고침</button>`;
   if (QA.show === 'done') { $('qa-cnt').textContent = nWait; return qaDrawDone(body); }
+  if (QA.show === 'err') { $('qa-cnt').textContent = nWait; return qaDrawErr(body); }
   if (QA.ban !== '*') gs = gs.filter(g => g.bans.includes(QA.ban));
   gs = gs.filter(g => QA.show === 'wait' ? g.wait.length : !g.wait.length).sort((a, b) => b.score - a.score || b.stu - a.stu || a.k.localeCompare(b.k));
   $('qa-cnt').textContent = nWait;
@@ -4940,7 +4957,12 @@ function qaDraw() {
       + `<input class="qa-memo" data-qam="${E(g.k)}" placeholder="한 줄 답 (선택)" value="${E(QA.memo && QA.memo[g.k] || '')}">`
       + `<label class="qa-face"><input type="checkbox" data-qaface="${E(g.k)}"${g.face ? ' checked' : ''}> 수업 때 직접 설명</label>`
       + `<button class="qa-go" data-qago="${E(g.k)}">${QA.show === 'wait' ? `${common}명에게 보내기` : '답 고쳐 다시 보내기'}</button>`
-      + `</div><div class="qa-msg" id="qa-msg-${i}"></div></div>`;
+      + (QA.err ? `<button class="qa-errb${QA.errOpen === g.k ? ' on' : ''}" data-qaerrt="${E(g.k)}" title="문제 자체가 틀렸을 때 — 학생 과제 이행에서 빼고 오류신고로 넘긴다">⚠ 문항 오류</button>` : '')
+      + `</div>`
+      + (QA.errOpen === g.k ? `<div class="qa-errf"><input class="qa-errr" data-qaerrr="${E(g.k)}" placeholder="어디가 틀렸나요? (예: 보기 ③ 오타, 정답 없음, 조건 빠짐) — 필수">`
+          + `<input class="qa-erra" data-qaerra="${E(g.k)}" placeholder="학생에게 갈 말 (비우면: 문제에 오류가 있어 수정 중, 과제 이행에서 빼 둘게요)">`
+          + `<button class="qa-go qa-errgo" data-qaerrgo="${E(g.k)}">문항 오류로 ${common}명 처리</button></div>` : '')
+      + `<div class="qa-msg" id="qa-msg-${i}"></div></div>`;
   }).join('');
 }
 // 한국 시각 'M/D HH:MM' — timestamptz 문자열은 UTC 라 잘라 쓰면 9시간 어긋난다
@@ -4960,12 +4982,68 @@ function qaDrawDone(body) {
     + gs.flatMap(g => g.qs.map(q => `<tr><td data-sv="${E(g.label + ' ' + String(g.no).padStart(3, '0'))}"><b>${E(g.label)} · ${E(String(g.no))}번</b>${g.qs.length > 1 ? ' ' + chip('bad', `공통 ${g.qs.length}`) : ''}</td>`
       + `<td>${E(nm(q['학생ID']))}</td><td>${E(q.반 || '')}</td><td>${E(q.답변자 || (q.해결자 ? String(q.해결자).split('@')[0] : '—'))}</td>`
       + `<td data-sv="${E(q.답변시각 || '')}">${tm(q.답변시각)}</td><td data-sv="${E(q.해결시각 || '')}">${tm(q.해결시각)}</td><td class="n">${q.재질문 || 0}</td>`
-      + `<td>${q.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(q.조교메모 || '')}${Array.isArray(q.풀이) && q.풀이.length ? `<span class="qa-th">${q.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이"></a>`).join('')}</span>` : ''}</td>`
+      + `<td>${q.오류 ? chip('bad', '⚠ 문항 오류') + ' ' : ''}${q.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(q.조교메모 || '')}${Array.isArray(q.풀이) && q.풀이.length ? `<span class="qa-th">${q.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이"></a>`).join('')}</span>` : ''}</td>`
       + `<td>${qaRepliesHtml([q])}</td><td>${qaFbHtml(qaLastLog(q.id))}</td>`
       + `<td>${(g.pdf || []).map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k}</a>`).join(' · ')}</td></tr>`)).join('')
     + '</tbody></table></div>';
   body.innerHTML = html;
 }
+// (1104) 문항 오류 판정 목록 — 같은 문항은 한 줄. 우리 확인(관리자) = 오류 맞음 / 오류 아님
+function qaDrawErr(body) {
+  let rows = QA.err || [];
+  if (QA.ban !== '*') rows = rows.filter(r => r.반 === QA.ban);
+  if (!rows.length) { body.innerHTML = '<div class="card"><div class="dim">조교가 문항 오류로 판정한 질문이 없다.</div></div>'; return; }
+  const nm = sid => String(sid || '').split('_')[0];
+  const ST = { 접수: '접수 · 밤에 검증', 확인중: '확인 중', 처리완료: '수정 완료', 해당없음: '이상 없음' };
+  const gs = qaGroups(rows).map(g => ({ ...g, pending: g.qs.some(q => !q.오류판정), at: g.qs.map(q => q.답변시각 || '').sort().pop() }))
+    .sort((a, b) => (b.pending - a.pending) || String(b.at).localeCompare(String(a.at)));
+  const nP = gs.filter(g => g.pending).length;
+  let h = `<div class="dim" style="margin:0 0 8px">조교가 '문항 오류'로 판정한 문항 · 같은 문항은 한 줄 · 우리 확인 전 <b>${nP}</b>개 · 판정하면 그 학생들의 과제 체크는 ⑦(이행률에서 빠짐), 오류신고로 접수돼 밤 운영 배치가 검증·수정한다${window.ROLE === 'admin' ? ' · [오류 아님]은 질문을 다시 답할 질문으로 돌리고 ⑦ 을 ⑤ 로 되돌린다' : ''}</div>`;
+  h += `<div class="card vs-wrap"><table class="vs-tbl qa-done"><thead><tr><th>판정한 때</th><th>문항</th><th>학생</th><th>판정 조교</th><th data-nosort>어디가 틀렸나</th><th>우리 확인</th><th>신고 처리</th><th data-nosort>PDF</th>${window.ROLE === 'admin' ? '<th data-nosort></th>' : ''}</tr></thead><tbody>`
+    + gs.map(g => {
+      const q0 = g.qs.find(q => !q.오류판정) || g.qs[0];
+      const reasons = [...new Set(g.qs.map(q => q.오류사유).filter(Boolean))];
+      const rv = g.pending ? chip('mid', '확인 전') : q0.오류판정 === '맞음' ? chip('bad', '오류 맞음') : chip('good', '오류 아님');
+      const sts = [...new Set(g.qs.map(q => (QA.errSt[q.오류신고] || {}).상태).filter(Boolean))].map(x => ST[x] || x).join(' · ');
+      return `<tr><td data-sv="${E(g.at)}">${E(qaTime(g.at))}</td><td><b>${E(g.label)} · ${E(String(g.no))}번</b>${g.qid ? ` <span class="dim">${E(g.qid)}</span>` : ''}</td>`
+        + `<td>${g.qs.map(q => `${E(nm(q['학생ID']))} <span class="dim">${E(q.반 || '')}</span>`).join(', ')}</td><td>${E([...new Set(g.qs.map(q => q.답변자).filter(Boolean))].join(', '))}</td>`
+        + `<td>${reasons.map(E).join(' / ')}</td><td>${rv}${q0.오류판정자 ? ` <span class="dim">${E(q0.오류판정자)}</span>` : ''}</td><td>${E(sts || '—')}</td>`
+        + `<td>${(g.pdf || []).map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k}</a>`).join(' · ')}</td>`
+        + (window.ROLE === 'admin' ? `<td>${g.pending ? `<button class="qa-fbb" data-qarv="${g.qs.filter(q => !q.오류판정).map(q => q.id).join(',')}" data-ok="1">오류 맞음</button> <button class="qa-fbb" data-qarv="${g.qs.filter(q => !q.오류판정).map(q => q.id).join(',')}" data-ok="0">오류 아님</button>` : ''}</td>` : '')
+        + `</tr>`;
+    }).join('') + '</tbody></table></div>';
+  body.innerHTML = h;
+}
+async function qaErrSend(k, btn) {
+  if (QA.busy) return;
+  const card = btn.closest('.qa-g'), msg = card.querySelector('.qa-msg');
+  const g = qaGroups().find(x => x.k === k); if (!g) return;
+  const qs = QA.show === 'wait' ? g.wait : g.qs;
+  const reason = card.querySelector('[data-qaerrr]').value.trim(), ans = card.querySelector('[data-qaerra]').value.trim();
+  if (!reason) { msg.className = 'qa-msg warn'; msg.textContent = '어디가 틀렸는지 한 줄 적어 주세요.'; return; }
+  QA.busy = true; btn.disabled = true; msg.className = 'qa-msg dim'; msg.textContent = '처리 중…';
+  try {
+    const { data, error } = await sb.rpc('hw_qa_error', { qids: qs.map(q => q.id), p_reason: reason, p_answer: ans || null });
+    if (error || !data || data.오류) throw new Error((error && error.message) || (data && data.오류) || '처리하지 못함');
+    QA.errOpen = null; msg.className = 'qa-msg'; msg.textContent = `${data.n}명 문항 오류로 처리 — 과제 이행에서 빠지고 오류신고로 넘어갔다.`;
+    setTimeout(qaLoad, 900);
+  } catch (e) { msg.className = 'qa-msg warn'; msg.textContent = String(e.message || e); btn.disabled = false; }
+  QA.busy = false;
+}
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('#qa-body [data-qaerrt]'); if (t) { QA.errOpen = QA.errOpen === t.dataset.qaerrt ? null : t.dataset.qaerrt; return qaDraw(); }
+  const g = ev.target.closest('#qa-body [data-qaerrgo]'); if (g) return qaErrSend(g.dataset.qaerrgo, g);
+  const r = ev.target.closest('#qa-body [data-qarv]');
+  if (r && window.ROLE === 'admin') {
+    const ok = r.dataset.ok === '1', ids = r.dataset.qarv.split(',').map(Number);
+    let memo = null;
+    if (!ok) { memo = prompt('학생에게 갈 말 (비우면: 확인해 보니 문항에는 이상이 없어요. 조교쌤이 다시 답해 줄게요.)', ''); if (memo === null) return; }
+    r.disabled = true;
+    const { data, error } = await sb.rpc('hw_qa_error_review', { qids: ids, ok, p_memo: memo || null });
+    if (error || !data || data.오류) { r.disabled = false; alert('저장 실패: ' + ((error && error.message) || (data && data.오류) || '')); return; }
+    qaLoad();
+  }
+});
 async function qaShrink(file) {
   const img = await createImageBitmap(file);
   const k = Math.min(1, 1600 / Math.max(img.width, img.height));
@@ -5181,7 +5259,7 @@ function qmDraw() {
   const fc = {}; fb.forEach(f => (fc[f.log_id] = fc[f.log_id] || []).push(f));
   h += `<div class="card vs-wrap"><div class="qm-st">답변 기록</div><table class="vs-tbl"><thead><tr><th>답한 때</th><th>문항</th><th>학생</th><th>반</th><th data-nosort>보낸 답</th><th>학생 반응</th><th class="n">댓글</th><th data-nosort>피드백</th></tr></thead><tbody>`
     + logs.map(l => `<tr class="qm-row${QM.open.has(l.id) ? ' on' : ''}" data-qml="${l.id}" title="눌러서 상세"><td data-sv="${E(l.시각)}">${QM.open.has(l.id) ? '▾' : '▸'} ${E(qaTime(l.시각))}</td><td>${E(qlab(l.qid))}</td><td>${E(nm(l['학생ID']))}</td><td>${E(l.반 || '')}</td>`
-      + `<td>${l.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(l.메모 || '')}${Array.isArray(l.풀이) && l.풀이.length ? ` <span class="dim">📷${l.풀이.length}</span>` : ''}</td>`
+      + `<td>${l.오류 ? chip('bad', '⚠ 문항 오류') + ' ' : ''}${l.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(l.메모 || '')}${Array.isArray(l.풀이) && l.풀이.length ? ` <span class="dim">📷${l.풀이.length}</span>` : ''}</td>`
       + `<td>${l.반응 === '이해' ? chip('good', '이해했어요') : l.반응 === '모름' ? chip('mid', '아직 모름') : '<span class="dim">확인 전</span>'}</td><td class="n">${rc[l.id] || 0}</td>`
       + `<td>${(fc[l.id] || []).map(f => QA_FB_ICON[f.평가]).join(' ')}</td></tr>`
       + (QM.open.has(l.id) ? `<tr class="qm-det"><td colspan="8">${qmDetail(l, qmap[l.qid], replies.filter(r => r.log_id === l.id), fc[l.id] || [])}</td></tr>` : '')).join('')
