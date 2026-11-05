@@ -7682,10 +7682,14 @@ function wireRow(d,id){
   {const r0=rs.value.trim();
    d.dataset.clinicSig=r0?[r0,d.querySelector('[data-f="추가학습날짜"]').value||'',d.querySelector('[data-f="추가학습시간"]').value||''].join('|'):'';}
   rs.addEventListener('input',()=>{
+    const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
     if(rs.value.trim()&&NEXT){
-      const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
       if(!dd.value)dd.value=NEXT.date;
       if(!tm.value&&NEXT.time)tm.value=NEXT.time;
+    }else if(!rs.value.trim()){
+      /* (1105 유강) 사유를 비우면 자동으로 들어갔던 날짜·시간도 같이 비운다 — 사유 없는 추가학습은 없다.
+         저장(change·blur)에서 daily_log 칸이 비고, clinic_roster 의 오늘 지정 행도 거둔다(save 의 기존 규칙). */
+      dd.value='';tm.value='';dd.classList.remove('autov');tm.classList.remove('autov');
     }
   });
   d.querySelectorAll('input,textarea').forEach(el=>{
