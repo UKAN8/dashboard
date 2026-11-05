@@ -123,7 +123,7 @@ async function show(k) {
     (fails.length ? ` · <span style="color:var(--warn)">없음 ${fails.length}</span>` : '') +
     (pending.length ? ` · 만드는 중 ${pending.length}` : '') +
     (names.length ? ` <button class="pv" id="zipall" style="margin-left:8px">⤓ 전체 받기 (${names.length}명 · zip)</button>`
-      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs">문제+해설</option><option value="all">전체 파일</option></select>`
+      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs" selected>문제+해설</option><option value="all">전체 파일</option></select>`
       + ` <button class="pv" id="printall" style="margin-left:6px">🖨 바로 인쇄</button>`
       + ` <label style="font-size:11.5px;color:var(--dim)" title="Edge 를 --kiosk-printing 으로 띄운 PC 에서만 켠다"><input type="checkbox" id="pauto"> 연속(키오스크)</label>` : '') + '</p>';
   html += '<table><tr><th>학생</th><th>파일</th><th></th></tr>';
@@ -152,7 +152,7 @@ async function show(k) {
 /* ── 전체 받기 (0908 유강) — 서명 URL 로 하나씩 받아 무압축 zip 한 파일로. 파일명=학생이름_문제.pdf.
    조회(app.js) makeZip 과 같은 store zip. 브라우저 다운로드 한 번에 끝난다. */
 function wantList(names, rows, urls) {
-  const kind = ($('#zipkind') || {}).value || 'q';
+  const kind = ($('#zipkind') || {}).value || 'qs';
   const want = [];
   for (const n of names) {
     const f = rows[n];
@@ -217,7 +217,7 @@ async function printAll(btn, names, rows, urls) {
   printAll(btn);                                  // 첫 장 바로
 }
 async function zipAll(btn, g, names, rows, urls) {
-  const kind = ($('#zipkind') || {}).value || 'q';
+  const kind = ($('#zipkind') || {}).value || 'qs';
   const want = [];
   for (const n of names) {
     const f = rows[n];
