@@ -825,14 +825,14 @@ body.cs-on #boot{display:none}
         <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
         <span class="cs-sp"></span>
         <span id="gt_done2row" class="hidden cs-gtdone"><button class="pill" id="gt_done2" onclick="gtDone()">① 채점 확정 → PT 만들기</button><span class="lbl">자평 낸 학생별 PT · 서술형까지 넣고 누를 것 · 고쳤으면 다시 눌러 재제작</span></span>
-        <button class="pill" id="cs_clinicset" onclick="setupClinic()">② 추가학습 세팅 <span class="lbl">(이상하면 고치고 다시 눌러도 된다)</span></button>
+        <!-- (1107 유강) ② 추가학습 세팅 폐지 — [마감] 이 과제 미흡·결석 학생 클리닉 예약을 만든다 -->
         <button class="key" onclick="closeSession()">③ [마감] 수업 종료</button>
       </div>
       <div class="card" id="closeguide" style="display:none">
         <h2>마감 후 흐름</h2>
         <div style="line-height:1.75">
           <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="#report">리포트 탭</a>에서 확인<br>
-          <b>추가학습만 고칠 땐 재마감하지 말 것</b> — 칸을 고치면 명단은 알아서 따라간다. 자동 지정을 다시 돌리려면 사유 칸을 비우고 <b>[② 추가학습 세팅]</b><br>
+          <b>클리닉 보완</b> — 과제 이행 100% 미만·결석 학생에게 5분 안에 예약 안내가 간다(다음 날 9시까지 직접 예약, 안 하면 자동 · 결석은 2시간). 리포트 '추가학습' 칸은 그 예약 시각<br>
           <b>재마감</b> — 점수·진도 같은 걸 고쳤을 때만. 그날 데이터를 리셋하고 다시 적재·렌더한다(몇 분 걸린다)<br>
           <b>다음날 9시</b> — 링크 리포트가 학생별 팀톡으로 나간다(보내기 전에 확인 질문이 먼저 온다)<br>
           진행 상황은 상단 <b>⚙ 작업</b>에서 본다
@@ -7754,7 +7754,7 @@ function updateAvgs(){
     if(scored.length>=2)scored.forEach(({c,v})=>{if(v<=avg&&(!full||v<full)){c.classList.add('below');below++;}});
     out.push(`<span>점수 <b>${avg.toFixed(1)}</b>${full?'<span class="s"> / '+full+'점</span>':''}</span>`
       +`<span class="s">${scored.length}명 채점${live.length-scored.length?' · 미입력 '+(live.length-scored.length)+'명':''}${na?' · 미응시 '+na+'명':''}</span>`
-      +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b> (마감 시 추가학습 대상)</span>`:''));
+      +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b></span>`:''));
   }else out.push(`<span class="s">점수 입력 없음${na?' · 미응시 '+na+'명':''}</span>`);
   {
     const ms=gtMissing();
@@ -7777,7 +7777,7 @@ function renderGrid(box,nq){
   const t=document.createElement('table');t.className='cs-grid';
   const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
                   :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
-  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th>추가학습 사유</th><th>날짜</th><th>시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th style="display:none">추가학습 사유</th><th style="display:none">날짜</th><th style="display:none">시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -7797,9 +7797,11 @@ function renderGrid(box,nq){
       <td><input data-f="이행률" style="width:56px" value="${esc(log['이행률']||'')}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${esc(log['코멘트']||'')}</textarea></td>
       <td><input data-f="특이사항" value="${esc(log['특이사항']||'')}" style="min-width:140px"></td>
-      <td><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
-      <td><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
-      <td><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
+      <td style="display:none"><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
+      <td style="display:none"><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
+      <td style="display:none"><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
+    /* (1107 유강 "콘솔에 추가학습 잡는 것이 필요없어졌고") 추가학습은 [마감] → 클리닉 보완·결석 예약(v61·054)으로 바뀌었다.
+       칸은 저장·리포트 코드가 아직 읽으니 지우지 않고 숨긴다(옛 기록이 보존된다). */
     tb.appendChild(tr);wireRow(tr,id);
   });
   t.appendChild(tb);
@@ -8018,7 +8020,7 @@ async function save(id,card){
       if(ev.length)await sb.from('events').insert(ev);
     }
     // 결석 → 보강 대기 자동 등록
-    if(att&&att.dataset.v==='결석'&&!card.dataset.absentDone){
+    if(false&&att&&att.dataset.v==='결석'&&!card.dataset.absentDone){   // (1107) 결석 보강은 [마감] → 클리닉 2시간 예약(054)이 맡는다 — 옛 보강대기 명단은 안 만든다
       card.dataset.absentDone='1';
       await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+vDay()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
       toast(s['이름']+' 보강 대기 등록');
@@ -8339,8 +8341,7 @@ async function closeSession(){
   const reclose=$('sessionstate').textContent==='마감됨';   // 재마감 = 리셋 후 재적재·재렌더 (0818)
   /* (0917 유강) 자동 추가학습 지정은 [② 추가학습 세팅] 버튼으로 뺐다. 마감은 지정을 만들지 않는다.
      여기서는 "세팅을 아예 안 눌렀다"만 짚어 준다 — 손으로 사유를 적어 둔 반은 묻지 않는다. */
-  if($('students').dataset.clinicset!==CLS+'|'+today
-     && ![...csAll('.stu [data-f="추가학습사유"]')].some(e=>e.value.trim())
+  if(false   /* (1107) 추가학습 세팅 폐지 — 클리닉 보완 예약이 대신한다 */
      && !confirm('[② 추가학습 세팅]을 아직 안 눌렀다.\n\n이대로 마감하면 오늘 추가학습은 아무도 지정되지 않는다.\n(손으로 다 적었거나 오늘은 부를 사람이 없으면 그냥 확인)\n\n그대로 마감할까?'))return;
   const present=[...csAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
   const crow={
