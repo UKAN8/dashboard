@@ -7047,12 +7047,15 @@ let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
    자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
    옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
-let AUTO={}, AUTOB=null, LOOPSTART=null, HWR={}, HWRB=null;   // (1028) HWR = console_hw_rate 학생별
+let AUTO={}, AUTOB=null, LOOPSTART=null, HWR={}, HWRB=null, HWC={};   // (1028) HWR = console_hw_rate 학생별 · (1106) HWC = 클리닉 과제 보완(hw_clinic_check, v60)
 /* (1021 유강) '최근 점수' 누적은 새 체계 시작일 이후 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
 const CYCLE_START='2026-10-21';   // (1022 유강 "오늘이 스타트") 새 체계 시작일 — 리포트 HISTORY_START 와 같다
 async function loadAuto(cls,day){
-  AUTO={};AUTOB=null;LOOPSTART=null;HWR={};HWRB=null;
+  AUTO={};AUTOB=null;LOOPSTART=null;HWR={};HWRB=null;HWC={};
   try{
+    // (1106) 과제 보완 클리닉 — 최근 10일, 학생마다 가장 최근 회차 하나. 표가 없으면(v60 전) 조용히 건너뛴다
+    await Promise.resolve(sb.from('hw_clinic_check').select('*').eq('반',cls).gte('갱신',new Date(Date.now()-10*864e5).toISOString()).order('회차',{ascending:false}))
+      .then(r=>{(r&&r.data||[]).forEach(x=>{if(!HWC[x['학생ID']])HWC[x['학생ID']]=x;});}).catch(()=>{});
     const [ra,rl,rh]=await Promise.all([sb.rpc('console_auto',{p_cls:cls,p_day:day}),
                                      Promise.resolve(sb.rpc('console_loop_start',{p_cls:cls,p_day:day})).catch(()=>null),
                                      Promise.resolve(sb.rpc('console_hw_rate',{p_cls:cls,p_day:day})).catch(()=>null)]);
@@ -7133,6 +7136,14 @@ function autoLine(id){
     out.push(`<span class="ac ${!HWRB['확정']?'none':hr['이행률']>=100?'ok':hr['이행률']<50?'bad':''}" title="${esc(t)}">과제 ${hr['이행률']}%</span>`);
   }
   if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
+  /* (1106) 과제 보완 클리닉 — 이행 100% 미만이면 클리닉 예약(학생 선택 → 22시 지나면 자동) → 조교 [완료] = 보완 완료(이행률은 그대로) */
+  const hc=HWC[id];
+  if(hc){
+    const ht=`과제 보완 클리닉 · ${hc['회차']} 회차 이행 ${hc['이행률']??'-'}%`;
+    out.push(hc['상태']==='완료'?`<span class="ac ok" title="${esc(ht)}">보완 완료 ✓</span>`
+      :hc['상태']==='예약'?`<span class="ac" title="${esc(ht)}">보완 예약 ${fmtDue(hc['예약'])}${hc['자동']?' (자동)':''}</span>`
+      :hc['상태']==='예약대기'?`<span class="ac bad" title="${esc(ht)}">보완 예약 대기</span>`:'');
+  }
   return `<div class="recent autoline">${out.join('')}</div>`;
 }
 /* 빈 칸 자동 채움 — 손으로 적은 값은 건드리지 않는다.
