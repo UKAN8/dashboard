@@ -4859,10 +4859,12 @@ async function qaLoad() {
   await qaLoadExtra();
   qaDraw();
 }
-// 묶음 열쇠 — 같은 문항(문항ID, 없으면 과제+번호)
+// 묶음 열쇠 — 같은 문항(과목+문항ID, 없으면 과제+번호)
+// (1107) 문항ID 는 과목 안에서만 유일하다(단원-번호: 공수2 08-107 = 함수, 미적1 08-107 = 정적분) — 과목을 붙여야 고1·고2 가 안 섞인다
 function qaKey(r) {
   const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null;
-  return r['문항ID'] || (it && it['문항ID']) || ('a' + r.assign_id + '#' + r.번호);
+  const qid = r['문항ID'] || (it && it['문항ID']) || '';
+  return qid ? (a.과목 || '?') + ':' + qid : ('a' + r.assign_id + '#' + r.번호);
 }
 // (1026) 같은 문항에 예전에 보낸 답 — 대기·답변·해결 전부에서 가장 최근 것(사진이나 글이 있는 것)
 function qaPrevFor(k) {
@@ -4875,7 +4877,7 @@ function qaGroups(rows) {
   (rows || QA.rows).forEach(r => {
     const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null;
     const qid = r['문항ID'] || (it && it['문항ID']) || '';
-    const k = qid || ('a' + r.assign_id + '#' + r.번호);
+    const k = qaKey(r);
     const g = G[k] || (G[k] = { k, qid, qs: [], label: '', th: null, typ: '' });
     g.qs.push(r);
     if (!g.label) {
@@ -7139,10 +7141,12 @@ function autoLine(id){
   /* (1106) 과제 보완 클리닉 — 이행 100% 미만이면 클리닉 예약(학생 선택 → 22시 지나면 자동) → 조교 [완료] = 보완 완료(이행률은 그대로) */
   const hc=HWC[id];
   if(hc){
-    const ht=`과제 보완 클리닉 · ${hc['회차']} 회차 이행 ${hc['이행률']??'-'}%`;
-    out.push(hc['상태']==='완료'?`<span class="ac ok" title="${esc(ht)}">보완 완료 ✓</span>`
-      :hc['상태']==='예약'?`<span class="ac" title="${esc(ht)}">보완 예약 ${fmtDue(hc['예약'])}${hc['자동']?' (자동)':''}</span>`
-      :hc['상태']==='예약대기'?`<span class="ac bad" title="${esc(ht)}">보완 예약 대기</span>`:'');
+    const kd=hc['결석']?'결석 보강':'보완';   // (1107 v62) 결석 2시간 · 도착~완료 동안 보완 체크 · 완료 뒤 보완 후 이행률
+    const ht=`${hc['결석']?'결석 보강(2시간)':'과제 보완'} 클리닉 · ${hc['회차']} 회차 이행 ${hc['이행률']??'-'}%${hc['보완후']!=null?' → 보완 후 '+hc['보완후']+'%':''}`;
+    out.push(hc['상태']==='완료'?`<span class="ac ok" title="${esc(ht)}">${kd} 완료 ✓${hc['보완후']!=null?' '+(hc['이행률']??'-')+'→'+hc['보완후']+'%':''}</span>`
+      :hc['상태']==='도착'?`<span class="ac" title="${esc(ht)}">${kd} 중 (클리닉실)</span>`
+      :hc['상태']==='예약'?`<span class="ac" title="${esc(ht)}">${kd} 예약 ${fmtDue(hc['예약'])}${hc['자동']?' (자동)':''}</span>`
+      :hc['상태']==='예약대기'?`<span class="ac bad" title="${esc(ht)}">${kd} 예약 대기</span>`:'');
   }
   return `<div class="recent autoline">${out.join('')}</div>`;
 }
