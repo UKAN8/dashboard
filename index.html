@@ -7282,10 +7282,12 @@ async function selectClass(cls){
   }
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
-  const since14=new Date(Date.parse(today)-14*864e5).toISOString().slice(0,10);   // (1021) 특이사항 이력은 2주만 — 옛 표시가 오래 남는다
+  /* (1106 유강 "며칠 전부터 안 지워지고 있다") 특이사항(⚑)은 직전 수업 1회분만 — 그 반의 오늘 전 마지막 수업일.
+     (1021~1105 는 최근 14일이라, 한 번 적은 메모가 2주 동안 수업마다 떠 있었다.) */
+  const prevDay=(hist||[]).reduce((m,r)=>{const d=String(r['날짜']||'');return d<today&&d>m?d:m;},'');
   RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
     if(r['점수']&&String(r['날짜']||'')>=CYCLE_START)(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
-    if(r['특이사항']&&String(r['날짜']||'')>=since14)(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
+    if(r['특이사항']&&prevDay&&String(r['날짜']||'')===prevDay)(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
     if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
   });
   PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
