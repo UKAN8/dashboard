@@ -832,7 +832,7 @@ function render(d){
   H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
   H.push(P.clinic);
   H.push(P.eval||P.evalNone);
-  H.push(`<div id="hw-host"></div>`);
+  H.push(`<div id="fix-host"></div><div id="hw-host"></div>`);
   H.push(`<div id="myq-host"></div>`);   // (1102) 내 질문 모음
   H.push(P.core);
   H.push(P.tower);
@@ -848,6 +848,7 @@ function render(d){
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
   mountHW(tok);
+  mountFix(tok);
   mountMyQ(tok);
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
@@ -1043,7 +1044,7 @@ function renderFinal(d,parts){
   const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
   H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
     +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`
-    +`<div id="hw-host"></div><div id="myq-host"></div>`);   // (1102) 내 질문 모음
+    +`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div>`);   // (1102) 내 질문 모음
   H.push(readyCardShell(c));
   const G=finalGichul(d.기출,c.시작);
   H.push(`<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''));
@@ -1069,6 +1070,7 @@ function renderFinal(d,parts){
   if(G.회차.length){ try{ PR.mount($('fx-pr'),{...d,기출:G},{staff:false}); }catch(e){} }
   mountReady(c,tok,today);
   mountHW(tok);
+  mountFix(tok);
   mountMyQ(tok);
   return {from:c.시작};
 }
@@ -1324,6 +1326,56 @@ async function hwTap(b){
     else if(cur===5&&a.질문[no]&&['대기','답변'].includes(a.질문[no].상태)){ if(st===4) a.질문[no].상태='해결'; else delete a.질문[no]; }
     drawHW();
   }catch(e){ b.classList.remove('busy'); alertHW(); }
+}
+/* ── 클리닉 보완 체크 (1107 유강 "도착부터 완료까지") ──
+ * 클리닉실에서 도착 처리된 뒤 ~ 조교 [완료] 까지만 열린다(schema_v62 hw_fix_get / hw_fix_mark).
+ * 그 회차 마감 때 남은 문항만 나온다 — 다른 과제·지난 미흡 과제는 안 나온다.
+ * 원래 과제 체크·이행률은 그대로. 여기 체크는 '보완'으로 따로 남고, ⑤ 는 조교 질문으로 간다. ⑥(안 풀었음)은 없다. */
+const FIX={tok:'',list:[],pen:1};
+async function mountFix(tok){
+  const host=$('fix-host'); if(!host||!tok) return;
+  FIX.tok=tok;
+  try{ const r=await sb.rpc('hw_fix_get',{tok}); FIX.list=(r&&!r.error&&Array.isArray(r.data))?r.data:[]; }catch(e){ FIX.list=[]; }   // 함수가 없으면(v62 전) 조용히 안 그린다
+  drawFix();
+  if(FIX.list.length&&!FIX.timer) FIX.timer=setInterval(async()=>{   // 조교가 [완료]를 누르면 닫혀야 하니 1분마다 다시 본다
+    if(document.visibilityState!=='visible') return;
+    try{ const r=await sb.rpc('hw_fix_get',{tok:FIX.tok}); if(r&&!r.error&&Array.isArray(r.data)){ FIX.list=r.data; drawFix(); } }catch(e){}
+  },60000);
+}
+function drawFix(){
+  const host=$('fix-host'); if(!host) return;
+  if(!FIX.list.length){ host.innerHTML=''; return; }
+  const ST=[1,2,3,4,5,7];
+  host.innerHTML=FIX.list.map((c,ci)=>{
+    const d=String(c.수업일||'');
+    const all=[].concat(...c.과제.map(a=>a.번호||[])).length;
+    const done=c.과제.reduce((s,a)=>s+Object.keys(a.체크||{}).length,0);
+    return `<div class="card hw" style="border-color:rgba(120,200,160,.6);background:rgba(120,200,160,.08)">`
+      +`<div class="row" style="border-bottom:none"><span class="t"><b>클리닉 보완 체크</b><span class="dim"> ${d?(+d.slice(5,7))+'/'+(+d.slice(8,10))+' 수업 회차 · ':''}${done}/${all}</span></span></div>`
+      +`<div class="hint">${c.결석?'결석 보강 시간이에요. ':''}지난 마감 때 못 한 문항만 나와요. 클리닉에서 풀고 해설까지 본 뒤 체크하세요. 조교쌤이 [완료]를 누르면 닫혀요.</div>`
+      +`<div class="pal">${ST.map(i=>`<button type="button" data-fpen="${i}" class="${FIX.pen===i?'on':''}"><i class="k${i}"></i>${HW_ST[i][0]} ${HW_ST[i][1]}</button>`).join('')}</div>`
+      +c.과제.map((a,ai)=>`<div class="sub">${E(a.제목)}</div><div class="grid">${(a.번호||[]).map(n=>{ const st=(a.체크||{})[n];
+          return `<button type="button" data-fc="${ci}" data-fa="${ai}" data-fn="${n}" class="${st?'s'+st:''}" aria-label="${n}번">${n}</button>`; }).join('')}</div>`).join('')
+      +`</div>`;
+  }).join('');
+  host.querySelectorAll('[data-fpen]').forEach(b=>b.onclick=()=>{ FIX.pen=+b.dataset.fpen; drawFix(); });
+  host.querySelectorAll('[data-fn]').forEach(b=>b.onclick=()=>fixTap(b));
+}
+async function fixTap(b){
+  const c=FIX.list[+b.dataset.fc], a=c.과제[+b.dataset.fa], no=+b.dataset.fn, cur=(a.체크||{})[no]||0;
+  const st=cur===FIX.pen?0:FIX.pen;
+  b.classList.add('busy');
+  try{
+    const r=await sb.rpc('hw_fix_mark',{tok:FIX.tok,p_key:c.key,aid:a.과제,no,st});
+    if(r.error||!r.data||r.data.오류){
+      b.classList.remove('busy');
+      const h=$('fix-host'); if(h){ let d=h.querySelector('.bad'); if(!d){ d=document.createElement('div'); d.className='bad'; h.prepend(d); } d.textContent=(r.data&&r.data.오류)||'저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; }
+      if(r.data&&r.data.닫힘){ FIX.list=FIX.list.filter(x=>x!==c); setTimeout(drawFix,2500); }
+      return;
+    }
+    a.체크=a.체크||{}; if(st) a.체크[no]=st; else delete a.체크[no];
+    drawFix();
+  }catch(e){ b.classList.remove('busy'); }
 }
 function alertHW(m){ const h=$('hw-host'); if(!h) return; let d=h.querySelector('.hwerr'); if(!d){ d=document.createElement('div'); d.className='bad hwerr'; h.prepend(d); } d.textContent=m||'저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; }
 
