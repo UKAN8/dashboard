@@ -7159,7 +7159,11 @@ function applyAuto(){
       if(inp.value.trim()===''){inp.value=String(v);inp.classList.add('autov');put=true;}
     }
     const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
-    if(sc&&r&&!c.classList.contains('na')&&sc.value.trim()===''&&!(Math.max(0,parseInt($('c_nq').value)||0))){
+    /* (1107 유강 "실제 점수랑 점수칸이 다르다") 예전엔 빈 칸만 채웠다 — 리뷰 도중 콘솔을 열면 그때까지의 부분 점수가
+       저장되고(출결 찍힌 학생), 나중에 다시 열어도 칸이 차 있어 안 고쳐졌다. 리뷰는 폰 자동 채점이므로
+       이 화면에서 손으로 고친 칸(dataset.manual)만 남기고, 저장값이 자동값과 다르면 자동값으로 맞춘다. */
+    const v10a=r?reviewScore(r).toFixed(1):'';
+    if(sc&&r&&!c.classList.contains('na')&&sc.dataset.manual!=='1'&&sc.value.trim()!==v10a&&!(Math.max(0,parseInt($('c_nq').value)||0))){
       const v10=reviewScore(r);
       sc.value=v10.toFixed(1);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 10점 환산 (확실 정답 '+r.ok+'/'+reviewN()+')';
       const sm=c.querySelector('.sum');if(sm)sm.textContent=v10.toFixed(1);
@@ -7706,7 +7710,7 @@ function wireRow(d,id){
     }
   });
   d.querySelectorAll('input,textarea').forEach(el=>{
-    el.addEventListener('input',()=>{el.classList.remove('autov');rowState(d,'dirty');});
+    el.addEventListener('input',()=>{el.classList.remove('autov');el.dataset.manual='1';rowState(d,'dirty');});
     el.addEventListener('change',()=>save(id,d));
     el.addEventListener('blur',()=>{if(d.classList.contains('dirty'))save(id,d);});
   });
