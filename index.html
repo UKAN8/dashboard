@@ -7777,7 +7777,7 @@ function renderGrid(box,nq){
   const t=document.createElement('table');t.className='cs-grid';
   const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
                   :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
-  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th style="display:none">추가학습 사유</th><th style="display:none">날짜</th><th style="display:none">시간</th></tr></thead>`;
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th title="조퇴 등 — 시간을 고르면 그 학생에게 클리닉 보강 예약 안내가 간다(마감 뒤 5분 안, 이미 마감했으면 지금부터 5분 안)">클리닉 보강</th><th style="display:none">추가학습 사유</th><th style="display:none">날짜</th><th style="display:none">시간</th></tr></thead>`;
   const tb=document.createElement('tbody');
   STUDENTS.forEach(s=>{
     const id=s['학생ID'],log=LOGMAP[id]||{};
@@ -7797,6 +7797,7 @@ function renderGrid(box,nq){
       <td><input data-f="이행률" style="width:56px" value="${esc(log['이행률']||'')}"></td>
       <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${esc(log['코멘트']||'')}</textarea></td>
       <td><input data-f="특이사항" value="${esc(log['특이사항']||'')}" style="min-width:140px"></td>
+      <td><div class="cmbox" style="display:flex;gap:4px"><select data-cm="blk" style="width:72px"><option value="">—</option><option value="1">30분</option><option value="2">1시간</option><option value="4">2시간</option></select><input data-cm="why" placeholder="사유 (조퇴 등)" style="width:110px"></div></td>
       <td style="display:none"><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
       <td style="display:none"><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
       <td style="display:none"><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
@@ -7805,6 +7806,7 @@ function renderGrid(box,nq){
     tb.appendChild(tr);wireRow(tr,id);
   });
   t.appendChild(tb);
+  cmMount(t);   // (1107) 클리닉 보강 칸
   wrap.appendChild(t);
   const hint=document.createElement('p');hint.className='kbdhint';
   hint.textContent=gtMode
@@ -8328,6 +8330,32 @@ async function setupClinic(){
       +'\n칸을 고친 뒤 이 버튼을 다시 눌러도 된다 — 마감은 따로.'
     : (total?'새로 잡힌 학생 없음 — 이미 사유가 적힌 '+total+'명 그대로'+(dn?' (날짜 '+dn+'명 채움)':'')
              :'추가학습 대상 없음 — 반평균 이하·과제 미흡·소수오답에 걸린 학생이 없다'));
+}
+/* (1107 유강 "장유진도 추가학습에 조퇴 잡아서 넣고 싶었는데 예약시스템이랑 콘솔쪽이랑 안붙어있을까봐")
+ * 학생 줄 '클리닉 보강' — 시간(30분/1시간/2시간) + 사유 → clinic_manual(회차 '반|날짜'). 포털 v63 이 [마감]된 회차와 같이
+ * 클리닉 예약 시스템으로 넘긴다 → 학생·학부모 예약 안내(다음 날 9시까지 직접, 안 하면 자동). 마감 뒤에 넣어도 5분 안에 간다.
+ * 미흡·결석으로 이미 잡힌 학생이면 한 예약으로 합쳐진다. 시간을 '—'로 되돌리면 지운다(이미 나간 안내·예약은 그대로). */
+async function cmMount(t){
+  const key=CLS+'|'+vDay();
+  try{
+    const {data}=await sb.from('clinic_manual').select('*').eq('회차',key);
+    (data||[]).forEach(m=>{ const tr=t.querySelector('tr.stu[data-id="'+m['학생ID']+'"]'); if(!tr)return;
+      tr.querySelector('[data-cm="blk"]').value=String(m['블록']); tr.querySelector('[data-cm="why"]').value=m['사유']||''; });
+  }catch(e){}
+  const save=async tr=>{
+    const id=tr.dataset.id, blk=tr.querySelector('[data-cm="blk"]').value, why=tr.querySelector('[data-cm="why"]').value.trim();
+    const nm=(STUDENTS.find(x=>x['학생ID']===id)||{})['이름']||'';
+    const closed=$('sessionstate').textContent==='마감됨';
+    const r=blk?await sb.from('clinic_manual').upsert({'회차':key,'학생ID':id,'사유':why||'보강','블록':+blk,'기록':new Date().toISOString()},{onConflict:'회차,학생ID'})
+               :await sb.from('clinic_manual').delete().eq('회차',key).eq('학생ID',id);
+    if(r.error){toast('클리닉 보강 저장 실패: '+r.error.message);return;}
+    toast(blk?nm+' 클리닉 보강 '+({1:'30분',2:'1시간',4:'2시간'}[blk])+' — '+(closed?'5분 안에 예약 안내가 간다':'[마감]하면 예약 안내가 간다'):nm+' 클리닉 보강 지움');
+  };
+  t.querySelectorAll('tr.stu').forEach(tr=>{
+    const s=tr.querySelector('[data-cm="blk"]'), w=tr.querySelector('[data-cm="why"]'); if(!s)return;
+    s.addEventListener('change',()=>save(tr));
+    w.addEventListener('change',()=>{ if(s.value) save(tr); });
+  });
 }
 async function closeSession(){
   if(!CLS)return;
