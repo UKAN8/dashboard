@@ -9363,7 +9363,22 @@ async function hwInit(){
 function hwClsChanged(){
   HWS.cls=$('hw_cls').value;
   $('hw_course').value=HWS.cls.startsWith('고1')?'공통수학2':'미적분1';
-  hwUnits(); hwSets(); hwList(); hwQueue();
+  hwUnits(); hwSets(); hwList(); hwQueue(); hwDueFill();
+}
+/* (1108 유강 v67) 마감 칸 미리 채우기 — 수업일 다음 첫 수업 30분 전(고1T 는 일요일을 건너뛰어 다음 토요일).
+   사람이 고친 값은 덮지 않는다(dataset.auto 가 있을 때만 바꾼다). 함수가 없으면(SQL 전) 조용히 둔다. */
+async function hwDueFill(){
+  for(const [dEl,uEl] of [['hw_sdate','hw_sdue'],['hw_date','hw_due']]){
+    const d=$(dEl), u=$(uEl); if(!d||!u||!HWS.cls||!d.value) continue;
+    if(u.value&&!u.dataset.auto) continue;
+    try{
+      const {data,error}=await sb.rpc('hw_default_due',{p_ban:HWS.cls,p_date:d.value});
+      if(error||!data) continue;
+      const t=new Date(new Date(data).getTime()+9*3600e3).toISOString().slice(0,16);
+      u.value=t; u.dataset.auto='1';
+    }catch(e){}
+    if(!d.dataset.dueWired){ d.dataset.dueWired='1'; d.addEventListener('change',()=>{ if(u.dataset.auto) u.value=''; hwDueFill(); }); u.addEventListener('input',()=>{ delete u.dataset.auto; }); }
+  }
 }
 function hwSets(){
   const sel=$('hw_set'); sel.innerHTML='';
