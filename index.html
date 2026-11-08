@@ -4942,7 +4942,7 @@ function qaDraw() {
       g.re ? chip('mid', `다시 모름 ×${g.re}`) : '', g.face ? chip('acc', '수업 때') : '',
       QA.show === 'wait' && g.hours >= 24 ? chip('mid', `${Math.floor(g.hours / 24)}일째 대기`) : QA.show === 'wait' ? `<span class="dim">${g.hours}시간 대기</span>` : ''].join(' ');
     const stuList = qs.map(q => `<div class="qa-s"><b>${E(nm(q['학생ID']))}</b> <span class="ban">${E(q.반 || '')}</span>`
-      + `${q.재질문 ? ' ' + chip('mid', '다시 모름') : ''}${QA.show === 'wait' && g.prev && !q.답변시각 && !q.재질문 ? ' <span class="dim">새로 물음</span>' : ''}${q.상태 === '답변' ? ' <span class="dim">답 확인 대기</span>' : ''}`
+      + `${q.재질문 ? ' ' + chip('mid', '다시 모름') : ''}${QA.show === 'wait' && g.prev && !q.답변시각 && !q.재질문 ? ' <span class="dim">새로 물음</span>' : ''}${q.상태 === '답변' ? (q.열람시각 ? ' <span class="dim">답 확인 대기 · 학생이 손풀이 봄</span>' : ' ' + chip('mid', '학생 아직 안 봄')) : ''}${q.막힌단계 ? ' ' + chip('acc', '막힘: ' + q.막힌단계) : ''}`
       + `${q.메모 ? `<span class="qa-m">“${E(q.메모)}”</span>` : ''}`
       + `${(QA.photos && QA.photos[q.id] || []).map(u => `<img src="${u}" alt="학생 사진" title="누르면 크게" onclick="this.style.height=this.style.height==='64px'?'auto':'64px';this.style.maxWidth='100%'" style="height:64px;border-radius:6px;margin:4px 4px 0 0;vertical-align:top;cursor:zoom-in">`).join('')}</div>`).join('');
     const pend = QA.files[g.k] || [];
@@ -4992,7 +4992,7 @@ function qaDrawDone(body) {
       + `<td>${E(nm(q['학생ID']))}</td><td>${E(q.반 || '')}</td><td>${E(q.답변자 || (q.해결자 ? String(q.해결자).split('@')[0] : '—'))}</td>`
       + `<td data-sv="${E(q.답변시각 || '')}">${tm(q.답변시각)}</td><td data-sv="${E(q.해결시각 || '')}">${tm(q.해결시각)}</td><td class="n">${q.재질문 || 0}</td>`
       + `<td>${q.오류 ? chip('bad', '⚠ 문항 오류') + ' ' : ''}${q.대면 ? chip('acc', '수업 때') + ' ' : ''}${E(q.조교메모 || '')}${Array.isArray(q.풀이) && q.풀이.length ? `<span class="qa-th">${q.풀이.map(f => `<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이"></a>`).join('')}</span>` : ''}</td>`
-      + `<td>${qaRepliesHtml([q])}</td><td>${qaFbHtml(qaLastLog(q.id))}</td>`
+      + `<td>${q.핵심 ? `<div style="white-space:normal;min-width:140px">핵심 “${E(q.핵심)}”</div>` : ''}${qaRepliesHtml([q])}</td><td>${qaFbHtml(qaLastLog(q.id))}</td>`
       + `<td>${(g.pdf || []).map(x => `<a href="${E(x.url)}" target="_blank" rel="noopener">${x.k}</a>`).join(' · ')}</td></tr>`)).join('')
     + '</tbody></table></div>';
   body.innerHTML = html;
