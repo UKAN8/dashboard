@@ -4835,7 +4835,9 @@ async function qaLoad() {
   const { data, error } = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)')
     .in('상태', ['대기', '답변']).order('시각').limit(2000);
   if (error) { body.innerHTML = `<div class="dim">불러오지 못함: ${E(error.message)}</div>`; return; }
-  QA.rows = data || [];
+  // (1108 v64) ⑤ 방식 — '방문'(클리닉에서 직접 물어봄)은 조교 온라인 목록에서 뺀다. 온라인만 답한다.
+  QA.visit = (data || []).filter(r => r.방식 === '방문').length;
+  QA.rows = (data || []).filter(r => r.방식 !== '방문');
   // (1024) 해결됨 — 최근 30일. 학생이 [이해했어요]를 누른 것
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
   const dn = await sb.from('hw_question').select('*, hw_assign(세트키,과목,단원코드,라운드,날짜,반,판)').eq('상태', '해결').gte('해결시각', since).order('해결시각', { ascending: false }).limit(1000);
@@ -4857,6 +4859,10 @@ async function qaLoad() {
   }
   await qaLoadPans(QA.rows.concat(QA.done, QA.err || []));
   await qaLoadExtra();
+  // (1108 v64) 학생이 올린 사진(온라인 질문)
+  QA.photos = {};
+  try { const ids = QA.rows.map(r => r.id); if (ids.length) { const ph = await sb.rpc('staff_qa_photos', { ids });
+    (ph.data || []).forEach(x => (QA.photos[x.qid] = QA.photos[x.qid] || []).push(x.url)); } } catch (e) {}
   qaDraw();
 }
 // 묶음 열쇠 — 같은 문항(과목+문항ID, 없으면 과제+번호)
@@ -4937,7 +4943,8 @@ function qaDraw() {
       QA.show === 'wait' && g.hours >= 24 ? chip('mid', `${Math.floor(g.hours / 24)}일째 대기`) : QA.show === 'wait' ? `<span class="dim">${g.hours}시간 대기</span>` : ''].join(' ');
     const stuList = qs.map(q => `<div class="qa-s"><b>${E(nm(q['학생ID']))}</b> <span class="ban">${E(q.반 || '')}</span>`
       + `${q.재질문 ? ' ' + chip('mid', '다시 모름') : ''}${QA.show === 'wait' && g.prev && !q.답변시각 && !q.재질문 ? ' <span class="dim">새로 물음</span>' : ''}${q.상태 === '답변' ? ' <span class="dim">답 확인 대기</span>' : ''}`
-      + `${q.메모 ? `<span class="qa-m">“${E(q.메모)}”</span>` : ''}</div>`).join('');
+      + `${q.메모 ? `<span class="qa-m">“${E(q.메모)}”</span>` : ''}`
+      + `${(QA.photos && QA.photos[q.id] || []).map(u => `<img src="${u}" alt="학생 사진" title="누르면 크게" onclick="this.style.height=this.style.height==='64px'?'auto':'64px';this.style.maxWidth='100%'" style="height:64px;border-radius:6px;margin:4px 4px 0 0;vertical-align:top;cursor:zoom-in">`).join('')}</div>`).join('');
     const pend = QA.files[g.k] || [];
     return `<div class="card qa-g" data-qg="${E(g.k)}">`
       + `<div class="qa-h"><span class="qa-rk">${QA.show === 'wait' ? i + 1 : '·'}</span><b>${E(g.label)} · ${E(String(g.no))}번</b>`
