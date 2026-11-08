@@ -5260,7 +5260,7 @@ function qmDraw() {
       : '<div class="dim">아직 피드백이 없어요.</div>') + `</div>`;
   // 학생 반응 — 댓글 + 이해했어요
   const feed = replies.map(r => ({ t: r.시각, h: `💬 <b>${E(nm(r['학생ID']))}</b> “${E(r.내용)}”`, q: (logById[r.log_id] || {}).qid }))
-    .concat(logs.filter(l => l.반응 === '이해').map(l => ({ t: l.반응시각 || l.시각, h: `✅ <b>${E(nm(l['학생ID']))}</b> 이해했어요`, q: l.qid })))
+    .concat(logs.filter(l => l.반응 === '이해').map(l => ({ t: l.반응시각 || l.시각, h: `✅ <b>${E(nm(l['학생ID']))}</b> 이해했어요${l.핵심 ? ` — “${E(l.핵심)}”` : ''}`, q: l.qid })))
     .sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, 60);
   h += `<div class="card"><div class="qm-st">학생 반응</div>` + (feed.length ? feed.map(x => `<div class="qm-fd">${x.h} <span class="dim">· ${E(qlab(x.q))} · ${E(qaTime(x.t))}</span></div>`).join('') : '<div class="dim">학생이 답을 확인하면 여기에 쌓여요.</div>') + `</div>`;
   // 내 답변 기록
