@@ -1254,7 +1254,7 @@ function drawHW(){
         +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:'')
         +(hwFiles(q.id).length?`<div class="qimg"><div class="dim" style="font-size:12px">${E(hwWho(q.id)||'조교쌤')} 손풀이 · 누르면 크게 보여요</div>${hwFiles(q.id).map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener"><img src="${E(f.url)}" alt="손풀이" loading="lazy"></a>`).join('')}</div>`:'')
         +(q.상태==='답변'&&q.대면&&!q.조교메모?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:'')
-        +(q.상태==='답변'?`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1">이해했어요</button><button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요</button></div>`:'')
+        +(q.상태==='답변'?`<div class="dim" style="font-size:12.5px;margin-top:6px">맨 위 <b>'조교쌤 답 확인'</b>에서 보고 [이해했어요]를 눌러 주세요.</div>`:'')
         +(hwAns(q.id)&&!Array.isArray(hwAns(q.id))?`<div class="rpl">${(hwAns(q.id).댓글||[]).map(c=>`<div class="rc"><span class="dim">나</span> ${E(c.내용)}</div>`).join('')}`
           +`<div class="rf"><input data-rpl="${q.id}" maxlength="300" placeholder="${E(hwWho(q.id)||'쌤')}에게 한마디 (고마워요 · 여기가 또 궁금해요)"><button type="button" data-rplgo="${q.id}">보내기</button></div></div>`:'')
         +`</div>`).join('')}`:'')
@@ -1271,7 +1271,7 @@ function drawHW(){
   const OLD_H=48, isOld=a=>a.지남&&!(a.마감&&Date.now()-new Date(a.마감)<OLD_H*36e5)&&!Object.values(a.질문||{}).some(q=>q.상태==='답변');
   const now=[], old=[]; HW.list.forEach((a,ai)=>(isOld(a)?old:now).push(cards[ai]));
   if(HW.showOld==null){ try{ HW.showOld=localStorage.getItem('hwShowOld')==='1'; }catch(e){ HW.showOld=false; } }
-  host.innerHTML=prefCard()+now.join('')
+  host.innerHTML=ansCard()+prefCard()+now.join('')
     +(old.length?`<button type="button" class="hwold" data-hwold="1">${HW.showOld?'지난 과제 숨기기 ⌃':`지난 과제 ${old.length}개 보기 ⌄`}</button>`
       +(HW.showOld?old.join(''):''):'');
   const ob=host.querySelector('[data-hwold]'); if(ob) ob.onclick=()=>{ HW.showOld=!HW.showOld; try{ localStorage.setItem('hwShowOld',HW.showOld?'1':'0'); }catch(e){} drawHW(); };
@@ -1288,10 +1288,15 @@ function drawHW(){
   host.querySelectorAll('.grid button').forEach(b=>b.onclick=()=>hwTap(b));
   wirePref(host); if(HW.popen){ const f=$('hwp-f'); if(f) f.classList.add('open'); HW.popen=false; }
   host.querySelectorAll('[data-ack]').forEach(b=>b.onclick=async()=>{
+    const qid=+b.dataset.ack, ok=b.dataset.ok==='1', ki=host.querySelector(`[data-key="${qid}"]`), key=(ki&&ki.value||'').trim();
+    if(ok&&!ansSeen(qid)){ alertHW('조교쌤 손풀이를 끝까지 보고 눌러 주세요.'); return; }
+    if(ok&&key.replace(/\s/g,'').length<8){ alertHW('이 문제의 핵심이 뭐였는지 한 줄(8자 이상) 적어 주세요.'); if(ki) ki.focus(); return; }
     b.disabled=true;
-    try{ const r=await sb.rpc('hw_ack',{tok:HW.tok,qid:+b.dataset.ack,ok:b.dataset.ok==='1'}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
+    try{ let r=await sb.rpc('hw_ack',{tok:HW.tok,qid,ok,p_key:ok?key:null}); if(r.error&&/hw_ack|p_key/.test(String(r.error.message||''))) r=await sb.rpc('hw_ack',{tok:HW.tok,qid,ok}); if(r.error||!r.data||r.data.오류){ alertHW(r.data&&r.data.오류); b.disabled=false; return; } }catch(e){ alertHW(); b.disabled=false; return; }
     await mountHW(HW.tok);
   });
+  host.querySelectorAll('[data-key]').forEach(i=>i.oninput=()=>ansGate(+i.dataset.key));
+  ansWatch(host);
   // (1024) 쌤 답에 댓글 — hw_reply(schema_v46c)
   host.querySelectorAll('[data-rplgo]').forEach(b=>b.onclick=async()=>{
     const i=host.querySelector(`[data-rpl="${b.dataset.rplgo}"]`), t=(i&&i.value||'').trim(); if(!t) return;
@@ -1395,6 +1400,8 @@ function askSheet(a,no){
       <button type="button" data-mode="온라인" style="text-align:left;padding:12px">💬 온라인으로 답 받을게요<div class="dim" style="font-size:12px">어디서 막혔는지 적어야 조교쌤이 딱 그 부분을 알려 줄 수 있어요</div></button>
     </div>
     <div id="ask-on" style="display:none;margin-top:12px">
+      <div class="dim" style="font-size:12.5px;margin-bottom:6px">어느 단계에서 막혔어요? <b>(하나 고르기)</b></div>
+      <div id="ask-step" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${['조건 해석','식 세우기','계산','개념','해설의 한 줄'].map(t=>`<button type="button" data-step="${t}" style="padding:6px 10px">${t}</button>`).join('')}</div>
       <textarea id="ask-memo" rows="4" maxlength="300" style="width:100%;box-sizing:border-box" placeholder="어디까지 이해했고 어디서 막혔는지 (10자 이상)&#10;예: (2)에서 판별식 세우는 건 알겠는데, k 범위가 왜 반대로 나오는지 모르겠어요"></textarea>
       <div class="dim" style="font-size:12px;margin:4px 0">내가 푼 풀이 사진을 올리면 더 정확해요 (선택 · 3장까지)</div>
       <input id="ask-file" type="file" accept="image/*" multiple>
@@ -1404,16 +1411,19 @@ function askSheet(a,no){
     <div class="acts" style="margin-top:14px"><button type="button" id="ask-cancel">취소</button><button type="button" class="go" id="ask-ok" style="display:none">질문 올리기</button></div>
   </div>`;
   document.body.appendChild(d);
-  let mode=null, files=[];
+  let mode=null, files=[], step=null;
+  d.querySelectorAll('[data-step]').forEach(x=>x.onclick=()=>{ step=x.dataset.step; d.querySelectorAll('[data-step]').forEach(y=>y.classList.toggle('go',y===x)); });
   const err=m=>{ const e=d.querySelector('#ask-err'); e.textContent=m; e.style.display=m?'':'none'; };
   d.querySelector('#ask-cancel').onclick=()=>d.remove();
   d.addEventListener('click',ev=>{ if(ev.target===d) d.remove(); });
   const send=async()=>{
     const memo=(d.querySelector('#ask-memo').value||'').trim();
+    if(mode==='온라인'&&!step){ err('어느 단계에서 막혔는지 골라 주세요.'); return; }
     if(mode==='온라인'&&memo.replace(/\s/g,'').length<10){ err('어디서 막혔는지 10자 이상 적어 주세요.'); return; }
     const ok=d.querySelector('#ask-ok'); ok.disabled=true; ok.textContent='올리는 중…'; err('');
     let r;
-    try{ r=await sb.rpc('hw_ask',{tok:HW.tok,aid:a.id,no,p_mode:mode,memo:mode==='온라인'?memo:null}); }catch(e){ r={error:e}; }
+    try{ r=await sb.rpc('hw_ask',{tok:HW.tok,aid:a.id,no,p_mode:mode,memo:mode==='온라인'?memo:null,p_step:mode==='온라인'?step:null});
+    if(r.error&&/p_step|hw_ask/.test(String(r.error.message||''))) r=await sb.rpc('hw_ask',{tok:HW.tok,aid:a.id,no,p_mode:mode,memo:mode==='온라인'?memo:null});   /* v65 전 */ }catch(e){ r={error:e}; }
     if(r.error&&/hw_ask/.test(String(r.error.message||''))){   // v64 전: 예전처럼 ⑤만
       r=await sb.rpc('hw_mark',{tok:HW.tok,aid:a.id,no,st:5,memo:mode==='온라인'?memo:null});
     }
@@ -1449,6 +1459,57 @@ function shrinkImg(f){
     img.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('img')); };
     img.src=u;
   });
+}
+/* (1108 유강 "학생들이 쌤들이 써준 손풀이를 거의 참조 안한다") 조교쌤 답 확인 — 과제 칸 맨 위.
+ *  · 답이 온 질문을 과제와 상관없이 한곳에 모아 손풀이를 펼쳐 보여 준다(접힌 과제 안에 묻혀 있던 것).
+ *  · 손풀이가 화면에 1.5초 이상 보이면 '봤음'(hw_qa_seen, schema_v65) — 조교 화면에 '학생 봄/안 봄'.
+ *  · [이해했어요] = 손풀이를 본 뒤 + '핵심이 뭐였는지' 한 줄(8자 이상). [아직 모르겠어요] = 클리닉에서 직접(방문 질문).
+ *  손풀이가 없는 답(글·수업 때)은 보자마자 봤음으로 친다. */
+HW.seen=HW.seen||{};
+const ansSeen=qid=>!!HW.seen[qid];
+function ansList(){
+  const out=[];
+  HW.list.forEach(a=>Object.entries(a.질문||{}).forEach(([k,q])=>{ if(q.상태==='답변') out.push({a,k,q}); }));
+  return out;
+}
+function ansCard(){
+  const L=ansList(); if(!L.length) return '';
+  L.forEach(({q})=>{ if(q.열람||!hwFiles(q.id).length) HW.seen[q.id]=true; });
+  const name=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+  return `<div class="card hw" id="ans-card" style="border-color:rgba(120,170,255,.6);background:rgba(120,170,255,.07)">`
+    +`<div class="row" style="border-bottom:none"><span class="t"><b>📩 조교쌤 답 확인 ${L.length}개</b></span></div>`
+    +`<div class="hint">손풀이를 끝까지 보고, 이 문제의 핵심을 한 줄로 적으면 [이해했어요]가 눌려요. 그래도 모르겠으면 클리닉에서 직접 물어봐요.</div>`
+    +L.map(({a,k,q})=>`<div class="q ansq" data-ansq="${q.id}" style="margin-top:12px">`
+      +`<b>${E(name(a))} · ${E(k)}번</b> <span class="dim">· ${E(hwWho(q.id)||'조교쌤')} 답</span>`
+      +(q.조교메모?`<div class="re">${E(q.조교메모)}</div>`:(q.대면?`<div class="re">수업 때 직접 설명해 줄게요.</div>`:''))
+      +(hwFiles(q.id).length?`<div class="qimg">${hwFiles(q.id).map(f=>`<a href="${E(f.url)}" target="_blank" rel="noopener" data-seenq="${q.id}"><img src="${E(f.url)}" alt="손풀이" loading="lazy" data-seenq="${q.id}"></a>`).join('')}</div>`:'')
+      +`<input data-key="${q.id}" maxlength="200" placeholder="이 문제의 핵심은? 예: 판별식이 아니라 근과 계수의 관계로 봐야 함" style="width:100%;box-sizing:border-box;margin-top:8px">`
+      +`<div class="acts"><button type="button" class="go" data-ack="${q.id}" data-ok="1" ${ansSeen(q.id)?'':'disabled'}>이해했어요</button>`
+      +`<button type="button" data-ack="${q.id}" data-ok="0">아직 모르겠어요 · 클리닉에서 물어볼게요</button></div>`
+      +`<div class="dim" data-gate="${q.id}" style="font-size:12px;margin-top:4px">${ansSeen(q.id)?'':'손풀이를 끝까지 내려 보면 버튼이 켜져요'}</div>`
+      +`</div>`).join('')
+    +`</div>`;
+}
+function ansGate(qid){
+  const b=document.querySelector(`[data-ack="${qid}"][data-ok="1"]`); if(b) b.disabled=!ansSeen(qid);
+  const g=document.querySelector(`[data-gate="${qid}"]`); if(g) g.textContent=ansSeen(qid)?'':'손풀이를 끝까지 내려 보면 버튼이 켜져요';
+}
+function ansMark(qid){
+  if(HW.seen[qid]) return; HW.seen[qid]=true; ansGate(qid);
+  try{ sb.rpc('hw_qa_seen',{tok:HW.tok,qid}); }catch(e){}
+}
+function ansWatch(host){
+  const imgs=[...host.querySelectorAll('img[data-seenq]')]; if(!imgs.length) return;
+  host.querySelectorAll('a[data-seenq]').forEach(x=>x.addEventListener('click',()=>ansMark(+x.dataset.seenq)));
+  if(!('IntersectionObserver' in window)){ imgs.forEach(i=>ansMark(+i.dataset.seenq)); return; }
+  const timers={};
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    const q=+e.target.dataset.seenq, last=[...host.querySelectorAll(`img[data-seenq="${q}"]`)].pop();
+    if(e.target!==last) return;                          // 마지막 장이 보여야 '끝까지 봤음'
+    if(e.isIntersecting&&e.intersectionRatio>=0.5){ timers[q]=setTimeout(()=>{ ansMark(q); io.unobserve(e.target); },1500); }
+    else clearTimeout(timers[q]);
+  }),{threshold:[0,0.5]});
+  imgs.forEach(i=>io.observe(i));
 }
 function alertHW(m){ const h=$('hw-host'); if(!h) return; let d=h.querySelector('.hwerr'); if(!d){ d=document.createElement('div'); d.className='bad hwerr'; h.prepend(d); } d.textContent=m||'저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; }
 
