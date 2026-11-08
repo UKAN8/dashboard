@@ -1271,9 +1271,13 @@ function drawHW(){
   const OLD_H=48, isOld=a=>a.지남&&!(a.마감&&Date.now()-new Date(a.마감)<OLD_H*36e5)&&!Object.values(a.질문||{}).some(q=>q.상태==='답변');
   const now=[], old=[]; HW.list.forEach((a,ai)=>(isOld(a)?old:now).push(cards[ai]));
   if(HW.showOld==null){ try{ HW.showOld=localStorage.getItem('hwShowOld')==='1'; }catch(e){ HW.showOld=false; } }
-  host.innerHTML=ansCard()+prefCard()+now.join('')
+  // (1108 황세원 "체크 누르면 화면이 내려가요") 탭마다 통째로 다시 그리면 위쪽 '조교쌤 답' 손풀이 사진이
+  //   새로 로딩되며 높이가 0→원래로 출렁여 화면이 밀렸다. 답 카드가 그대로면 기존 노드(로딩된 사진·적던 글)를 옮겨 붙인다.
+  const ah=ansCard(), keepAns=(ah&&ah===HW._ah)?$('ans-card'):null; HW._ah=ah;
+  host.innerHTML=(keepAns?'<div id="ans-slot"></div>':ah)+prefCard()+now.join('')
     +(old.length?`<button type="button" class="hwold" data-hwold="1">${HW.showOld?'지난 과제 숨기기 ⌃':`지난 과제 ${old.length}개 보기 ⌄`}</button>`
       +(HW.showOld?old.join(''):''):'');
+  if(keepAns){ const sl=host.querySelector('#ans-slot'); if(sl) sl.replaceWith(keepAns); }
   const ob=host.querySelector('[data-hwold]'); if(ob) ob.onclick=()=>{ HW.showOld=!HW.showOld; try{ localStorage.setItem('hwShowOld',HW.showOld?'1':'0'); }catch(e){} drawHW(); };
 
   host.querySelectorAll('[data-open]').forEach(r=>r.onclick=ev=>{ ev.preventDefault(); const f=$('hw-f'+r.dataset.open); f.classList.toggle('open'); HW.open=f.classList.contains('open')?r.dataset.open:null; });
@@ -1318,6 +1322,13 @@ function drawHW(){
     try{ await sb.rpc('hw_mark',{tok:HW.tok,aid:a.id,no:+k,st:5,memo:i.value}); i.value=''; i.placeholder='저장됐어요 — 조교쌤이 확인해요'; }catch(e){}
   });
 }
+// (1108) 다시 그려도 누른 버튼이 화면에서 같은 자리에 있게 — 위쪽 높이가 바뀌어도 화면이 안 튄다
+function hwRedrawKeep(b){
+  const ai=b.dataset.a, n=b.dataset.n, y0=b.getBoundingClientRect().top;
+  drawHW();
+  const nb=document.querySelector(`#hw-host .grid button[data-a="${ai}"][data-n="${n}"]`);
+  if(nb){ const dy=nb.getBoundingClientRect().top-y0; if(Math.abs(dy)>1) window.scrollBy(0,dy); }
+}
 async function hwTap(b){
   const a=HW.list[+b.dataset.a], no=+b.dataset.n, cur=(a.체크||{})[no]||0;
   if(a.지남){ alertHW('마감이 지나 체크를 바꿀 수 없어요.'); return; }
@@ -1331,7 +1342,7 @@ async function hwTap(b){
     a.질문=a.질문||{};
     if(st===5){ if(!a.질문[no]||!['대기','답변'].includes(a.질문[no].상태)) a.질문[no]={상태:'대기'}; }
     else if(cur===5&&a.질문[no]&&['대기','답변'].includes(a.질문[no].상태)){ if(st===4) a.질문[no].상태='해결'; else delete a.질문[no]; }
-    drawHW();
+    hwRedrawKeep(b);
   }catch(e){ b.classList.remove('busy'); alertHW(); }
 }
 /* ── 클리닉 보완 체크 (1107 유강 "도착부터 완료까지") ──
