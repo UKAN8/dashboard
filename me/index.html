@@ -1187,24 +1187,26 @@ const HW_LV={자동:'자동 (추천)',기본:'기본 다지기',표준:'표준',
 const HW_LVD={자동:'내 체크에 맞춰 정해요. 혼자 푼 게 절반이 안 되면 막힌 유형은 쉬운 문제부터',
   기본:'한 단계 쉽게 — 막힌 유형 하 · 나머지 중',
   표준:'막힌 유형·나머지 중 · 다 맞힌 유형 중상',
-  도전:'한 단계 어렵게 — 나머지 중상 · 다 맞힌 유형 상 · 최소를 더 줄일 수 있어요'};
+  도전:'한 단계 어렵게 — 나머지 중상 · 다 맞힌 유형 상(한 부의 절반까지) · 분량을 더 줄일 수 있어요'};
 const HW_MIN=35, HW_MIN_CHAL=20;   // (1109 유강) '도전'이면 최소 20 — hw_plan.MIN_Q_CHAL 과 같게
 // (1110) 반별 하한 — hw_plan.MIN_Q_BAN / MIN_Q_CHAL_BAN 과 같게. 고1T 는 토·일 묶음 한 부라 70(도전 40)
 const HW_FLOOR_BAN={'고1T':[70,40]};
+const HW_EXTRA=15;   // (1110) hw_plan.EXTRA_Q
 function hwFloor(lv){ const f=HW_FLOOR_BAN[HW.ban]; return lv==='도전'?(f?f[1]:HW_MIN_CHAL):(f?f[0]:HW_MIN); }
 function prefCard(){
-  const p0=HW.pref||{최소:35,최대:50,난이도:'자동'}, fl=hwFloor(p0.난이도);
-  const p={...p0, 최소:Math.max(fl,p0.최소), 최대:Math.max(fl,p0.최소,p0.최대)};   // (1110) 실제로 나가는 하한으로 보여 준다(고1T 70)
+  // (1110 유강 '분량 한 칸') 학생은 분량 하나만 고른다 — 막힌 게 많으면 분량+HW_EXTRA 까지 늘어난다(hw_plan.EXTRA_Q)
+  const p0=HW.pref||{최소:35,난이도:'자동'};
+  const p={...p0, 최소:Math.max(hwFloor(p0.난이도),p0.최소)};   // 실제로 나가는 하한으로 보여 준다(고1T 70)
   const lo=Math.min(HW_MIN_CHAL,hwFloor('도전')), hi=Math.max(60,hwFloor('자동')+20);
-  const mins=[], maxs=[]; for(let i=lo;i<=hi;i+=5) mins.push(i); for(let i=lo;i<=120;i+=5) maxs.push(i);
+  const ns=[]; for(let i=lo;i<=hi;i+=5) ns.push(i);
   return `<div class="card hwp"><div class="row" data-popen="1"><span class="t"><b>내 개별과제 설정</b>`
-    +`<span class="dim"> ${p.최소}~${p.최대}문항 · ${E(HW_LV[p.난이도]||p.난이도)}</span></span><a class="n dim" href="#" style="text-decoration:none">바꾸기</a></div>`
-    +`<div class="fold" id="hwp-f"><div class="dim" style="font-size:12px">다음 수업에 받을 개별과제를 이 설정대로 만들어요. 최소는 ${hwFloor('자동')}문항보다 줄일 수 없어요(난이도 '도전'은 ${hwFloor('도전')}문항까지). 과제를 다 맞히면 남는 자리를 더 어려운 문제로 채워요.</div>`
-    +`<label>문항 수</label><div class="two"><select id="hwp-min">${mins.map(v=>`<option ${v===p.최소?'selected':''}>${v}</option>`).join('')}</select><span class="dim">~</span>`
-    +`<select id="hwp-max">${maxs.map(v=>`<option ${v===p.최대?'selected':''}>${v}</option>`).join('')}</select><span class="dim">문항</span></div>`
+    +`<span class="dim"> ${p.최소}문항 · ${E(HW_LV[p.난이도]||p.난이도)}</span></span><a class="n dim" href="#" style="text-decoration:none">바꾸기</a></div>`
+    +`<div class="fold" id="hwp-f"><div class="dim" style="font-size:12px">다음 수업에 받을 개별과제를 이 설정대로 만들어요. 분량은 ${hwFloor('자동')}문항부터예요(난이도 '도전'은 ${hwFloor('도전')}문항부터).</div>`
+    +`<label>분량</label><div class="two"><select id="hwp-min">${ns.map(v=>`<option ${v===p.최소?'selected':''}>${v}</option>`).join('')}</select><span class="dim">문항</span></div>`
+    +`<div class="dim" style="font-size:12px;margin-top:4px">막힌 유형(③·⑤)이 많으면 최대 ${HW_EXTRA}문항까지 더 나가요.</div>`
     +`<label>난이도</label><div class="seg">${Object.keys(HW_LV).map(k=>`<button type="button" data-lv="${k}" class="${k===p.난이도?'on':''}">${HW_LV[k]}</button>`).join('')}</div>`
     +`<div class="dim lvh" style="font-size:12px;line-height:1.75;margin-top:6px">${Object.keys(HW_LV).map(k=>`<div data-lvd="${k}"${k===p.난이도?' style="color:var(--tx)"':''}><b>${HW_LV[k]}</b> · ${HW_LVD[k]}</div>`).join('')}`
-    +`<div style="margin-top:4px">막힌 유형 = ③·⑤ 체크한 유형. 많이 막힌 유형일수록 문항이 더 많이 나가요.</div></div>`
+    +`<div style="margin-top:4px">분량이 남으면 막힌 유형 → 안 푼 유형 → 다 맞힌 유형(한 단계 어렵게) 순으로 채워요.</div></div>`
     +`<div class="acts"><button type="button" class="b go" id="hwp-save">저장</button></div><div id="hwp-msg" class="dim" style="font-size:12px;margin-top:6px"></div></div></div>`;
 }
 function wirePref(host){
@@ -1214,9 +1216,8 @@ function wirePref(host){
   host.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ lv=b.dataset.lv; host.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('on',x===b));
     host.querySelectorAll('[data-lvd]').forEach(x=>x.style.color=x.dataset.lvd===lv?'var(--tx)':''); });
   $('hwp-save').onclick=async()=>{
-    let mn=+$('hwp-min').value, mx=+$('hwp-max').value; const msg=$('hwp-msg');
-    if(mn<hwFloor(lv)){ msg.className='bad'; msg.textContent=lv==='도전'?`최소는 ${hwFloor(lv)}문항부터예요.`:`최소 ${hwFloor('자동')}문항보다 적게는 '도전'에서만 돼요.`; return; }
-    if(mx<mn){ msg.className='bad'; msg.textContent='최대는 최소보다 크거나 같아야 해요.'; return; }
+    const mn=+$('hwp-min').value, mx=Math.min(120,mn+HW_EXTRA), msg=$('hwp-msg');
+    if(mn<hwFloor(lv)){ msg.className='bad'; msg.textContent=lv==='도전'?`'도전' 분량은 ${hwFloor(lv)}문항부터예요.`:`${hwFloor('자동')}문항보다 적게는 '도전'에서만 돼요.`; return; }
     try{ const r=await sb.rpc('hw_pref_set',{tok:HW.tok,p_min:mn,p_max:mx,p_lv:lv});
       if(r.error||!r.data||r.data.오류){ msg.className='bad'; msg.textContent=(r.data&&r.data.오류)||'저장하지 못했어요.'; return; }
       HW.pref={최소:mn,최대:mx,난이도:lv}; HW.popen=true; drawHW(); }catch(e){ msg.className='bad'; msg.textContent='저장하지 못했어요.'; }
