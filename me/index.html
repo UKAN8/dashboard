@@ -1187,13 +1187,14 @@ const HW_LV={자동:'자동 (추천)',기본:'기본 다지기',표준:'표준',
 const HW_LVD={자동:'내 체크에 맞춰 정해요. 혼자 푼 게 절반이 안 되면 막힌 유형은 쉬운 문제부터',
   기본:'한 단계 쉽게 — 막힌 유형 하 · 나머지 중',
   표준:'막힌 유형·나머지 중 · 다 맞힌 유형 중상',
-  도전:'한 단계 어렵게 — 나머지 중상 · 다 맞힌 유형 상'};
+  도전:'한 단계 어렵게 — 나머지 중상 · 다 맞힌 유형 상 · 최소 20문항까지 줄일 수 있어요'};
+const HW_MIN=35, HW_MIN_CHAL=20;   // (1109 유강) '도전'이면 최소 20 — hw_plan.MIN_Q_CHAL 과 같게
 function prefCard(){
   const p=HW.pref||{최소:35,최대:50,난이도:'자동'};
-  const mins=[], maxs=[]; for(let i=35;i<=60;i+=5) mins.push(i); for(let i=35;i<=120;i+=5) maxs.push(i);
+  const mins=[], maxs=[]; for(let i=HW_MIN_CHAL;i<=60;i+=5) mins.push(i); for(let i=HW_MIN_CHAL;i<=120;i+=5) maxs.push(i);
   return `<div class="card hwp"><div class="row" data-popen="1"><span class="t"><b>내 개별과제 설정</b>`
     +`<span class="dim"> ${p.최소}~${p.최대}문항 · ${E(HW_LV[p.난이도]||p.난이도)}</span></span><a class="n dim" href="#" style="text-decoration:none">바꾸기</a></div>`
-    +`<div class="fold" id="hwp-f"><div class="dim" style="font-size:12px">다음 수업에 받을 개별과제를 이 설정대로 만들어요. 최소는 35문항보다 줄일 수 없어요. 과제를 다 맞히면 남는 자리를 더 어려운 문제로 채워요.</div>`
+    +`<div class="fold" id="hwp-f"><div class="dim" style="font-size:12px">다음 수업에 받을 개별과제를 이 설정대로 만들어요. 최소는 35문항보다 줄일 수 없어요(난이도 '도전'은 20문항까지). 과제를 다 맞히면 남는 자리를 더 어려운 문제로 채워요.</div>`
     +`<label>문항 수</label><div class="two"><select id="hwp-min">${mins.map(v=>`<option ${v===p.최소?'selected':''}>${v}</option>`).join('')}</select><span class="dim">~</span>`
     +`<select id="hwp-max">${maxs.map(v=>`<option ${v===p.최대?'selected':''}>${v}</option>`).join('')}</select><span class="dim">문항</span></div>`
     +`<label>난이도</label><div class="seg">${Object.keys(HW_LV).map(k=>`<button type="button" data-lv="${k}" class="${k===p.난이도?'on':''}">${HW_LV[k]}</button>`).join('')}</div>`
@@ -1208,7 +1209,8 @@ function wirePref(host){
   host.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ lv=b.dataset.lv; host.querySelectorAll('[data-lv]').forEach(x=>x.classList.toggle('on',x===b));
     host.querySelectorAll('[data-lvd]').forEach(x=>x.style.color=x.dataset.lvd===lv?'var(--tx)':''); });
   $('hwp-save').onclick=async()=>{
-    const mn=+$('hwp-min').value, mx=+$('hwp-max').value, msg=$('hwp-msg');
+    let mn=+$('hwp-min').value, mx=+$('hwp-max').value; const msg=$('hwp-msg');
+    if(lv!=='도전' && mn<HW_MIN){ msg.className='bad'; msg.textContent=`최소 ${HW_MIN}문항보다 적게는 '도전'에서만 돼요.`; return; }
     if(mx<mn){ msg.className='bad'; msg.textContent='최대는 최소보다 크거나 같아야 해요.'; return; }
     try{ const r=await sb.rpc('hw_pref_set',{tok:HW.tok,p_min:mn,p_max:mx,p_lv:lv});
       if(r.error||!r.data||r.data.오류){ msg.className='bad'; msg.textContent=(r.data&&r.data.오류)||'저장하지 못했어요.'; return; }
