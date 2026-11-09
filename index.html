@@ -7331,6 +7331,11 @@ async function selectClass(cls){
   CLPREV=(cl&&cl[0])?{'진도원문':cl[0]['진도원문']||'','이번과제':cl[0]['이번과제']||'','테스트유형':cl[0]['테스트유형']||''}:{};
   if(cl&&cl[0]){
     $('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';setTest(cl[0]['테스트유형']);
+  }else if((PLANFILL=await planFill(cls,today))){
+    /* (1109 유강 "진도계획에 따라 콘솔에 진도랑 과제 세팅") 오늘 기록이 없으면 진도계획(hw_assign 공통 세트)으로 채운다.
+       계획이 없는 날만 아래의 '직전 수업 값' 제안으로 내려간다. */
+    $('c_progress').value=PLANFILL.진도;$('c_hw').value=PLANFILL.과제;
+    setTest(prev&&prev[0]&&prev[0]['테스트유형']!=='미시행'?prev[0]['테스트유형']:'');
   }else if(prev&&prev[0]){
     // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
     $('c_progress').value=prev[0]['진도원문']||'';
@@ -9367,6 +9372,35 @@ function hwClsChanged(){
 }
 /* (1108 유강 v67) 마감 칸 미리 채우기 — 수업일 다음 첫 수업 30분 전(고1T 는 일요일을 건너뛰어 다음 토요일).
    사람이 고친 값은 덮지 않는다(dataset.auto 가 있을 때만 바꾼다). 함수가 없으면(SQL 전) 조용히 둔다. */
+/* (1109) 진도계획 → 콘솔 진도·과제 기본값. 계획 = hw_assign 의 공통 세트(학생ID 없음) × hw_set(단원명·DAY).
+   형식은 그동안 적어 온 그대로:
+     진도 "CORE TRAINING_공통수학2 09 유리함수 DAY3"
+     과제 "[포털] 코어 루프 X\n[프린트] 써킷 트레이닝 X\n[프린트] 커스텀 트레이닝"
+   고1T(1108 규칙): 토요일은 루프만, 일요일에 토·일 두 DAY 를 묶어 써킷을 낸다. */
+let PLANFILL=null;
+async function planFill(cls,today){
+  try{
+    const isT=cls==='고1T', dow=new Date(today+'T00:00:00Z').getUTCDay();
+    let from=today;
+    if(isT&&dow===0)from=new Date(Date.parse(today+'T00:00:00Z')-864e5).toISOString().slice(0,10);
+    const a=await sb.from('hw_assign').select('날짜,세트키,단원코드').eq('반',cls).is('학생ID',null).gte('날짜',from).lte('날짜',today).order('날짜');
+    if(a.error||!a.data||!a.data.length)return null;
+    const keys=[...new Set(a.data.map(r=>r.세트키))];
+    const s=await sb.from('hw_set').select('세트키,단원명,DAY,단원코드').in('세트키',keys);
+    if(s.error||!s.data)return null;
+    const S={};s.data.forEach(r=>S[r.세트키]=r);
+    const items=a.data.map(r=>S[r.세트키]).filter(x=>x&&x.DAY&&x.단원명&&x.단원명!=='개별과제');
+    if(!items.length)return null;
+    const last=items[items.length-1];
+    const subj=cls.startsWith('고2')?'미적분1':'공통수학2';
+    const code=String(last.단원코드||'').padStart(2,'0');
+    const 진도='CORE TRAINING_'+subj+' '+code+' '+last.단원명+' '+last.DAY;
+    const nm=x=>String(x.단원명).replace(/\s+\(/g,'(')+' '+x.DAY;
+    if(isT&&dow===6)return {진도,과제:'[포털] 코어 루프 '+nm(last)};
+    const t=items.map(nm).join(' & ');
+    return {진도,과제:'[포털] 코어 루프 '+t+'\n[프린트] 써킷 트레이닝 '+t+'\n[프린트] 커스텀 트레이닝'};
+  }catch(e){return null;}
+}
 async function hwDueFill(){
   for(const [dEl,uEl] of [['hw_sdate','hw_sdue'],['hw_date','hw_due']]){
     const d=$(dEl), u=$(uEl); if(!d||!u||!HWS.cls||!d.value) continue;
