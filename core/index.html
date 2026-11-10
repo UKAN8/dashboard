@@ -450,7 +450,8 @@ function loopToday(){
   const done=new Set(LOG.filter(inRound).map(r=>r[1]));
   if(ids){
     const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean)
-      .filter(x=>x.key[0]==='C'?cOpen(x.key):tOpen(x.key));   // (1027) 고정된 세트라도 그 뒤 잠긴 칸(신규생 입원 전 진도)은 뺀다
+      .filter(x=>x.key[0]==='C'?cOpen(x.key):tOpen(x.key))   // (1027) 고정된 세트라도 그 뒤 잠긴 칸(신규생 입원 전 진도)은 뺀다
+      .filter(x=>!(SUPP.has(x.key) && keyState(x.key).st==='grad' && !keyState(x.key).chk));   // (1110 유강) 보충 표시로 졸업시킨 칸은 고정된 세트에서도 뺀다(정운정 루프 줄이기)
     saveLoopSet(ids);   // (1028) 첫 저장이 실패했어도 다시 열 때 서버에 남긴다
     return {items:rest, started:done.size>0, finished:!rest.length};
   }
