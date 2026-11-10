@@ -217,6 +217,7 @@ let TOK='', DEMO=false, NAME='', BAN='', TODAY='', SET=null, SKEY='';
 let LOG=[];                      // [키, 문항ID, 정오, 확신, 모드, 'YYYY-MM-DDTHH:MM:SS', 원인(1103)] 시간순
 let UNL={};                      // 서버 mastery_unlock (키→날짜) · (1027) 학생별 행이 덮음, null = 이 학생은 잠김
 let SUPP=new Set();              // (1027) 보충 칸 — 입원 전 진도를 따라잡는 칸. 성공일 1번이면 졸업
+let LOOP_CAP=0;                   // (1110 유강) 포털 과제 설정의 '루프 상한' — 0 = 상한 없음(밀린 칸 전부). 20·30·40 = 한 회차 문항 수
 let SRV_SET=null;                 // (1028 '카톡으로 연 루프가 달라요') 서버 loop_set 의 이번 회차 세트 — 이 브라우저에 세트가 없을 때 쓴다
 let ROUND='', NEXTC='', DUE='';   // (1024 유강) DUE = 루프 마감 = 다음 수업 시작 30분 전(1029 v50)(서버 mastery_round.마감)
            // (1022 유강) 루프 회차 = 직전 수업 끝(서버 mastery_round, KST 'YYYY-MM-DDTHH:MM:SS') · 다음 수업 시작. 비면 옛 규칙(하루)
@@ -431,10 +432,26 @@ function buildReviewType(usedIds){
   return out;
 }
 function buildLoop(){
+  if(LOOP_CAP>0) return buildLoopCap(LOOP_CAP);
   const out=[], used=new Set();
   reserveNew(dueConcepts(),LOOP_C_KEYS).forEach(k=>pickItems(k,LOOP_C_ITEMS,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   // (1103) 확실하다고 했는데 틀린 유형은 2문항 — 착각을 확실히 고친다
   reserveNew(dueTypes(new Set()),LOOP_T).forEach(k=>pickItems(k,keyState(k).two?2:1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
+  return out;
+}
+// (1110 유강 "루프 상한") 상한이 있으면 우선순위대로 자른다 — 확인(마지막 실패·보류) → 실패 → 시도 중 → 1회 → 새 칸, 같은 순위는 개념 먼저.
+//   못 들어간 칸은 다음 회차로. 새 칸 한 자리는 남긴다(reserveNew 와 같은 뜻). scripts/loop_forecast.py 시뮬레이션과 같은 규칙.
+function buildLoopCap(cap){
+  const pr=k=>{ const s=keyState(k); return s.chk?0:(PRI[s.st]!=null?PRI[s.st]:3); };
+  const blocks=dueConcepts().map(k=>({k,t:0,n:LOOP_C_ITEMS,p:pr(k)}))
+    .concat(dueTypes(new Set()).map(k=>({k,t:1,n:keyState(k).two?2:1,p:pr(k)})))
+    .sort((a,b)=>a.p-b.p||a.t-b.t||a.k.localeCompare(b.k));
+  const sel=[]; let tot=0;
+  for(const b of blocks){ if(tot+b.n<=cap){ sel.push(b); tot+=b.n; } }
+  if(sel.length && !sel.some(b=>b.p===3)){ const nw=blocks.find(b=>b.p===3); if(nw) sel[sel.length-1]=nw; }
+  const out=[], used=new Set();
+  sel.sort((a,b)=>a.t-b.t||a.p-b.p||a.k.localeCompare(b.k))
+     .forEach(b=>pickItems(b.k,b.n,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   return out;
 }
 // (1022 유강 "루프는 수업하고 나서 다음 수업 전까지 한 번") 루프 과제는 **수업당 1회** — 회차(직전 수업 끝 ~ 다음 수업 시작)에
@@ -769,7 +786,7 @@ const EMBED=new URLSearchParams(location.search).get('embed')==='1';
 function bootErr(h){ $('msg').innerHTML=h; if(EMBED) try{ parent.postMessage({type:'core-summary',err:h.replace(/<[^>]+>/g,' ').trim()},location.origin); }catch(e){} }
 async function boot(){
   const P=new URLSearchParams(location.search);
-  TOK=(P.get('t')||'').trim(); DEMO=P.get('demo')==='1';
+  TOK=(P.get('t')||'').trim(); DEMO=P.get('demo')==='1'; if(DEMO) LOOP_CAP=+(P.get('cap')||0);   // (1110) 미리보기 &cap=30
   if(DEMO){
     NAME='미리보기'; BAN=P.get('ban')||'고1A'; SKEY=pickSet(BAN); if(!SKEY) SKEY='core_m2';
     TODAY=(P.get('today')||nowKST()).slice(0,10); setup();
@@ -791,6 +808,7 @@ async function boot(){
     try{ const r=await sb.rpc('mastery_round',{tok:TOK}); if(r&&r.data&&r.data.회차){ ROUND=r.data.회차; NEXTC=r.data.다음||''; DUE=r.data.마감||''; } }catch(e){}   // (1022) 루프 회차 — 못 받으면 옛 규칙(하루)
     if(SKEY!=='core_m2'){ try{ const r=await sb.rpc('mastery_open',{tok:TOK,skey:SKEY}); d=r.data||d; }catch(e){} }
     // (1028) 루프 세트는 브라우저마다 따로 저장돼, 알림톡(카톡 인앱)으로 열면 세트를 새로 만들어 문항이 달라졌다 → 서버에 남은 세트를 먼저 받는다
+    try{ const r=await sb.rpc('loop_info',{tok:TOK}); if(r&&r.data&&r.data.상한) LOOP_CAP=+r.data.상한||0; }catch(e){}   // (1110) 포털 '루프 상한'
     try{ const r=await sb.rpc('loop_set_get',{tok:TOK,skey:SKEY,rnd:ROUND||TODAY}); if(r&&Array.isArray(r.data)&&r.data.length) SRV_SET=r.data.map(String); }catch(e){}
     setup();
     LOG=(d.기록||[]).map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6]||null]);   // (1103 v58) 7번째 = 원인
