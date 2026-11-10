@@ -136,6 +136,7 @@ svg.spark{display:block;margin-top:8px}
 .grow .rp button.vid.on{background:rgba(255,92,138,.22)}
 .vix{display:none;margin-top:8px;padding:12px;border:1px solid rgba(255,92,138,.25);border-radius:10px;background:rgba(255,92,138,.04)}
 .vix.open{display:block}
+.rp a.rvb{border-color:rgba(255,92,138,.45);color:#ff8fae;font-weight:600}
 .vix a{text-decoration:none;color:inherit}
 .vix .vall{display:block;text-align:center;font-weight:600;padding:8px;border-radius:8px;background:rgba(255,92,138,.16);margin-bottom:8px}
 .vix .vhint{font-size:12px;opacity:.65;margin:4px 0 8px}
@@ -1405,7 +1406,7 @@ function drawLib(host,opt){
   });
   // (1023) 정규수업 영상 — 기말 모드에 자료실이 비던 것. 날짜 = 진도표의 수업일
   // (1023) 정규수업 행 = 수업 영상 + 그날 나간 써킷(문제·해설) · 단원 첫 수업일에 수업교재(문제·해설)
-  (D.정규||[]).forEach(r=>{ if(r.반!==ban) return; rows.push({d:r.날짜,ds:[r.날짜],t:r.제목,sub:r.과목,reg:true,vs:r.영상||[],ck:r.써킷}); });
+  (D.정규||[]).forEach(r=>{ if(r.반!==ban) return; rows.push({d:r.날짜,ds:[r.날짜],t:r.제목,sub:r.과목,reg:true,vs:r.영상||[],ck:r.써킷,rv:r.복습}); });
   (D.교재||[]).forEach(b=>{ if(b.반!==ban) return; rows.push({d:b.날짜,ds:[b.날짜],t:`${b.단원.replace(/^\d+\s*/,'')} 수업교재`,sub:b.과목,book:b,vs:[]}); });
   (LIB.mine||[]).forEach(m=>{ rows.push({d:m.날짜,ds:[m.날짜],t:m.종류+(m.판?` No.${m.판}`:'')+(m.문항수?` · ${m.문항수}문항`:''),sub:'나만의 과제',mine:m,vs:[]}); });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
@@ -1450,7 +1451,7 @@ function drawLib(host,opt){
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
       if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
       if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
-      if(r.reg) return hd+`<div class="rp">${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
+      if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">📘 강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
         +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
         +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
