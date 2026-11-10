@@ -263,6 +263,7 @@ svg.spark{display:block;margin-top:6px}
 @media (min-width:700px){#asksheet{align-items:center}#asksheet .grab{display:none}#asksheet .sh{border-radius:18px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:18px}}
 @keyframes askf{from{opacity:0}}@keyframes asku{from{transform:translateY(24px);opacity:.6}}
 body.noscroll{overflow:hidden}
+#asksheet .hwp{background:none;border:0;padding:0;margin:0}#asksheet .hwp .row{cursor:default}#asksheet .hwp .row .n{display:none}
 .hw .acts{display:flex;gap:6px;margin-top:8px}
 .hw .acts button,.hwp button.b{flex:1;border-radius:9px;padding:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:none;color:var(--tx2)}
 .hw .acts button.go,.hwp button.go{background:var(--acc);color:#1a0d0d;border-color:var(--acc)}
@@ -919,7 +920,10 @@ function partsOf(d){
   // (1110) 다른 페이지로 넘어가는 것들 — 큰 카드 대신 '오늘' 위 바로가기 한 줄
   const qk=[[`https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
   if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
-  P.qk=`<div class="qk">${qk.map(([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`).join('')}</div>`;
+  // (1110 유강) 1줄 = 클리닉 + 내 개별과제 설정(과제 탭에서 옮김, 누르면 설정 창) / 2줄 = 개념의 탑 — 추후 다른 서비스로 대체
+  const qa=([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`;
+  P.qk=`<div class="qk">${qa(qk[0])}<a href="#" id="qk-pref" style="display:none">내 개별과제 설정<small id="qk-pref-s">불러오는 중…</small></a></div>`
+    +(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
   //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
   const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
@@ -998,9 +1002,28 @@ function tabSync(){
     else if(g==='fix'){ const c=$('fix-host'); if(c) c.scrollIntoView({block:'start'}); }
   });
 }
+function prefSheet(){
+  const old=document.getElementById('asksheet'); if(old) old.remove();
+  const d=document.createElement('div'); d.id='asksheet';
+  d.innerHTML=`<div class="sh" role="dialog" aria-modal="true"><div class="grab"></div>${prefCard()}<div class="acts" style="margin-top:6px"><button type="button" id="pref-x">닫기</button></div></div>`;
+  document.body.appendChild(d); document.body.classList.add('noscroll');
+  const close=()=>{ d.remove(); document.body.classList.remove('noscroll'); };
+  const f=d.querySelector('#hwp-f'); if(f) f.classList.add('open');
+  d.querySelector('.hwp .row').onclick=ev=>ev.preventDefault();
+  d.querySelector('#pref-x').onclick=close;
+  d.addEventListener('click',ev=>{ if(ev.target===d) close(); });
+  wirePref(d,()=>{ close(); prefTile(); try{ drawHW(); }catch(e){} });
+}
+function prefTile(){
+  const a=$('qk-pref'); if(!a) return;
+  if(!HW.tok||!HW.pref&&!(HW.list||[]).length){ a.style.display='none'; return; }
+  const p=HW.pref||{최소:35,최대:50,난이도:'자동'};
+  a.style.display=''; $('qk-pref-s').textContent=`${p.최소}~${p.최대}문항 · ${HW_LV[p.난이도]||p.난이도}`;
+  a.onclick=ev=>{ ev.preventDefault(); prefSheet(); };
+}
 function mountTasks(tok){
   mountWeekly(tok);
-  Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(tabSync);
+  Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(()=>{ tabSync(); prefTile(); });
 }
 const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
 
@@ -1403,7 +1426,7 @@ function prefCard(){
     +`<div style="margin-top:4px">막힌 유형 = ③·⑤ 체크한 유형. 많이 막힌 유형일수록 문항이 더 많이 나가요.</div></div>`
     +`<div class="acts"><button type="button" class="b go" id="hwp-save">저장</button></div><div id="hwp-msg" class="dim" style="font-size:12px;margin-top:6px"></div></div></div>`;
 }
-function wirePref(host){
+function wirePref(host,onSaved){
   const r=host.querySelector('[data-popen]'); if(!r) return;
   r.onclick=ev=>{ ev.preventDefault(); $('hwp-f').classList.toggle('open'); };
   let lv=(HW.pref||{}).난이도||'자동';
@@ -1415,7 +1438,7 @@ function wirePref(host){
     if(mx<mn){ msg.className='bad'; msg.textContent='최대는 최소보다 크거나 같아야 해요.'; return; }
     try{ const r=await sb.rpc('hw_pref_set',{tok:HW.tok,p_min:mn,p_max:mx,p_lv:lv});
       if(r.error||!r.data||r.data.오류){ msg.className='bad'; msg.textContent=(r.data&&r.data.오류)||'저장하지 못했어요.'; return; }
-      HW.pref={최소:mn,최대:mx,난이도:lv}; HW.popen=true; drawHW(); }catch(e){ msg.className='bad'; msg.textContent='저장하지 못했어요.'; }
+      HW.pref={최소:mn,최대:mx,난이도:lv}; if(onSaved) onSaved(); else drawHW(); }catch(e){ msg.className='bad'; msg.textContent='저장하지 못했어요.'; }
   };
 }
 function drawHW(){
@@ -1477,7 +1500,7 @@ function drawHW(){
   // (1108 황세원 "체크 누르면 화면이 내려가요") 탭마다 통째로 다시 그리면 위쪽 '조교쌤 답' 손풀이 사진이
   //   새로 로딩되며 높이가 0→원래로 출렁여 화면이 밀렸다. 답 카드가 그대로면 기존 노드(로딩된 사진·적던 글)를 옮겨 붙인다.
   const ah=ansCard(), keepAns=(ah&&ah===HW._ah)?$('ans-card'):null; HW._ah=ah;
-  host.innerHTML=(keepAns?'<div id="ans-slot"></div>':ah)+prefCard()+now.join('')
+  host.innerHTML=(keepAns?'<div id="ans-slot"></div>':ah)+now.join('')
     +(old.length?`<button type="button" class="hwold" data-hwold="1">${HW.showOld?'지난 과제 숨기기 ⌃':`지난 과제 ${old.length}개 보기 ⌄`}</button>`
       +(HW.showOld?old.join(''):''):'');
   if(keepAns){ const sl=host.querySelector('#ans-slot'); if(sl) sl.replaceWith(keepAns); }
@@ -1493,7 +1516,6 @@ function drawHW(){
   });
   host.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>{ HW.pen=+b.dataset.pen; host.querySelectorAll('[data-pen]').forEach(x=>x.classList.toggle('on',+x.dataset.pen===HW.pen)); });
   host.querySelectorAll('.grid button').forEach(b=>b.onclick=()=>hwTap(b));
-  wirePref(host); if(HW.popen){ const f=$('hwp-f'); if(f) f.classList.add('open'); HW.popen=false; }
   host.querySelectorAll('[data-ack]').forEach(b=>b.onclick=async()=>{
     const qid=+b.dataset.ack, ok=b.dataset.ok==='1', ki=host.querySelector(`[data-key="${qid}"]`), key=(ki&&ki.value||'').trim();
     if(ok&&!ansSeen(qid)){ alertHW('조교쌤 손풀이를 끝까지 보고 눌러 주세요.'); return; }
