@@ -503,6 +503,9 @@ function withoutRound(fn){ const sv=LOG; LOG=LOG.filter(r=>!inRound(r)); try{ re
 function loopToday(){
   const k=roundKey(); let ids=lget(k,null);
   if(!ids && SRV_SET){ ids=SRV_SET.slice(); lset(k,ids); }   // (1028) 다른 브라우저에서 고정된 세트를 그대로 이어 받는다
+  // (1110 장유진 '다 했는데 2문제 덜') 이 기기 세트가 있어도 다른 기기에서 덧붙은 문항(틀린 유형→개념 되돌림)을 서버 세트에서 합친다.
+  //   전엔 이 기기 세트만 보고 '완료'라 했는데 서버(이행률 분모)엔 2문항이 더 있어 '덜 함'으로 잡혔다.
+  if(ids && SRV_SET){ const add=SRV_SET.filter(id=>!ids.includes(id)); if(add.length){ ids=ids.concat(add); lset(k,ids); } }
   const done=new Set(LOG.filter(inRound).map(r=>r[1]));
   if(ids){
     // (1110 유강 "분모 줄여") 보충 표시로 졸업시킨 칸의 안 푼 문항은 세트에서 아예 뺀다 — 서버 loop_set(이행률 분모)에도 다시 안 올라가게
