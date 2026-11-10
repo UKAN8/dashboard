@@ -223,7 +223,7 @@ let UNL={};                      // 서버 mastery_unlock (키→날짜) · (102
 let SUPP=new Set();              // (1027) 보충 칸 — 입원 전 진도를 따라잡는 칸. 성공일 1번이면 졸업
 let LOOP_DAILY=false;             // (1110 유강 '루프 완성은 기말 전') 기말 21일 전부터 시험 전날까지 루프는 하루 1회(loop_info.시험일)
 let LOOP_CAP=0;
-let LINFO=null, P_SUPP=false, P_LOW=false;                   // (1110) loop_info — 상한·졸업 예상·시험일                   // (1110 유강) 포털 과제 설정의 '루프 상한' — 0 = 상한 없음(밀린 칸 전부). 20·30·40 = 한 회차 문항 수
+let LINFO=null, P_SUPP=false, P_LOW=false, CSUPP=null;   /* (1110 유강 '클리닉에서 보충루프 1벌') CSUPP = 지금 클리닉에 도착해 있고 그 회차 루프가 덜 됨(서버 clinic_supp_open) */                   // (1110) loop_info — 상한·졸업 예상·시험일                   // (1110 유강) 포털 과제 설정의 '루프 상한' — 0 = 상한 없음(밀린 칸 전부). 20·30·40 = 한 회차 문항 수
 let SRV_SET=null;                 // (1028 '카톡으로 연 루프가 달라요') 서버 loop_set 의 이번 회차 세트 — 이 브라우저에 세트가 없을 때 쓴다
 let ROUND='', NEXTC='', DUE='';   // (1024 유강) DUE = 루프 마감 = 다음 수업 시작 30분 전(1029 v50)(서버 mastery_round.마감)
            // (1022 유강) 루프 회차 = 직전 수업 끝(서버 mastery_round, KST 'YYYY-MM-DDTHH:MM:SS') · 다음 수업 시작. 비면 옛 규칙(하루)
@@ -459,6 +459,9 @@ function suppState(LT){
   if(set){ const done=todayIds('루프'); const rest=set.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean);
     return {show:true, can:rest.length>0, items:rest, started:true, done:!rest.length}; }
   if(DEMO && P_SUPP) return {show:true, can:true, items:withoutToday('루프',buildLoopAll), started:false, done:false};
+  /* (1110) 클리닉에 도착해 있으면 평소 조건(기말 넘김·이번 루프 끝·오늘 안 풂) 없이 바로 1벌 — 한 회차 크기(내 상한) */
+  if(CSUPP){ let items=buildLoop(); if(!items.length) items=buildLoopAll();
+    return items.length?{show:true, can:true, items, started:false, done:false, clinic:true}:{show:true, can:false, clinic:true, why:'지금은 다시 볼 칸이 없어요 — 선생님께 말해 주세요'}; }
   if(!eta||!eta.behind) return {show:false};
   if(loopLock() || !LT.finished) return {show:true, can:false, why:'이번 루프를 먼저 끝내면 열려요'};
   if(todayIds('루프').size) return {show:true, can:false, why:'오늘은 루프를 풀었어요 — 내일 보충할 수 있어요(같은 날은 졸업에 안 쳐져요)'};
@@ -598,7 +601,7 @@ function homeModel(){
   const sp=suppState(LT), eta=etaInfo();
   const supp=sp.show?{cls:sp.done?'done':sp.can?'act':'s', can:!!sp.can, n:(sp.items||[]).length,
     title:'보충 루프'+(sp.done?' · 오늘 완료':sp.can?` · ${sp.started?'이어서 ':''}${sp.items.length}문항`:''),
-    sub:sp.done?'오늘 보충 끝! 내일 또 털어낼 수 있어요':sp.can?'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요':sp.why,
+    sub:sp.done?(CSUPP?'클리닉 보충 루프 끝! 선생님께 확인받아요':'오늘 보충 끝! 내일 또 털어낼 수 있어요'):sp.can?(sp.clinic||CSUPP?'클리닉 보완 — 밀린 루프 대신 보충 루프 1벌을 풀어요':'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요'):sp.why,
     tap:sp.can?(sp.started?'이어서 →':'보충 시작 →'):sp.done?'완료':''}:null;
   return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,supp,eta,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop,_supp:sp.items||[]};
 }
@@ -856,6 +859,7 @@ async function boot(){
       if(li&&li.시험일){ const ex=String(li.시험일).slice(0,10), ws=new Date(Date.parse(ex+'T00:00:00Z')-21*864e5).toISOString().slice(0,10);
         /* (1110 롤백 — 유강 '매일 하는 건 무리') 기말 3주 전 하루 1회 회차는 끔. 켜려면: if(TODAY>=ws && TODAY<ex){ LOOP_DAILY=true; ROUND=TODAY+'T00:00:00'; NEXTC=''; } */ }
     }catch(e){}
+    try{ const r=await sb.rpc('clinic_supp_open',{tok:TOK}); if(r&&r.data&&r.data.열림) CSUPP=r.data; }catch(e){}   // (1110) 클리닉 보충 루프
     try{ const r=await sb.rpc('loop_set_get',{tok:TOK,skey:SKEY,rnd:ROUND||TODAY}); if(r&&Array.isArray(r.data)&&r.data.length) SRV_SET=r.data.map(String); }catch(e){}
     setup();
     LOG=(d.기록||[]).map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6]||null]);   // (1103 v58) 7번째 = 원인
