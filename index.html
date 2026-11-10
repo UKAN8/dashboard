@@ -627,6 +627,10 @@ details.rp-imgs[open] summary:before{content:'▾ ';}
 #cs .cs-grid .ac.none{opacity:.65}
 #cs .cs-grid input.autov{color:#7fb8ff;font-style:italic}
 
+/* (1110) 이름 → 학생 포털 */
+#cs .cs-grid a.name.ptlink{color:inherit;text-decoration:none;border-bottom:1px dashed var(--dim);cursor:pointer}
+#cs .cs-grid a.name.ptlink:hover{color:var(--accent,#7aa2ff)}
+
 /* 2단 메뉴 (0908) */
 #nav{flex-direction:column;gap:4px;align-items:flex-start}
 #nav .ng{display:flex;gap:4px}
@@ -7086,6 +7090,7 @@ let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
    자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
    옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
+let PTOK={};   // (1110) 학생ID → 학생 포털 토큰(유강 계정만)
 let AUTO={}, AUTOB=null, LOOPSTART=null, HWR={}, HWRB=null, HWC={};   // (1028) HWR = console_hw_rate 학생별 · (1106) HWC = 클리닉 과제 보완(hw_clinic_check, v60)
 /* (1021 유강) '최근 점수' 누적은 새 체계 시작일 이후 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
 const CYCLE_START='2026-10-21';   // (1022 유강 "오늘이 스타트") 새 체계 시작일 — 리포트 HISTORY_START 와 같다
@@ -7339,6 +7344,16 @@ async function selectClass(cls){
     LOADSEEN[key]=Math.max(LOADSEEN[key]||0,filled);
   }
   STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+  /* (1110 유강 "콘솔에서 학생이름 누르면 학생 포털 열리게") 학생 토큰 — portal_token 은 관리자(유강 계정)만 읽힌다. 조교 화면은 이름 그대로 */
+  PTOK={};
+  if(window.VS_OK&&STUDENTS.length){
+    try{
+      const td=new Date(Date.now()+9*36e5).toISOString().slice(0,10);
+      const {data:tk}=await sb.from('portal_token').select('"학생ID",토큰,대상,회수,만료일,발급일').in('학생ID',STUDENTS.map(x=>x['학생ID']));
+      (tk||[]).filter(t=>(t.대상||'학생')==='학생'&&!t.회수&&(!t.만료일||String(t.만료일)>=td)).forEach(t=>{
+        const o=PTOK[t['학생ID']]; if(!o||String(t.발급일||'')>String(o.발급일||''))PTOK[t['학생ID']]=t; });
+    }catch(e){}
+  }
   LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
   /* (1106 유강 "며칠 전부터 안 지워지고 있다") 특이사항(⚑)은 직전 수업 1회분만 — 그 반의 오늘 전 마지막 수업일.
      (1021~1105 는 최근 14일이라, 한 번 적은 메모가 2주 동안 수업마다 떠 있었다.) */
@@ -7832,7 +7847,7 @@ function renderGrid(box,nq){
     tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="fz"><span class="name">${esc(s['이름'])}</span><span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
+      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan8.github.io/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
