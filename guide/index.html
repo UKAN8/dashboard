@@ -48,36 +48,28 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 .scrollhint i{width:1px;height:28px;background:linear-gradient(var(--acc),transparent);animation:drip 1.6s var(--ease) infinite}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* ── 따라 보기: 고정 폰 + 단계 ── */
-.walk{position:relative;max-width:1000px;margin:24px auto 0;padding:0 20px}
-.stage{position:sticky;top:0;z-index:7;height:min(58vh,480px);display:flex;justify-content:center;align-items:flex-start;padding-top:12px;
- background:linear-gradient(var(--bg) 92%,rgba(17,17,19,0))}
-.phone{width:270px;height:540px;transform:scale(var(--ps,.8));transform-origin:top center;border-radius:36px;background:#0b0b0d;border:1px solid rgba(237,237,237,.12);
- box-shadow:0 30px 60px rgba(0,0,0,.45);position:relative;overflow:hidden}
+/* ── 따라 보기: 단계마다 폰 + 설명 (고정 화면 없음 — 겹치지 않게) ── */
+.walk{max-width:880px;margin:24px auto 0;padding:0 20px;display:flex;flex-direction:column;gap:16px}
+.step{display:grid;grid-template-columns:1fr;gap:16px;background:var(--card);border:1px solid var(--bd);border-radius:24px;padding:20px 16px;
+ opacity:0;transform:translateY(16px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.step.seen{opacity:1;transform:none}
+.pw{--ps:.62;height:calc(540px*var(--ps));display:flex;justify-content:center}
+.phone{width:270px;height:540px;flex:none;transform:scale(var(--ps));transform-origin:top center;border-radius:36px;background:#0b0b0d;
+ border:1px solid rgba(237,237,237,.12);position:relative;overflow:hidden;contain:layout paint}
 .notch{position:absolute;top:10px;left:50%;width:84px;height:22px;margin-left:-42px;border-radius:12px;background:#000;z-index:9}
-.scr{position:absolute;inset:0;padding:42px 14px 70px;opacity:0;transform:translateX(16px);transition:opacity .35s var(--ease),transform .35s var(--ease);pointer-events:none}
-.scr.on{opacity:1;transform:none}
-.steps{position:relative;z-index:5;padding-bottom:12vh}
-.step{min-height:72vh;display:flex;align-items:flex-end;padding:16px 0}
-.step .tx{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:20px;transition:border-color .3s var(--ease)}
-.step.cur .tx{border-color:rgba(245,160,160,.45)}
+.scr{position:absolute;inset:0;padding:42px 14px 70px}
 .step .no{font-size:13px;color:var(--acc);font-weight:500}
-.step h2{font-family:var(--hd);font-size:21px;font-weight:600;line-height:1.35;margin:4px 0 8px}
+.step h2{font-family:var(--hd);font-size:20px;font-weight:600;line-height:1.35;margin:4px 0 8px}
 .step p{font-size:15px;color:var(--tx2)}
 .step p b{color:var(--tx);font-weight:500}
 .step ul{list-style:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:12px}
 .step li{font-size:14px;color:var(--tx2);padding-left:16px;position:relative;margin:4px 0}
 .step li::before{content:'';position:absolute;left:4px;top:10px;width:4px;height:4px;border-radius:50%;background:var(--acc)}
 .step li b{color:var(--tx);font-weight:500}
-@media (min-width:900px){
- .walk{display:grid;grid-template-columns:380px 1fr;gap:48px}
- .stage{grid-column:1;grid-row:1;height:100vh;align-items:center;padding:0;background:none}
- .steps{grid-column:2;grid-row:1}
- .phone{--ps:1}
- .step{min-height:90vh;align-items:center}
+@media (min-width:720px){
+ .step{grid-template-columns:240px 1fr;align-items:center;gap:32px;padding:24px 32px}
+ .pw{--ps:.78}
 }
-@media (max-height:700px) and (max-width:899px){.phone{--ps:.66}.stage{height:min(52vh,380px)}}
-
 /* ── 폰 화면 공통 ── */
 .ph-brand{font-family:'PaperlogyLogo',sans-serif;font-weight:600;color:var(--acc);font-size:11px}
 .ph-name{font-family:var(--hd);font-weight:600;font-size:17px;margin:2px 0 8px}
@@ -112,6 +104,7 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 /* 손가락(누르는 곳) */
 .tap{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(245,160,160,.35);border:2px solid var(--acc);opacity:0;z-index:10;pointer-events:none}
 .scr.on .tap{animation:tap 2.4s var(--ease) var(--td,1s) infinite}
+.scr:not(.vis) .tap{animation-play-state:paused}
 @keyframes tap{0%{opacity:0;transform:scale(1.6)}12%{opacity:1;transform:scale(1)}22%{transform:scale(.8)}34%{opacity:1;transform:scale(1)}50%,100%{opacity:0;transform:scale(1)}}
 /* 아래에서 올라오는 창 */
 .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid rgba(237,237,237,.12);border-radius:18px 18px 0 0;padding:10px 14px 24px;z-index:9;
@@ -205,7 +198,7 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
   <div class="logo"><i></i>수학은유강</div>
   <div class="kicker">11월 업데이트 · 학생과 학부모님 모두</div>
   <h1>포털, 화면으로<br>따라 보세요</h1>
-  <p class="lead">포털이 <b>아래 탭 4개</b>로 바뀌었어요. 성적·리포트는 사라진 게 아니라 <b>[기록]</b> 탭에 그래프로 모여 있어요. 아래로 내리면 폰 화면이 같이 움직이며 하나씩 보여 드려요.</p>
+  <p class="lead">포털이 <b>아래 탭 4개</b>로 바뀌었어요. 성적·리포트는 사라진 게 아니라 <b>[기록]</b> 탭에 그래프로 모여 있어요. 아래 카드마다 폰 화면으로 누르는 곳을 보여 드려요.</p>
   <div class="tabsdemo" aria-hidden="true">
     <span><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>오늘<small>지금 할 것</small></span>
     <span><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>과제<small>체크·질문</small></span>
@@ -216,18 +209,19 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 </header>
 
 <section class="walk">
-  <div class="stage" aria-hidden="true"><div class="phone" id="ph"><div class="notch"></div>
-
-    <!-- 1 열기 -->
-    <div class="scr" data-s="open">
+  <div class="step" data-s="open">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr">
       <div class="kt-top in"><i></i>필탑수학 황세원 팀톡</div>
       <div class="kt-pin in"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 3h6l-1 7 4 3H6l4-3z"/></svg><span>공지 · 학생 포털 개인 링크입니다. 학생·학부모님 같은 링크로 보세요.<br><u>ukan8.github.io/dashboard/me/?t=…</u></span></div>
       <div class="kt-msg in"><span>오늘 과제 체크 완료했어요</span><span class="me">확인했어요</span></div>
       <i class="tap" style="left:90px;top:118px;--td:1.7s"></i>
-    </div>
-
-    <!-- 2 오늘 -->
-    <div class="scr" data-s="today">
+    </div></div></div>
+    <div class="tx"><div class="no">1 · 여는 법</div><h2>팀톡 맨 위 공지의 링크를 눌러요</h2>
+      <p>학생·학부모·선생님이 같이 있는 <b>학생 팀톡방</b>의 공지에 개인 링크가 있어요. 로그인 없이 바로 열려요.</p>
+      <ul><li>공지가 안 보이면 <b>오른쪽 위 ≡ → 톡게시판 → 공지</b></li><li>학생과 학부모님이 <b>같은 링크</b>를 써요</li></ul></div>
+  </div>
+  <div class="step" data-s="today">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr">
       <div class="ph-brand in">수학은유강</div>
       <div class="ph-name in">황세원<small>고1A</small></div>
       <div class="dday in"><div class="t">2학기 기말 대비 · 공통수학2</div><div class="d">D-12</div>
@@ -237,10 +231,13 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
       <div class="blk in"><div class="row"><span><b>개별과제 No.1348 <span style="color:var(--dim);font-weight:400">2/35</span></b><small>마감 11/14 14:30</small></span><em class="go">체크 →</em></div></div>
       <i class="tap" style="left:228px;top:226px;--td:1.4s"></i>
       <div class="tabbar"><span class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>오늘<em>1</em></span><span><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>과제<em>3</em></span><span><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/></svg>기록</span><span><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/></svg>자료</span></div>
-    </div>
-
-    <!-- 3 타일 → 기말 준비도 -->
-    <div class="scr" data-s="tiles" style="--sd:1.5s">
+    </div></div></div>
+    <div class="tx"><div class="no">2 · 오늘</div><h2>열면 늘 '오늘'부터 — 지금 할 것만 모여 있어요</h2>
+      <p>기말 D-day, <b>리뷰테스트·루프 과제</b> 시작 버튼, 새로 온 <b>조교쌤 답</b>, 마감이 다가오는 과제가 한 줄씩 떠요.</p>
+      <ul><li>탭 위 <b>빨간 숫자</b> = 지금 해야 할 일 개수</li><li>줄을 누르면 그 과제·답으로 바로 가요</li></ul></div>
+  </div>
+  <div class="step" data-s="tiles">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr" style="--sd:1.5s">
       <div class="ph-brand">수학은유강</div>
       <div class="ph-name">황세원<small>고1A</small></div>
       <div class="dday"><div class="t">2학기 기말 대비 · 공통수학2</div><div class="d">D-12</div>
@@ -253,10 +250,13 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
         <div class="un"><span>09 유리함수</span><div class="bar"><i class="g" style="--w:12%"></i><i class="o" style="--w:30%"></i><i class="r" style="--w:10%"></i></div><span class="p">12%</span></div>
         <div class="un"><span>10 무리함수</span><div class="bar"></div><span class="p">수업 후</span></div>
         <div style="font-size:9px;color:var(--dim);margin-top:6px">단원을 누르면 개념·유형 칸까지 보여요</div></div>
-    </div>
-
-    <!-- 4 과제 체크 -->
-    <div class="scr" data-s="hw">
+    </div></div></div>
+    <div class="tx"><div class="no">3 · 오늘 — 숫자 칸</div><h2>'루프 완성 예상'을 누르면 기말 준비도가 열려요</h2>
+      <p>단원마다 개념·유형을 몇 % <b>졸업</b>했는지 막대로 보여요. 단원을 누르면 칸까지 볼 수 있어요.</p>
+      <ul><li><b>확신 정확도</b>를 누르면 '확실해요'라고 한 답 중 맞힌 비율과 틀린 이유</li><li>루프 완성이 기말보다 늦으면 빨갛게 '보충이 필요해요'</li></ul></div>
+  </div>
+  <div class="step" data-s="hw">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr">
       <div class="ph-brand">수학은유강</div>
       <div class="ph-name">황세원<small>고1A</small></div>
       <div class="blk in"><b>개별과제 No.1348 <span style="color:var(--dim);font-weight:400">6/35</span></b><small>마감 11/14 14:30</small>
@@ -268,10 +268,13 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
       <div class="blk in"><div class="row"><span><b>내 질문 모음</b><small>올린 질문과 답 전부</small></span></div></div>
       <i class="tap" style="left:128px;top:262px;--td:1.9s"></i>
       <div class="tabbar"><span><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>오늘</span><span class="on"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>과제<em>3</em></span><span><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/></svg>기록</span><span><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/></svg>자료</span></div>
-    </div>
-
-    <!-- 5 질문하기 / 조교쌤 답 -->
-    <div class="scr" data-s="ask" style="--sd:1s">
+    </div></div></div>
+    <div class="tx"><div class="no">4 · 과제</div><h2>해설까지 공부한 뒤, 문항마다 어떻게 풀었는지 골라요</h2>
+      <p>위에서 상태를 고르고 번호를 누르면 칸이 칠해져요. 마감은 <b>다음 수업 30분 전</b>이에요.</p>
+      <ul><li><b>①</b> 한 번에 맞음 · <b>②</b> 해설 없이 고쳐서 맞음 · <b>③</b> 해설 보고 해결</li><li><b>⑤</b> 해설 봐도 모름 → 바로 질문하기 · <b>⑦</b> 문제가 이상함(오류 신고)</li></ul></div>
+  </div>
+  <div class="step" data-s="ask">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr" style="--sd:1s">
       <div class="ph-brand">수학은유강</div>
       <div class="ph-name">황세원<small>고1A</small></div>
       <div class="blk"><b>조교쌤 답 확인 1개</b><small>써킷 함수 DAY3 · 17번 · 동현T 답</small>
@@ -282,10 +285,13 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
         <div class="blk" style="background:var(--raised)"><b>클리닉에서 직접 물어볼게요</b><small>예약할 때 이 문항이 맨 위에 골라져 있어요</small></div>
         <div class="blk hot" style="background:var(--raised)"><b>온라인으로 답 받을게요</b><small>어디서 막혔는지 적으면 조교쌤이 손풀이로 답해요</small></div></div>
       <i class="tap" style="left:140px;top:452px;--td:2.1s"></i>
-    </div>
-
-    <!-- 6 기록 -->
-    <div class="scr" data-s="rec">
+    </div></div></div>
+    <div class="tx"><div class="no">5 · 질문과 답</div><h2>⑤를 누르면 물어볼 방법을 골라요</h2>
+      <p><b>클리닉에서 직접</b> 묻거나, 막힌 곳을 적어 <b>온라인 질문</b>을 올려요. 조교쌤 답이 오면 과제 탭 맨 위에 손풀이가 떠요.</p>
+      <ul><li>손풀이를 끝까지 보고 <b>핵심을 한 줄</b> 적으면 [이해했어요]</li><li>그래도 모르겠으면 [클리닉에서 물어볼게요]</li></ul></div>
+  </div>
+  <div class="step" data-s="rec">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr">
       <div class="ph-brand">수학은유강</div>
       <div class="ph-name">황세원<small>고1A</small></div>
       <div class="blk in"><b>출결</b><small>출석 6 · 지각 1</small>
@@ -305,10 +311,13 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
           <div class="c"><div class="bt"><i class="bv" style="--h:75%;--bd2:1.5s"></i></div><small>11/2주</small></div></div></div>
       <i class="tap" style="left:216px;top:258px;--td:2.2s"></i>
       <div class="tabbar"><span><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>오늘</span><span><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>과제</span><span class="on"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/></svg>기록</span><span><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/></svg>자료</span></div>
-    </div>
-
-    <!-- 7 자료 -->
-    <div class="scr" data-s="lib">
+    </div></div></div>
+    <div class="tx"><div class="no">6 · 기록</div><h2>출결·리뷰테스트·과제 이행률·주간고사를 그래프로</h2>
+      <p>매일 받던 리포트의 숫자를 모아 <b>흐름</b>으로 보여요. 점선은 반 평균이에요.</p>
+      <ul><li>막대를 누르면 <b>그날 수업 리포트</b>(주간고사는 그 주 리포트)가 열려요</li><li>기출 모의 점수도 여기 아래에 쌓여요</li></ul></div>
+  </div>
+  <div class="step" data-s="lib">
+    <div class="pw" aria-hidden="true"><div class="phone"><div class="notch"></div><div class="scr">
       <div class="ph-brand">수학은유강</div>
       <div class="ph-name">황세원<small>고1A</small></div>
       <div class="blk in"><b><span style="color:var(--dim);font-weight:500">11/9</span> 유리함수 DAY3</b>
@@ -318,37 +327,10 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
       <div class="blk in"><b>오류 신고</b><small>자료가 이상하면 여기서 알려 주세요</small></div>
       <i class="tap" style="left:196px;top:150px;--td:1.6s"></i>
       <div class="tabbar"><span><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>오늘</span><span><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>과제</span><span><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/></svg>기록</span><span class="on"><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/></svg>자료</span></div>
-    </div>
-  </div></div>
-
-  <div class="steps">
-    <div class="step" data-s="open"><div class="tx"><div class="no">1 · 여는 법</div><h2>팀톡 맨 위 공지의 링크를 눌러요</h2>
-      <p>학생·학부모·선생님이 같이 있는 <b>학생 팀톡방</b>의 공지에 개인 링크가 있어요. 로그인 없이 바로 열려요.</p>
-      <ul><li>공지가 안 보이면 <b>오른쪽 위 ≡ → 톡게시판 → 공지</b></li><li>학생과 학부모님이 <b>같은 링크</b>를 써요</li></ul></div></div>
-
-    <div class="step" data-s="today"><div class="tx"><div class="no">2 · 오늘</div><h2>열면 늘 '오늘'부터 — 지금 할 것만 모여 있어요</h2>
-      <p>기말 D-day, <b>리뷰테스트·루프 과제</b> 시작 버튼, 새로 온 <b>조교쌤 답</b>, 마감이 다가오는 과제가 한 줄씩 떠요.</p>
-      <ul><li>탭 위 <b>빨간 숫자</b> = 지금 해야 할 일 개수</li><li>줄을 누르면 그 과제·답으로 바로 가요</li></ul></div></div>
-
-    <div class="step" data-s="tiles"><div class="tx"><div class="no">3 · 오늘 — 숫자 칸</div><h2>'루프 완성 예상'을 누르면 기말 준비도가 열려요</h2>
-      <p>단원마다 개념·유형을 몇 % <b>졸업</b>했는지 막대로 보여요. 단원을 누르면 칸까지 볼 수 있어요.</p>
-      <ul><li><b>확신 정확도</b>를 누르면 '확실해요'라고 한 답 중 맞힌 비율과 틀린 이유</li><li>루프 완성이 기말보다 늦으면 빨갛게 '보충이 필요해요'</li></ul></div></div>
-
-    <div class="step" data-s="hw"><div class="tx"><div class="no">4 · 과제</div><h2>해설까지 공부한 뒤, 문항마다 어떻게 풀었는지 골라요</h2>
-      <p>위에서 상태를 고르고 번호를 누르면 칸이 칠해져요. 마감은 <b>다음 수업 30분 전</b>이에요.</p>
-      <ul><li><b>①</b> 한 번에 맞음 · <b>②</b> 해설 없이 고쳐서 맞음 · <b>③</b> 해설 보고 해결</li><li><b>⑤</b> 해설 봐도 모름 → 바로 질문하기 · <b>⑦</b> 문제가 이상함(오류 신고)</li></ul></div></div>
-
-    <div class="step" data-s="ask"><div class="tx"><div class="no">5 · 질문과 답</div><h2>⑤를 누르면 물어볼 방법을 골라요</h2>
-      <p><b>클리닉에서 직접</b> 묻거나, 막힌 곳을 적어 <b>온라인 질문</b>을 올려요. 조교쌤 답이 오면 과제 탭 맨 위에 손풀이가 떠요.</p>
-      <ul><li>손풀이를 끝까지 보고 <b>핵심을 한 줄</b> 적으면 [이해했어요]</li><li>그래도 모르겠으면 [클리닉에서 물어볼게요]</li></ul></div></div>
-
-    <div class="step" data-s="rec"><div class="tx"><div class="no">6 · 기록</div><h2>출결·리뷰테스트·과제 이행률·주간고사를 그래프로</h2>
-      <p>매일 받던 리포트의 숫자를 모아 <b>흐름</b>으로 보여요. 점선은 반 평균이에요.</p>
-      <ul><li>막대를 누르면 <b>그날 수업 리포트</b>(주간고사는 그 주 리포트)가 열려요</li><li>기출 모의 점수도 여기 아래에 쌓여요</li></ul></div></div>
-
-    <div class="step" data-s="lib"><div class="tx"><div class="no">7 · 자료</div><h2>수업 영상과 PDF는 수업일 순으로</h2>
+    </div></div></div>
+    <div class="tx"><div class="no">7 · 자료</div><h2>수업 영상과 PDF는 수업일 순으로</h2>
       <p>강의노트·복습, 써킷 문제·해설, 수업교재, 수업 영상(색인으로 원하는 구간부터)이 날짜별로 정리돼 있어요.</p>
-      <ul><li>받은 자료가 이상하면 맨 아래 <b>오류 신고</b></li></ul></div></div>
+      <ul><li>받은 자료가 이상하면 맨 아래 <b>오류 신고</b></li></ul></div>
   </div>
 </section>
 
@@ -384,23 +366,21 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 
 <script>
 (()=>{
-  const ph=document.getElementById('ph'), scr=[...ph.querySelectorAll('.scr')], steps=[...document.querySelectorAll('.step')];
-  let cur='';
-  const show=s=>{ if(s===cur) return; cur=s;
-    scr.forEach(x=>{ if(x.dataset.s===s){ x.classList.remove('on'); void x.offsetWidth; x.classList.add('on'); } else x.classList.remove('on'); });
-    steps.forEach(x=>x.classList.toggle('cur',x.dataset.s===s)); };
-  show('open');
-  const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting) show(e.target.dataset.s); }); },{rootMargin:'-55% 0px -35% 0px'});
-  steps.forEach(x=>io.observe(x));
-  // 아래 섹션 — 화면에 들어오면 올라오기
+  // 단계 카드가 보이면 그 폰 화면만 움직인다(나가면 멈춰서 다른 카드가 버벅이지 않게)
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    const st=e.target, sc=st.querySelector('.scr');
+    if(e.isIntersecting){ st.classList.add('seen'); sc.classList.add('on','vis'); }   // 한 번 재생하면 끝난 화면 그대로 둔다
+    else sc.classList.remove('vis');                                                     // 안 보이면 깜빡임만 멈춘다
+  }),{threshold:[0,.35]});
+  document.querySelectorAll('.step').forEach(x=>io.observe(x));
   const io2=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('seen'); if(e.target.id==='core') core(); io2.unobserve(e.target); } }),{threshold:.2});
   document.querySelectorAll('.sec').forEach(x=>io2.observe(x));
   function core(){
     const L=[...document.querySelectorAll('#loop3 div')], D=[...document.querySelectorAll('#days span')];
     const seq=[()=>L[0].classList.add('lit'),()=>{L[1].classList.add('lit');D[0].classList.add('ok');},()=>D[3].classList.add('ok'),()=>L[2].classList.add('lit')];
-    let i=0; const tick=()=>{ if(i<seq.length){ seq[i++](); setTimeout(tick,700); } else setTimeout(()=>{ L.forEach(x=>x.classList.remove('lit')); D.forEach(x=>x.classList.remove('ok')); i=0; setTimeout(tick,600); },2600); };
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){ seq.forEach(f=>f()); return; }
-    tick();
+    let i=0; const tick=()=>{ if(i<seq.length){ seq[i++](); setTimeout(tick,700); } };
+    tick();   // 한 번만 — 계속 반복하지 않는다
   }
 })();
 </script>
