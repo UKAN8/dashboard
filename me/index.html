@@ -124,6 +124,17 @@ svg.spark{display:block;margin-top:6px}
 .grow .rp{margin-top:7px}
 .grow .rp a.no{opacity:.35;pointer-events:none}
 .grow .rp a.vid{background:rgba(255,92,138,.10);border-color:rgba(255,92,138,.3)}
+.grow .rp button.vid{font:inherit;color:inherit;cursor:pointer;background:rgba(255,92,138,.10);border:1px solid rgba(255,92,138,.3);border-radius:8px;padding:6px 10px}
+.grow .rp button.vid.on{background:rgba(255,92,138,.22)}
+.vix{display:none;margin-top:8px;padding:10px;border:1px solid rgba(255,92,138,.25);border-radius:10px;background:rgba(255,92,138,.04)}
+.vix.open{display:block}
+.vix a{text-decoration:none;color:inherit}
+.vix .vall{display:block;text-align:center;font-weight:700;padding:9px;border-radius:8px;background:rgba(255,92,138,.16);margin-bottom:6px}
+.vix .vhint{font-size:12px;opacity:.65;margin:4px 0 6px}
+.vix .vth{margin:8px 0 4px;font-weight:700;font-size:13px}
+.vix .vth a{display:block;padding:4px 0}
+.vix .vt{font-size:11px;opacity:.6;font-weight:400;margin:0 6px;font-variant-numeric:tabular-nums}
+.vix a.vp{display:inline-block;margin:0 6px 6px 0;padding:5px 9px;border:1px solid rgba(127,127,127,.3);border-radius:14px;font-size:13px}
 .grow .rp a.vid small{color:var(--dim);font-size:11px;margin-left:3px}
 .grow .ld{color:var(--acc);font-size:12.5px;font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
 .lib-more{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
@@ -1141,6 +1152,7 @@ async function mountLib(host,ban,school,opt){
   drawLib(host,host._opt);
 }
 // (0928) 탭 없이 내 반 수업일 순 한 줄 목록: 날짜 · 수업 내용 · 시험지/손풀이/영상
+let VXN=0;
 function drawLib(host,opt){
   // (1015) 기말 모드 — opt.from 이후(기말 자료) / opt.to 이전(지난 수업 자료)만
   opt=opt||host._opt||{}; host._opt=opt;
@@ -1183,13 +1195,26 @@ function drawLib(host,opt){
   else{
     const n=Math.min(rows.length,LIB.showN);
     H.push(rows.slice(0,n).map(r=>{
-      const vbtn=r.vs.slice().sort((a,b)=>String(a.부||'').localeCompare(String(b.부||''))).map(v=>`<a class="vid" href="https://youtu.be/${encodeURIComponent(v.id)}" target="_blank" rel="noopener">▶ 수업 영상${v.부?' <small>'+E(v.부)+'</small>':(r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':'')}</a>`).join('');
+      // (1110 유강) 색인 있는 영상: 탭하면 '처음부터 보기 / 색인 구간으로 바로 가기' 고르는 패널을 연다
+      const vlab=v=>`▶ 수업 영상${v.부?' <small>'+E(v.부)+'</small>':(r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':'')}`;
+      const yu=(id,t)=>`https://youtu.be/${encodeURIComponent(id)}${t?'?t='+t:''}`;
+      const ts=t=>{t=+t;const h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0');};
+      let vix='';
+      const vbtn=r.vs.slice().sort((a,b)=>String(a.부||'').localeCompare(String(b.부||''))).map(v=>{
+        if(!(v.색인&&v.색인.length>2)) return `<a class="vid" href="${yu(v.id)}" target="_blank" rel="noopener">${vlab(v)}</a>`;
+        const k='vx'+(VXN++);
+        const items=v.색인.filter(c=>c[0]>0).map(c=>/^THEME/.test(c[1])
+          ?`<div class="vth"><a href="${yu(v.id,c[0])}" target="_blank" rel="noopener"><span class="vt">${ts(c[0])}</span>${E(c[1])}</a></div>`
+          :`<a class="vp" href="${yu(v.id,c[0])}" target="_blank" rel="noopener">${E(c[1])}<span class="vt">${ts(c[0])}</span></a>`).join('');
+        vix+=`<div class="vix" id="${k}"><a class="vall" href="${yu(v.id)}" target="_blank" rel="noopener">▶ 처음부터 전체 보기</a><div class="vhint">또는 보고 싶은 곳을 눌러 바로 가기</div>${items}</div>`;
+        return `<button type="button" class="vid vidx" data-k="${k}">${vlab(v)} <small>· 색인</small></button>`;
+      }).join('');
       const lk=(u,t)=>u?`<a href="${LIB_URL+u}" target="_blank" rel="noopener">${t}</a>`:'';
       const hd=`<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`;
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
       if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
       if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
-      if(r.reg) return hd+`<div class="rp">${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div></div>`;
+      if(r.reg) return hd+`<div class="rp">${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
         +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
         +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
@@ -1197,6 +1222,7 @@ function drawLib(host,opt){
   }
   H.push(`<div class="note">${E(ban)} 수업 영상 · 수업교재 · 써킷 과제 · 내 개별과제 · 수업에서 본 기출테스트 시험지·해설이 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
   host.innerHTML=H.join('');
+  host.querySelectorAll('.vidx').forEach(b=>b.onclick=()=>{const p=document.getElementById(b.dataset.k); if(!p) return; const o=p.classList.toggle('open'); b.classList.toggle('on',o);});
   const m=host.querySelector('.lib-more'); if(m) m.onclick=()=>{LIB.showN+=20; drawLib(host,opt);};
 }
 
