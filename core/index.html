@@ -812,7 +812,7 @@ async function boot(){
     try{ const r=await sb.rpc('loop_info',{tok:TOK}); const li=r&&r.data;
       if(li&&li.상한) LOOP_CAP=+li.상한||0;   // (1110) 포털 '루프 상한'
       if(li&&li.시험일){ const ex=String(li.시험일).slice(0,10), ws=new Date(Date.parse(ex+'T00:00:00Z')-21*864e5).toISOString().slice(0,10);
-        if(TODAY>=ws && TODAY<ex){ LOOP_DAILY=true; ROUND=TODAY+'T00:00:00'; NEXTC=''; } }   // (1110) 기말 3주 전 — 회차 = 하루(키는 시각꼴: 리포트·마감 알림이 읽는다)
+        /* (1110 롤백 — 유강 '매일 하는 건 무리') 기말 3주 전 하루 1회 회차는 끔. 켜려면: if(TODAY>=ws && TODAY<ex){ LOOP_DAILY=true; ROUND=TODAY+'T00:00:00'; NEXTC=''; } */ }
     }catch(e){}
     try{ const r=await sb.rpc('loop_set_get',{tok:TOK,skey:SKEY,rnd:ROUND||TODAY}); if(r&&Array.isArray(r.data)&&r.data.length) SRV_SET=r.data.map(String); }catch(e){}
     setup();
