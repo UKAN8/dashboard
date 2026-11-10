@@ -100,6 +100,8 @@ button{font:inherit;cursor:pointer}
 .num .k{flex:none;width:52px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);font-size:20px;font-weight:700}
 .num .ok{flex:1 1 100%;padding:12px;border-radius:12px;border:none;background:var(--acc);color:#1a0d12;font-weight:800;font-size:15px}
 .num.right input{border-color:rgba(126,224,163,.6);color:var(--ok)} .num.wrong input{border-color:rgba(255,143,168,.6);color:#ffd0da}
+.dunno{display:block;width:100%;margin:-2px 0 12px;padding:10px 0;border-radius:12px;border:1px dashed var(--bd);background:none;color:var(--tx2);font-size:14px;font-weight:700}
+.dunno[disabled]{display:none}
 .conf{display:none}
 .conf.show{display:block}
 .conf p{margin:4px 2px 8px;color:var(--tx2);font-size:13px}
@@ -685,6 +687,7 @@ function drawItem(){
     +`<div class="qcard"><div class="kind"><span>${E(kl)}</span><span>${E(kn)}</span></div><div class="q">${T(x.q)}</div>`
     +(x.key[0]==='T'?`<div class="sheet">✎ 연습지 ${S.q.slice(0,S.i+1).filter(z=>z.key[0]==='T').length}번에 풀고 답만 넣어요</div>`:'')+`</div>`
     +A
+    +(S.mode==='리뷰'?'':`<button class="dunno" id="dk">잘 모르겠어요 — 정답·해설 보기</button>`)
     +`<div class="conf" id="conf"><p>이 답, 얼마나 확실해요?</p><div class="row2"><button class="sure" data-c="확실">확실해요</button><button class="unsure" data-c="애매">애매해요</button></div></div>`
     +`<button class="next" id="nx">${S.i+1<n||(!S.typeBuilt)?'다음':'끝'}</button>`
     +`</div><div class="qside"><div class="res" id="res"></div><div id="cbx"></div><div id="bbx"></div></div></div>`;
@@ -706,6 +709,8 @@ function drawItem(){
       $('ans').querySelectorAll('button').forEach(z=>z.classList.remove('on')); b.classList.add('on'); S.pick=b.dataset.a; showConf(); });
   }
   $('conf').querySelectorAll('button').forEach(b=>b.onclick=()=>grade(b.dataset.c));
+  // (1111 유강) 찍지 말고 '잘 모르겠어요' — 실패로 기록(애매+오답·원인 '모름'), 정답·해설을 바로 보여 준다
+  if($('dk')) $('dk').onclick=()=>{ if($('conf').dataset.lock) return; S.pick='모름'; grade('애매',true); };
   $('nx').onclick=next;
   window.scrollTo(0,0);
 }
@@ -715,20 +720,22 @@ function frac(s){
   return [ (m[1]?-1:1)*+m[2], m[3]?+m[3]:1 ];
 }
 function same(a,b){ const p=frac(a), q=frac(b); return !!p&&!!q&&q[1]!==0&&p[1]!==0&&p[0]*q[1]===q[0]*p[1]; }
-function grade(conf){
+function grade(conf,dunno){
   const x=S.q[S.i]; if($('conf').dataset.lock||S.pick===null) return; $('conf').dataset.lock='1';
-  const ok = x.k==='num' ? same(S.pick,x.a) : S.pick===x.a;
+  const ok = dunno ? false : x.k==='num' ? same(S.pick,x.a) : S.pick===x.a;
+  if($('dk')) $('dk').disabled=true;
   const ms=Date.now()-S.t0;
-  if(x.k==='num'){ $('numIn').value=S.pick; $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); $('ans').classList.add(ok?'right':'wrong'); }
+  if(dunno){ if(x.k==='num'){ $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); } else $('ans').querySelectorAll('button').forEach(b=>{ b.disabled=true; b.classList.remove('on'); if(b.dataset.a===x.a) b.classList.add('right'); }); }
+  else if(x.k==='num'){ $('numIn').value=S.pick; $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); $('ans').classList.add(ok?'right':'wrong'); }
   else $('ans').querySelectorAll('button').forEach(b=>{ b.disabled=true; if(b.dataset.a===x.a) b.classList.add('right'); else if(b.dataset.a===S.pick) b.classList.add('wrong'); });
   $('conf').querySelectorAll('button').forEach(b=>b.disabled=true);
   $('conf').style.display='none';
   const succ=ok&&conf==='확실';
   // (1103 유강) 확실+오답 / 애매+정답 은 '왜?' 를 한 번 묻는다 — 고를 때까지 [다음]을 숨긴다
-  const ask=(!ok&&conf==='확실')?(x.key[0]==='T'?WHY_T:WHY_C):(ok&&conf==='애매')?WHY_U:null;
+  const ask=dunno?null:(!ok&&conf==='확실')?(x.key[0]==='T'?WHY_T:WHY_C):(ok&&conf==='애매')?WHY_U:null;
   const r=$('res'); r.className='res show '+(succ?'o':ok?'u':'x');
-  r.innerHTML=`<div class="h">${succ?'맞았어요':ok?'맞았지만 애매 — 다음 루프에 한 번 더 확인해요':conf==='확실'?'틀렸어요 — 확실하다고 했는데 틀렸어요':'틀렸어요'}</div>`
-    +(ok?'':`<div class="w" style="margin-bottom:6px">정답: <b>${x.k==='ox'?x.a:T(x.a)}</b>${x.k==='num'?` · 내 답 ${E(S.pick)}`:''}</div>`)
+  r.innerHTML=`<div class="h">${dunno?'괜찮아요 — 정답과 해설을 보고 넘어가요. 다음 루프에 다시 와요':succ?'맞았어요':ok?'맞았지만 애매 — 다음 루프에 한 번 더 확인해요':conf==='확실'?'틀렸어요 — 확실하다고 했는데 틀렸어요':'틀렸어요'}</div>`
+    +(ok?'':`<div class="w" style="margin-bottom:6px">정답: <b>${x.k==='ox'?x.a:T(x.a)}</b>${x.k==='num'&&!dunno?` · 내 답 ${E(S.pick)}`:''}</div>`)
     +`<div class="w">${T(x.w)}</div>`
     +(ask?`<div class="why" id="why"><p>${ok?'어땠어요?':'왜 틀렸어요?'} <span style="color:var(--gold)">— 하나 고르면 [다음] 버튼이 나와요</span></p><div class="wb">${ask.map(([v,t])=>`<button data-w="${v}">${t}</button>`).join('')}</div></div>`:'')
     +`<div class="btn2"><button class="cardbtn" id="cb">개념 정리 보기</button>${themeOf(x)&&themeOf(x).book?'<button class="cardbtn bk" id="bb">교재 예제 보기</button>':''}</div>`;
@@ -742,7 +749,8 @@ function grade(conf){
   const tNow=nowKST(), tRow=tNow.slice(0,10)>TODAY?TODAY+'T23:59:59':tNow;
   const row={k:x.key,i:x.id,m:S.mode,a:String(S.pick).slice(0,40),o:ok,c:conf,ms:Math.min(ms,9999999),t:tRow,u:uid()};
   if(ask) row.p=Date.now();                 // 원인 고를 때까지 보내지 않는다(2분 지나거나 그만하면 원인 없이 보낸다)
-  const rres={x,ok:succ,raw:ok,conf,w:''}, lrow=[x.key,x.id,ok,conf,S.mode,tRow,null];
+  if(dunno) row.w='모름';
+  const rres={x,ok:succ,raw:ok,conf,w:dunno?'모름':''}, lrow=[x.key,x.id,ok,conf,S.mode,tRow,dunno?'모름':null];
   S.res.push(rres);
   LOG.push(lrow);
   queue([row]);
