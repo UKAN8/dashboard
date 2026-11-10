@@ -511,50 +511,59 @@ function cellState(k){
   else if(!tOpen(k)) return 'lock';
   const s=keyState(k).st; return s==='try'?'new':s;
 }
-function drawHome(){
-  document.body.classList.remove('sess');
+/* (1110 유강 "코어 루프 내부 페이지 해체·재구성") 첫 화면은 포털로 옮겼다.
+ *  · 포털 '오늘' = 리뷰테스트·루프 과제 버튼 / '기록' = 단원 지도·졸업 현황·확신 정확도·규칙.
+ *  · 포털은 이 페이지를 숨은 창(?embed=1)으로 열어 homeModel() 을 받는다 — 상태 규칙을 복사하지 않으려고(복사하면 두 화면이 다른 말을 한다).
+ *  · ?go=리뷰|루프 = 바로 풀이. 끝나면 [포털로 돌아가기]. 파라미터 없이 열면(옛 링크·알림) 버튼 둘만 있는 얇은 홈. */
+const GUIDE_HTML=`개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
+  +`틀린 건 다시 돌아와요. <b>애매</b>하면 애매하다고 눌러요 — 맞혔으면 쌓아 둔 건 그대로 두고 한 번 더 확인만 해요.<br>`
+  +`<b>확실하다고 했는데 틀리면</b> 다음 루프에 더 많이 확인해요. 그래서 확실할 때만 확실해요를 눌러요.`;
+const PORTAL_URL=()=>'/dashboard/me/?t='+encodeURIComponent(TOK);
+function homeModel(){
   let tot=0, grad=0, open=0;
-  CONCEPTS.forEach(c=>[c.key,...c.themes.map(t=>t.key)].forEach(k=>{ tot++; const s=cellState(k); if(s==='grad') grad++; if(s!=='lock') open++; }));
+  const units=SET.units.map(U=>({code:U.code,name:U.name,concepts:U.concepts.map(c=>{
+    const cs=cellState(c.key), od=openDate(c.key);
+    const th=c.themes.map(t=>({key:t.key,no:t.no,name:t.name,st:cellState(t.key)}));
+    [cs,...th.map(t=>t.st)].forEach(st=>{ tot++; if(st==='grad') grad++; if(st!=='lock') open++; });
+    return {key:c.key,no:c.no,title:c.title,st:cs,od:cs==='lock'&&od?od:null,themes:th}; })}));
   const lc=lastClassConcepts(); const LT=loopLock()?{items:buildLoop(),started:false,finished:false}:loopToday(); const loop=LT.items;
   const rDone=reviewDone(), lDone=LT.finished, rOpen=inClass(), lLock=loopLock(), lDue=!lLock && !lDone && pastDue();
-  const H=[];
-  H.push(`<div class="brand">수학은유강</div>`
-    +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
-    +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
-    +`<div class="sum"><div><b>${grad}<small style="font-size:12px;color:var(--dim)">/${tot}</small></b><span>졸업</span></div>`
-    +`<div><b>${open}</b><span>열림</span></div>`
-    +`<div><b>${loop.length}</b><span>이번에 돌아온 문항</span></div></div>`);
-  const rAct=!rDone && lc.length && rOpen;
-  H.push(`<button class="go${rDone?' done':rAct?' act':' s'}" id="goR"><b>리뷰테스트 ${rDone?'· 오늘 완료':''}</b>`
-    +`<span>${!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`}</span>`
-    +`${rAct?'<em class="tap">시작 →</em>':rDone?'<em class="tap">완료</em>':''}</button>`);
+  const rAct=!!(!rDone && lc.length && rOpen);
   const once=ROUND?'수업마다 한 번':'하루 한 번', nextT=ROUND?'다음 수업 뒤':'내일', nx=nextClassText();
   const lAct=!lLock && !lDone && !lDue && loop.length>0;
-  H.push(`<button class="go${lDone?' done':lAct?' act':' s'}" id="goL"><b>루프 과제 ${lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):lDue?'· 마감됐어요':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''}</b>`
-    +`<span>${lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`}</span>`
-    +`${lAct?`<em class="tap">${LT.started?'이어서':'시작'} →</em>`:lDone?'<em class="tap">완료</em>':''}</button>`);
-  H.push(`<div class="guide">개념을 <b>확실하게</b> 맞히면 그 개념의 유형이 열려요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.<br>`
-    +`틀린 건 다시 돌아와요. <b>애매</b>하면 애매하다고 눌러요 — 맞혔으면 쌓아 둔 건 그대로 두고 한 번 더 확인만 해요.<br>`
-    +`<b>확실하다고 했는데 틀리면</b> 다음 루프에 더 많이 확인해요. 그래서 확실할 때만 확실해요를 눌러요.</div>`
-    +calibHTML());
-  H.push(`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${ST_LABEL[s]}</span>`).join('')}</div>`);
-  SET.units.forEach(U=>{
-    H.push(`<div class="unit">${E(U.name)}</div>`);
-    U.concepts.forEach(c=>{
-      const cs=cellState(c.key); const od=openDate(c.key);
-      H.push(`<div class="cp"><div class="ch1"><span class="chip ${cs}">개념 ${E(c.no)}</span>`
-        +`<span class="nm">${E(c.title)}${cs==='lock'&&od?`<small>${+od.slice(5,7)}/${+od.slice(8)} 수업 뒤 열림</small>`:''}</span></div>`
-        +`<div class="chips">${c.themes.map(t=>`<span class="chip ${cellState(t.key)}">${E(t.no)} ${E(t.name)}</span>`).join('')}</div></div>`);
-    });
-  });
-  H.push(`<div class="foot">${DEMO?'<b>미리보기</b>예요. 기록이 저장되지 않아요.<br>'
+  const review={cls:rDone?'done':rAct?'act':'s', can:rAct, title:'리뷰테스트'+(rDone?' · 오늘 완료':''),
+    sub:!lc.length?'아직 지난 수업이 없어요 — 첫 수업 다음부터 열려요':!rOpen?classText():`지난 수업 개념 ${reviewCN()} → 유형 ${REVIEW_T} · 연습지에 풀고 답만 넣어요`,
+    tap:rAct?'시작 →':rDone?'완료':''};
+  const lp={cls:lDone?'done':lAct?'act':'s', can:!lLock && !(!LT.finished && pastDue()) && loop.length>0, n:loop.length,
+    title:'루프 과제 '+(lLock?'· 수업 끝나고 열려요':lDone?(ROUND?'· 이번 루프 완료':'· 오늘 완료'):lDue?'· 마감됐어요':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''),
+    sub:lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`,
+    tap:lAct?(LT.started?'이어서 →':'시작 →'):lDone?'완료':''};
+  return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop};
+}
+function goBtn(id,b){ return `<button class="go ${b.cls==='act'?'act':b.cls==='done'?'done':'s'}" id="${id}"><b>${b.title}</b><span>${b.sub}</span>${b.tap?`<em class="tap">${b.tap}</em>`:''}</button>`; }
+function drawHome(){
+  document.body.classList.remove('sess');
+  const m=homeModel();
+  $('app').innerHTML=`<div class="brand">수학은유강</div>`
+    +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
+    +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
+    +goBtn('goR',m.review)+goBtn('goL',m.loop)
+    +(DEMO?'':`<div class="btns" style="margin-top:14px"><button class="s" id="toP">단원 지도 · 졸업 현황은 포털 '기록'에서 →</button></div>`)
+    +`<div class="foot">${DEMO?'<b>미리보기</b>예요. 기록이 저장되지 않아요.<br>'
     :`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>`}`
-    +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 개념·유형을 0개</b>로 만드는 게 목표예요.</div>`);
-  $('app').innerHTML=H.join('');
-  $('goR').onclick=()=>{ if(lc.length && inClass() && !reviewDone()) startSession('리뷰'); else drawHome(); };
-  HOME_OPEN=rOpen;
-  $('goL').onclick=()=>{ if(loopLock() || (!LT.finished && pastDue())){ drawHome(); return; } if(loop.length) startSession('루프', loop); };
+    +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 개념·유형을 0개</b>로 만드는 게 목표예요.</div>`;
+  $('goR').onclick=()=>{ if(m.review.can) startSession('리뷰'); else drawHome(); };
+  HOME_OPEN=inClass();
+  $('goL').onclick=()=>{ if(m.loop.can) startSession('루프', m._items); else drawHome(); };
+  if($('toP')) $('toP').onclick=()=>{ location.href=PORTAL_URL()+'&tab=기록'; };
   window.scrollTo(0,0);
+}
+/* 포털에서 [시작 →] 으로 온 경우 — 열려 있으면 바로 풀이, 아니면 얇은 홈 */
+function startFromGo(g){
+  const m=homeModel();
+  if(g==='리뷰' && m.review.can){ startSession('리뷰'); return; }
+  if(g==='루프' && m.loop.can){ startSession('루프', m._items); return; }
+  drawHome();
 }
 
 /* ── 풀이 세션 ── */
@@ -709,9 +718,9 @@ async function finish(early){
     +`<p>${okN===res.length?'전부 확실해요. 이 개념·유형들은 며칠 뒤 한 번 더 보면 졸업이에요.':'틀리거나 애매했던 건 다음 루프에 다시 와요.'}</p>`
     +(sureX?`<p class="sx">확실하다고 했는데 틀린 문항 ${sureX}개 — 다음 루프에 더 꼼꼼히 확인해요</p>`:'')
     +`<div class="save" id="sv">기록 보내는 중…</div></div><div class="list">${L}</div>`
-    +`<div class="btns"><button class="p" id="home">단원 지도 보기</button></div>`;
+    +`<div class="btns">${DEMO?'':'<button class="p" id="toP">포털로 돌아가기</button>'}<button class="${DEMO?'p':'s'}" id="home">CORE 첫 화면</button></div>`;
   if(S.mode==='리뷰' && !early) lset('rdone_'+TODAY,true);
-  $('home').onclick=drawHome; S=null;
+  $('home').onclick=drawHome; if($('toP')) $('toP').onclick=()=>{ location.href=PORTAL_URL(); }; S=null;
   const ok=await flush();
   const drop=lget('dropped',0); if(drop) lset('dropped',0);
   const sv=$('sv'); if(sv){ sv.textContent=ok?(drop?`기록 저장됨 · ${drop}문항은 수업 시간 밖이라 저장되지 않았어요`:'기록 저장됨'):'인터넷이 불안정해서 이 기기에 보관했어요. 다음에 열면 자동으로 보내요'; if(!ok) sv.classList.add('bad'); }
@@ -752,6 +761,8 @@ function pickSet(ban){
   const g=(ban||'').slice(0,2);
   return Object.keys(BANK.sets).find(k=>BANK.sets[k].학년===g)||null;
 }
+const EMBED=new URLSearchParams(location.search).get('embed')==='1';
+function bootErr(h){ $('msg').innerHTML=h; if(EMBED) try{ parent.postMessage({type:'core-summary',err:h.replace(/<[^>]+>/g,' ').trim()},location.origin); }catch(e){} }
 async function boot(){
   const P=new URLSearchParams(location.search);
   TOK=(P.get('t')||'').trim(); DEMO=P.get('demo')==='1';
@@ -763,16 +774,16 @@ async function boot(){
     if(P.get('class')) CLASS=P.get('class').split(',').map(x=>x.split('-'));   // 미리보기: &class=15:00-17:00
     LOG=lget('demo_log',[]);
   } else {
-    if(TOK.length<16){ $('msg').innerHTML='<b>링크가 올바르지 않아요</b>포털에서 다시 들어와 주세요.'; return; }
-    if(!sb){ $('msg').innerHTML='<b>연결이 안 돼요</b>잠시 뒤 다시 열어 주세요.'; return; }
+    if(TOK.length<16){ bootErr('<b>링크가 올바르지 않아요</b>포털에서 다시 들어와 주세요.'); return; }
+    if(!sb){ bootErr('<b>연결이 안 돼요</b>잠시 뒤 다시 열어 주세요.'); return; }
     // 학년을 모르니 두 세트를 차례로 연다 — 반이 정해지면 맞는 세트로
     let d=null;
     try{ const r=await sb.rpc('mastery_open',{tok:TOK,skey:'core_m2'}); d=r.data; }catch(e){}
-    if(!d){ $('msg').innerHTML='<b>열 수 없는 링크예요</b>쌤에게 새 링크를 받아 주세요.'; return; }
+    if(!d){ bootErr('<b>열 수 없는 링크예요</b>쌤에게 새 링크를 받아 주세요.'); return; }
     NAME=d.이름; BAN=d.반; TODAY=d.오늘; SKEY=pickSet(BAN);
     CLASS=Array.isArray(d.수업)?d.수업:[];    // 서버가 시간표를 안 주면(v40 전) 리뷰는 닫힌다
     if(d.지금){ const t=Date.parse(d.지금+'+09:00'); if(!isNaN(t)) SKEW=t-Date.now(); }
-    if(!SKEY){ $('msg').innerHTML='<b>아직 이 반은 CORE 루프가 없어요</b>'; return; }
+    if(!SKEY){ bootErr('<b>아직 이 반은 CORE 루프가 없어요</b>'); return; }
     try{ const r=await sb.rpc('mastery_round',{tok:TOK}); if(r&&r.data&&r.data.회차){ ROUND=r.data.회차; NEXTC=r.data.다음||''; DUE=r.data.마감||''; } }catch(e){}   // (1022) 루프 회차 — 못 받으면 옛 규칙(하루)
     if(SKEY!=='core_m2'){ try{ const r=await sb.rpc('mastery_open',{tok:TOK,skey:SKEY}); d=r.data||d; }catch(e){} }
     // (1028) 루프 세트는 브라우저마다 따로 저장돼, 알림톡(카톡 인앱)으로 열면 세트를 새로 만들어 문항이 달라졌다 → 서버에 남은 세트를 먼저 받는다
@@ -785,12 +796,18 @@ async function boot(){
     LOG.sort((a,b)=>a[5].localeCompare(b[5]));
     flush();
   }
+  if(EMBED){   // (1110) 포털 숨은 창 — 그리지 않고 요약만 넘긴다
+    try{ const m=homeModel(); delete m._items; parent.postMessage({type:'core-summary',m},location.origin); }
+    catch(e){ try{ parent.postMessage({type:'core-summary',err:String(e&&e.message||e)},location.origin); }catch(_){} }
+    return;
+  }
   $('msg').style.display='none'; $('app').style.display='block';
-  waitKatex(drawHome);
+  const go=P.get('go');
+  waitKatex(()=>go?startFromGo(go):drawHome());
 }
 boot();
 // (1018) 홈을 열어 둔 채 수업 시간이 되면/끝나면 [수업 리뷰]를 다시 그린다
 setInterval(()=>{ if(!S && SET && $('app').style.display==='block' && HOME_OPEN!==null && inClass()!==HOME_OPEN) drawHome(); }, 20000);
 // 자정을 넘겨 열어 둔 페이지는 다시 연다(감리 R8) — 풀이 중이면 건드리지 않는다
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && !DEMO && !S && TODAY && nowKST().slice(0,10)!==TODAY) location.reload(); });
-</script><script src="/dashboard/track.js" data-page="core" defer></script></body></html>
+</script><script>if(!EMBED){ const t=document.createElement('script'); t.src='/dashboard/track.js'; t.dataset.page='core'; t.defer=true; document.body.appendChild(t); }</script></body></html>

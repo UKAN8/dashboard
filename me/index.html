@@ -295,6 +295,69 @@ body.noscroll{overflow:hidden}
 .hw .q .rf{display:flex;gap:6px;margin-top:4px}
 .hw .q .rf input{flex:1;margin-top:0}
 .hw .q .rf button{background:rgba(245,160,160,.12);border:1px solid rgba(245,160,160,.35);color:var(--tx);border-radius:9px;padding:0 12px;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+/* ── (1110) CORE 버튼·지도 (core 페이지 .go/.chip 과 같은 모양) ── */
+.cgo{position:relative;display:block;width:100%;text-align:left;border-radius:16px;padding:14px 16px;margin-bottom:10px;color:var(--tx);
+ background:rgba(255,255,255,.05);border:1px solid var(--bd);text-decoration:none}
+.cgo b{display:block;font-size:16px}
+.cgo span{display:block;font-size:12.5px;color:var(--dim);line-height:1.5}
+.cgo em{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-style:normal;font-weight:800;font-size:15px;color:var(--acc);white-space:nowrap}
+.cgo.act{background:rgba(245,160,160,.07);border-color:rgba(245,160,160,.55);padding-right:88px}
+.cgo.act span{color:var(--tx2)}
+.cgo.act:active{background:rgba(245,160,160,.16)}
+.cgo.done{background:rgba(126,224,163,.07);border-color:rgba(126,224,163,.3);padding-right:72px}
+.cgo.done b{color:var(--good)}.cgo.done em{color:var(--good)}
+#core-map .cu{border-bottom:1px solid var(--bd)}
+#core-map .cu:last-of-type{border-bottom:none}
+#core-map .cuh{grid-template-columns:minmax(0,92px) 1fr 44px 14px;width:100%;background:none;border:0;color:inherit;font:inherit;font-size:13px;font-weight:700;text-align:left;padding:9px 0;cursor:pointer}
+#core-map .cuh .cv{color:var(--dim);font-size:11px;transition:transform .15s}
+#core-map .cu.open .cuh .cv{transform:rotate(180deg)}
+#core-map .cub{display:none;padding:2px 0 10px}
+#core-map .cu.open .cub{display:block}
+#core-map .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cp{background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:12px;padding:10px 11px;margin-bottom:7px}
+.cp .ch1{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cp .ch1 .nm{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow-wrap:anywhere}
+.cp .ch1 .nm small{font-weight:400;color:var(--dim);font-size:11.5px;margin-left:4px}
+.cp .chips{display:flex;flex-wrap:wrap;gap:6px}
+#core-map .chip,.cp .chip{margin:0;font-size:11.5px;padding:3px 9px;border-radius:9px;border:1px solid var(--bd);color:var(--tx2);background:rgba(255,255,255,.03)}
+#core-map .chip.lock{color:#5d5d6a;border-style:dashed}
+#core-map .chip.fail{color:#ffd0da;border-color:rgba(255,143,168,.5);background:rgba(255,143,168,.1)}
+#core-map .chip.one{color:#f0d58a;border-color:rgba(240,213,138,.45);background:rgba(240,213,138,.08)}
+#core-map .chip.grad{color:var(--good);border-color:rgba(126,224,163,.5);background:rgba(126,224,163,.1)}
+.crule{color:var(--dim);font-size:12.5px;line-height:1.75}.crule b{color:var(--tx2)}
+/* ── (1110 유강) 탭 4개 — 오늘 · 과제 · 기록 · 자료. 아래 고정 탭바 ── */
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.tabp{display:none}.tabp.on{display:block;animation:tabin .18s ease-out}
+@keyframes tabin{from{opacity:.4;transform:translateY(4px)}}
+.tabp>h2:first-child,.tabp>div:first-child>h2:first-child{margin-top:6px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:center;
+ background:rgba(12,12,18,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--bd);
+ padding:6px clamp(8px,4vw,28px) calc(6px + env(safe-area-inset-bottom))}
+.tabbar .in{display:flex;width:100%;max-width:620px}
+.tabbar button{flex:1;position:relative;background:none;border:0;color:var(--dim);font:inherit;font-size:11.5px;font-weight:700;
+ display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 4px;cursor:pointer;border-radius:12px}
+.tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--acc)}
+.tabbar button.on::before{content:'';position:absolute;top:-7px;left:30%;right:30%;height:2px;border-radius:2px;background:var(--acc)}
+.tabbar .bdg{position:absolute;top:1px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:9px;
+ background:var(--bad);color:#fff;font-size:10.5px;font-style:normal;line-height:17px;text-align:center;display:none}
+.tabbar .bdg.on{display:block}
+.fx-hero+.qk{margin-top:10px}
+.qk{display:flex;gap:8px;margin:2px 0 12px;overflow-x:auto;scrollbar-width:none}
+.qk::-webkit-scrollbar{display:none}
+.qk a{flex:1 0 auto;display:flex;flex-direction:column;gap:1px;min-width:0;border:1px solid var(--bd);background:var(--card);
+ border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:700;white-space:nowrap}
+.qk a small{color:var(--dim);font-size:11px;font-weight:400}
+.tdh{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);
+ border-radius:14px;padding:12px 14px;margin-bottom:8px;color:var(--tx);font:inherit;font-size:14px;cursor:pointer}
+.tdh .tt{flex:1;min-width:0;overflow-wrap:anywhere}
+.tdh .tt small{display:block;color:var(--dim);font-size:12px;font-weight:400;margin-top:1px}
+.tdh .go{flex:0 0 auto;color:var(--mid);font-weight:800;font-size:13.5px}
+.tdh.ans{border-color:rgba(120,170,255,.6);background:rgba(120,170,255,.08)}
+.tdh.ans .go{color:#cfe0ff}
+.tdh.hwc{border-color:rgba(245,160,160,.45);background:rgba(245,160,160,.06)}
+.tdh.fix{border-color:rgba(120,200,160,.5);background:rgba(120,200,160,.07)}
+@media (hover:hover) and (pointer:fine){.tabbar button:hover{color:var(--tx2)}.tabbar button.on:hover{color:var(--acc)}.qk a:hover,.tdh:hover{border-color:var(--acc)}}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -846,6 +909,10 @@ function partsOf(d){
       +`<span class="t"><b>개념의 탑</b><span class="dim"> 평면좌표~집합의 연산 · 교과서 개념 OX 17층</span></span>`
       +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:800">오르기 →</a></div></div>`;
   }
+  // (1110) 다른 페이지로 넘어가는 것들 — 큰 카드 대신 '오늘' 위 바로가기 한 줄
+  const qk=[[`https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
+  if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
+  P.qk=`<div class="qk">${qk.map(([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`).join('')}</div>`;
   // ② 오류 신고 (0913) — 저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
   P.report=`<h2>오류 신고</h2>`
     +`<div class="card" id="rpt-card">`
@@ -865,6 +932,61 @@ function partsOf(d){
   return P;
 }
 
+/* ── (1110 유강 "기능이 많아져 재구성 — 탭 4개") 탭 ──────────────────────────────
+ * 오늘 = 지금 할 것만(D-day·자기평가·CORE·해부 루프 + 과제 요약 줄) / 과제 = 체크·조교쌤 답·질문 모음 / 기록 = 성적·준비도 / 자료 = 수업 자료·오류 신고.
+ * 학생·학부모 링크가 같아서 늘 '오늘'부터 연다(마지막 탭 기억 안 함 — 할 일을 놓친다). 알림 링크는 &tab=과제 처럼 바로 연다.
+ * 숨은 탭 안 손풀이는 화면에 안 보이니 '봤음'(IntersectionObserver)도 안 잡힌다 — 의도대로. */
+const TABS=[['오늘','<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>'],
+  ['과제','<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/>'],
+  ['기록','<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M21 20H3"/>'],
+  ['자료','<path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/>']];
+function tabsHTML(S){
+  return TABS.map(([k])=>`<section class="tabp" data-tabp="${k}">${(S[k]||[]).join('')}</section>`).join('')
+    +`<nav class="tabbar"><div class="in">${TABS.map(([k,ic])=>`<button type="button" data-tab="${k}" aria-label="${k}"><svg viewBox="0 0 24 24">${ic}</svg><span>${k}</span><i class="bdg" data-bdg="${k}"></i></button>`).join('')}</div></nav>`;
+}
+function goTab(k,keepScroll){
+  if(!TABS.some(t=>t[0]===k)) k='오늘';
+  document.querySelectorAll('[data-tabp]').forEach(x=>x.classList.toggle('on',x.dataset.tabp===k));
+  document.querySelectorAll('.tabbar [data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===k));
+  try{ const u=new URL(location.href); if(k==='오늘') u.searchParams.delete('tab'); else u.searchParams.set('tab',k); history.replaceState(null,'',u); }catch(e){}
+  if(!keepScroll) window.scrollTo(0,0);
+}
+function wireTabs(){
+  document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.onclick=()=>goTab(b.dataset.tab));
+  goTab(QP.get('tab')||'오늘',true);
+}
+/* 과제 탭 뱃지 + '오늘' 의 과제 요약 줄. drawHW·drawFix·drawMyQ 뒤마다 다시 센다 */
+function tabSync(){
+  if(!document.querySelector('.tabbar')) return;
+  const ans=HW.list&&HW.list.length?ansList().length:0;
+  const act=(HW.list||[]).map((a,ai)=>{ const c=a.체크||{}, L=a.문항.filter(x=>c[x.n]!==7);
+      return {a,ai,n:L.length,done:L.filter(x=>c[x.n]).length,due:a.마감?new Date(a.마감):null}; })
+    .filter(x=>!x.a.지남&&x.n>0&&x.done<x.n).sort((x,y)=>(x.due||Infinity)-(y.due||Infinity));
+  const fix=(FIX.list||[]).length;
+  const b=document.querySelector('[data-bdg="과제"]'), n=ans+act.length+fix;
+  if(b){ b.textContent=n>9?'9+':String(n); b.classList.toggle('on',n>0); }
+  const em=$('hw-empty'); if(em) em.style.display=((HW.list||[]).length||fix||(MQ.rows||[]).length)?'none':'';
+  const box=$('today-hw'); if(!box) return;
+  const dueT=d=>d?`마감 ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
+  const nm=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+  const R=[];
+  if(ans) R.push(`<button type="button" class="tdh ans" data-tgo="ans"><span class="tt"><b>📩 조교쌤 답 ${ans}개가 왔어요</b><small>손풀이 보고 핵심 한 줄 적기</small></span><span class="go">확인 →</span></button>`);
+  if(fix) R.push(`<button type="button" class="tdh fix" data-tgo="fix"><span class="tt"><b>클리닉 보완 체크</b><small>못 한 문항 체크하기</small></span><span class="go">체크 →</span></button>`);
+  act.slice(0,3).forEach(x=>R.push(`<button type="button" class="tdh hwc" data-tgo="hw:${x.ai}"><span class="tt"><b>${E(nm(x.a))}</b> <span class="dim">${x.done}/${x.n}</span><small>${E(dueT(x.due))}</small></span><span class="go">${x.done?'이어서 →':'체크 →'}</span></button>`));
+  if(act.length>3) R.push(`<button type="button" class="tdh" data-tgo="hw"><span class="tt">과제 ${act.length-3}개 더</span><span class="go">과제 탭 →</span></button>`);
+  box.innerHTML=R.length?`<h2>과제</h2>`+R.join(''):'';
+  box.querySelectorAll('[data-tgo]').forEach(x=>x.onclick=()=>{
+    const g=x.dataset.tgo; goTab('과제');
+    if(g.startsWith('hw:')){ HW.open=g.slice(3); drawHW(); const f=$('hw-f'+HW.open); if(f){ const c=f.closest('.card'); if(c) c.scrollIntoView({block:'start'}); } }
+    else if(g==='ans'){ const c=$('ans-card'); if(c) c.scrollIntoView({block:'start'}); }
+    else if(g==='fix'){ const c=$('fix-host'); if(c) c.scrollIntoView({block:'start'}); }
+  });
+}
+function mountTasks(tok){
+  Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(tabSync);
+}
+const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
+
 /* ── 화면 ── */
 const MINIMAL=true;   // (0902 유강) 자기평가 카드만. 0906 정리: 하위 전체 화면 코드는 07_보관/콘솔정리_0906/portal.html 에 있다
 function render(d){
@@ -880,31 +1002,22 @@ function render(d){
     document.title=`${d.학생.이름} · 수학은유강`;
     return;
   }
-  const H=[];
-  H.push(P.head);
-  H.push(P.diag);
-  // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — 맨 위 카드. lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
-  H.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
-  H.push(P.clinic);
-  H.push(P.eval||P.evalNone);
-  H.push(`<div id="fix-host"></div><div id="hw-host"></div>`);
-  H.push(`<div id="myq-host"></div>`);   // (1102) 내 질문 모음
-  H.push(P.core);
-  H.push(P.tower);
+  const S={오늘:[],과제:[],기록:[],자료:[]};
+  S.오늘.push(P.qk, P.diag);
+  // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
+  S.오늘.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`);
+  S.오늘.push(P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
+  S.과제.push(TASK_TAB);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
-  H.push(`<div id="pr-host"></div>`);
-  H.push(`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+  S.기록.push(P.core?`<div id="core-rec"></div>`:'', `<h2>기출테스트</h2><div id="pr-host"></div>`,`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
   // ③ 수업 자료 (0927) — 정적 목록(mathis-lib/lib.json)을 읽는다. 내 반 것만, 수업일 순 한 목록(유강 0928).
-  H.push(`<h2>수업 자료</h2>`
-    +`<div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
-  H.push(P.report);
-  H.push(P.foot);
-  $('app').innerHTML=H.join('');
+  S.자료.push(`<h2>수업 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`, P.report);
+  $('app').innerHTML=P.head+tabsHTML(S)+P.foot;
+  wireTabs();
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
-  mountHW(tok);
-  mountFix(tok);
-  mountMyQ(tok);
+  mountTasks(tok);
+  if(P.core) mountCore(tok,P.core,null);
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
   catch(e){ $('pr-host').innerHTML='<div class="none">기출테스트 기록을 그리지 못했습니다. 잠시 뒤 다시 열어 주세요.</div>'; }
@@ -971,24 +1084,6 @@ function finalGichul(g,start){
     흐름: gr?{현재z:Math.round(cur*100)/100,회차수:R.length,등급:gr,앵커:(g.흐름||{}).앵커}:{회차수:R.length},
     _충분:!!gr};
 }
-/* CORE 상태 — core.html keyState 와 같은 규칙 */
-/* (1103 유강) 규칙 v2 — S 성공(정답+확실) · H 보류(애매+정답 찍음 아님, 확실+오답 오터치) · F 실패 · 시험 강등은 늘 리셋.
-   리셋: 유형 = F 하나 / 개념 = F 연속 둘(H 건너뜀). 성공일 = 리셋 뒤 그날 첫 시도 S ≥ need, 그날 F 없음. */
-function coreCls(r){ const ok=r[2], c=r[3], w=r[6]||''; if(r[4]==='시험') return 'X'; if(ok&&c==='확실') return 'S'; if(ok) return w==='찍음'?'F':'H'; if(c==='확실'&&w==='오터치') return 'H'; return 'F'; }
-function coreState(log,k,need,gap){
-  const rows=log.filter(r=>r[0]===k);
-  if(!rows.length) return 'new';
-  const isC=k[0]==='C'; let lf=-1, prev='';
-  rows.forEach((r,i)=>{ const c=coreCls(r); if(c==='H') return; if(c==='X'||(c==='F'&&(!isC||prev==='F'))) lf=i; prev=c==='X'?'F':c; });
-  const first=new Set(), per={}, bad={}; let anyF=false;
-  rows.forEach((r,i)=>{ const d=String(r[5]).slice(0,10), id=d+'|'+r[1]; const f=!first.has(id); first.add(id);
-    if(i<=lf) return; const c=coreCls(r);
-    if(c==='F'||c==='X'){ bad[d]=1; anyF=true; } else if(f && c==='S') (per[d]=per[d]||new Set()).add(r[1]); });
-  const days=Object.keys(per).filter(d=>per[d].size>=need && !bad[d]).sort();
-  if(days.length>=2 && dn(days[days.length-1])-dn(days[0])>=gap) return 'grad';
-  if(days.length>=1) return 'one';
-  return (lf>=0||anyF)?'fail':'try';
-}
 function roadmap(c,today){
   const units=c.진도.map(u=>({이름:u.단원,짧게:u.단원.replace(/\(.*\)/,'').replace(/^(\d+)\s*/,'$1 ').trim(),첫:u.날짜[0],끝:u.날짜[u.날짜.length-1]}));
   units.push({이름:'기출 모의',짧게:'기출 모의',첫:c.모의[0],끝:c.모의[c.모의.length-1]});
@@ -1024,59 +1119,80 @@ function heroCard(d,c,today){
     +`${mockStart>today?` <span class="sep">·</span> 기출 모의 ${sd(mockStart)}부터 ${c.모의.length}회`:''}</div>`
     +`</div>`;
 }
-function readyCardShell(c){
-  return `<div id="fx-cal"></div><h2>내 기말 준비도<small>개념·유형 졸업 비율</small></h2><div class="card" id="fx-ready">`
-    +c.진도.map(u=>`<div class="fx-un"><span class="u">${E(u.단원.replace(/\(.*\)/,'').trim())}</span><div class="fx-bar"></div><span class="p">—</span></div>`).join('')
-    +`<div class="note">불러오는 중…</div></div>`;
-}
-async function mountReady(c,tok,today){
-  const box=$('fx-ready'); if(!box) return;
-  const set=CORE_KEYS&&CORE_KEYS[c.core];
-  let log=null;
-  if(set){ try{ const r=await sb.rpc('mastery_open',{tok,skey:c.core}); if(r&&r.data&&!r.error) log=(r.data.기록||[]); }catch(e){} }
-  const need=(CORE_KEYS&&CORE_KEYS._need)||{C:2,T:1}, gap=(CORE_KEYS&&CORE_KEYS._gap)||3;
-  const weak=[];
-  let anyLog=!!(log&&log.length);
-  const rows=c.진도.map(u=>{
-    const name=u.단원.replace(/\(.*\)/,'').trim();
-    const U=set&&(set.units||[]).find(x=>x.code===u.core);
-    const opened=u.날짜[0]<=today;
-    if(!U||!log) return `<div class="fx-un"><span class="u">${E(name)}</span><div class="fx-bar"></div><span class="p dim">${opened?'—':'수업 후'}</span></div>`;
-    const keys=U.keys; const cnt={grad:0,one:0,fail:0};
-    keys.forEach(k=>{ const s=coreState(log,k.k,k.k[0]==='C'?need.C:need.T,gap);
-      if(s in cnt) cnt[s]++;
-      if(s==='fail') weak.push({t:k.t,u:name}); });
-    const n=keys.length||1, pg=Math.round(cnt.grad/n*100);
-    const w=x=>(x/n*100).toFixed(1)+'%';
-    return `<div class="fx-un"><span class="u">${E(name)}</span><div class="fx-bar"><i class="g" style="width:${w(cnt.grad)}"></i><i class="o" style="width:${w(cnt.one)}"></i><i class="r" style="width:${w(cnt.fail)}"></i></div>`
-      +`<span class="p">${opened||cnt.grad+cnt.one+cnt.fail?pg+'%':'수업 후'}</span></div>`;
-  });
-  mountCalib(log,today);
-  box.innerHTML=rows.join('')
-    +`<div class="fx-lg"><i style="background:var(--fx-g)"></i>졸업<i style="background:var(--fx-o)"></i>1회 통과<i style="background:var(--fx-r)"></i>다시</div>`
-    +(weak.length?`<div class="fx-weak">먼저 잡을 것 ${weak.slice(0,3).map(x=>`<b>${E(x.t)}</b>`).join(' · ')}</div>`:'')
-    +`<div class="note">${anyLog?'졸업 = 서로 다른 날 두 번 이상, 확실하게 맞힌 개념·유형이에요. 단원 칸 수 중 졸업한 비율이에요.'
-      :'리뷰테스트·루프 과제를 시작하면 단원별 졸업 비율이 여기에 쌓여요.'}</div>`;
-}
-/* (1103 유강 "포털에 크게 지표") 확신 정확도 — 최근 7일 CORE 리뷰·루프에서 '확실해요'로 답한 것 중 맞힌 비율.
-   확실 답이 10개 이상일 때만. 지난 7일과 비교, 이번 주 '왜 틀렸어요?' 원인(확실+오답). */
+/* ── (1110 유강 "코어 루프 내부 페이지 해체·재구성") CORE ─────────────────────────────
+ * core 페이지(/dashboard/core/)를 숨은 창(?embed=1)으로 열고, core 가 계산한 첫 화면 요약(homeModel)을 받는다.
+ *   '오늘' = 리뷰테스트·루프 과제 버튼(누르면 core 의 풀이 화면으로 바로 · &go=리뷰|루프)
+ *   '기록' = 확신 정확도 + 단원별 졸업 비율(누르면 개념·유형 칸) + 루프 규칙
+ * 졸업·잠금·루프 규칙을 여기 복사하지 않는다 — 전엔 coreState 복사본이 있어 규칙이 바뀌면 두 화면이 달라질 수 있었다.
+ * 요약을 20초 안에 못 받으면 예전 [CORE 루프 열기] 카드로 대신한다. */
 const CAL_W={계산:'계산 실수',읽기:'잘못 읽음',조건:'조건 놓침',떠올림:'떠올리지 못함',헷갈림:'헷갈림',모름:'몰랐음',오터치:'잘못 누름'};
-function mountCalib(log,today){
-  const host=$('fx-cal'); if(!host) return;
-  const t=dn(today), R=(log||[]).filter(r=>(r[4]==='루프'||r[4]==='리뷰') && r[3]==='확실');
-  const wk=(a,b)=>R.filter(r=>{ const x=t-dn(String(r[5]).slice(0,10)); return x>=a&&x<b; });
-  const cur=wk(0,7), prv=wk(7,14);
-  if(cur.length<10){ host.innerHTML=''; return; }
-  const pct=a=>Math.round(100*a.filter(r=>r[2]).length/a.length), p=pct(cur), q=prv.length>=10?pct(prv):null;
-  const x=cur.filter(r=>!r[2]);
-  const why={}; x.forEach(r=>{ if(r[6]&&CAL_W[r[6]]) why[r[6]]=(why[r[6]]||0)+1; });
-  const ws=Object.keys(CAL_W).filter(k=>why[k]).map(k=>`${CAL_W[k]} ${why[k]}`).join(' · ');
-  const col=p>=90?'#8fe0b0':p>=75?'#f0d58a':'#ff8fa8';
-  host.innerHTML=`<h2>확신 정확도<small>'확실해요'라고 한 답 중 맞힌 비율 · 최근 7일</small></h2>`
-    +`<div class="card fx-cal"><div class="c1"><b style="color:${col}">${p}<small>%</small></b>`
-    +(q==null?'':`<em class="${p>=q?'up':'dn'}">지난주보다 ${p>=q?'▲':'▼'} ${Math.abs(p-q)}</em>`)+`</div>`
-    +`<div class="c2">확실하다고 한 ${cur.length}개 중 <b>${x.length}개</b>가 틀렸어요${ws?` — ${E(ws)}`:''}</div>`
-    +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`;
+const CORE={m:null,err:null,tok:'',url:'/dashboard/core/',fallback:'',final:null,openU:{}};
+const coreOn=d=>/^고[12]/.test(String(d.학생.반||'').trim());
+const CORE_TODAY=`<div id="core-today"><div class="cgo s"><b>리뷰테스트</b><span>불러오는 중…</span></div><div class="cgo s"><b>루프 과제</b><span>불러오는 중…</span></div></div>`;
+function mountCore(tok,fallback,finalCfg){
+  CORE.tok=tok; CORE.fallback=fallback||''; CORE.final=finalCfg||null;
+  const f=document.createElement('iframe');
+  f.src=CORE.url+'?t='+encodeURIComponent(tok)+'&embed=1';
+  f.setAttribute('aria-hidden','true'); f.tabIndex=-1; f.title='CORE';
+  f.style.cssText='position:absolute;left:-10px;top:-10px;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+  const done=(m,err)=>{ if(CORE.m||CORE.err) return; CORE.m=m||null; CORE.err=m?null:(err||'timeout'); drawCore(); };
+  window.addEventListener('message',e=>{ if(e.origin!==location.origin||!e.data||e.data.type!=='core-summary') return; done(e.data.m,e.data.err); });
+  setTimeout(()=>done(null,'timeout'),20000);
+  document.body.appendChild(f);   // 지우지 않는다 — core 가 못 보낸 기록·루프 세트를 서버로 보내는 중일 수 있다
+}
+function drawCore(){
+  const t=$('core-today'), r=$('core-rec'), m=CORE.m;
+  const bd=document.querySelector('[data-bdg="오늘"]');
+  if(!m){ if(t) t.innerHTML=CORE.fallback; if(r) r.innerHTML=''; if(bd) bd.classList.remove('on'); return; }
+  const go=g=>CORE.url+'?t='+encodeURIComponent(CORE.tok)+'&go='+encodeURIComponent(g);
+  const btn=(b,g)=>b.can?`<a class="cgo act" href="${E(go(g))}"><b>${b.title}</b><span>${b.sub}</span><em>${b.tap}</em></a>`
+    :`<div class="cgo ${b.cls==='done'?'done':'s'}"><b>${b.title}</b><span>${b.sub}</span>${b.tap?`<em>${b.tap}</em>`:''}</div>`;
+  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프');
+  const n=(m.review.can?1:0)+(m.loop.can?1:0);
+  if(bd){ bd.textContent=String(n); bd.classList.toggle('on',n>0); }
+  if(r){ r.innerHTML=coreRecHTML(m); wireCoreRec(r); }
+}
+function coreRecHTML(m){
+  const H=[], c=m.calib||{};
+  if(c.n>=10){
+    const col=c.pct>=90?'#8fe0b0':c.pct>=75?'#f0d58a':'#ff8fa8';
+    const ws=Object.keys(CAL_W).filter(k=>(c.why||{})[k]).map(k=>`${CAL_W[k]} ${c.why[k]}`).join(' · ');
+    H.push(`<h2>확신 정확도<small>'확실해요'라고 한 답 중 맞힌 비율 · 최근 7일</small></h2>`
+      +`<div class="card fx-cal"><div class="c1"><b style="color:${col}">${c.pct}<small>%</small></b>`
+      +(c.prev==null?'':`<em class="${c.pct>=c.prev?'up':'dn'}">지난주보다 ${c.pct>=c.prev?'▲':'▼'} ${Math.abs(c.pct-c.prev)}</em>`)+`</div>`
+      +`<div class="c2">확실하다고 한 ${c.n}개 중 <b>${c.x}개</b>가 틀렸어요${ws?` — ${E(ws)}`:''}</div>`
+      +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`);
+  }
+  // 기말 모드면 기말 진도 단원만(코드가 하나도 안 맞으면 전부)
+  let U=m.units||[];
+  if(CORE.final){ const codes=new Set(CORE.final.진도.map(u=>u.core).filter(Boolean)); const f=U.filter(u=>codes.has(u.code)); if(f.length) U=f; }
+  const weak=[];
+  const rows=U.map((u,i)=>{
+    const cells=[]; u.concepts.forEach(c=>{ cells.push({st:c.st,t:c.title}); c.themes.forEach(t=>cells.push({st:t.st,t:t.name})); });
+    const k=cells.length||1, cnt={grad:0,one:0,fail:0,lock:0}; cells.forEach(x=>{ if(cnt[x.st]!=null) cnt[x.st]++; if(x.st==='fail') weak.push(x.t); });
+    const w=x=>(x/k*100).toFixed(1)+'%', allLock=cnt.lock===cells.length;
+    const nm=String(u.name||'').replace(/\(.*\)/,'').trim();
+    return `<div class="cu${CORE.openU[i]?' open':''}" data-cu="${i}"><button type="button" class="fx-un cuh"><span class="u">${E(nm)}</span>`
+      +`<div class="fx-bar"><i class="g" style="width:${w(cnt.grad)}"></i><i class="o" style="width:${w(cnt.one)}"></i><i class="r" style="width:${w(cnt.fail)}"></i></div>`
+      +`<span class="p">${allLock?'수업 후':Math.round(cnt.grad/k*100)+'%'}</span><span class="cv">⌄</span></button>`
+      +`<div class="cub">${u.concepts.map(c=>`<div class="cp"><div class="ch1"><span class="chip ${c.st}">개념 ${E(c.no)}</span>`
+        +`<span class="nm">${E(c.title)}${c.od?`<small>${+String(c.od).slice(5,7)}/${+String(c.od).slice(8,10)} 수업 뒤 열림</small>`:''}</span></div>`
+        +`<div class="chips">${c.themes.map(t=>`<span class="chip ${t.st}">${E(t.no)} ${E(t.name)}</span>`).join('')}</div></div>`).join('')}</div></div>`;
+  });
+  const L=m.labels||{};
+  H.push(`<h2>${CORE.final?'내 기말 준비도':'개념·유형 지도'}<small>졸업 ${m.grad}/${m.tot} · 열림 ${m.open}</small></h2>`
+    +`<div class="card" id="core-map">`+rows.join('')
+    +`<div class="fx-lg"><i style="background:var(--fx-g)"></i>졸업<i style="background:var(--fx-o)"></i>1회 통과<i style="background:var(--fx-r)"></i>다시</div>`
+    +(weak.length?`<div class="fx-weak">먼저 잡을 것 ${weak.slice(0,3).map(x=>`<b>${E(x)}</b>`).join(' · ')}</div>`:'')
+    +`<div class="note">단원을 누르면 개념·유형 칸이 보여요. 졸업 = 서로 다른 날 두 번 이상 확실하게 맞힌 개념·유형이에요.</div>`
+    +`<div class="legend">${['lock','new','fail','one','grad'].map(s=>`<span class="chip ${s}">${E(L[s]||s)}</span>`).join('')}</div>`
+    +`</div>`
+    +`<button type="button" class="fx-fold" data-crule="1"><span>CORE 루프 규칙</span><i>펼치기 ⌄</i></button><div class="fx-fb" id="core-rule"><div class="card crule">${m.guide||''}</div></div>`);
+  return H.join('');
+}
+function wireCoreRec(r){
+  r.querySelectorAll('[data-cu]').forEach(x=>x.querySelector('.cuh').onclick=()=>{ const i=x.dataset.cu, o=!x.classList.contains('open'); x.classList.toggle('open',o); CORE.openU[i]=o; });
+  const b=r.querySelector('[data-crule]'); if(b) b.onclick=()=>{ const box=$('core-rule'), o=!box.classList.contains('open'); box.classList.toggle('open',o); b.querySelector('i').textContent=o?'접기 ⌃':'펼치기 ⌄'; };
 }
 function mockCard(c,G,today){
   const R=G.회차||[];
@@ -1092,25 +1208,20 @@ function foldBtn(id,label){
 function renderFinal(d,parts){
   const ban=String(d.학생.반||'').trim(), c=finalCfg(ban), today=todayOf(d);
   const tok=QP.get('t')||d.토큰||'';
-  const H=[];
-  H.push(parts.head);
-  H.push(heroCard(d,c,today));
-  H.push(parts.clinic);
-  const todo=[parts.diag,parts.eval,parts.core].filter(Boolean);
-  H.push(`<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
-    +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`
-    +`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div>`);   // (1102) 내 질문 모음
-  H.push(readyCardShell(c));
+  const S={오늘:[],과제:[],기록:[],자료:[]};
+  const todo=[parts.diag,parts.eval,parts.core?CORE_TODAY:''].filter(Boolean);
+  S.오늘.push(heroCard(d,c,today), parts.qk,
+    `<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
+    +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div>`,
+    `<div id="today-hw"></div>`);
+  S.과제.push(TASK_TAB);
   const G=finalGichul(d.기출,c.시작);
-  H.push(`<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''));
-  H.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`);
-  H.push(`<h2>지난 기록</h2>`
-    +foldBtn('fx-old-pr','지난 기출테스트 기록')
-    +foldBtn('fx-old-lib','지난 수업 자료')
-    +(parts.tower?foldBtn('fx-old-tw','개념의 탑'):''));
-  H.push(parts.report);
-  H.push(parts.foot);
-  $('app').innerHTML=H.join('');
+  S.기록.push(parts.core?`<div id="core-rec"></div>`:'', `<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''),
+    `<h2>지난 기록</h2>`+foldBtn('fx-old-pr','지난 기출테스트 기록'));
+  S.자료.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`,
+    foldBtn('fx-old-lib','지난 수업 자료'), parts.report);
+  $('app').innerHTML=parts.head+tabsHTML(S)+parts.foot;
+  wireTabs();
   // 접힘 — <details> 는 폰에서 안 눌린 적이 있다(0926) → 버튼 + 클래스
   const filled={};
   $('app').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
@@ -1123,10 +1234,8 @@ function renderFinal(d,parts){
     }
   });
   if(G.회차.length){ try{ PR.mount($('fx-pr'),{...d,기출:G},{staff:false}); }catch(e){} }
-  mountReady(c,tok,today);
-  mountHW(tok);
-  mountFix(tok);
-  mountMyQ(tok);
+  if(parts.core) mountCore(tok,parts.core,c);
+  mountTasks(tok);
   return {from:c.시작};
 }
 
@@ -1621,6 +1730,9 @@ function ansWatch(host){
   }),{threshold:[0,0.5]});
   imgs.forEach(i=>io.observe(i));
 }
+/* (1110) draw 뒤 탭 뱃지 갱신 — 그리기 함수 본문은 손대지 않는다 */
+{ const w=f=>function(){ const r=f.apply(this,arguments); try{ tabSync(); }catch(e){} return r; };
+  drawHW=w(drawHW); drawFix=w(drawFix); drawMyQ=w(drawMyQ); }
 function alertHW(m){ const h=$('hw-host'); if(!h) return; let d=h.querySelector('.hwerr'); if(!d){ d=document.createElement('div'); d.className='bad hwerr'; h.prepend(d); } d.textContent=m||'저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; }
 
 
