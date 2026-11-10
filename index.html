@@ -6520,7 +6520,7 @@ function hbDraw() {
  * 상태 규칙은 학생 페이지 keyState 와 같다: 성공 = 정답+확실, 마지막 실패 뒤만, 그날 같은 문항 첫 시도만, 성공일 1 → 1회, 3일 이상 떨어진 두 성공일 → 졸업.
  */
 const CO_SETS = { core_m2: '고1 · 공통수학2 (07 명제~)', core_c1: '고2 · 미적분Ⅰ (05~)' };
-let CO = { view: 'live', bq: '', bk: '*', rows: null, bank: null, set: 'core_m2', ban: '*', day: '', dayPick: false, auto: true, timer: null, open: null, loadedAt: null };
+let CO = { view: 'sum', sum: null, bq: '', bk: '*', rows: null, bank: null, set: 'core_m2', ban: '*', day: '', dayPick: false, auto: true, timer: null, open: null, loadedAt: null };
 
 function viewCore(st) {
   CO.stu = (st.students || []).map(s => ({ sid: s.sid, name: s.name, ban: String(s.ban || '').trim() }));
@@ -6589,7 +6589,7 @@ async function coLoad(force) {
 }
 function coTick() {
   clearTimeout(CO.timer);
-  if (!CO.auto || CO.view === 'bank' || (CO.dayPick && CO.day !== coToday())) return;
+  if (!CO.auto || CO.view === 'bank' || CO.view === 'sum' || (CO.dayPick && CO.day !== coToday())) return;
   CO.timer = setTimeout(() => { if (document.getElementById('v-core')?.classList.contains('on')) coLoad(true); }, 15000);
 }
 
@@ -6619,6 +6619,7 @@ function coDraw() {
   const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
   if (CO.view === 'bank') return coDrawBank();
   if (CO.view === 'why') return coDrawWhy();
+  if (CO.view === 'sum') return coDrawSum();
   const R = CO.rows || [], B = CO.bank, T = coToday();
   const bans = [...new Set(R.map(r => r.반).concat(CO.stu.filter(s => s.ban.startsWith(CO_SETS[CO.set].slice(0, 2))).map(s => s.ban)))].filter(Boolean).sort();
   const days = [...new Set(R.map(r => r.d))].sort().reverse(); if (!days.includes(T)) days.unshift(T);
@@ -6697,9 +6698,139 @@ function coDraw() {
   body.querySelectorAll('tr[data-ci]').forEach(tr => tr.onclick = () => { const r = dayR.find(x => x.문항ID === tr.dataset.ci); if (r) coOpen(r, null, dayR.filter(x => x.문항ID === tr.dataset.ci)); });
 }
 
+/* ───────── (1110 유강 "학생별로 현재까지 푼 루프 문항수와 통과, 반별 평균 루프 … 의미있는 데이터로 재구성") ─────────
+ * 학생·반 요약 = 이 탭의 첫 화면.
+ *  · 누적 루프 = 모드 '루프' 로 푼 문항 수(시도 수 아님, 같은 날 같은 문항은 1번) · 최근 7일
+ *  · 회차별 루프 이행 = console_hw_rate(반, 수업일).루프 [푼, 낸] — 리포트·콘솔 '과제 이행'의 루프 칸과 같은 숫자
+ *    (회차 = 그 수업 전까지의 루프, 수업일 = class_log 날짜 + 다음 수업). 고1T 일요일처럼 루프를 안 세는 회차는 —
+ *  · 통과(졸업) / 1회 / 다시 = 학생 화면 칸 상태와 같은 규칙(coState). 본 칸 = 한 번이라도 푼 칸, 전체 = 이 세트 칸 수
+ *  · 확실 정답률 = 최근 7일 루프에서 '확실'로 답해 맞힌 비율
+ */
+async function coSumRounds() {
+  const pre = CO.set === 'core_c1' ? '고2' : '고1', T = coToday();
+  const [cl, tt] = await Promise.all([sb.from('class_log').select('반,날짜').gte('날짜', '2026-10-19').lte('날짜', T),
+    sb.from('timetable').select('반,요일,시작')]);
+  const bans = [...new Set((tt.data || []).map(r => r.반).filter(b => b && b.startsWith(pre) && !b.startsWith('고3')))];
+  const W = ['일', '월', '화', '수', '목', '금', '토'], nowHM = coKST(Date.now()).slice(11, 16);
+  const R = {};
+  await Promise.all(bans.map(async b => {
+    const past = [...new Set((cl.data || []).filter(r => r.반 === b).map(r => r.날짜))].sort().slice(-6);
+    let next = null;   // 다음 수업(오늘 수업이 아직 안 끝났으면 오늘) = 이번 회차
+    for (let i = 0; i < 8 && !next; i++) {
+      const d = new Date(Date.parse(T + 'T00:00:00Z') + i * 864e5).toISOString().slice(0, 10), w = W[new Date(d + 'T00:00:00Z').getUTCDay()];
+      const row = (tt.data || []).find(r => r.반 === b && r.요일 === w && /^\d/.test(String(r.시작 || '').trim()));
+      if (row && !past.includes(d)) next = d;
+    }
+    const days = past.concat(next ? [next] : []);
+    const res = await Promise.all(days.map(d => sb.rpc('console_hw_rate', { p_cls: b, p_day: d }).then(r => [d, r.data]).catch(() => [d, null])));
+    R[b] = { days, next, res: res.map(([d, x]) => ({ d, now: d === next, map: Object.fromEntries(((x && x.학생) || []).map(s => [s.학생ID, s.루프 || null])) })) };
+  }));
+  return R;
+}
+async function coDrawSum() {
+  const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
+  const R = CO.rows || [], B = CO.bank, T = coToday();
+  const pre = CO.set === 'core_c1' ? '고2' : '고1';
+  const roster = CO.stu.filter(s => s.ban.startsWith(pre) && !s.ban.startsWith('고3'));
+  const bans = [...new Set(roster.map(s => s.ban))].sort();
+  bar.innerHTML = coViewBtns() + Object.keys(CO_SETS).map(k => `<button class="chip${CO.set === k ? ' on' : ''}" data-cs="${k}">${E(CO_SETS[k])}</button>`).join('')
+    + '<span class="sep">│</span>' + ['*', ...bans].map(b => `<button class="chip${CO.ban === b ? ' on' : ''}" data-cb="${E(b)}">${b === '*' ? '반 전체' : E(b)}</button>`).join('')
+    + `<span class="sep">│</span><button class="chip" id="co-re">새로고침</button><span class="dim co-at">${CO.loadedAt ? coHM(CO.loadedAt) + ' 기준' : ''}</span>`;
+  bar.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { CO.set = b.dataset.cs; CO.ban = '*'; CO.rows = null; CO.sum = null; coLoad(); });
+  coViewWire(bar);
+  bar.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => { CO.ban = b.dataset.cb; coDrawSum(); });
+  $('co-re').onclick = () => { CO.sum = null; coLoad(true); };
+  if (!CO.sum || CO.sum.set !== CO.set) {
+    body.innerHTML = CO_CSS + '<div class="dim">회차별 루프 이행을 계산하는 중… (반마다 최근 6회 + 이번 회차)</div>';
+    try { CO.sum = { set: CO.set, r: await coSumRounds() }; } catch (e) { CO.sum = { set: CO.set, r: {}, err: String(e && e.message || e) }; }
+    if (CO.view !== 'sum') return;
+  }
+  const RD = CO.sum.r;
+  // 키 목록(세트 전체 칸)
+  const keys = []; if (B && B.sets[CO.set]) B.sets[CO.set].units.forEach(U => U.concepts.forEach(c => { keys.push(c.key); c.themes.forEach(th => keys.push(th.key)); }));
+  const d7 = new Date(Date.parse(T + 'T00:00:00Z') - 6 * 864e5).toISOString().slice(0, 10);
+  const byS = {}; R.forEach(r => (byS[r.학생ID] = byS[r.학생ID] || []).push(r));
+  const keyAgg = {};   // 칸별 — 어려운 칸
+  const stu = roster.map(s => {
+    const rs = byS[s.sid] || [], lp = rs.filter(r => r.모드 === '루프');
+    const uniq = new Set(lp.map(r => r.d + '|' + r.문항ID)), u7 = new Set(lp.filter(r => r.d >= d7).map(r => r.d + '|' + r.문항ID));
+    const l7 = lp.filter(r => r.d >= d7), sure = l7.length ? Math.round(l7.filter(r => r.정오 && r.확신 === '확실').length / l7.length * 100) : null;
+    const bk = {}; rs.forEach(r => (bk[r.키] = bk[r.키] || []).push(r));
+    const st = { grad: 0, one: 0, fail: 0, try: 0 }; Object.keys(bk).forEach(k => { const x = coState(bk[k]).st; st[x] = (st[x] || 0) + 1;
+      const a = keyAgg[k] = keyAgg[k] || { n: 0, grad: 0, fail: 0 }; if (s.ban === CO.ban || CO.ban === '*') { a.n++; if (x === 'grad') a.grad++; if (x === 'fail') a.fail++; } });
+    const rd = RD[s.ban] || { res: [] };
+    const cells = rd.res.map(x => { const v = x.map[s.sid]; return { d: x.d, now: x.now, v: Array.isArray(v) && v[1] > 0 ? v : null }; });
+    const done = cells.filter(c => !c.now && c.v), avg = done.length ? Math.round(done.reduce((a, c) => a + Math.min(1, c.v[0] / c.v[1]), 0) / done.length * 100) : null;
+    const cur = cells.find(c => c.now);
+    const last = lp.length ? lp[lp.length - 1].시각 : null;
+    return { ...s, tot: uniq.size, w7: u7.size, sure, seen: Object.keys(bk).length, ...st, cells, avg, cur: cur && cur.v, last };
+  });
+  const view = stu.filter(x => CO.ban === '*' || x.ban === CO.ban);
+  const mean = (a, f) => { const v = a.map(f).filter(x => x != null); return v.length ? v.reduce((p, c) => p + c, 0) / v.length : null; };
+  const fmt = (v, u = '') => v == null ? '—' : Math.round(v) + u;
+  const curDone = x => x.cur && x.cur[0] >= x.cur[1];
+  const H = [CO_CSS, CO_SUM_CSS];
+  if (CO.sum.err) H.push(`<div class="card dim" style="padding:10px 14px;margin-bottom:10px">회차별 이행을 못 불러왔어요: ${E(CO.sum.err)}</div>`);
+  H.push(`<div class="co-kpi">
+<div><div class="k">학생</div><div class="v">${view.length}<small>명</small></div><div class="s">${CO.ban === '*' ? bans.join(' · ') : E(CO.ban)}</div></div>
+<div><div class="k">누적 루프 (평균)</div><div class="v">${fmt(mean(view, x => x.tot))}<small>문항/인</small></div><div class="s">최근 7일 평균 ${fmt(mean(view, x => x.w7))}문항</div></div>
+<div><div class="k">회차 루프 이행 (평균)</div><div class="v">${fmt(mean(view, x => x.avg))}<small>%</small></div><div class="s">지난 회차들 · 리포트 루프 칸과 같은 계산</div></div>
+<div><div class="k">통과(졸업) 칸 (평균)</div><div class="v">${fmt(mean(view, x => x.grad))}<small>/ ${keys.length || '—'}칸</small></div><div class="s">1회 성공 ${fmt(mean(view, x => x.one))} · 다시 ${fmt(mean(view, x => x.fail))}</div></div>
+<div><div class="k">이번 회차 루프 완료</div><div class="v">${view.filter(curDone).length}<small>/ ${view.filter(x => x.cur).length}명</small></div><div class="s">다음 수업 전 마감분</div></div>
+</div>`);
+  if (CO.ban === '*') {
+    H.push(`<h3 class="co-h">반별</h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th>반</th><th>학생</th><th>누적 루프 평균</th><th>최근 7일 평균</th><th>회차 이행 평균</th><th>통과 칸 평균</th><th>다시 칸 평균</th><th>이번 회차 완료</th></tr></thead><tbody>`
+      + bans.map(b => { const a = stu.filter(x => x.ban === b), m = mean(a, x => x.avg);
+        return `<tr data-cbr="${E(b)}" style="cursor:pointer"><td><b>${E(b)}</b></td><td data-v="${a.length}">${a.length}</td><td data-v="${mean(a, x => x.tot) || 0}">${fmt(mean(a, x => x.tot))}</td><td data-v="${mean(a, x => x.w7) || 0}">${fmt(mean(a, x => x.w7))}</td>`
+          + `<td data-v="${m == null ? -1 : m}"><b class="${m != null && m < 60 ? 'bad' : ''}">${fmt(m, '%')}</b></td><td data-v="${mean(a, x => x.grad) || 0}">${fmt(mean(a, x => x.grad))}</td><td data-v="${mean(a, x => x.fail) || 0}">${fmt(mean(a, x => x.fail))}</td>`
+          + `<td data-v="${a.filter(curDone).length}">${a.filter(curDone).length} / ${a.filter(x => x.cur).length}</td></tr>`; }).join('') + '</tbody></table></div>');
+  }
+  const heads = CO.ban !== '*' && RD[CO.ban] ? RD[CO.ban].res.map(x => `<th class="rd" title="${x.now ? '이번 회차(다음 수업 전 마감)' : x.d + ' 수업 전까지'}">${x.now ? '이번' : x.d.slice(5).replace('-', '/')}</th>`).join('') : '<th>회차별 이행 (최근 → 오른쪽)</th>';
+  const cellH = c => { if (!c.v) return `<td class="rd"><span class="dim">—</span></td>`; const p = Math.min(100, Math.round(c.v[0] / c.v[1] * 100));
+    return `<td class="rd" data-v="${p}" title="${c.v[0]}/${c.v[1]}문항"><span class="rc ${c.now ? 'now' : p >= 100 ? 'ok' : p >= 50 ? 'mid' : 'bad'}">${p}</span></td>`; };
+  H.push(`<h3 class="co-h">학생별 <span class="dim" style="font-size:12px;font-weight:400">— 머리글을 누르면 정렬 · 이름을 누르면 칸 지도</span></h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th class="fz">이름</th>${CO.ban === '*' ? '<th>반</th>' : ''}<th>누적 루프</th><th>최근 7일</th>${heads}<th>회차 평균</th><th>통과</th><th>1회</th><th>다시</th><th>본 칸</th><th>확실 정답률(7일)</th><th>마지막 루프</th></tr></thead><tbody>`
+    + view.sort((a, b) => (a.ban + a.name).localeCompare(b.ban + b.name, 'ko')).map(x => `<tr><td class="fz"><a class="nm" data-csu="${E(x.sid)}">${E(x.name)}</a></td>${CO.ban === '*' ? `<td>${E(x.ban)}</td>` : ''}`
+      + `<td data-v="${x.tot}"><b>${x.tot}</b></td><td data-v="${x.w7}">${x.w7}</td>`
+      + (CO.ban === '*' ? `<td class="rds">${x.cells.map(c => cellH(c).replace(/^<td[^>]*>|<\/td>$/g, '')).join('')}</td>` : x.cells.map(cellH).join(''))
+      + `<td data-v="${x.avg == null ? -1 : x.avg}"><b class="${x.avg != null && x.avg < 60 ? 'bad' : ''}">${fmt(x.avg, '%')}</b></td>`
+      + `<td data-v="${x.grad}"><b style="color:var(--ok)">${x.grad}</b></td><td data-v="${x.one}">${x.one}</td><td data-v="${x.fail}"><span class="${x.fail ? 'bad' : ''}">${x.fail}</span></td><td data-v="${x.seen}">${x.seen}${keys.length ? `<span class="dim">/${keys.length}</span>` : ''}</td>`
+      + `<td data-v="${x.sure == null ? -1 : x.sure}">${fmt(x.sure, '%')}</td><td data-sv="${x.last || ''}">${x.last ? (coKST(x.last).slice(0, 10) === T ? '오늘 ' + coHM(x.last) : coKST(x.last).slice(5, 10).replace('-', '/')) : '<span class="dim">없음</span>'}</td></tr>`).join('')
+    + '</tbody></table></div>');
+  // 어려운 칸
+  const hard = Object.entries(keyAgg).filter(([, a]) => a.n >= 3).map(([k, a]) => ({ k, ...a, g: a.grad / a.n })).sort((a, b) => b.fail / b.n - a.fail / a.n || a.g - b.g).slice(0, 12);
+  H.push(`<h3 class="co-h">막히는 칸 — '다시' 비율 높은 순 <span class="dim" style="font-size:12px;font-weight:400">(푼 학생 3명 이상)</span></h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th>칸</th><th>푼 학생</th><th>통과</th><th>다시</th></tr></thead><tbody>`
+    + (hard.length ? hard.map(h => `<tr><td>${E((B && B.title[h.k]) || h.k)} <span class="dim">${E(h.k)}</span></td><td data-v="${h.n}">${h.n}</td><td data-v="${h.g}">${Math.round(h.g * 100)}%</td><td data-v="${h.fail / h.n}"><b class="${h.fail / h.n >= .4 ? 'bad' : ''}">${h.fail}명 · ${Math.round(h.fail / h.n * 100)}%</b></td></tr>`).join('') : '<tr><td colspan="4" class="dim">아직 데이터가 부족해요.</td></tr>')
+    + '</tbody></table></div>');
+  H.push(`<p class="co-sub" style="margin-top:10px">용어 — <b>누적 루프</b>: 루프로 푼 문항 수(같은 날 같은 문항은 1번). <b>회차 이행</b>: 그 수업 전까지 낸 루프 중 푼 비율(리포트·콘솔과 같은 계산, — = 그 회차는 루프를 안 셈). <b>통과</b>: 성공일 2번(3일 이상 간격) = 졸업한 칸. <b>1회</b>: 한 번 성공. <b>다시</b>: 마지막 시도가 실패라 다시 와야 하는 칸. <b>확실 정답률</b>: '확실'로 답하고 맞힌 비율.</p>`);
+  $('co-cnt').textContent = `${view.length}명`;
+  body.innerHTML = H.join('');
+  body.querySelectorAll('[data-cbr]').forEach(tr => tr.onclick = () => { CO.ban = tr.dataset.cbr; coDrawSum(); });
+  body.querySelectorAll('[data-csu]').forEach(a => a.onclick = () => coSumMap(a.dataset.csu, keys, byS));
+}
+function coSumMap(sid, keys, byS) {
+  const dr = $('co-dr'), B = CO.bank; if (!dr) return;
+  const s = CO.stu.find(x => x.sid === sid) || { name: sid, ban: '' }, rs = byS[sid] || [];
+  const bk = {}; rs.forEach(r => (bk[r.키] = bk[r.키] || []).push(r));
+  const units = B && B.sets[CO.set] ? B.sets[CO.set].units : [];
+  const cell = k => { const rr = bk[k]; if (!rr) return `<span class="ms none" title="${E((B && B.title[k]) || k)} · 아직 안 풂">${E(k.replace(/^[CT][a-z0-9]+-/, k[0]))}</span>`;
+    const st = coState(rr).st; return `<span class="ms ${st}" title="${E(((B && B.title[k]) || k) + ' · ' + CO_ST[st] + ' · 시도 ' + rr.length)}">${E(k.replace(/^[CT][a-z0-9]+-/, k[0]))}</span>`; };
+  dr.innerHTML = `<button class="co-close" id="co-drx">닫기</button><h4>${E(s.name)} <span class="dim">${E(s.ban)}</span></h4>`
+    + `<div class="meta">칸 상태 — <span class="ms grad">졸업</span> <span class="ms one">1회</span> <span class="ms fail">다시</span> <span class="ms try">하는 중</span> <span class="ms none">안 풂</span></div>`
+    + units.map(U => `<div class="co-un"><b>${E(U.name || U.code || '')}</b>${U.concepts.map(c => `<div class="co-cr">${cell(c.key)}<span class="dim co-ct">${E(c.title)}</span>${c.themes.map(th => cell(th.key)).join('')}</div>`).join('')}</div>`).join('');
+  dr.classList.add('on'); dr.setAttribute('aria-hidden', 'false');
+  $('co-drx').onclick = () => { dr.classList.remove('on'); dr.setAttribute('aria-hidden', 'true'); };
+}
+const CO_SUM_CSS = `<style>
+#v-core table.co-sum td,#v-core table.co-sum th{white-space:nowrap}
+#v-core .rc{display:inline-block;min-width:30px;text-align:center;border-radius:6px;padding:1px 4px;font-size:12px;font-weight:700}
+#v-core .rc.ok{background:rgba(80,200,120,.18);color:var(--ok)}#v-core .rc.mid{background:rgba(240,180,60,.18);color:#e0a83a}#v-core .rc.bad{background:rgba(240,90,90,.18);color:#f07070}#v-core .rc.now{border:1px dashed var(--dim);color:var(--tx2)}
+#v-core td.rds .rc{margin-right:3px}#v-core a.nm{cursor:pointer;text-decoration:underline dotted}
+#v-core .co-un{margin:10px 0}#v-core .co-cr{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin:3px 0}#v-core .co-ct{font-size:11.5px;margin:0 6px 0 2px}
+#v-core .ms.none{opacity:.35}
+</style>`;
 /* (1019) 문항 전체 보기 — 유강 "학생들이 눈으로 풀던데 문제가 어떤 문제인지 내가 볼 수 있게" */
 function coViewBtns() {
-  return `<span class="co-vw"><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">풀이 현황</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button><button class="chip${CO.view === 'why' ? ' on' : ''}" data-cv="why">확신·실수</button></span><span class="sep">│</span>`;
+  return `<span class="co-vw"><button class="chip${CO.view === 'sum' ? ' on' : ''}" data-cv="sum">학생·반 요약</button><button class="chip${CO.view === 'live' ? ' on' : ''}" data-cv="live">날짜별 풀이</button><button class="chip${CO.view === 'bank' ? ' on' : ''}" data-cv="bank">문항 전체</button><button class="chip${CO.view === 'why' ? ' on' : ''}" data-cv="why">확신·실수</button></span><span class="sep">│</span>`;
 }
 function coViewWire(bar) { bar.querySelectorAll('[data-cv]').forEach(b => b.onclick = () => { CO.view = b.dataset.cv; coDraw(); coTick(); }); }
 // 문항 원문의 <br> 는 학생 화면(T())처럼 줄바꿈으로, <b> 는 굵게 — 글자 그대로 찍히지 않게 (1019)
