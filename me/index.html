@@ -994,7 +994,7 @@ function partsOf(d){
       +`<a href="${E(L+'gorim2k-basic-2.html'+tq)}" target="_blank" rel="noopener">2차 프린트 기본판 · 적분<small>7문항 · 한 단계씩 따라 풀기</small></a></div>`;
   }
   P.qk=`<div class="qk">${qa(qk[0])}<a href="#" id="qk-pref" style="display:none">내 개별과제 설정<small id="qk-pref-s">불러오는 중…</small></a></div>`
-    +qkBasic+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
+    +qkBasic+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
   //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
   const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
@@ -1391,6 +1391,16 @@ async function mountLib(host,ban,school,opt){
       if(tk&&typeof sb!=='undefined'){ const q=await sb.rpc('portal_hw_files',{tok:tk}); if(!q.error&&Array.isArray(q.data)) LIB.mine=q.data; } }catch(_){}
   }catch(e){ host.innerHTML='<div class="none">자료 목록을 지금은 못 불러왔어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
   drawLib(host,host._opt);
+  drawRvQuick();
+}
+// (1110 유강 "포털에 넣자") 강의노트·복습 — '오늘' 바로가기 줄에 내 반 최근 2개
+function drawRvQuick(){
+  const el=document.getElementById('qk-rv'), D=LIB.data, ban=LIB.ban;
+  if(!el||!D||!ban) return;
+  const rs=(D.정규||[]).filter(r=>r.반===ban&&r.복습).sort((a,b)=>String(b.날짜).localeCompare(String(a.날짜))).slice(0,2);
+  if(!rs.length) return;
+  el.innerHTML=rs.map(r=>`<a href="${E(LIB_URL+r.복습)}" target="_blank" rel="noopener">📘 ${md(r.날짜)} 강의노트·복습<small>${E(String(r.제목||''))}</small></a>`).join('');
+  el.style.display='';
 }
 // (0928) 탭 없이 내 반 수업일 순 한 줄 목록: 날짜 · 수업 내용 · 시험지/손풀이/영상
 let VXN=0;
