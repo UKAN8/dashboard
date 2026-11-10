@@ -95,6 +95,13 @@ svg.spark{display:block;margin-top:6px}
 #rpt-form .acts button.go{background:var(--acc);color:#1a0d0d;border-color:var(--acc)}
 #rpt-form .acts button:disabled{opacity:.5;cursor:default}
 #rpt-msg{font-size:13px;margin-top:8px;min-height:1.2em}
+/* (1110) 수업 리포트 */
+.rpl1{display:flex;align-items:center;gap:10px;background:rgba(245,160,160,.07);border:1px solid rgba(245,160,160,.5);border-radius:15px;padding:13px 16px;margin-bottom:10px}
+.rpl1 span{flex:1;min-width:0}.rpl1 small{display:block;color:var(--dim);font-size:11.5px}.rpl1 b{font-size:16px}
+.rpl1 b+.dim{font-size:13px}
+.rpls .rp a small{color:var(--dim);font-size:11px;margin-left:3px}
+.rpl1 em{font-style:normal;font-weight:800;color:var(--acc);white-space:nowrap}
+#rp-list .xtra{display:none}#rp-list.showall .xtra{display:inline-block}
 .rpt-item{padding:9px 0;border-bottom:1px solid var(--bd);font-size:13px}
 .rpt-item:last-child{border-bottom:none}
 .rpt-item .hd{display:flex;justify-content:space-between;gap:8px;color:var(--dim);font-size:11.5px}
@@ -913,6 +920,15 @@ function partsOf(d){
   const qk=[[`https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
   if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
   P.qk=`<div class="qk">${qk.map(([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`).join('')}</div>`;
+  // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
+  //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
+  const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
+  const rpD=x=>{ const t=String(x).slice(0,10), [y,m,dd]=t.split('-').map(Number); return `${m}/${dd}(${'일월화수목금토'[new Date(y,m-1,dd).getDay()]})`; };
+  P.reports=`<h2>수업 리포트<small>수업 다음 날 올라와요</small></h2>`
+    +(RP.length?`<a class="rpl1" href="${E(RP[0].url)}" target="_blank" rel="noopener"><span><small>가장 최근</small><b>${rpD(RP[0].날짜)} 수업 리포트</b></span><em>열기 →</em></a>`
+      +(RP.length>1?`<div class="card rpls"><div class="rp" id="rp-list">${RP.slice(1).map((r,i)=>`<a href="${E(r.url)}" target="_blank" rel="noopener"${i>=8?' class="xtra"':''}>${rpD(r.날짜)}</a>`).join('')}</div>`
+        +(RP.length>9?`<button type="button" class="tmbtn" id="rp-more">지난 리포트 ${RP.length-9}개 더 보기</button>`:'')+`</div>`:'')
+      :`<div class="none">아직 올라온 수업 리포트가 없어요. 수업 다음 날부터 여기에 쌓여요.</div>`);
   // ② 오류 신고 (0913) — 저장·조회 모두 portal_report(tok, p) 하나로(표를 직접 읽지 않는다). 밤마다 처리하고 답을 단다.
   P.report=`<h2>오류 신고</h2>`
     +`<div class="card" id="rpt-card">`
@@ -983,6 +999,7 @@ function tabSync(){
   });
 }
 function mountTasks(tok){
+  mountWeekly(tok);
   Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(tabSync);
 }
 const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
@@ -1009,11 +1026,11 @@ function render(d){
   S.오늘.push(P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
-  S.기록.push(P.core?`<div id="core-rec"></div>`:'', `<h2>기출테스트</h2><div id="pr-host"></div>`,`<div class="note">다른 기록(루프·리포트·유형맵)은 정비 중이라 잠시 숨겨 두었습니다.</div>`);
+  S.기록.push(P.reports, `<div id="wk-host"></div>`, P.core?`<div id="core-rec"></div>`:'', `<h2>기출테스트</h2><div id="pr-host"></div>`);
   // ③ 수업 자료 (0927) — 정적 목록(mathis-lib/lib.json)을 읽는다. 내 반 것만, 수업일 순 한 목록(유강 0928).
   S.자료.push(`<h2>수업 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`, P.report);
   $('app').innerHTML=P.head+tabsHTML(S)+P.foot;
-  wireTabs();
+  wireTabs(); wireReports();
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
   mountTasks(tok);
@@ -1216,12 +1233,12 @@ function renderFinal(d,parts){
     `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   const G=finalGichul(d.기출,c.시작);
-  S.기록.push(parts.core?`<div id="core-rec"></div>`:'', `<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''),
+  S.기록.push(parts.reports, `<div id="wk-host"></div>`, parts.core?`<div id="core-rec"></div>`:'', `<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''),
     `<h2>지난 기록</h2>`+foldBtn('fx-old-pr','지난 기출테스트 기록'));
   S.자료.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`,
     foldBtn('fx-old-lib','지난 수업 자료'), parts.report);
   $('app').innerHTML=parts.head+tabsHTML(S)+parts.foot;
-  wireTabs();
+  wireTabs(); wireReports();
   // 접힘 — <details> 는 폰에서 안 눌린 적이 있다(0926) → 버튼 + 클래스
   const filled={};
   $('app').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
@@ -1730,6 +1747,20 @@ function ansWatch(host){
   }),{threshold:[0,0.5]});
   imgs.forEach(i=>io.observe(i));
 }
+/* (1110 유강 "주간리포트도 포털에") 주간고사 리포트 — 클리닉 예약 시스템이 보낸 리포트를 portal_weekly(schema_v69)로.
+ *  함수가 아직 없거나 실패하면 칸을 그리지 않는다. */
+async function mountWeekly(tok){
+  const host=$('wk-host'); if(!host||!tok) return;
+  let L=null; try{ const r=await sb.rpc('portal_weekly',{tok}); if(!r.error&&Array.isArray(r.data)) L=r.data; }catch(e){}
+  if(!L){ host.innerHTML=''; return; }
+  const wl=x=>{ const [y,m,d]=String(x).slice(0,10).split('-').map(Number); return `${m}/${d}주`; };
+  const tag=r=>r.점수?`<small>${E(r.점수)}</small>`:'';
+  host.innerHTML=`<h2>주간고사 리포트<small>주말 주간고사 결과 · 오답 루프</small></h2>`
+    +(L.length?`<a class="rpl1" href="${E(L[0].url)}" target="_blank" rel="noopener"><span><small>가장 최근</small><b>${wl(L[0].주차)} 주간고사 리포트</b>${L[0].점수?` <span class="dim">· ${E(L[0].점수)}</span>`:''}</span><em>열기 →</em></a>`
+      +(L.length>1?`<div class="card rpls"><div class="rp">${L.slice(1).map(r=>`<a href="${E(r.url)}" target="_blank" rel="noopener">${wl(r.주차)} ${tag(r)}</a>`).join('')}</div></div>`:'')
+      :`<div class="none">아직 받은 주간고사 리포트가 없어요. 주간고사를 본 주 주말에 올라와요.</div>`);
+}
+function wireReports(){ const b=$('rp-more'); if(b) b.onclick=()=>{ $('rp-list').classList.add('showall'); b.remove(); }; }
 /* (1110) draw 뒤 탭 뱃지 갱신 — 그리기 함수 본문은 손대지 않는다 */
 { const w=f=>function(){ const r=f.apply(this,arguments); try{ tabSync(); }catch(e){} return r; };
   drawHW=w(drawHW); drawFix=w(drawFix); drawMyQ=w(drawMyQ); }
