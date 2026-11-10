@@ -485,6 +485,8 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 .bc .bs{position:relative;flex:1;background:var(--raised);border-radius:6px;overflow:hidden}
 .bc .bs.av{flex:0 0 7px;border-radius:4px}
 .bc .bs.av i{position:absolute;left:0;right:0;bottom:0;background:rgba(237,237,237,.32);border-radius:4px 4px 0 0}
+.trh .mn{display:block;margin-top:4px;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.trh .mn b{color:var(--tx2);font-weight:500}
 .bc .bavg{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:-2px}
 .ba-l{display:inline-block!important;width:7px!important;height:12px;border:0!important;border-radius:3px;background:rgba(237,237,237,.32)}
 
@@ -2022,6 +2024,10 @@ async function mountTrend(tok,RP){
     return `<div class="bars">${P.map(([d,v])=>{ const h=Math.max(3,Math.round(100*Math.min(v,max)/max)), a=avg&&avg[d]!=null?Math.round(100*Math.min(avg[d],max)/max):null, u=link&&link(d);
       return `<${u?`a href="${E(u)}" target="_blank" rel="noopener"`:'div'} class="bc"><b class="bn">${fmt(v)}</b><span class="bt"><span class="bs"><i class="bv" style="height:${h}%"></i></span>${a!=null?`<span class="bs av"><i style="height:${Math.max(3,a)}%"></i></span>`:''}</span><span class="bl">${lab?lab(d):md(d)}</span>${a!=null?`<span class="bavg">반 ${fmt(avg[d])}</span>`:''}</${u?'a':'div'}>`; }).join('')}</div>`; };
   const card=(title,sub,big,unit,body,foot)=>`<div class="card tr"><div class="trh"><span><b>${title}</b><small>${sub}</small></span>${big!=null?`<strong>${big}<small>${unit||''}</small></strong>`:''}</div>${body}${foot?`<div class="trf">${foot}</div>`:''}</div>`;
+  // (1110 유강 "평균점수도") 기간 평균 — 내 평균 · 반 평균(같은 날들만)
+  const mean=(pts,avg,fmt)=>{ const P=pts.slice(-8); if(!P.length) return ''; const me=P.reduce((t,x)=>t+Number(x[1]),0)/P.length;
+    const A=avg?P.filter(x=>avg[x[0]]!=null).map(x=>Number(avg[x[0]])):[]; const cl=A.length?A.reduce((t,v)=>t+v,0)/A.length:null;
+    return `<span class="mn">내 평균 <b>${fmt(me)}</b>${cl!=null?` · 반 평균 <b>${fmt(cl)}</b>`:''}</span>`; };
   const H=[];
   const rt=(T&&T.rt)||[], ht=(T&&T.ht)||[], att=(T&&T.att)||[];
   // 출결
@@ -2031,12 +2037,12 @@ async function mountTrend(tok,RP){
       `<div class="att">${att.slice(-12).map(([d,a])=>`<span class="ad ${k(a)}" title="${E(a)}"><i></i><small>${md(d)}</small></span>`).join('')}</div>`));
   }
   if(rt.length){ const L=rt[rt.length-1][1];
-    H.push(card('리뷰테스트','10점 만점',Number(L).toFixed(1),'점',bars(rt,10,v=>Number(v).toFixed(1),T.rt_avg,d=>rp[d]),T.rt_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
+    H.push(card('리뷰테스트','10점 만점'+mean(rt,T.rt_avg,v=>v.toFixed(1)),Number(L).toFixed(1),'점',bars(rt,10,v=>Number(v).toFixed(1),T.rt_avg,d=>rp[d]),T.rt_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
   if(ht.length){ const L=ht[ht.length-1][1];
-    H.push(card('과제 이행률','써킷 + 개별과제 + 루프',Math.round(L),'%',bars(ht,100,v=>Math.round(v),T.ht_avg,d=>rp[d]),T.ht_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
+    H.push(card('과제 이행률','써킷 + 개별과제 + 루프'+mean(ht,T.ht_avg,v=>Math.round(v)+'%'),Math.round(L),'%',bars(ht,100,v=>Math.round(v),T.ht_avg,d=>rp[d]),T.ht_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
   const wk=(W||[]).map(w=>{ const m=String(w.점수||'').match(/([\d.]+)\s*점/); return m?[String(w.주차).slice(0,10),Number(m[1]),w.url]:null; }).filter(Boolean).reverse();
   if(wk.length){ const L=wk[wk.length-1][1], wu={}; wk.forEach(x=>wu[x[0]]=x[2]);
-    H.push(card('주간고사','주말 시험 점수',L%1?L.toFixed(1):L,'점',bars(wk.map(x=>[x[0],x[1]]),100,v=>v%1?v.toFixed(1):v,null,d=>wu[d],d=>md(d)+'주'))); }
+    H.push(card('주간고사','주말 시험 점수'+mean(wk.map(x=>[x[0],x[1]]),null,v=>v%1?v.toFixed(1):String(v)),L%1?L.toFixed(1):L,'점',bars(wk.map(x=>[x[0],x[1]]),100,v=>v%1?v.toFixed(1):v,null,d=>wu[d],d=>md(d)+'주'))); }
   host.innerHTML=H.length
     ?`<h2>학습 기록<small>이번 내신 대비부터</small></h2>`+H.join('')+`<div class="note">막대를 누르면 그날 리포트가 열려요.${att.length?'':' 출결은 다음 리포트부터 함께 보여요.'}</div>`
     :`<div class="none">아직 쌓인 기록이 없어요. 수업 다음 날부터 여기에 쌓여요.</div>`;
