@@ -175,6 +175,8 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 .loop3 .ar{flex:0 0 auto;color:var(--dim);background:none;padding:0;opacity:1;box-shadow:none}
 .days{display:flex;gap:4px;margin-top:12px}
 .days span{flex:1;height:30px;border-radius:6px;background:var(--raised);font-size:11px;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:background .4s var(--ease),color .4s var(--ease)}
+.step .ex{font-size:13px;color:var(--dim);margin:6px 0 12px}
+.step .loop3{margin:4px 0 12px}
 .days span.ok{background:rgba(126,224,163,.75);color:#0b2416}
 /* 아래쪽 섹션 */
 .after{max-width:640px;margin:0 auto;padding:8px 20px 48px}
@@ -257,8 +259,12 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
         <div class="un"><span>10 무리함수</span><div class="bar"></div><span class="p">수업 후</span></div>
         <div style="font-size:9px;color:var(--dim);margin-top:6px">단원을 누르면 개념·유형 칸까지 보여요</div></div>
     </div></div></div>
-    <div class="tx"><div class="no">3 · 오늘 — 루프 완성 예상</div><h2>날짜를 누르면 기말 준비도가 열려요</h2>
-      <p><b>루프 완성 예상</b>은 지금처럼 루프를 하면 모든 개념·유형을 <b>졸업하는 날</b>이에요. 기말보다 앞서면 순조로운 거예요. 누르면 단원별 졸업 비율이 막대로 보이고, 단원을 누르면 칸까지 볼 수 있어요.</p>
+    <div class="tx"><div class="no">3 · 오늘 — CORE 루프와 루프 완성 예상</div><h2>루프로 하나씩 졸업하고, 다 졸업하는 날이 ‘루프 완성 예상’이에요</h2>
+      <div class="loop3" id="loop3"><div>리뷰테스트<small>수업 시간</small></div><span class="ar">→</span><div>루프 과제<small>수업마다 한 번</small></div><span class="ar">→</span><div>졸업<small>두 날 확실히</small></div></div>
+      <p>답마다 <b>‘확실해요 / 애매해요’</b>를 골라요. 같은 개념·유형을 <b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.</p>
+      <div class="days" id="days"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <p class="ex">예: 월요일에 맞히고 → 목요일에 또 맞히면 졸업</p>
+      <p><b>루프 완성 예상</b>은 지금 속도로 루프를 하면 기말 범위의 개념·유형을 <b>모두 졸업하는 날</b>이에요. 기말보다 앞서면 순조로운 거예요. 날짜를 누르면 단원별 졸업 비율이 막대로 보이고, 단원을 누르면 칸까지 볼 수 있어요.</p>
       <ul><li>날짜가 빨갛게 <b>‘보충이 필요해요’</b>로 뜨면 기말 전에 다 끝내기 어려운 속도예요. 이번 루프를 끝낸 다음 날부터 <b>[보충 루프]</b>를 스스로 더 풀어 날짜를 앞당겨요</li><li>보충 루프는 하루 한 번만 쳐져요 — 같은 날 두 번 풀면 졸업에 안 들어가요</li><li><b>확신 정확도</b>를 누르면 ‘확실해요’라고 한 답 중 맞힌 비율과 틀린 이유가 보여요</li></ul></div>
   </div>
   <div class="step" data-s="hw">
@@ -349,14 +355,6 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
 </section>
 
 <main class="after">
-  <section class="sec" id="core">
-    <h2>CORE 루프<small>개념 → 유형 → 졸업</small></h2>
-    <div class="loop3" id="loop3"><div>리뷰테스트<small>수업 시간</small></div><span class="ar">→</span><div>루프 과제<small>수업마다 한 번</small></div><span class="ar">→</span><div>졸업<small>두 날 확실히</small></div></div>
-    <p style="font-size:14px;color:var(--tx2);margin-top:12px">답마다 <b style="color:var(--tx);font-weight:500">'확실해요 / 애매해요'</b>를 골라요. 같은 개념·유형을 <b style="color:var(--tx);font-weight:500">3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업이에요.</p>
-    <div class="days" id="days"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
-    <p style="font-size:13px;color:var(--dim);margin-top:8px">예: 월요일에 맞히고 → 목요일에 또 맞히면 졸업</p>
-  </section>
-
   <section class="sec" id="parent">
     <h2>학부모님은 이렇게 봐 주세요</h2>
     <dl class="see">
@@ -383,11 +381,11 @@ h1{font-family:var(--hd);font-size:clamp(30px,8vw,40px);font-weight:600;line-hei
   // 단계 카드가 보이면 그 폰 화면만 움직인다(나가면 멈춰서 다른 카드가 버벅이지 않게)
   const io=new IntersectionObserver(es=>es.forEach(e=>{
     const st=e.target, sc=st.querySelector('.scr');
-    if(e.isIntersecting){ st.classList.add('seen'); sc.classList.add('on','vis'); }   // 한 번 재생하면 끝난 화면 그대로 둔다
+    if(e.isIntersecting){ st.classList.add('seen'); sc.classList.add('on','vis'); if(st.dataset.s==='tiles'&&!st.dataset.c){ st.dataset.c=1; core(); } }   // 한 번 재생하면 끝난 화면 그대로 둔다
     else sc.classList.remove('vis');                                                     // 안 보이면 깜빡임만 멈춘다
   }),{threshold:[0,.35]});
   document.querySelectorAll('.step').forEach(x=>io.observe(x));
-  const io2=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('seen'); if(e.target.id==='core') core(); io2.unobserve(e.target); } }),{threshold:.2});
+  const io2=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('seen'); io2.unobserve(e.target); } }),{threshold:.2});
   document.querySelectorAll('.sec').forEach(x=>io2.observe(x));
   function core(){
     const L=[...document.querySelectorAll('#loop3 div')], D=[...document.querySelectorAll('#days span')];
