@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>학생 포털 이용 안내 · 수학은유강</title>
+<meta name="description" content="포털이 탭 4개로 바뀌었어요. 기록은 [기록] 탭에 그대로 있고, 수업 리포트·주간고사 리포트도 모아 볼 수 있어요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="수학은유강">
+<meta property="og:title" content="학생 포털이 바뀌었어요 — 이용 안내">
+<meta property="og:description" content="아래 탭 4개(오늘·과제·기록·자료)로 정리. 수업 리포트·주간고사 리포트도 포털에서 바로.">
+<meta property="og:image" content="https://ukan8.github.io/dashboard/guide/thumb_1110.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ukan8.github.io/dashboard/guide/">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 기준: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0 — 회색 단계 바탕 + 강조색(로고 로즈) 하나, 굵기 400~600, 4px 간격 */
+:root{color-scheme:dark;--bg:#111113;--card:#18181b;--raised:#222226;--bd:rgba(237,237,237,.08);--tx:#ededed;--tx2:#a8a8ae;--dim:#85858b;--acc:#f5a0a0;--pink:#e5484d;--ease:cubic-bezier(.22,1,.36,1)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
+body{background:var(--bg);color:var(--tx);font:15px/1.65 'Pretendard Variable','Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;padding:32px 16px calc(40px + env(safe-area-inset-bottom))}
+main{max-width:600px;margin:0 auto}
+b{font-weight:600}
+.ic{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px;color:var(--tx2)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px}
+.logo i{width:28px;height:16px;position:relative;display:inline-block}
+.logo i::before,.logo i::after{content:'';position:absolute;top:0;width:16px;height:16px;border-radius:50%}
+.logo i::before{left:0;background:var(--acc)}.logo i::after{left:10px;background:#fff}
+.kicker{margin-top:32px;font-size:13px;color:var(--acc);font-weight:500}
+h1{font-size:32px;font-weight:600;margin:4px 0 12px;line-height:1.25;letter-spacing:-.01em}
+.lead{color:var(--tx2);font-size:16px;line-height:1.7}
+.lead b{color:var(--tx);font-weight:500}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 32px}
+.toc a{font-size:13px;color:var(--tx2);border:1px solid var(--bd);border-radius:8px;padding:4px 12px;text-decoration:none;background:var(--card);transition:border-color .15s var(--ease),color .15s var(--ease)}
+.sec{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:12px;scroll-margin-top:16px}
+.sec h2{font-size:18px;font-weight:600;margin-bottom:12px}
+.sec h2 small{font-size:13px;font-weight:400;color:var(--dim);margin-left:8px}
+.sec p.d{font-size:14px;color:var(--tx2)}
+.sec p.d b{color:var(--tx)}
+.alert{background:var(--card);border:1px solid rgba(245,160,160,.45);border-radius:20px;padding:20px;margin-bottom:12px}
+.alert h2{font-size:20px;font-weight:600}
+.alert p{color:var(--tx2);font-size:15px;margin-top:4px}
+.alert p b{color:var(--tx)}
+.phone{margin:16px auto 0;max-width:380px;background:var(--bg);border:1px solid var(--bd);border-radius:20px;overflow:hidden}
+.scr{min-height:212px;padding:16px 12px 8px}
+.pane{display:none;animation:fade .3s var(--ease)}.pane.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+.pane h3{font-size:13px;font-weight:500;color:var(--tx2);margin-bottom:8px}
+.mk{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;margin-bottom:8px;font-size:14px;font-weight:500}
+.mk small{display:block;color:var(--dim);font-size:12px;font-weight:400}
+.mk span{flex:1;min-width:0}
+.mk em{font-style:normal;color:var(--acc);font-size:13px;font-weight:600;white-space:nowrap}
+.mk.hot{border-color:rgba(245,160,160,.45)}
+.mk .new{font-size:12px;font-weight:500;color:var(--acc);margin-left:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two .mk{margin-bottom:8px}
+.bar{display:flex;border-top:1px solid var(--bd);background:var(--bg);padding:8px 4px}
+.bar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;font-size:12px;font-weight:500;color:var(--dim);position:relative;background:none;border:0;cursor:pointer;padding:4px 0;transition:color .15s var(--ease)}
+.bar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.bar button.on{color:var(--acc)}
+.bar button.on::before{content:'';position:absolute;top:-8px;left:30%;right:30%;height:2px;background:var(--acc);border-radius:2px}
+.bar .bd{position:absolute;top:0;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--pink);color:#fff;font-size:11px;line-height:16px;text-align:center;font-style:normal;padding:0 4px;font-variant-numeric:tabular-nums}
+.hint{text-align:center;font-size:13px;color:var(--tx2);margin-top:12px}
+.step{display:flex;align-items:flex-start;gap:12px;font-size:15px;margin-bottom:8px}
+.step i{flex:0 0 24px;height:24px;margin-top:1px;border-radius:8px;background:var(--raised);color:var(--tx2);font-style:normal;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.step em{font-style:normal;color:var(--acc);font-weight:500}
+.tip{background:var(--raised);border-radius:12px;padding:12px;font-size:13px;color:var(--tx2);margin-top:12px}
+.tip b{color:var(--tx)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:420px){.tabs{grid-template-columns:1fr}}
+.tab{background:var(--raised);border-radius:12px;padding:16px}
+.tab h3{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;margin-bottom:8px}
+.tab h3 svg{width:18px;height:18px;stroke:var(--tx2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tab li{list-style:none;font-size:14px;color:var(--tx2);line-height:1.6;padding-left:12px;position:relative;margin-bottom:2px}
+.tab li::before{content:'';position:absolute;left:0;top:10px;width:4px;height:4px;border-radius:50%;background:var(--dim)}
+.tab li b{color:var(--tx);font-weight:500}
+.tab li .new{font-size:12px;font-weight:500;color:var(--acc);margin-left:4px}
+.it{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd)}
+.it:last-of-type{border-bottom:0}
+.it>i{flex:0 0 32px;height:32px;border-radius:8px;background:var(--raised);color:var(--tx2);font-style:normal;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.it h4{font-size:16px;font-weight:600;margin-bottom:2px}
+.it h4 small{font-size:13px;color:var(--dim);font-weight:400;margin-left:8px}
+.it p{font-size:14px;color:var(--tx2)}
+.it p b{color:var(--tx);font-weight:500}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin:12px 0 4px}
+.chk span{font-size:13px;color:var(--tx2);background:var(--raised);border-radius:8px;padding:4px 8px;display:flex;align-items:center;gap:8px}
+.chk i{flex:0 0 10px;height:10px;border-radius:3px}
+.notes{border-top:1px solid var(--bd);margin-top:12px;padding-top:12px}
+.notes li{list-style:none;font-size:14px;color:var(--tx2);line-height:1.7;padding-left:16px;position:relative;margin:4px 0}
+.notes li::before{content:'';position:absolute;left:4px;top:10px;width:4px;height:4px;border-radius:50%;background:var(--acc)}
+.notes li b{color:var(--tx);font-weight:500}
+.see{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:8px;font-size:15px}
+.see dt{color:var(--tx2);white-space:nowrap}
+.see dd b{color:var(--acc);font-weight:500}
+.faq details{border-top:1px solid var(--bd);padding:12px 0}
+.faq details:first-of-type{border-top:0;padding-top:0}
+.faq summary{font-weight:500;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';color:var(--dim)}
+.faq details[open] summary::after{content:'−'}
+.faq p{font-size:14px;color:var(--tx2);margin-top:4px}
+.faq p b{color:var(--tx);font-weight:500}
+.foot{border-top:1px solid var(--bd);margin-top:24px;padding-top:16px;font-size:13px;color:var(--dim)}
+@media (hover:hover) and (pointer:fine){.toc a:hover{border-color:rgba(245,160,160,.6);color:var(--tx)}.bar button:hover{color:var(--tx2)}.bar button.on:hover{color:var(--acc)}}
+</style></head><body><main>
+<div class="logo"><i></i>수학은유강</div>
+<div class="kicker">11월 업데이트</div>
+<h1>학생 포털 이용 안내</h1>
+<p class="lead">포털 화면이 <b>아래 탭 4개</b>로 정리됐어요.<br>수업 리포트 · 주간고사 리포트도 이제 포털에서 모아 봐요.<br>학생과 학부모님이 <b>같은 링크</b>로 보시면 됩니다.</p>
+<nav class="toc"><a href="#tabs">탭마다 있는 것</a><a href="#open">여는 법</a><a href="#core">CORE 루프</a><a href="#hw">과제 체크</a><a href="#parent">학부모님</a><a href="#faq">자주 묻는 것</a></nav>
+
+<section class="alert">
+  <h2>기록은 그대로 있어요</h2>
+  <p>화면 <b>맨 아래 탭</b>을 누르면 다른 화면으로 넘어가요.<br>성적·리포트는 <b>[기록]</b>, 수업 자료는 <b>[자료]</b> 탭에 그대로 있어요.</p>
+  <div class="phone" id="demo">
+    <div class="scr">
+      <div class="pane on" data-p="오늘"><h3>오늘</h3>
+        <div class="two"><div class="mk"><span>주간고사·클리닉<small>예약·결과·질문</small></span></div><div class="mk"><span>내 개별과제 설정<small>35~50문항</small></span></div></div>
+        <div class="mk hot"><span>루프 과제 · 39문항<small>다음 수업 30분 전까지</small></span><em>시작 →</em></div>
+        <div class="mk"><span><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>조교쌤 답 2개가 왔어요<small>손풀이 보고 핵심 한 줄</small></span><em>확인 →</em></div></div>
+      <div class="pane" data-p="과제"><h3>과제</h3>
+        <div class="mk"><span>조교쌤 답 확인<small>손풀이 끝까지 보고 [이해했어요]</small></span></div>
+        <div class="mk hot"><span>개별과제 No.1348 <small>문항마다 ①~⑦ 체크 · 마감 11/14 14:30</small></span><em>체크 →</em></div>
+        <div class="mk"><span>내 질문 모음<small>올린 질문과 답 전부</small></span></div></div>
+      <div class="pane" data-p="기록"><h3>기록</h3>
+        <div class="mk hot"><span>11/9(월) 수업 리포트<span class="new">새로</span><small>가장 최근</small></span><em>열기 →</em></div>
+        <div class="mk"><span>11/2주 주간고사 리포트<span class="new">새로</span><small>점수 · 오답 루프</small></span><em>열기 →</em></div>
+        <div class="mk"><span>내 기말 준비도<small>단원 누르면 개념·유형 칸까지</small></span></div></div>
+      <div class="pane" data-p="자료"><h3>자료</h3>
+        <div class="mk"><span>수업 영상<small>내 반 수업일 순</small></span></div>
+        <div class="mk"><span>시험지 · 손풀이 해설<small>PDF로 바로</small></span></div>
+        <div class="mk"><span>오류 신고<small>자료가 이상하면 여기서</small></span></div></div>
+    </div>
+    <div class="bar">
+      <button class="on" data-t="오늘"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>오늘<i class="bd">1</i></button>
+      <button data-t="과제"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>과제<i class="bd">3</i></button>
+      <button data-t="기록"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M21 20H3"/></svg>기록</button>
+      <button data-t="자료"><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></svg>자료</button>
+    </div>
+  </div>
+  <div class="hint">위 탭을 눌러 보세요 · 빨간 숫자는 지금 해야 할 일 개수</div>
+</section>
+
+<section class="sec" id="tabs">
+  <h2>탭마다 있는 것</h2>
+  <div class="tabs">
+    <div class="tab"><h3><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>오늘</h3><ul>
+      <li>기말 <b>D-day</b> · 단원 진도 · 다음 수업</li>
+      <li>주간고사·클리닉 예약, <b>내 개별과제 설정</b></li>
+      <li><b>리뷰테스트 · 루프 과제</b> 시작 버튼</li>
+      <li>새로 온 <b>조교쌤 답</b> · 마감 다가오는 과제</li></ul></div>
+    <div class="tab"><h3><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>과제</h3><ul>
+      <li>써킷 · 개별과제 <b>문항별 체크</b></li>
+      <li><b>조교쌤 손풀이 답</b> 확인</li>
+      <li>질문하기 · <b>내 질문 모음</b></li></ul></div>
+    <div class="tab"><h3><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/></svg>기록</h3><ul>
+      <li><b>수업 리포트</b> (수업 다음 날)<span class="new">새로</span></li>
+      <li><b>주간고사 리포트</b> (주말)<span class="new">새로</span></li>
+      <li>기말 준비도 · 확신 정확도 · 기출 모의</li></ul></div>
+    <div class="tab"><h3><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v13"/></svg>자료</h3><ul>
+      <li>수업 영상</li>
+      <li>시험지 · 손풀이 해설</li>
+      <li>자료가 이상하면 <b>오류 신고</b></li></ul></div>
+  </div>
+</section>
+
+<section class="sec" id="open">
+  <h2>이렇게 여세요</h2>
+  <div class="step"><i>1</i><span>학생 팀톡방(학생·학부모·선생님 방)에 들어가기</span></div>
+  <div class="step"><i>2</i><span>맨 위 <em>공지</em>를 눌러 펼치기</span></div>
+  <div class="step"><i>3</i><span>공지 속 <em>포털 링크</em> 누르기 → 로그인 없이 바로 열림</span></div>
+  <div class="tip">공지가 안 보이면 <b>오른쪽 위 ≡ 메뉴 → 톡게시판 → 공지</b>에서 찾을 수 있어요. 열면 늘 <b>[오늘]</b> 탭부터 보여요.</div>
+</section>
+
+<section class="sec" id="core">
+  <h2>CORE 루프<small>개념 → 유형 복습</small></h2>
+  <div class="it"><i>1</i><div><h4>리뷰테스트<small>수업 시간에</small></h4>
+    <p>지난 수업 <b>개념</b> 문제를 풀고, 이어서 그 개념의 <b>유형</b> 문제를 풀어요. 연습지에 풀고 폰엔 답만 넣어요.</p></div></div>
+  <div class="it"><i>2</i><div><h4>루프 과제<small>수업 끝나고 ~ 다음 수업 30분 전</small></h4>
+    <p>다시 볼 때가 된 개념·유형을 <b>수업마다 한 번</b> 모아서 풀어요. 틀리거나 애매했던 건 다음 루프에 다시 와요.</p></div></div>
+  <div class="it"><i>3</i><div><h4>졸업</h4>
+    <p><b>3일 이상 떨어진 두 날</b> 확실하게 맞히면 졸업. 기말 전까지 <b>모든 개념·유형 졸업</b>이 목표예요.</p></div></div>
+  <ul class="notes">
+    <li>답마다 <b>'확실해요 / 애매해요'</b>를 골라요. 확실하다고 했는데 틀리면 다음 루프에 더 많이 확인해요.</li>
+    <li>틀리면 <b>왜 틀렸는지</b> 하나 고르고, 개념 정리·교재 예제를 바로 볼 수 있어요.</li>
+    <li>[오늘] 탭의 버튼으로 바로 시작하고, 끝나면 <b>[포털로 돌아가기]</b>로 와요.</li>
+  </ul>
+</section>
+
+<section class="sec" id="hw">
+  <h2>과제 체크 · 질문</h2>
+  <p class="d">해설까지 공부를 마친 뒤 <b>[과제]</b> 탭에서 문항마다 어떻게 해결했는지 골라요. 마감은 <b>다음 수업 30분 전</b>이에요.</p>
+  <div class="chk">
+    <span><i style="background:rgba(126,224,163,.75)"></i>① 한 번에 맞음</span>
+    <span><i style="background:rgba(126,224,163,.25);outline:1px dashed rgba(126,224,163,.85)"></i>② 고쳐서 맞음</span>
+    <span><i style="background:rgba(232,197,106,.75)"></i>③ 해설 보고 해결</span>
+    <span><i style="background:rgba(120,180,255,.75)"></i>④ 질문해서 해결</span>
+    <span><i style="background:rgba(255,92,138,.85)"></i>⑤ 해설 봐도 모름</span>
+    <span><i style="background:rgba(255,255,255,.15)"></i>⑥ 안 풀었음</span>
+    <span><i style="background:rgba(180,140,255,.75)"></i>⑦ 문항 오류</span>
+  </div>
+  <ul class="notes">
+    <li><b>⑤ 해설 봐도 모름</b> → 클리닉에서 직접 묻거나, 막힌 곳을 적어 <b>온라인 질문</b>.</li>
+    <li>조교쌤 답이 오면 <b>[과제] 맨 위</b>에서 손풀이를 끝까지 보고, 핵심을 한 줄 적고 <b>[이해했어요]</b>.</li>
+    <li>다음 개별과제 문항 수·난이도는 <b>[오늘] → 내 개별과제 설정</b>에서 바꿔요.</li>
+  </ul>
+</section>
+
+<section class="sec" id="parent">
+  <h2>학부모님은 이렇게 봐 주세요</h2>
+  <dl class="see">
+    <dt>수업 다음 날</dt><dd><b>[기록]</b> → 수업 리포트</dd>
+    <dt>주말</dt><dd><b>[기록]</b> → 주간고사 리포트</dd>
+    <dt>수업 전</dt><dd><b>[오늘]</b> 루프 과제 '완료' · <b>[과제]</b> 체크</dd>
+    <dt>일주일에 한 번</dt><dd><b>[기록]</b> → 기말 준비도 졸업 비율</dd>
+    <dt>모의 시작 후</dt><dd><b>[기록]</b> → 기출 모의 점수 흐름</dd>
+  </dl>
+</section>
+
+<section class="sec faq" id="faq">
+  <h2>자주 묻는 것</h2>
+  <details><summary>예전 화면에 있던 게 안 보여요</summary><p>맨 아래 탭을 확인해 주세요. 성적·리포트·기말 준비도는 <b>[기록]</b>, 수업 영상·시험지는 <b>[자료]</b>에 있어요.</p></details>
+  <details><summary>리뷰테스트 버튼이 안 눌려요</summary><p>리뷰테스트는 <b>수업 시간에만</b> 열려요. 수업 밖에서는 '수업 시간에 열려요'라고 보여요.</p></details>
+  <details><summary>루프 과제가 '마감됐어요'로 떠요</summary><p>루프는 다음 수업 30분 전에 마감돼요. 못 푼 문항은 <b>다음 루프에 같이</b> 와요.</p></details>
+  <details><summary>수업 리포트가 아직 없어요</summary><p>리포트는 <b>수업 다음 날</b> 올라와요. 주간고사 리포트는 주간고사를 본 주 주말에 올라와요.</p></details>
+  <details><summary>링크를 다른 사람에게 보내도 되나요?</summary><p>안 돼요. 포털 링크는 <b>학생 개인 전용</b>이에요. 이 안내 페이지는 공유해도 괜찮아요.</p></details>
+</section>
+
+<div class="foot">필탑학원 고등수학 · 수학은유강</div>
+</main>
+<script>
+document.querySelectorAll('#demo [data-t]').forEach(b=>b.onclick=()=>{
+  const t=b.dataset.t;
+  document.querySelectorAll('#demo [data-t]').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('#demo [data-p]').forEach(p=>p.classList.toggle('on',p.dataset.p===t));
+});
+</script>
+</body></html>
