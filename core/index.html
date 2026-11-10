@@ -218,7 +218,8 @@ let LOG=[];                      // [키, 문항ID, 정오, 확신, 모드, 'YYY
 let UNL={};                      // 서버 mastery_unlock (키→날짜) · (1027) 학생별 행이 덮음, null = 이 학생은 잠김
 let SUPP=new Set();              // (1027) 보충 칸 — 입원 전 진도를 따라잡는 칸. 성공일 1번이면 졸업
 let LOOP_DAILY=false;             // (1110 유강 '루프 완성은 기말 전') 기말 21일 전부터 시험 전날까지 루프는 하루 1회(loop_info.시험일)
-let LOOP_CAP=0;                   // (1110 유강) 포털 과제 설정의 '루프 상한' — 0 = 상한 없음(밀린 칸 전부). 20·30·40 = 한 회차 문항 수
+let LOOP_CAP=0;
+let LINFO=null, P_SUPP=false;                   // (1110) loop_info — 상한·졸업 예상·시험일                   // (1110 유강) 포털 과제 설정의 '루프 상한' — 0 = 상한 없음(밀린 칸 전부). 20·30·40 = 한 회차 문항 수
 let SRV_SET=null;                 // (1028 '카톡으로 연 루프가 달라요') 서버 loop_set 의 이번 회차 세트 — 이 브라우저에 세트가 없을 때 쓴다
 let ROUND='', NEXTC='', DUE='';   // (1024 유강) DUE = 루프 마감 = 다음 수업 시작 30분 전(1029 v50)(서버 mastery_round.마감)
            // (1022 유강) 루프 회차 = 직전 수업 끝(서버 mastery_round, KST 'YYYY-MM-DDTHH:MM:SS') · 다음 수업 시작. 비면 옛 규칙(하루)
@@ -432,6 +433,31 @@ function buildReviewType(usedIds){
   for(const k of reviewTypeKeys(REVIEW_T+doneK.size).filter(k=>!doneK.has(k))){ if(out.length>=left) break; const p=pickItems(k,1,usedIds); if(p[0]){ usedIds.add(p[0].id); out.push(p[0]); } }
   return out;
 }
+// (1110 유강 "시험기간을 넘기는 학생은 스스로 보충 루프 생성을 눌러서 털어낼 수 있게") ────────────────
+//   · 대상 = 루프 전체 완성 예상이 기말을 넘기는 학생(loop_info, 내 상한 설정 기준)
+//   · 열림 = 이번 회차 정규 루프를 다 끝냈고 + 오늘 아직 루프를 안 푼 날(같은 날 두 번은 성공일이 안 늘어 효과가 없다) — 하루 한 번
+//   · 세트 = 지금 다시 볼 때가 된 칸 전부(상한 없음). 기록은 평소 루프와 같은 '루프' 행 — 졸업 규칙이 그대로 센다
+function etaInfo(){
+  const li=LINFO; if(!li||!li.예상) return null;
+  const e=li.예상[String(LOOP_CAP||0)]||li.예상['0']; if(!e) return null;
+  const ex=li.시험일?String(li.시험일).slice(0,10):'';
+  const behind=!!ex && (!e.중앙 || e.완료비율<0.5 || e.중앙>=ex || (e.시험전!=null && e.시험전<0.5));
+  return {mid:e.중앙||null, exam:ex||null, behind};
+}
+function suppToday(){ return lget('supp_'+TODAY,null); }
+function suppState(LT){
+  const eta=etaInfo(); const set=suppToday();
+  if(set){ const done=todayIds('루프'); const rest=set.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean);
+    return {show:true, can:rest.length>0, items:rest, started:true, done:!rest.length}; }
+  if(DEMO && P_SUPP) return {show:true, can:true, items:withoutToday('루프',buildLoopAll), started:false, done:false};
+  if(!eta||!eta.behind) return {show:false};
+  if(loopLock() || !LT.finished) return {show:true, can:false, why:'이번 루프를 먼저 끝내면 열려요'};
+  if(todayIds('루프').size) return {show:true, can:false, why:'오늘은 루프를 풀었어요 — 내일 보충할 수 있어요(같은 날은 졸업에 안 쳐져요)'};
+  const items=buildLoopAll();
+  if(!items.length) return {show:true, can:false, why:'지금은 다시 볼 칸이 없어요'};
+  return {show:true, can:true, items, started:false, done:false};
+}
+function buildLoopAll(){ const c=LOOP_CAP; LOOP_CAP=0; try{ return buildLoop(); } finally{ LOOP_CAP=c; } }
 function buildLoop(){
   if(LOOP_CAP>0) return buildLoopCap(LOOP_CAP);
   const out=[], used=new Set();
@@ -560,7 +586,12 @@ function homeModel(){
     title:'루프 과제 '+(lLock?'· 수업 끝나고 열려요':lDone?((ROUND&&!LOOP_DAILY)?'· 이번 루프 완료':'· 오늘 완료'):lDue?'· 마감됐어요':loop.length?`· ${LT.started?'이어서 ':''}${loop.length}문항`:''),
     sub:lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`,
     tap:lAct?(LT.started?'이어서 →':'시작 →'):lDone?'완료':''};
-  return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop};
+  const sp=suppState(LT), eta=etaInfo();
+  const supp=sp.show?{cls:sp.done?'done':sp.can?'act':'s', can:!!sp.can, n:(sp.items||[]).length,
+    title:'보충 루프'+(sp.done?' · 오늘 완료':sp.can?` · ${sp.started?'이어서 ':''}${sp.items.length}문항`:''),
+    sub:sp.done?'오늘 보충 끝! 내일 또 털어낼 수 있어요':sp.can?'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요':sp.why,
+    tap:sp.can?(sp.started?'이어서 →':'보충 시작 →'):sp.done?'완료':''}:null;
+  return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,supp,eta,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop,_supp:sp.items||[]};
 }
 function goBtn(id,b){ return `<button class="go ${b.cls==='act'?'act':b.cls==='done'?'done':'s'}" id="${id}"><b>${b.title}</b><span>${b.sub}</span>${b.tap?`<em class="tap">${b.tap}</em>`:''}</button>`; }
 function drawHome(){
@@ -569,7 +600,7 @@ function drawHome(){
   $('app').innerHTML=`<div class="brand">수학은유강</div>`
     +`<div class="who"><b>${E(NAME)}</b>${BAN?`<span class="ban">${E(BAN)}</span>`:''}</div>`
     +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
-    +goBtn('goR',m.review)+goBtn('goL',m.loop)
+    +goBtn('goR',m.review)+goBtn('goL',m.loop)+(m.supp?goBtn('goS',m.supp):'')
     +(DEMO?'':`<div class="btns" style="margin-top:14px"><button class="s" id="toP">단원 지도 · 졸업 현황은 포털 '기록'에서 →</button></div>`)
     +`<div class="foot">${DEMO?'<b>미리보기</b>예요. 기록이 저장되지 않아요.<br>'
     :`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>`}`
@@ -577,6 +608,7 @@ function drawHome(){
   $('goR').onclick=()=>{ if(m.review.can) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=inClass();
   $('goL').onclick=()=>{ if(m.loop.can) startSession('루프', m._items); else drawHome(); };
+  if($('goS')) $('goS').onclick=()=>{ if(m.supp.can){ if(!suppToday()) lset('supp_'+TODAY, m._supp.map(x=>x.id)); startSession('루프', m._supp, true); } else drawHome(); };   // (1110) 보충 루프
   if($('toP')) $('toP').onclick=()=>{ location.href=PORTAL_URL()+'&tab=기록'; };
   window.scrollTo(0,0);
 }
@@ -585,17 +617,18 @@ function startFromGo(g){
   const m=homeModel();
   if(g==='리뷰' && m.review.can){ startSession('리뷰'); return; }
   if(g==='루프' && m.loop.can){ startSession('루프', m._items); return; }
+  if(g==='보충' && m.supp && m.supp.can){ if(!suppToday()) lset('supp_'+TODAY, m._supp.map(x=>x.id)); startSession('루프', m._supp, true); return; }   // (1110) 보충 루프
   drawHome();
 }
 
 /* ── 풀이 세션 ── */
 let S=null;   // {mode, q:[item], i, res:[], phase, used:Set}
-function startSession(mode, preset){
+function startSession(mode, preset, supp){
   if(mode==='리뷰'){
     const all=buildReviewConcept(), done=todayIds('리뷰'), c=all.filter(x=>!done.has(x.id));   // (1021) 이어서 — 같은 세트의 남은 문항만
     S={mode,q:c,i:0,res:[],used:new Set([...all.map(x=>x.id),...done]),typeBuilt:false,back:0};
     if(!c.length){ S.typeBuilt=true; S.q=buildReviewType(S.used); }
-  } else S={mode,q:preset,i:0,res:[],used:new Set(preset.map(x=>x.id)),typeBuilt:true,back:0};
+  } else S={mode,q:preset,i:0,res:[],used:new Set(preset.map(x=>x.id)),typeBuilt:true,back:0,supp:!!supp};
   if(!S.q.length){ drawHome(); return; }
   drawItem();
 }
@@ -630,7 +663,7 @@ function drawItem(){
     A=`<div class="chs" id="ans">${order.map((c,j)=>`<button data-a="${E(c)}"><em>${'①②③④⑤'[j]}</em>${T(c)}</button>`).join('')}</div>`;
   } else A=`<div class="num" id="ans"><input id="numIn" inputmode="numeric" autocomplete="off" placeholder="답"><button class="k" data-k="-">−</button><button class="k" data-k="/">/</button><button class="ok" id="numOk">답 넣기</button></div>`;
   const dots=S.q.map((_,j)=>`<i class="${j<S.res.length?(S.res[j].ok?'o':'x'):''}${j===S.i?' cur':''}"></i>`).join('');
-  $('app').innerHTML=`<div class="top"><button class="back" id="bk">그만하기</button><div class="fname"><b>${S.mode==='리뷰'?'리뷰테스트':'루프 과제'}</b> · ${S.i+1}/${n}${S.mode==='리뷰'&&!S.typeBuilt?' + 유형':''}</div></div>`
+  $('app').innerHTML=`<div class="top"><button class="back" id="bk">그만하기</button><div class="fname"><b>${S.mode==='리뷰'?'리뷰테스트':S.supp?'보충 루프':'루프 과제'}</b> · ${S.i+1}/${n}${S.mode==='리뷰'&&!S.typeBuilt?' + 유형':''}</div></div>`
     +`<div class="dots">${dots}</div>`
     +(S.note?`<div class="note">${S.note}</div>`:'')
     +`<div class="qwrap"><div class="qmain">`
@@ -713,7 +746,7 @@ function grade(conf){
   // 유형을 놓치면 그 개념으로 되돌림 — 개념 문항 하나 덧붙임(루프만, 최대 BACK_C)
   if(!succ && x.key[0]==='T' && S.mode==='루프' && S.back<BACK_C){
     const ck=TKEY2C[x.key]; const p=pickItems(ck,1,S.used);
-    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; loopAdd(p[0].id); }
+    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; if(S.supp){ const k='supp_'+TODAY, a=lget(k,[]); if(!a.includes(p[0].id)){ a.push(p[0].id); lset(k,a); } } else loopAdd(p[0].id); }
   }
   // 리뷰: 개념 파트를 끝내면 그 자리에서 유형을 고른다(방금 열린 유형 포함)
   if(S.mode==='리뷰' && !S.typeBuilt && S.i===S.q.length-1){
@@ -787,7 +820,7 @@ const EMBED=new URLSearchParams(location.search).get('embed')==='1';
 function bootErr(h){ $('msg').innerHTML=h; if(EMBED) try{ parent.postMessage({type:'core-summary',err:h.replace(/<[^>]+>/g,' ').trim()},location.origin); }catch(e){} }
 async function boot(){
   const P=new URLSearchParams(location.search);
-  TOK=(P.get('t')||'').trim(); DEMO=P.get('demo')==='1'; if(DEMO){ LOOP_CAP=+(P.get('cap')||0); LOOP_DAILY=P.get('daily')==='1'; }   // (1110) 미리보기 &cap=30
+  TOK=(P.get('t')||'').trim(); DEMO=P.get('demo')==='1'; if(DEMO){ LOOP_CAP=+(P.get('cap')||0); LOOP_DAILY=P.get('daily')==='1'; P_SUPP=P.get('supp')==='1'; }   // (1110) 미리보기 &cap=30
   if(DEMO){
     NAME='미리보기'; BAN=P.get('ban')||'고1A'; SKEY=pickSet(BAN); if(!SKEY) SKEY='core_m2';
     TODAY=(P.get('today')||nowKST()).slice(0,10); setup();
@@ -809,7 +842,7 @@ async function boot(){
     try{ const r=await sb.rpc('mastery_round',{tok:TOK}); if(r&&r.data&&r.data.회차){ ROUND=r.data.회차; NEXTC=r.data.다음||''; DUE=r.data.마감||''; } }catch(e){}   // (1022) 루프 회차 — 못 받으면 옛 규칙(하루)
     if(SKEY!=='core_m2'){ try{ const r=await sb.rpc('mastery_open',{tok:TOK,skey:SKEY}); d=r.data||d; }catch(e){} }
     // (1028) 루프 세트는 브라우저마다 따로 저장돼, 알림톡(카톡 인앱)으로 열면 세트를 새로 만들어 문항이 달라졌다 → 서버에 남은 세트를 먼저 받는다
-    try{ const r=await sb.rpc('loop_info',{tok:TOK}); const li=r&&r.data;
+    try{ const r=await sb.rpc('loop_info',{tok:TOK}); const li=r&&r.data; LINFO=li||null;
       if(li&&li.상한) LOOP_CAP=+li.상한||0;   // (1110) 포털 '루프 상한'
       if(li&&li.시험일){ const ex=String(li.시험일).slice(0,10), ws=new Date(Date.parse(ex+'T00:00:00Z')-21*864e5).toISOString().slice(0,10);
         /* (1110 롤백 — 유강 '매일 하는 건 무리') 기말 3주 전 하루 1회 회차는 끔. 켜려면: if(TODAY>=ws && TODAY<ex){ LOOP_DAILY=true; ROUND=TODAY+'T00:00:00'; NEXTC=''; } */ }
