@@ -479,6 +479,18 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 .grow .rp .rvb{border-color:rgba(245,160,160,.45)!important}
 .grow .rp button.vid,.grow .rp a.vid{font-size:13px;font-weight:500;line-height:1.4;padding:8px 12px;border-radius:10px}
 .grow .rp button.vid.on{box-shadow:inset 0 0 0 1px var(--acc)}
+
+/* (1110 유강 "점선 너무 어색") 반 평균 = 옆의 가는 회색 막대 */
+.bc .bt{display:flex;gap:3px;align-items:stretch;background:none!important;overflow:visible!important;max-width:34px!important}
+.bc .bs{position:relative;flex:1;background:var(--raised);border-radius:6px;overflow:hidden}
+.bc .bs.av{flex:0 0 7px;border-radius:4px}
+.bc .bs.av i{position:absolute;left:0;right:0;bottom:0;background:rgba(237,237,237,.32);border-radius:4px 4px 0 0}
+.bc .bavg{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:-2px}
+.ba-l{display:inline-block!important;width:7px!important;height:12px;border:0!important;border-radius:3px;background:rgba(237,237,237,.32)}
+
+.card.etab{padding:16px 20px}.card.etab b{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-size:16px;font-weight:600}
+.card.etab p{font-size:13px;color:var(--tx2);margin-top:4px;line-height:1.6}.card.etab p b{font-family:inherit;font-size:inherit;color:var(--tx)}
+.card.etab.warn{border-color:rgba(229,72,77,.5)!important}.card.etab.warn>b{color:var(--bad)}.card.etab .w{color:var(--tx)}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -1379,6 +1391,14 @@ function coreRecHTML(m,part){
       +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`);
   }
   if(part==='cal') return H.join('');
+  if(part==='map'&&m.eta&&m.eta.mid!==undefined){
+    const md2=x=>{ const d=new Date(String(x).slice(0,10)+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})`; };
+    const e=m.eta;
+    H.push(`<div class="card etab${e.behind?' warn':''}"><b>${e.mid?`루프 완성 예상 ${md2(e.mid)}`:'루프 완성 예상 — 아직 계산 중'}</b>`
+      +`<p>지금처럼 루프를 하면 모든 개념·유형을 졸업하는 날짜예요.${e.exam?` 기말은 ${md2(e.exam)}.`:''}</p>`
+      +(e.behind?`<p class="w">기말 전에 다 끝내기 어려운 속도예요. 이번 루프를 끝낸 다음 날부터 <b>[보충 루프]</b>를 스스로 더 풀면 날짜가 앞당겨져요. 하루 한 번만 쳐져요(같은 날 두 번은 졸업에 안 들어가요).</p>`:`<p>기말보다 앞서면 순조로운 거예요. 틀리거나 애매한 게 쌓이면 날짜가 뒤로 밀려요.</p>`)
+      +`</div>`);
+  }
   // 기말 모드면 기말 진도 단원만(코드가 하나도 안 맞으면 전부)
   let U=m.units||[];
   if(CORE.final){ const codes=new Set(CORE.final.진도.map(u=>u.core).filter(Boolean)); const f=U.filter(u=>codes.has(u.code)); if(f.length) U=f; }
@@ -2000,7 +2020,7 @@ async function mountTrend(tok,RP){
   const bars=(pts,max,fmt,avg,link,lab)=>{
     const P=pts.slice(-8);
     return `<div class="bars">${P.map(([d,v])=>{ const h=Math.max(3,Math.round(100*Math.min(v,max)/max)), a=avg&&avg[d]!=null?Math.round(100*Math.min(avg[d],max)/max):null, u=link&&link(d);
-      return `<${u?`a href="${E(u)}" target="_blank" rel="noopener"`:'div'} class="bc"><b class="bn">${fmt(v)}</b><span class="bt"><i class="bv" style="height:${h}%"></i>${a!=null?`<em class="ba" style="bottom:${a}%"></em>`:''}</span><span class="bl">${lab?lab(d):md(d)}</span></${u?'a':'div'}>`; }).join('')}</div>`; };
+      return `<${u?`a href="${E(u)}" target="_blank" rel="noopener"`:'div'} class="bc"><b class="bn">${fmt(v)}</b><span class="bt"><span class="bs"><i class="bv" style="height:${h}%"></i></span>${a!=null?`<span class="bs av"><i style="height:${Math.max(3,a)}%"></i></span>`:''}</span><span class="bl">${lab?lab(d):md(d)}</span>${a!=null?`<span class="bavg">반 ${fmt(avg[d])}</span>`:''}</${u?'a':'div'}>`; }).join('')}</div>`; };
   const card=(title,sub,big,unit,body,foot)=>`<div class="card tr"><div class="trh"><span><b>${title}</b><small>${sub}</small></span>${big!=null?`<strong>${big}<small>${unit||''}</small></strong>`:''}</div>${body}${foot?`<div class="trf">${foot}</div>`:''}</div>`;
   const H=[];
   const rt=(T&&T.rt)||[], ht=(T&&T.ht)||[], att=(T&&T.att)||[];
@@ -2011,9 +2031,9 @@ async function mountTrend(tok,RP){
       `<div class="att">${att.slice(-12).map(([d,a])=>`<span class="ad ${k(a)}" title="${E(a)}"><i></i><small>${md(d)}</small></span>`).join('')}</div>`));
   }
   if(rt.length){ const L=rt[rt.length-1][1];
-    H.push(card('리뷰테스트','10점 만점',Number(L).toFixed(1),'점',bars(rt,10,v=>Number(v).toFixed(1),T.rt_avg,d=>rp[d]),T.rt_avg?'<i class="ba-l"></i>반 평균':'')); }
+    H.push(card('리뷰테스트','10점 만점',Number(L).toFixed(1),'점',bars(rt,10,v=>Number(v).toFixed(1),T.rt_avg,d=>rp[d]),T.rt_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
   if(ht.length){ const L=ht[ht.length-1][1];
-    H.push(card('과제 이행률','써킷 + 개별과제 + 루프',Math.round(L),'%',bars(ht,100,v=>Math.round(v),T.ht_avg,d=>rp[d]),T.ht_avg?'<i class="ba-l"></i>반 평균':'')); }
+    H.push(card('과제 이행률','써킷 + 개별과제 + 루프',Math.round(L),'%',bars(ht,100,v=>Math.round(v),T.ht_avg,d=>rp[d]),T.ht_avg?'<i class="ba-l"></i>회색 막대 = 반 평균':'')); }
   const wk=(W||[]).map(w=>{ const m=String(w.점수||'').match(/([\d.]+)\s*점/); return m?[String(w.주차).slice(0,10),Number(m[1]),w.url]:null; }).filter(Boolean).reverse();
   if(wk.length){ const L=wk[wk.length-1][1], wu={}; wk.forEach(x=>wu[x[0]]=x[2]);
     H.push(card('주간고사','주말 시험 점수',L%1?L.toFixed(1):L,'점',bars(wk.map(x=>[x[0],x[1]]),100,v=>v%1?v.toFixed(1):v,null,d=>wu[d],d=>md(d)+'주'))); }
