@@ -601,7 +601,7 @@ function homeModel(){
   const sp=suppState(LT), eta=etaInfo();
   const supp=sp.show?{cls:sp.done?'done':sp.can?'act':'s', can:!!sp.can, n:(sp.items||[]).length,
     title:'보충 루프'+(sp.done?' · 오늘 완료':sp.can?` · ${sp.started?'이어서 ':''}${sp.items.length}문항`:''),
-    sub:sp.done?(CSUPP?'클리닉 보충 루프 끝! 선생님께 확인받아요':'오늘 보충 끝! 내일 또 털어낼 수 있어요'):sp.can?(sp.clinic||CSUPP?'클리닉 보완 — 밀린 루프 대신 보충 루프 1벌을 풀어요':'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요'):sp.why,
+    sub:sp.done?(CSUPP?'클리닉 보충 루프 끝! 선생님께 확인받아요':'오늘 보충 끝! 내일 또 털어낼 수 있어요'):sp.can?(sp.clinic||CSUPP?'클리닉 보완 — 밀린 루프 대신 보충 루프 1SET을 풀어요':'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요'):sp.why,
     tap:sp.can?(sp.started?'이어서 →':'보충 시작 →'):sp.done?'완료':''}:null;
   return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,supp,eta,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop,_supp:sp.items||[]};
 }
