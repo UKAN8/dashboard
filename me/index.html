@@ -1250,8 +1250,13 @@ function drawCore(){
   const go=g=>CORE.url+'?t='+encodeURIComponent(CORE.tok)+'&go='+encodeURIComponent(g);
   const btn=(b,g)=>b.can?`<a class="cgo act" href="${E(go(g))}"><b>${b.title}</b><span>${b.sub}</span><em>${b.tap}</em></a>`
     :`<div class="cgo ${b.cls==='done'?'done':'s'}"><b>${b.title}</b><span>${b.sub}</span>${b.tap?`<em>${b.tap}</em>`:''}</div>`;
-  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프');
-  const n=(m.review.can?1:0)+(m.loop.can?1:0);
+  // (1110 유강) 루프 전체 완성 예상 + 기말을 넘기면 '보충이 필요해요' · 보충 루프 버튼(core homeModel.eta·supp)
+  const md=x=>{ const d=new Date(String(x).slice(0,10)+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})`; };
+  const eta=m.eta, etaH=!eta?'':eta.behind
+    ?`<div class="bad" style="font-size:13px;line-height:1.6;margin:-4px 4px 12px">${eta.mid?`루프 전체 완성 예상 ${md(eta.mid)} — 기말(${md(eta.exam)})보다 늦어요.`:`지금 속도로는 기말(${md(eta.exam)}) 전 완성이 어려워요.`} <b>보충이 필요해요</b></div>`
+    :(eta.mid?`<div style="font-size:13px;line-height:1.6;color:var(--dim);margin:-4px 4px 12px">루프 전체 완성 예상 <b>${md(eta.mid)}</b>${eta.exam?` · 기말 ${Math.round((Date.parse(eta.exam)-Date.parse(eta.mid))/864e5)}일 전`:''}</div>`:'');
+  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+etaH;
+  const n=(m.review.can?1:0)+(m.loop.can?1:0)+(m.supp&&m.supp.can?1:0);
   if(bd){ bd.textContent=String(n); bd.classList.toggle('on',n>0); }
   if(r){ r.innerHTML=coreRecHTML(m); wireCoreRec(r); }
 }
