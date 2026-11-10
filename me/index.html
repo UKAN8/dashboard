@@ -391,6 +391,14 @@ h2 small{font-size:13px;font-weight:400;color:var(--dim);margin-left:8px}
 .card.rpls{background:none;border:0;padding:0 0 4px}
 .fx-hero .road div.done{background:var(--raised);color:var(--tx2)}
 .fx-hero .road div.now{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--acc)}
+/* (1110 유강) D-day 카드 속 CORE 두 칸 — 루프 완성 예상 · 확신 정확도 */
+.fx-hero .hk{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.fx-hero .hk:empty{display:none}
+.fx-hero .hk>div{background:var(--raised);border-radius:10px;padding:10px 12px;min-width:0}
+.fx-hero .hk i{display:block;font-style:normal;font-size:11px;color:var(--dim)}
+.fx-hero .hk b{display:block;font-size:18px;font-weight:600;margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif}
+.fx-hero .hk b small{font-size:12px;font-weight:500;margin-left:1px}
+.fx-hero .hk em{display:block;font-style:normal;font-size:11.5px;color:var(--tx2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-hero .hk .warn{box-shadow:inset 0 0 0 1px var(--bad)}.fx-hero .hk .warn b,.fx-hero .hk .warn em{color:var(--bad)}
 .qk a{background:var(--card);border-color:var(--bd);border-radius:12px;padding:12px 16px;font-weight:600}
 .cgo,.tdh,.rpl1{background:var(--card)!important;border-color:var(--bd)!important;border-radius:16px}
 .cgo.act,.rpl1{border-color:rgba(245,160,160,.45)!important}
@@ -1217,6 +1225,7 @@ function heroCard(d,c,today){
   return `<div class="fx-hero">`
     +`<div class="t">${E(FINAL.학기||'기말')} 대비 · ${E(c.과목||'')}</div>`
     +`<div class="dd"><b>${dday}</b><span>${sub}</span></div>`
+    +`<div class="hk" id="hero-core"></div>`   /* (1110) drawCore 가 채운다 */
     +`<div class="road">${rm.map(u=>`<div class="${u.st}">${E(u.짧게)}</div>`).join('')}</div>`
     +`<div class="nx">${nx?`다음 수업 <b>${sd(nx.d)}</b> ${E(nx.t)}`:'정규 진도와 기출 모의를 모두 마쳤어요'}`
     +`${mockStart>today?` <span class="sep">·</span> 기출 모의 ${sd(mockStart)}부터 ${c.모의.length}회`:''}</div>`
@@ -1255,7 +1264,17 @@ function drawCore(){
   const eta=m.eta, etaH=!eta?'':eta.behind
     ?`<div class="bad" style="font-size:13px;line-height:1.6;margin:-4px 4px 12px">${eta.mid?`루프 전체 완성 예상 ${md(eta.mid)} — 기말(${md(eta.exam)})보다 늦어요.`:`지금 속도로는 기말(${md(eta.exam)}) 전 완성이 어려워요.`} <b>보충이 필요해요</b></div>`
     :(eta.mid?`<div style="font-size:13px;line-height:1.6;color:var(--dim);margin:-4px 4px 12px">루프 전체 완성 예상 <b>${md(eta.mid)}</b>${eta.exam?` · 기말 ${Math.round((Date.parse(eta.exam)-Date.parse(eta.mid))/864e5)}일 전`:''}</div>`:'');
-  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+etaH;
+  const hk=$('hero-core');
+  if(hk){
+    const c=m.calib||{}, left=eta&&eta.mid&&eta.exam?Math.round((Date.parse(eta.exam)-Date.parse(eta.mid))/864e5):null;
+    const a=!eta?'':eta.behind
+      ?`<div class="warn"><i>루프 완성 · 기말보다 늦어요</i><b>${eta.mid?md(eta.mid):'예측 어려움'}</b><em>보충이 필요해요</em></div>`
+      :(eta.mid?`<div><i>루프 완성 예상</i><b>${md(eta.mid)}</b><em>${left!=null?`기말 ${left}일 전`:''}</em></div>`:'');
+    const b=c.n>=10?`<div><i>확신 정확도</i><b>${c.pct}<small>%</small></b><em>${c.prev==null?'최근 7일':`지난주보다 ${c.pct>=c.prev?'▲':'▼'} ${Math.abs(c.pct-c.prev)}`}</em></div>`
+      :`<div><i>확신 정확도</i><b>—</b><em>'확실해요' 10개부터 보여요</em></div>`;
+    hk.innerHTML=a?a+b:b.replace('<div>','<div style="grid-column:1/-1">');
+  }
+  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+(hk?'':etaH);
   const n=(m.review.can?1:0)+(m.loop.can?1:0)+(m.supp&&m.supp.can?1:0);
   if(bd){ bd.textContent=String(n); bd.classList.toggle('on',n>0); }
   if(r){ r.innerHTML=coreRecHTML(m); wireCoreRec(r); }
