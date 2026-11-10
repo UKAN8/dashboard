@@ -1467,9 +1467,14 @@ const HW_FLOOR_BAN={'고1T':[70,40]};
 const HW_EXTRA=15;   // (1110) hw_plan.EXTRA_Q
 const LOOP_CAPS=[0,40,30,20];   // (1110 유강) 루프 상한 — 0 = 상한 없음. DB hw_pref.루프상한·core.html LOOP_CAP 과 같게
 function loopEta(cap){ const e=HW.loop&&HW.loop.예상&&HW.loop.예상[String(cap)]; if(!e) return null;
-  if(!e.중앙||e.완료비율<0.8) return {txt:'지금 속도로는 아직 예측이 어려워요', far:true};
-  const d=new Date(e.중앙+'T00:00:00'); return {txt:`${d.getMonth()+1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})`, far:false}; }
-function loopEtaLine(cap){ const t=loopEta(cap); if(!t) return ''; return t.far?`루프 전체 완성 · ${t.txt}`:`루프 전체 완성 예상 <b>${t.txt}</b>`; }
+  const md=x=>{ const d=new Date(String(x).slice(0,10)+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})`; };
+  const ex=HW.loop.시험일?String(HW.loop.시험일).slice(0,10):'';
+  if(!e.중앙||e.완료비율<0.5) return {txt:ex?`기말(${md(ex)}) 전 완성이 어려워요 — 루프를 빠짐없이 하면 앞당겨져요`:'지금 속도로는 아직 예측이 어려워요', bad:true};
+  if(ex){ const left=Math.round((Date.parse(ex)-Date.parse(e.중앙))/864e5);
+    if(e.중앙<ex && (e.시험전==null || e.시험전>=0.5)) return {txt:`루프 전체 완성 예상 <b>${md(e.중앙)}</b> · 기말 ${left}일 전`, bad:false};
+    return {txt:`완성 예상 ${md(e.중앙)} — 기말(${md(ex)})보다 늦어요. 루프를 빠짐없이 하면 앞당겨져요`, bad:true}; }
+  return {txt:`루프 전체 완성 예상 <b>${md(e.중앙)}</b>`, bad:false}; }
+function loopEtaLine(cap){ const t=loopEta(cap); if(!t) return ''; return t.bad?`<span class="bad">${t.txt}</span>`:t.txt; }
 function hwFloor(lv){ const f=HW_FLOOR_BAN[HW.ban]; return lv==='도전'?(f?f[1]:HW_MIN_CHAL):(f?f[0]:HW_MIN); }
 function prefCard(){
   // (1110 유강 '분량 한 칸') 학생은 분량 하나만 고른다 — 막힌 게 많으면 분량+HW_EXTRA 까지 늘어난다(hw_plan.EXTRA_Q)
@@ -1489,7 +1494,7 @@ function prefCard(){
     +`<div class="dim lvh" style="font-size:12px;line-height:1.75;margin-top:8px">${Object.keys(HW_LV).map(k=>`<div data-lvd="${k}"${k===p.난이도?' style="color:var(--tx)"':''}><b>${HW_LV[k]}</b> · ${HW_LVD[k]}</div>`).join('')}`
     +`<div style="margin-top:4px">분량이 남으면 막힌 유형 → 안 푼 유형 → 다 맞힌 유형(한 단계 어렵게) 순으로 채워요.</div></div>`
     +`<label>루프 상한</label><div class="seg">${LOOP_CAPS.map(c=>`<button type="button" data-cap="${c}" class="${c===cap?'on':''}">${c?c+'문항':'전부'}</button>`).join('')}</div>`
-    +`<div class="dim" style="font-size:12px;margin-top:8px;line-height:1.75">한 번 루프에 나오는 문항 수예요. 못 들어간 문제는 다음 루프로 넘어가요.<br><span id="loop-eta">${loopEtaLine(cap)}</span></div>`
+    +`<div class="dim" style="font-size:12px;margin-top:8px;line-height:1.75">한 번 루프에 나오는 문항 수예요. 못 들어간 문제는 다음 루프로 넘어가요. 기말 3주 전부터는 루프가 매일 나와요.<br><span id="loop-eta">${loopEtaLine(cap)}</span></div>`
     +`<div class="acts"><button type="button" class="b go" id="hwp-save">저장</button></div><div id="hwp-msg" class="dim" style="font-size:12px;margin-top:8px"></div></div></div>`;
 }
 function wirePref(host,onSaved){
