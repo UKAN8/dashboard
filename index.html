@@ -6318,11 +6318,24 @@ function hbDraw() {
   const myItems = s => items.filter(x => hbSchOfItem(x.id) === s.sch && (!s.ban || !x.g || x.g === s.ban.slice(0, 2)));
 
   // 첫 시도 / 마지막 시도
-  const first = {}, last = {}, lastAt = {};
+  const first = {}, last = {}, lastAt = {}, lastDone = {};
   R.forEach(r => { const k = r.학생ID + '|' + r.문항ID;
     if (!first[k] || r.시도 < first[k].시도) first[k] = r;
     if (!last[k] || r.시도 > last[k].시도) last[k] = r;
+    if (r.완료 && (!lastDone[k] || r.시도 > lastDone[k].시도)) lastDone[k] = r;
     if (!lastAt[r.학생ID] || r.시각 > lastAt[r.학생ID]) lastAt[r.학생ID] = r.시각; });
+  // (1110 유강 "한 번 더 풀게 하고 달라진 데이터를 비교") 1회차(첫 완료) vs 최근 완료 회차
+  const hbCnt = (res, re) => ((res || '').match(re) || []).length;
+  function hbCmp(sid, its) {
+    const c = { n: 0, o1: 0, o2: 0, b1: 0, b2: 0, c1: 0, c2: 0, ms1: 0, ms2: 0, up: [], keep: [] };
+    its.forEach(it => { const k = sid + '|' + it.id, a = first[k], b = lastDone[k];
+      if (!a || !b || !a.완료 || b.시도 <= a.시도) return;
+      c.n++; c.o1 += hbCnt(a.결과, /o/g); c.o2 += hbCnt(b.결과, /o/g); c.b1 += hbCnt(a.결과, /[tx]/g); c.b2 += hbCnt(b.결과, /[tx]/g);
+      c.c1 += (a.결과 || '').replace(/-/g, '').length; c.c2 += (b.결과 || '').replace(/-/g, '').length; c.ms1 += a.ms || 0; c.ms2 += b.ms || 0;
+      [...(b.결과 || '')].forEach((ch, j) => { const p0 = (a.결과 || '')[j]; if (!p0 || !/[tx]/.test(p0)) return;
+        const nm = hbShortId(it.id) + ' ' + (j + 1) + '단계'; if (ch === 'o') c.up.push(nm); else if (/[tx]/.test(ch)) c.keep.push(nm); }); });
+    return c;
+  }
 
   // ── 툴바
   const fb = (grp, v, lbl, cur) => `<button class="fbtn${v === cur ? ' on' : ''}" data-${grp}="${E(v)}">${E(lbl)}</button>`;
@@ -6349,7 +6362,7 @@ function hbDraw() {
     const okc = done.reduce((a, y) => a + ((y.r.결과 || '').match(/o/g) || []).length, 0);
     const memo = rs.filter(y => hbMemo(y.r)), stuck = rs.filter(y => hbStuck(y.r)), fast = rs.filter(y => hbFastR(y.r));
     const retry = rs.filter(y => y.l && y.l.시도 > y.r.시도);
-    return { s, its, rs, done: done.length, ing: rs.length - done.length, pass: cells ? okc / cells : null, memo, stuck, fast, retry,
+    return { s, its, rs, done: done.length, ing: rs.length - done.length, pass: cells ? okc / cells : null, memo, stuck, fast, retry, cmp: hbCmp(s.sid, its),
       mins: Math.round(rs.reduce((a, y) => a + (y.r.ms || 0), 0) / 60000), last: lastAt[s.sid] };
   });
   const on = S.filter(x => x.rs.length);
@@ -6380,6 +6393,8 @@ function hbDraw() {
   H.push(`<div><div class="k">첫 응답 정답률 (끝낸 문항, 단계 기준)</div><div class="v">${passAll == null ? '—' : Math.round(passAll * 100) + '%'}</div><div class="s">${okN} / ${tot.length}단계 · ${hbBar('o', 1)} 첫 응답 ${hbBar('t', 1)} 도움 후 ${hbBar('x', 1)} 재확인</div></div>`);
   H.push(`<div><div class="k">'설명할 수 있다'고 한 문항</div><div class="v">${conf.length ? Math.round(confBad.length / conf.length * 100) + '%' : '—'}<small>가 한 단계 이상 틀림</small></div><div class="s">${confBad.length} / ${conf.length}문항 · 감으로 맞힘 ${gamBad.length} / ${gam.length}문항</div></div>`);
   H.push(`<div><div class="k">풀이 시간 확인</div><div class="v">${fastN}<small>문항</small></div><div class="s">${Math.round((HB_FAST[PAN] || 60000) / 1000)}초 안에 끝낸 문항 · ${HB.nofast ? '지금 계산에서 뺌' : '계산에 포함 중 (위 버튼으로 빼기)'}</div></div>`);
+  const CM = on.map(x => x.cmp).filter(c => c.n), cm = CM.reduce((a, c) => ({ n: a.n + c.n, o1: a.o1 + c.o1, o2: a.o2 + c.o2, c1: a.c1 + c.c1, c2: a.c2 + c.c2 }), { n: 0, o1: 0, o2: 0, c1: 0, c2: 0 });
+  H.push(`<div><div class="k">다시 푼 문항 · 첫 응답 정답률</div><div class="v">${cm.n ? Math.round(cm.o1 / cm.c1 * 100) + '% → ' + Math.round(cm.o2 / cm.c2 * 100) + '%' : '—'}</div><div class="s">${CM.length}명 · ${cm.n}문항 · 1회차 → 최근 회차</div></div>`);
   H.push('</div>');
 
   // ① 먼저 볼 학생
@@ -6390,6 +6405,17 @@ function hbDraw() {
     : '<div class="card hb-empty">걸리는 학생 없음</div>');
   const notYet = watch.filter(w => !w.x.rs.length);
   if (notYet.length) H.push(`<p class="hb-sub" style="margin-top:8px">아직 시작 안 함 (${notYet.length}명) · ${notYet.map(w => E(w.x.s.name)).join(', ')}</p>`);
+  // ①-2 다시 푼 학생 (1110) — 1회차 vs 최근 완료 회차. 두 번 다 막힌 단계 = 수업에서 다시 짚을 곳
+  const rv = S.filter(x => x.cmp.n).sort((a, b) => b.cmp.keep.length - a.cmp.keep.length || (b.cmp.o2 - b.cmp.o1) - (a.cmp.o2 - a.cmp.o1));
+  if (rv.length) {
+    H.push(`<h3 class="hb-h">다시 푼 학생 · 1회차 → 최근</h3><p class="hb-sub">한 번에 맞힘 · 막힌 단계 · 시간 · <span class="hb-tag r">두 번 다 막힘</span> = 수업에서 다시 짚을 곳 · <span class="hb-tag g">이번에 한 번에</span> = 다시 풀어서 넘어간 단계</p><div class="hb-watch">`);
+    rv.forEach(x => { const c = x.cmp;
+      H.push(`<button class="hb-w" data-sid="${E(x.s.sid)}"><div><b>${E(x.s.name)}</b><span class="bn">${E(x.s.ban)} · ${c.n}문항 다시</span>`
+        + `<div class="why">한 번에 ${c.o1} → <b>${c.o2}</b> · 막힘 ${c.b1} → <b>${c.b2}</b> · ${hbMin(c.ms1)} → ${hbMin(c.ms2)}</div>`
+        + `<div class="why">${c.keep.slice(0, 8).map(t => `<span class="hb-tag r">${E(t)}</span>`).join('')}${c.keep.length > 8 ? `<span class="hb-tag r">+${c.keep.length - 8}</span>` : ''}`
+        + `${c.up.length ? `<span class="hb-tag g" title="${E(c.up.join(', '))}">이번에 한 번에 ${c.up.length}</span>` : ''}</div></div></button>`); });
+    H.push('</div>');
+  }
 
   // ② 스텝별 — 반 전체
   const names = hbStepNames(PAN, NSmax);
@@ -6413,7 +6439,7 @@ function hbDraw() {
     H.push(`<h3 class="hb-h hb-g">${E(gname)} <span class="dim">· ${gon}/${GS.length}명 참여 · ${shown.length}문항</span></h3>`);
     H.push(`<p class="hb-sub">칸 하나 = 그 문항의 단계 막대(첫 시도) · 초록 첫 응답 정답 · 주황 도움 후 정답 · 빨강 재확인 필요 · 점선 = 진행 중 · ⚡ = 풀이 시간 확인 · ↻ = 다시 풀어 봄 · 이름·칸을 누르면 학생 기록, 머리글을 누르면 정렬</p>`);
     H.push('<div class="hb-scroll"><table class="hb-m"><thead>');
-    H.push(`<tr><th class="nm">이름</th><th>끝냄</th><th>첫 응답 정답률</th><th>표시</th>${shown.map(it => `<th title="${E(it.id + ' · ' + it.unit)}">${E(hbShortId(it.id))}</th>`).join('')}<th>시간</th><th>마지막</th></tr></thead><tbody>`);
+    H.push(`<tr><th class="nm">이름</th><th>끝냄</th><th>첫 응답 정답률</th><th>표시</th><th title="1회차 → 최근 완료 회차 (다시 푼 문항만)">다시 풀기</th>${shown.map(it => `<th title="${E(it.id + ' · ' + it.unit)}">${E(hbShortId(it.id))}</th>`).join('')}<th>시간</th><th>마지막</th></tr></thead><tbody>`);
     GS.forEach(x => {
       const cells = shown.map(it => {
         if (!x.its.includes(it)) return '<td class="c" data-sv=""><span class="e">·</span></td>';
@@ -6427,7 +6453,8 @@ function hbDraw() {
       const flags = [x.fast.length ? `<span class="hb-tag r" title="풀이 시간 확인">⚡${x.fast.length}</span>` : '', x.memo.length ? `<span class="hb-tag r" title="확신했는데 2단계 이상 막힘">확신↓ ${x.memo.length}</span>` : '', x.stuck.length ? `<span class="hb-tag y" title="재확인 필요 2단계 이상">재확인 ${x.stuck.length}</span>` : ''].join('');
       H.push(`<tr${x.rs.length ? '' : ' class="off"'}><td class="nm" data-sid="${E(x.s.sid)}" data-sv="${E(x.s.name)}">${E(x.s.name)}<small>${E(x.s.ban)}</small></td>`
         + `<td class="r" data-sv="${x.done}">${x.done}/${x.its.length}</td><td class="r" data-sv="${x.pass == null ? '' : x.pass}"><span class="hb-pct" style="color:${x.pass == null ? 'var(--dim)' : x.pass >= .75 ? 'var(--ok)' : x.pass >= .55 ? 'var(--tt)' : 'var(--xx)'}">${pc}</span></td>`
-        + `<td class="fl" data-sv="${x.fast.length * 3 + x.memo.length * 2 + x.stuck.length || ''}">${flags}</td>${cells}`
+        + `<td class="fl" data-sv="${x.fast.length * 3 + x.memo.length * 2 + x.stuck.length || ''}">${flags}</td>`
+        + `<td class="r" data-sv="${x.cmp.n ? x.cmp.o2 - x.cmp.o1 : ''}" title="${x.cmp.n ? E(x.cmp.n + '문항 · 한 번에 ' + x.cmp.o1 + '→' + x.cmp.o2 + ' · 막힘 ' + x.cmp.b1 + '→' + x.cmp.b2 + (x.cmp.keep.length ? ' · 두 번 다 막힘 ' + x.cmp.keep.join(', ') : '')) : ''}">${x.cmp.n ? `${x.cmp.o1}→<b>${x.cmp.o2}</b>${x.cmp.keep.length ? `<span class="fz">${x.cmp.keep.length}</span>` : ''}` : '—'}</td>${cells}`
         + `<td class="r" data-sv="${x.rs.length ? x.mins : ''}">${x.rs.length ? x.mins + '분' : '—'}</td><td class="r" data-sv="${x.last || ''}">${x.last ? hbT(x.last) : '—'}</td></tr>`);
     });
     H.push('</tbody></table></div>');
