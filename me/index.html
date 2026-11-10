@@ -429,6 +429,56 @@ h2{font-weight:600;font-size:16px}
 /* (1110 유강 "수학은유강은 로고 — 페이퍼로지 고정") 로고 글자는 늘 페이퍼로지. 늦게 받아져도 다른 글꼴로 먼저 보이지 않게 block */
 @font-face{font-family:'PaperlogyLogo';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:block}
 .brand,#msg .logo{font-family:'PaperlogyLogo','Paperlogy',sans-serif!important;font-weight:600!important;letter-spacing:0}
+
+/* (1110) 기록 탭 추이 카드 */
+.card.tr{padding:16px 20px}
+.trh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
+.trh b{display:block;font-size:15px;font-weight:600;font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif}
+.trh small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.trh strong{font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif;font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.trh strong small{display:inline;font-size:14px;font-weight:500;color:var(--tx2);margin-left:2px}
+.bars{display:flex;gap:8px;align-items:stretch}
+.bc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;color:inherit;text-decoration:none}
+.bc .bn{font-size:12px;font-weight:500;color:var(--tx2);font-variant-numeric:tabular-nums}
+.bc .bt{position:relative;width:100%;max-width:28px;height:72px;background:var(--raised);border-radius:6px;overflow:hidden}
+.bc .bv{position:absolute;left:0;right:0;bottom:0;background:rgba(245,160,160,.55);border-radius:6px 6px 0 0}
+.bc:last-child .bv{background:var(--acc)}
+.bc:last-child .bn{color:var(--tx)}
+.bc .ba{position:absolute;left:-2px;right:-2px;height:0;border-top:2px dashed rgba(237,237,237,.45)}
+.bc .bl{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
+.trf{margin-top:8px;font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.ba-l{display:inline-block;width:14px;border-top:2px dashed rgba(237,237,237,.45)}
+.att{display:flex;gap:8px;flex-wrap:wrap}
+.ad{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:30px}
+.ad i{width:14px;height:14px;border-radius:50%}
+.ad.ok i{background:rgba(126,224,163,.75)}.ad.late i{background:#f0d58a}.ad.abs i{background:var(--bad)}
+.ad small{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+/* (1110) 오늘 타일 — 누르면 상세 */
+.hk{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#core-hk{margin:0 0 12px}
+#core-hk>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;min-width:0}
+#core-hk i{display:block;font-style:normal;font-size:12px;color:var(--dim)}
+#core-hk b{display:block;font-size:20px;font-weight:600;margin-top:2px;font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif}
+#core-hk b small{font-size:12px}
+#core-hk em{display:block;font-style:normal;font-size:12px;color:var(--tx2)}
+.hk .tap{cursor:pointer;position:relative;transition:box-shadow .15s cubic-bezier(.22,1,.36,1)}
+.hk .tap::after{content:'›';position:absolute;right:12px;top:10px;color:var(--dim);font-size:16px}
+.hk .tap:active{box-shadow:inset 0 0 0 1px var(--acc)}
+#asksheet .sh>h2:first-of-type,#asksheet .sh>.grab+h2{margin-top:4px}
+/* (1110) 자료 탭 정리 — 날짜·제목·버튼 크기 통일 */
+.grow{padding:16px 0}
+.grow .h b{font-size:15px;font-weight:600;display:flex;align-items:baseline;gap:8px;min-width:0}
+.grow .ld{font-size:13px;font-weight:500;color:var(--dim);margin:0;font-variant-numeric:tabular-nums;letter-spacing:0;font-family:inherit}
+.grow .h>span{font-size:12px;color:var(--dim)}
+.grow .rp{gap:8px;margin-top:12px}
+.grow .rp a,.grow .rp button,.grow .rp .vid,.grow .rp .rvb{display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:13px;font-weight:500;line-height:1.4;
+ padding:8px 12px;border-radius:10px;background:var(--raised)!important;border:1px solid var(--bd)!important;color:var(--tx)!important;cursor:pointer}
+.grow .rp small,.grow .rp a small{font-size:12px;color:var(--dim);margin-left:2px}
+.grow .rp .vid .ic,.grow .rp .rvb .ic{color:var(--acc);margin-right:2px}
+.grow .rp .rvb{border-color:rgba(245,160,160,.45)!important}
+.grow .rp button.vid,.grow .rp a.vid{font-size:13px;font-weight:500;line-height:1.4;padding:8px 12px;border-radius:10px}
+.grow .rp button.vid.on{box-shadow:inset 0 0 0 1px var(--acc)}
 </style></head>
 <body>
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
@@ -998,6 +1048,7 @@ function partsOf(d){
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
   //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
   const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
+  P._rp=RP;
   const rpD=x=>{ const t=String(x).slice(0,10), [y,m,dd]=t.split('-').map(Number); return `${m}/${dd}(${'일월화수목금토'[new Date(y,m-1,dd).getDay()]})`; };
   P.reports=`<h2>수업 리포트<small>수업 다음 날 올라와요</small></h2>`
     +(RP.length?`<a class="rpl1" href="${E(RP[0].url)}" target="_blank" rel="noopener"><span><small>가장 최근</small><b>${rpD(RP[0].날짜)} 수업 리포트</b></span><em>열기 →</em></a>`
@@ -1027,7 +1078,9 @@ const IC={
   mail:'<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
   pin:'<svg class="ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M10 21v-5h4v5"/></svg>',
   chat:'<svg class="ic" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
-  cam:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'};
+  cam:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  book:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></svg>',
+  play:'<svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>'};
 /* ── (1110 유강 "기능이 많아져 재구성 — 탭 4개") 탭 ──────────────────────────────
  * 오늘 = 지금 할 것만(D-day·자기평가·CORE·해부 루프 + 과제 요약 줄) / 과제 = 체크·조교쌤 답·질문 모음 / 기록 = 성적·준비도 / 자료 = 수업 자료·오류 신고.
  * 학생·학부모 링크가 같아서 늘 '오늘'부터 연다(마지막 탭 기억 안 함 — 할 일을 놓친다). 알림 링크는 &tab=과제 처럼 바로 연다.
@@ -1098,7 +1151,6 @@ function prefTile(){
   a.onclick=ev=>{ ev.preventDefault(); prefSheet(); };
 }
 function mountTasks(tok){
-  mountWeekly(tok);
   Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(()=>{ tabSync(); prefTile(); });
 }
 const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
@@ -1125,11 +1177,11 @@ function render(d){
   S.오늘.push(P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
-  S.기록.push(P.reports, `<div id="wk-host"></div>`, P.core?`<div id="core-rec"></div>`:'', `<h2>기출테스트</h2><div id="pr-host"></div>`);
+  S.기록.push(`<div id="trend-host"><div class="none">기록을 불러오는 중…</div></div>`, `<h2>기출테스트</h2><div id="pr-host"></div>`);
   // ③ 수업 자료 (0927) — 정적 목록(mathis-lib/lib.json)을 읽는다. 내 반 것만, 수업일 순 한 목록(유강 0928).
   S.자료.push(`<h2>수업 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`, P.report);
   $('app').innerHTML=P.head+tabsHTML(S)+P.foot;
-  wireTabs(); wireReports();
+  wireTabs(); mountTrend(tok,P._rp);
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
   mountTasks(tok);
@@ -1258,9 +1310,9 @@ function mountCore(tok,fallback,finalCfg){
   document.body.appendChild(f);   // 지우지 않는다 — core 가 못 보낸 기록·루프 세트를 서버로 보내는 중일 수 있다
 }
 function drawCore(){
-  const t=$('core-today'), r=$('core-rec'), m=CORE.m;
+  const t=$('core-today'), m=CORE.m;
   const bd=document.querySelector('[data-bdg="오늘"]');
-  if(!m){ if(t) t.innerHTML=CORE.fallback; if(r) r.innerHTML=''; if(bd) bd.classList.remove('on'); return; }
+  if(!m){ if(t) t.innerHTML=CORE.fallback; if(bd) bd.classList.remove('on'); return; }
   const go=g=>CORE.url+'?t='+encodeURIComponent(CORE.tok)+'&go='+encodeURIComponent(g);
   const btn=(b,g)=>b.can?`<a class="cgo act" href="${E(go(g))}"><b>${b.title}</b><span>${b.sub}</span><em>${b.tap}</em></a>`
     :`<div class="cgo ${b.cls==='done'?'done':'s'}"><b>${b.title}</b><span>${b.sub}</span>${b.tap?`<em>${b.tap}</em>`:''}</div>`;
@@ -1277,16 +1329,47 @@ function drawCore(){
       :(eta.mid?`<div><i>루프 완성 예상</i><b>${md(eta.mid)}</b><em>${left!=null?`기말 ${left}일 전`:''}</em></div>`:'');
     const b=c.n>=10?`<div><i>확신 정확도</i><b>${c.pct}<small>%</small></b><em>${c.prev==null?'최근 7일':`지난주보다 ${c.pct>=c.prev?'▲':'▼'} ${Math.abs(c.pct-c.prev)}`}</em></div>`
       :`<div><i>확신 정확도</i><b>—</b><em>'확실해요' 10개부터 보여요</em></div>`;
-    hk.innerHTML=a?a+b:b.replace('<div>','<div style="grid-column:1/-1">');
+    hk.innerHTML=coreTiles(m);
   }
-  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+(hk?'':etaH);
+  if(t) t.innerHTML=btn(m.review,'리뷰')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+(hk?'':etaH)
+    +(hk?'':`<div class="hk" id="core-hk">${coreTiles(m)}</div>`);   // 히어로가 없는 평소 화면은 버튼 아래에
+  wireTiles(hk||$('core-hk'),m);
   const n=(m.review.can?1:0)+(m.loop.can?1:0)+(m.supp&&m.supp.can?1:0);
   if(bd){ bd.textContent=String(n); bd.classList.toggle('on',n>0); }
-  if(r){ r.innerHTML=coreRecHTML(m); wireCoreRec(r); }
 }
-function coreRecHTML(m){
+/* (1110 유강 "확신정확도는 메인에서 터치하면 상세 · 기말 준비도는 루프 완성일 터치했을 때") 타일 → 상세 창 */
+function coreTiles(m){
+  const c=m.calib||{}, eta=m.eta;
+  const md=x=>{ const d=new Date(String(x).slice(0,10)+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})`; };
+  const pct=m.tot?Math.round(100*m.grad/m.tot):0;
+  const a=eta&&eta.behind?`<div class="warn"><i>루프 완성 · 기말보다 늦어요</i><b>${eta.mid?md(eta.mid):'예측 어려움'}</b><em>보충이 필요해요</em></div>`
+    :eta&&eta.mid?`<div><i>루프 완성 예상</i><b>${md(eta.mid)}</b><em>완성 ${m.grad}/${m.tot} · ${pct}%</em></div>`
+    :`<div><i>루프 완성</i><b>${pct}<small>%</small></b><em>완성 ${m.grad}/${m.tot}</em></div>`;
+  const b=c.n>=10?`<div><i>확신 정확도</i><b>${c.pct}<small>%</small></b><em>${c.prev==null?'최근 7일':`지난주보다 ${c.pct>=c.prev?'▲':'▼'} ${Math.abs(c.pct-c.prev)}`}</em></div>`
+    :`<div><i>확신 정확도</i><b>—</b><em>'확실해요' 10개부터</em></div>`;
+  return a+b;
+}
+function wireTiles(box,m){
+  if(!box) return;
+  const ks=box.children.length===2?['map','cal']:['cal'];
+  [...box.children].forEach((x,i)=>{ const k=ks[i]; if(!k) return;
+    x.setAttribute('role','button'); x.tabIndex=0; x.classList.add('tap');
+    const go=()=>coreSheet(m,k); x.onclick=go; x.onkeydown=ev=>{ if(ev.key==='Enter') go(); }; });
+}
+function coreSheet(m,k){
+  const old=document.getElementById('asksheet'); if(old) old.remove();
+  const d=document.createElement('div'); d.id='asksheet';
+  d.innerHTML=`<div class="sh" role="dialog" aria-modal="true"><div class="grab"></div>${coreRecHTML(m,k)}<div class="acts" style="margin-top:12px"><button type="button" id="cs-x">닫기</button></div></div>`;
+  document.body.appendChild(d); document.body.classList.add('noscroll');
+  const close=()=>{ d.remove(); document.body.classList.remove('noscroll'); };
+  d.querySelector('#cs-x').onclick=close; d.addEventListener('click',ev=>{ if(ev.target===d) close(); });
+  wireCoreRec(d);
+}
+function coreRecHTML(m,part){
   const H=[], c=m.calib||{};
-  if(c.n>=10){
+  if(part==='cal'&&c.n<10) H.push(`<h2>확신 정확도</h2><div class="card fx-cal"><div class="c2">최근 7일 '확실해요'라고 답한 문항이 10개가 넘으면 맞힌 비율이 나와요.</div>`
+      +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`);
+  if(part==='cal'&&c.n>=10){
     const col=c.pct>=90?'#8fe0b0':c.pct>=75?'#f0d58a':'#ff8fa8';
     const ws=Object.keys(CAL_W).filter(k=>(c.why||{})[k]).map(k=>`${CAL_W[k]} ${c.why[k]}`).join(' · ');
     H.push(`<h2>확신 정확도<small>'확실해요'라고 한 답 중 맞힌 비율 · 최근 7일</small></h2>`
@@ -1295,6 +1378,7 @@ function coreRecHTML(m){
       +`<div class="c2">확실하다고 한 ${c.n}개 중 <b>${c.x}개</b>가 틀렸어요${ws?` — ${E(ws)}`:''}</div>`
       +`<div class="note">확실할 때만 '확실해요'를 눌러요. 헷갈리면 '애매해요'가 손해가 아니에요 — 맞혔으면 쌓은 건 그대로예요.</div></div>`);
   }
+  if(part==='cal') return H.join('');
   // 기말 모드면 기말 진도 단원만(코드가 하나도 안 맞으면 전부)
   let U=m.units||[];
   if(CORE.final){ const codes=new Set(CORE.final.진도.map(u=>u.core).filter(Boolean)); const f=U.filter(u=>codes.has(u.code)); if(f.length) U=f; }
@@ -1348,12 +1432,12 @@ function renderFinal(d,parts){
     `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   const G=finalGichul(d.기출,c.시작);
-  S.기록.push(parts.reports, `<div id="wk-host"></div>`, parts.core?`<div id="core-rec"></div>`:'', `<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''),
+  S.기록.push(`<div id="trend-host"><div class="none">기록을 불러오는 중…</div></div>`, `<h2>기출 모의</h2>`+mockCard(c,G,today)+(G.회차.length?`<div id="fx-pr"></div>`:''),
     `<h2>지난 기록</h2>`+foldBtn('fx-old-pr','지난 기출테스트 기록'));
   S.자료.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`,
     foldBtn('fx-old-lib','지난 수업 자료'), parts.report);
   $('app').innerHTML=parts.head+tabsHTML(S)+parts.foot;
-  wireTabs(); wireReports();
+  wireTabs(); mountTrend(tok,parts._rp);
   // 접힘 — <details> 는 폰에서 안 눌린 적이 있다(0926) → 버튼 + 클래스
   const filled={};
   $('app').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
@@ -1399,7 +1483,7 @@ function drawRvQuick(){
   if(!el||!D||!ban) return;
   const rs=(D.정규||[]).filter(r=>r.반===ban&&r.복습).sort((a,b)=>String(b.날짜).localeCompare(String(a.날짜))).slice(0,2);
   if(!rs.length) return;
-  el.innerHTML=rs.map(r=>`<a href="${E(LIB_URL+r.복습)}" target="_blank" rel="noopener">📘 ${md(r.날짜)} 강의노트·복습<small>${E(String(r.제목||''))}</small></a>`).join('');
+  el.innerHTML=rs.map(r=>`<a href="${E(LIB_URL+r.복습)}" target="_blank" rel="noopener">${IC.book}${md(r.날짜)} 강의노트·복습<small>${E(String(r.제목||''))}</small></a>`).join('');
   el.style.display='';
 }
 // (0928) 탭 없이 내 반 수업일 순 한 줄 목록: 날짜 · 수업 내용 · 시험지/손풀이/영상
@@ -1447,7 +1531,7 @@ function drawLib(host,opt){
     const n=Math.min(rows.length,LIB.showN);
     H.push(rows.slice(0,n).map(r=>{
       // (1110 유강) 색인 있는 영상: 탭하면 '처음부터 보기 / 색인 구간으로 바로 가기' 고르는 패널을 연다
-      const vlab=v=>`▶ 수업 영상${v.부?' <small>'+E(v.부)+'</small>':(r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':'')}`;
+      const vlab=v=>`${IC.play}수업 영상${v.부?' <small>'+E(v.부)+'</small>':(r.vs.length>1?' <small>'+E(md(v.날짜))+'</small>':'')}`;
       const yu=(id,t)=>`https://youtu.be/${encodeURIComponent(id)}${t?'?t='+t:''}`;
       const ts=t=>{t=+t;const h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0');};
       let vix='';
@@ -1465,7 +1549,7 @@ function drawLib(host,opt){
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
       if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
       if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
-      if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">📘 강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
+      if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">${IC.book}강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
         +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
         +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
@@ -1901,6 +1985,41 @@ async function mountWeekly(tok){
     +(L.length?`<a class="rpl1" href="${E(L[0].url)}" target="_blank" rel="noopener"><span><small>가장 최근</small><b>${wl(L[0].주차)} 주간고사 리포트</b>${L[0].점수?` <span class="dim">· ${E(L[0].점수)}</span>`:''}</span><em>열기 →</em></a>`
       +(L.length>1?`<div class="card rpls"><div class="rp">${L.slice(1).map(r=>`<a href="${E(r.url)}" target="_blank" rel="noopener">${wl(r.주차)} ${tag(r)}</a>`).join('')}</div></div>`:'')
       :`<div class="none">아직 받은 주간고사 리포트가 없어요. 주간고사를 본 주 주말에 올라와요.</div>`);
+}
+/* (1110 유강 "기록탭은 산만 — 리포트에서 데이터만 빼와서 출결·리뷰테스트·과제 이행률·주간고사 추이")
+ *  portal_trend(v70) = 데일리 리포트가 밤마다 남기는 학생별 추이 · portal_weekly(v69) = 주간고사 리포트.
+ *  막대를 누르면 그날(그 주) 리포트가 열린다. 리포트 목록은 따로 두지 않는다. */
+async function mountTrend(tok,RP){
+  const host=$('trend-host'); if(!host||!tok) return;
+  let T=null, W=null;
+  try{ const r=await sb.rpc('portal_trend',{tok}); if(!r.error&&r.data) T=r.data; }catch(e){}
+  try{ const r=await sb.rpc('portal_weekly',{tok}); if(!r.error&&Array.isArray(r.data)) W=r.data; }catch(e){}
+  const rp={}; (RP||[]).forEach(x=>{ rp[String(x.날짜).slice(0,10)]=x.url; });
+  const md=x=>{ const [y,m,d]=String(x).slice(0,10).split('-').map(Number); return `${m}/${d}`; };
+  const wd=x=>{ const [y,m,d]=String(x).slice(0,10).split('-').map(Number); return '일월화수목금토'[new Date(y,m-1,d).getDay()]; };
+  const bars=(pts,max,fmt,avg,link,lab)=>{
+    const P=pts.slice(-8);
+    return `<div class="bars">${P.map(([d,v])=>{ const h=Math.max(3,Math.round(100*Math.min(v,max)/max)), a=avg&&avg[d]!=null?Math.round(100*Math.min(avg[d],max)/max):null, u=link&&link(d);
+      return `<${u?`a href="${E(u)}" target="_blank" rel="noopener"`:'div'} class="bc"><b class="bn">${fmt(v)}</b><span class="bt"><i class="bv" style="height:${h}%"></i>${a!=null?`<em class="ba" style="bottom:${a}%"></em>`:''}</span><span class="bl">${lab?lab(d):md(d)}</span></${u?'a':'div'}>`; }).join('')}</div>`; };
+  const card=(title,sub,big,unit,body,foot)=>`<div class="card tr"><div class="trh"><span><b>${title}</b><small>${sub}</small></span>${big!=null?`<strong>${big}<small>${unit||''}</small></strong>`:''}</div>${body}${foot?`<div class="trf">${foot}</div>`:''}</div>`;
+  const H=[];
+  const rt=(T&&T.rt)||[], ht=(T&&T.ht)||[], att=(T&&T.att)||[];
+  // 출결
+  if(att.length){
+    const k=a=>/출석|응시/.test(a)?'ok':/지각|늦/.test(a)?'late':'abs', cnt={ok:0,late:0,abs:0}; att.forEach(([d,a])=>cnt[k(a)]++);
+    H.push(card('출결',`출석 ${cnt.ok}${cnt.late?` · 지각 ${cnt.late}`:''}${cnt.abs?` · 결석 ${cnt.abs}`:''}`,null,'',
+      `<div class="att">${att.slice(-12).map(([d,a])=>`<span class="ad ${k(a)}" title="${E(a)}"><i></i><small>${md(d)}</small></span>`).join('')}</div>`));
+  }
+  if(rt.length){ const L=rt[rt.length-1][1];
+    H.push(card('리뷰테스트','10점 만점',Number(L).toFixed(1),'점',bars(rt,10,v=>Number(v).toFixed(1),T.rt_avg,d=>rp[d]),T.rt_avg?'<i class="ba-l"></i>반 평균':'')); }
+  if(ht.length){ const L=ht[ht.length-1][1];
+    H.push(card('과제 이행률','써킷 + 개별과제 + 루프',Math.round(L),'%',bars(ht,100,v=>Math.round(v),T.ht_avg,d=>rp[d]),T.ht_avg?'<i class="ba-l"></i>반 평균':'')); }
+  const wk=(W||[]).map(w=>{ const m=String(w.점수||'').match(/([\d.]+)\s*점/); return m?[String(w.주차).slice(0,10),Number(m[1]),w.url]:null; }).filter(Boolean).reverse();
+  if(wk.length){ const L=wk[wk.length-1][1], wu={}; wk.forEach(x=>wu[x[0]]=x[2]);
+    H.push(card('주간고사','주말 시험 점수',L%1?L.toFixed(1):L,'점',bars(wk.map(x=>[x[0],x[1]]),100,v=>v%1?v.toFixed(1):v,null,d=>wu[d],d=>md(d)+'주'))); }
+  host.innerHTML=H.length
+    ?`<h2>학습 기록<small>이번 내신 대비부터</small></h2>`+H.join('')+`<div class="note">막대를 누르면 그날 리포트가 열려요.${att.length?'':' 출결은 다음 리포트부터 함께 보여요.'}</div>`
+    :`<div class="none">아직 쌓인 기록이 없어요. 수업 다음 날부터 여기에 쌓여요.</div>`;
 }
 function wireReports(){ const b=$('rp-more'); if(b) b.onclick=()=>{ $('rp-list').classList.add('showall'); b.remove(); }; }
 /* (1110) draw 뒤 탭 뱃지 갱신 — 그리기 함수 본문은 손대지 않는다 */
