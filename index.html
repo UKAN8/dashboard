@@ -6727,6 +6727,16 @@ async function coSumRounds() {
   }));
   return R;
 }
+/* (1111 유강 "루프탭에 예상 완성일도") 학생 포털과 같은 loop_info(토큰) — 토큰은 관리자만 읽혀서 유강 계정에서만 */
+async function coSumEta(roster) {
+  if (!window.VS_OK || !roster.length) return {};
+  const td = coToday(), out = {};
+  const { data: tk } = await sb.from('portal_token').select('"학생ID",토큰,대상,회수,만료일,발급일').in('학생ID', roster.map(x => x.sid));
+  const best = {}; (tk || []).filter(t => (t.대상 || '학생') === '학생' && !t.회수 && (!t.만료일 || String(t.만료일) >= td))
+    .forEach(t => { const o = best[t['학생ID']]; if (!o || String(t.발급일 || '') > String(o.발급일 || '')) best[t['학생ID']] = t; });
+  await Promise.all(Object.values(best).map(t => sb.rpc('loop_info', { tok: t.토큰 }).then(r => { if (r && r.data) out[t['학생ID']] = r.data; }).catch(() => {})));
+  return out;
+}
 async function coDrawSum() {
   const body = $('co-body'), bar = $('co-bar'); if (!body || !bar) return;
   const R = CO.rows || [], B = CO.bank, T = coToday();
@@ -6742,7 +6752,7 @@ async function coDrawSum() {
   $('co-re').onclick = () => { CO.sum = null; coLoad(true); };
   if (!CO.sum || CO.sum.set !== CO.set) {
     body.innerHTML = CO_CSS + '<div class="dim">회차별 루프 이행을 계산하는 중… (반마다 최근 6회 + 이번 회차)</div>';
-    try { CO.sum = { set: CO.set, r: await coSumRounds() }; } catch (e) { CO.sum = { set: CO.set, r: {}, err: String(e && e.message || e) }; }
+    try { CO.sum = { set: CO.set, r: await coSumRounds(), eta: await coSumEta(roster) }; } catch (e) { CO.sum = { set: CO.set, r: {}, eta: {}, err: String(e && e.message || e) }; }
     if (CO.view !== 'sum') return;
   }
   const RD = CO.sum.r;
@@ -6763,12 +6773,17 @@ async function coDrawSum() {
     const done = cells.filter(c => !c.now && c.v), avg = done.length ? Math.round(done.reduce((a, c) => a + Math.min(1, c.v[0] / c.v[1]), 0) / done.length * 100) : null;
     const cur = cells.find(c => c.now);
     const last = lp.length ? lp[lp.length - 1].시각 : null;
-    return { ...s, tot: uniq.size, w7: u7.size, sure, seen: Object.keys(bk).length, ...st, cells, avg, cur: cur && cur.v, last };
+    const li = (CO.sum.eta || {})[s.sid], e = li && li.예상 ? (li.예상[String(li.상한 || 0)] || li.예상['0']) : null;
+    const eta = e ? { mid: e.중앙 || null, late: e.늦으면 || null, pre: e.시험전, ex: li.시험일 ? String(li.시험일).slice(0, 10) : null } : null;
+    return { ...s, tot: uniq.size, w7: u7.size, sure, seen: Object.keys(bk).length, ...st, cells, avg, cur: cur && cur.v, last, eta };
   });
   const view = stu.filter(x => CO.ban === '*' || x.ban === CO.ban);
   const mean = (a, f) => { const v = a.map(f).filter(x => x != null); return v.length ? v.reduce((p, c) => p + c, 0) / v.length : null; };
   const fmt = (v, u = '') => v == null ? '—' : Math.round(v) + u;
   const curDone = x => x.cur && x.cur[0] >= x.cur[1];
+  const etaOk = x => x.eta && x.eta.mid && x.eta.ex && x.eta.mid < x.eta.ex;
+  const md = d => d ? d.slice(2, 4) === '26' ? d.slice(5).replace('-', '/') : d.slice(2).replace(/-/g, '/') : '—';
+  const midOf = a => { const v = a.map(x => x.eta && x.eta.mid).filter(Boolean).sort(); return v.length ? v[Math.floor((v.length - 1) / 2)] : null; };
   const H = [CO_CSS, CO_SUM_CSS];
   if (CO.sum.err) H.push(`<div class="card dim" style="padding:10px 14px;margin-bottom:10px">회차별 이행을 못 불러왔어요: ${E(CO.sum.err)}</div>`);
   H.push(`<div class="co-kpi">
@@ -6776,24 +6791,27 @@ async function coDrawSum() {
 <div><div class="k">누적 루프 (평균)</div><div class="v">${fmt(mean(view, x => x.tot))}<small>문항/인</small></div><div class="s">최근 7일 평균 ${fmt(mean(view, x => x.w7))}문항</div></div>
 <div><div class="k">회차 루프 이행 (평균)</div><div class="v">${fmt(mean(view, x => x.avg))}<small>%</small></div><div class="s">지난 회차들 · 리포트 루프 칸과 같은 계산</div></div>
 <div><div class="k">통과(졸업) 칸 (평균)</div><div class="v">${fmt(mean(view, x => x.grad))}<small>/ ${keys.length || '—'}칸</small></div><div class="s">1회 성공 ${fmt(mean(view, x => x.one))} · 다시 ${fmt(mean(view, x => x.fail))}</div></div>
+<div><div class="k">시험 전 완성 예상</div><div class="v">${view.filter(etaOk).length}<small>/ ${view.filter(x => x.eta).length}명</small></div><div class="s">${(() => { const ex = (view.find(x => x.eta && x.eta.ex) || {}).eta; return ex ? '기말 ' + ex.ex.slice(5).replace('-', '/') + ' · 예상 중앙값 기준' : (window.VS_OK ? '예상 없음' : '유강 계정에서만 보여요'); })()}</div></div>
 <div><div class="k">이번 회차 루프 완료</div><div class="v">${view.filter(curDone).length}<small>/ ${view.filter(x => x.cur).length}명</small></div><div class="s">다음 수업 전 마감분</div></div>
 </div>`);
   if (CO.ban === '*') {
-    H.push(`<h3 class="co-h">반별</h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th>반</th><th>학생</th><th>누적 루프 평균</th><th>최근 7일 평균</th><th>회차 이행 평균</th><th>통과 칸 평균</th><th>다시 칸 평균</th><th>이번 회차 완료</th></tr></thead><tbody>`
+    H.push(`<h3 class="co-h">반별</h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th>반</th><th>학생</th><th>누적 루프 평균</th><th>최근 7일 평균</th><th>회차 이행 평균</th><th>통과 칸 평균</th><th>다시 칸 평균</th><th>예상 완성(중앙)</th><th>시험 전 완성</th><th>이번 회차 완료</th></tr></thead><tbody>`
       + bans.map(b => { const a = stu.filter(x => x.ban === b), m = mean(a, x => x.avg);
         return `<tr data-cbr="${E(b)}" style="cursor:pointer"><td><b>${E(b)}</b></td><td data-v="${a.length}">${a.length}</td><td data-v="${mean(a, x => x.tot) || 0}">${fmt(mean(a, x => x.tot))}</td><td data-v="${mean(a, x => x.w7) || 0}">${fmt(mean(a, x => x.w7))}</td>`
           + `<td data-v="${m == null ? -1 : m}"><b class="${m != null && m < 60 ? 'bad' : ''}">${fmt(m, '%')}</b></td><td data-v="${mean(a, x => x.grad) || 0}">${fmt(mean(a, x => x.grad))}</td><td data-v="${mean(a, x => x.fail) || 0}">${fmt(mean(a, x => x.fail))}</td>`
+          + `<td data-sv="${midOf(a) || ''}">${md(midOf(a))}</td><td data-v="${a.filter(etaOk).length}">${a.filter(etaOk).length} / ${a.filter(x => x.eta).length}</td>`
           + `<td data-v="${a.filter(curDone).length}">${a.filter(curDone).length} / ${a.filter(x => x.cur).length}</td></tr>`; }).join('') + '</tbody></table></div>');
   }
   const heads = CO.ban !== '*' && RD[CO.ban] ? RD[CO.ban].res.map(x => `<th class="rd" title="${x.now ? '이번 회차(다음 수업 전 마감)' : x.d + ' 수업 전까지'}">${x.now ? '이번' : x.d.slice(5).replace('-', '/')}</th>`).join('') : '<th>회차별 이행 (최근 → 오른쪽)</th>';
   const cellH = c => { if (!c.v) return `<td class="rd"><span class="dim">—</span></td>`; const p = Math.min(100, Math.round(c.v[0] / c.v[1] * 100));
     return `<td class="rd" data-v="${p}" title="${c.v[0]}/${c.v[1]}문항"><span class="rc ${c.now ? 'now' : p >= 100 ? 'ok' : p >= 50 ? 'mid' : 'bad'}">${p}</span></td>`; };
-  H.push(`<h3 class="co-h">학생별 <span class="dim" style="font-size:12px;font-weight:400">— 머리글을 누르면 정렬 · 이름을 누르면 칸 지도</span></h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th class="fz">이름</th>${CO.ban === '*' ? '<th>반</th>' : ''}<th>누적 루프</th><th>최근 7일</th>${heads}<th>회차 평균</th><th>통과</th><th>1회</th><th>다시</th><th>본 칸</th><th>확실 정답률(7일)</th><th>마지막 루프</th></tr></thead><tbody>`
+  H.push(`<h3 class="co-h">학생별 <span class="dim" style="font-size:12px;font-weight:400">— 머리글을 누르면 정렬 · 이름을 누르면 칸 지도</span></h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th class="fz">이름</th>${CO.ban === '*' ? '<th>반</th>' : ''}<th>누적 루프</th><th>최근 7일</th>${heads}<th>회차 평균</th><th>통과</th><th>1회</th><th>다시</th><th>본 칸</th><th title="지금 속도면 전체 칸 졸업 예상일(중앙) · 괄호 = 늦으면">예상 완성</th><th>확실 정답률(7일)</th><th>마지막 루프</th></tr></thead><tbody>`
     + view.sort((a, b) => (a.ban + a.name).localeCompare(b.ban + b.name, 'ko')).map(x => `<tr><td class="fz"><a class="nm" data-csu="${E(x.sid)}">${E(x.name)}</a></td>${CO.ban === '*' ? `<td>${E(x.ban)}</td>` : ''}`
       + `<td data-v="${x.tot}"><b>${x.tot}</b></td><td data-v="${x.w7}">${x.w7}</td>`
       + (CO.ban === '*' ? `<td class="rds">${x.cells.map(c => cellH(c).replace(/^<td[^>]*>|<\/td>$/g, '')).join('')}</td>` : x.cells.map(cellH).join(''))
       + `<td data-v="${x.avg == null ? -1 : x.avg}"><b class="${x.avg != null && x.avg < 60 ? 'bad' : ''}">${fmt(x.avg, '%')}</b></td>`
       + `<td data-v="${x.grad}"><b style="color:var(--ok)">${x.grad}</b></td><td data-v="${x.one}">${x.one}</td><td data-v="${x.fail}"><span class="${x.fail ? 'bad' : ''}">${x.fail}</span></td><td data-v="${x.seen}">${x.seen}${keys.length ? `<span class="dim">/${keys.length}</span>` : ''}</td>`
+      + `<td data-sv="${(x.eta && x.eta.mid) || '9999'}" title="${x.eta ? '늦으면 ' + (x.eta.late || '—') + (x.eta.ex ? ' · 기말 ' + x.eta.ex : '') : ''}">${x.eta && x.eta.mid ? `<b class="${etaOk(x) ? '' : 'bad'}">${md(x.eta.mid)}</b> <span class="dim">(${md(x.eta.late)})</span>` : '<span class="dim">—</span>'}</td>`
       + `<td data-v="${x.sure == null ? -1 : x.sure}">${fmt(x.sure, '%')}</td><td data-sv="${x.last || ''}">${x.last ? (coKST(x.last).slice(0, 10) === T ? '오늘 ' + coHM(x.last) : coKST(x.last).slice(5, 10).replace('-', '/')) : '<span class="dim">없음</span>'}</td></tr>`).join('')
     + '</tbody></table></div>');
   // 어려운 칸
@@ -6801,7 +6819,7 @@ async function coDrawSum() {
   H.push(`<h3 class="co-h">막히는 칸 — '다시' 비율 높은 순 <span class="dim" style="font-size:12px;font-weight:400">(푼 학생 3명 이상)</span></h3><div class="co-scroll"><table class="co-t co-sum"><thead><tr><th>칸</th><th>푼 학생</th><th>통과</th><th>다시</th></tr></thead><tbody>`
     + (hard.length ? hard.map(h => `<tr><td>${E((B && B.title[h.k]) || h.k)} <span class="dim">${E(h.k)}</span></td><td data-v="${h.n}">${h.n}</td><td data-v="${h.g}">${Math.round(h.g * 100)}%</td><td data-v="${h.fail / h.n}"><b class="${h.fail / h.n >= .4 ? 'bad' : ''}">${h.fail}명 · ${Math.round(h.fail / h.n * 100)}%</b></td></tr>`).join('') : '<tr><td colspan="4" class="dim">아직 데이터가 부족해요.</td></tr>')
     + '</tbody></table></div>');
-  H.push(`<p class="co-sub" style="margin-top:10px">용어 — <b>누적 루프</b>: 루프로 푼 문항 수(같은 날 같은 문항은 1번). <b>회차 이행</b>: 그 수업 전까지 낸 루프 중 푼 비율(리포트·콘솔과 같은 계산, — = 그 회차는 루프를 안 셈). <b>통과</b>: 성공일 2번(3일 이상 간격) = 졸업한 칸. <b>1회</b>: 한 번 성공. <b>다시</b>: 마지막 시도가 실패라 다시 와야 하는 칸. <b>확실 정답률</b>: '확실'로 답하고 맞힌 비율.</p>`);
+  H.push(`<p class="co-sub" style="margin-top:10px">용어 — <b>누적 루프</b>: 루프로 푼 문항 수(같은 날 같은 문항은 1번). <b>회차 이행</b>: 그 수업 전까지 낸 루프 중 푼 비율(리포트·콘솔과 같은 계산, — = 그 회차는 루프를 안 셈). <b>통과</b>: 성공일 2번(3일 이상 간격) = 졸업한 칸. <b>1회</b>: 한 번 성공. <b>다시</b>: 마지막 시도가 실패라 다시 와야 하는 칸. <b>확실 정답률</b>: '확실'로 답하고 맞힌 비율. <b>예상 완성</b>: 지금까지 루프 속도로 전체 칸을 졸업하는 예상일(학생 포털 '졸업 예상'과 같은 값, 학생이 고른 루프 상한 기준) — 기말보다 늦으면 빨강, 괄호는 늦으면.</p>`);
   $('co-cnt').textContent = `${view.length}명`;
   body.innerHTML = H.join('');
   body.querySelectorAll('[data-cbr]').forEach(tr => tr.onclick = () => { CO.ban = tr.dataset.cbr; coDrawSum(); });
