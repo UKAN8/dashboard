@@ -4481,7 +4481,7 @@ function drawV5(el, box, rows) {
   const item = n => {
     const r = byName[n], d = r.내역 || {};
     const parts = ['써킷', '개별과제', '루프'].filter(k => d[k]).map(k => `${k} ${d[k][0]}/${d[k][1]}`).join(' · ');
-    return `<div class="v5row"><a href="${E(r.url)}" target="_blank" rel="noopener" class="v5th"><img loading="lazy" src="${V5_BASE}${E(r.rid)}.jpg" alt=""></a>`
+    return `<div class="v5row"><a href="${E(r.url)}" target="_blank" rel="noopener" class="v5th"><img loading="lazy" src="${V5_BASE}${E(r.rid)}.jpg?v=${E(String(r.시각 || '').replace(/\D/g, '').slice(0, 14))}" alt=""></a>`
       + `<div class="v5m"><b>${E(n)}</b>`
       + `<span>리뷰 <em class="${cls(r.리뷰, 8, 5)}">${r.리뷰 != null ? Number(r.리뷰).toFixed(1) : '—'}</em>`
       + ` · 이행 <em class="${cls(r.이행, 90, 60)}">${r.이행 != null ? r.이행 + '%' : '—'}</em></span>`
@@ -6597,8 +6597,7 @@ function coTick() {
 function coState(rows) {
   if (!rows.length) return { st: 'new' };
   const need = (CO.bank && CO.bank.need && CO.bank.need[rows[0].키[0]]) || (rows[0].키[0] === 'C' ? 2 : 1);
-  const gb = CO.bank && CO.bank.gap_ban && CO.bank.gap_ban[rows[0].반];   // (1112 유강) 고1T 간격 1일
-  const gap = gb != null ? gb : ((CO.bank && CO.bank.gap) || 3);
+  const gap = (CO.bank && CO.bank.gap) || 3;
   // (1103 유강) 규칙 v2 — core.html rowCls·resetAt·succDays 와 같다(S 성공 · H 보류 · F 실패 · X 시험 강등)
   const cls = r => { const w = r.원인 || ''; if (r.모드 === '시험') return 'X'; if (r.정오 && r.확신 === '확실') return 'S'; if (r.정오) return w === '찍음' ? 'F' : 'H'; if (r.확신 === '확실' && w === '오터치') return 'H'; return 'F'; };
   const isC = rows[0].키[0] === 'C'; let lf = -1, prev = '';
