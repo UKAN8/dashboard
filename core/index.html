@@ -557,6 +557,7 @@ function loopAdd(id){ const k=roundKey(), ids=lget(k,[]); if(!ids.includes(id)){
 // (1028 유강 "루프 이행률 세트 크기 남기는 작업") 이번 회차 루프 세트(낸 문항)를 서버 loop_set 에 남긴다 — 리포트 과제 이행률의 분모.
 //   서버는 같은 회차면 문항을 합친다. 실패해도 루프는 그대로 돈다(리포트가 추정으로 대신한다).
 let LSET_SENT='', LDROP_SENT='';
+function saveSupp(ids){ if(DEMO||!sb||!TOK||!SKEY||!ids||!ids.length) return; try{ sb.rpc('supp_set_save',{tok:TOK,skey:SKEY,ids:ids.slice(0,400)}).then(()=>{},()=>{}); }catch(e){} }   // (1112) 보충 세트 서버 저장(합치기)
 let PREV_SET=null;   // (1112) {rnd, ids} — 앞 회차(고1T 토요일) 세트
 /* 앞 세트에서 안 푼 문항 중, 지금도 열려 있고 졸업 안 한 칸의 문항 — 이번 세트 맨 앞에 이어 붙인다 */
 function carryPrev(){
@@ -667,7 +668,7 @@ function drawHome(){
   $('goR').onclick=()=>{ if(m.review.can) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=inClass();
   $('goL').onclick=()=>{ if(m.loop.can) startSession('루프', m._items); else drawHome(); };
-  if($('goS')) $('goS').onclick=()=>{ if(m.supp.can){ if(!suppToday()) lset('supp_'+TODAY, m._supp.map(x=>x.id)); startSession('루프', m._supp, true); } else drawHome(); };   // (1110) 보충 루프
+  if($('goS')) $('goS').onclick=()=>{ if(m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } startSession('루프', m._supp, true); } else drawHome(); };   // (1110) 보충 루프
   if($('toP')) $('toP').onclick=()=>{ location.href=PORTAL_URL()+'&tab=기록'; };
   window.scrollTo(0,0);
 }
@@ -676,7 +677,7 @@ function startFromGo(g){
   const m=homeModel();
   if(g==='리뷰' && m.review.can){ startSession('리뷰'); return; }
   if(g==='루프' && m.loop.can){ startSession('루프', m._items); return; }
-  if(g==='보충' && m.supp && m.supp.can){ if(!suppToday()) lset('supp_'+TODAY, m._supp.map(x=>x.id)); startSession('루프', m._supp, true); return; }   // (1110) 보충 루프
+  if(g==='보충' && m.supp && m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } startSession('루프', m._supp, true); return; }   // (1110) 보충 루프
   drawHome();
 }
 
@@ -811,7 +812,7 @@ function grade(conf,dunno){
   // 유형을 놓치면 그 개념으로 되돌림 — 개념 문항 하나 덧붙임(루프만, 최대 BACK_C)
   if(!succ && x.key[0]==='T' && S.mode==='루프' && S.back<BACK_C){
     const ck=TKEY2C[x.key]; const p=pickItems(ck,1,S.used);
-    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; if(S.supp){ const k='supp_'+TODAY, a=lget(k,[]); if(!a.includes(p[0].id)){ a.push(p[0].id); lset(k,a); } } else loopAdd(p[0].id); }
+    if(p[0]){ S.used.add(p[0].id); S.q.push(p[0]); S.back++; if(S.supp){ const k='supp_'+TODAY, a=lget(k,[]); if(!a.includes(p[0].id)){ a.push(p[0].id); lset(k,a); saveSupp(a); } } else loopAdd(p[0].id); }
   }
   // 리뷰: 개념 파트를 끝내면 그 자리에서 유형을 고른다(방금 열린 유형 포함)
   if(S.mode==='리뷰' && !S.typeBuilt && S.i===S.q.length-1){
@@ -914,6 +915,10 @@ async function boot(){
     }catch(e){}
     try{ const r=await sb.rpc('clinic_supp_open',{tok:TOK}); if(r&&r.data&&r.data.열림) CSUPP=r.data; }catch(e){}   // (1110) 클리닉 보충 루프
     try{ const r=await sb.rpc('loop_set_get',{tok:TOK,skey:SKEY,rnd:ROUND||TODAY}); if(r&&Array.isArray(r.data)&&r.data.length) SRV_SET=r.data.map(String); }catch(e){}
+    /* (1112 유강) 보충 루프 세트도 서버에 — 카톡 인앱↔크롬처럼 다른 앱에서 열어도 같은 날 이어서 푼다 */
+    try{ const r=await sb.rpc('supp_set_get',{tok:TOK,skey:SKEY}); const srv=(r&&Array.isArray(r.data))?r.data.map(String):[];
+      const loc=lget('supp_'+TODAY,null)||[]; const all=srv.concat(loc.filter(id=>!srv.includes(id)));
+      if(all.length){ lset('supp_'+TODAY, all); if(all.length>srv.length) saveSupp(all); } }catch(e){}
     /* (1112 유강 ③) 고1T 토→일 — 일요일 세트는 토요일 세트에서 안 푼 문항을 이어받는다(서버가 '루프 안 세는 날'로 연 회차일 때만 준다) */
     if(ROUND){ try{ const r=await sb.rpc('loop_set_prev',{tok:TOK,skey:SKEY,rnd:ROUND}); if(r&&r.data&&Array.isArray(r.data.문항)) PREV_SET={rnd:String(r.data.회차), ids:r.data.문항.map(String)}; }catch(e){} }
     setup();
