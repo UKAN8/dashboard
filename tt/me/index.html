@@ -902,7 +902,7 @@ window.api=async function(path,body){
     LAST={sid,k,seed};return {sid,probs,student:k,link:false};}
   if(path==='/api/h/record'){
     if(!CURS||CURS.sid!==body.sid)throw '회차 없음';
-    rpc({kind:'record',who:WHO,page:(window.TT_WHO_PAGE||''),type:body.type,variant:CURS.seed[body.type],res:body.res}).catch(()=>{});
+    TT_REC({kind:'record',who:WHO,page:(window.TT_WHO_PAGE||''),step:((CURS.titles||{})[body.type]||[]).join('|'),type:body.type,variant:CURS.seed[body.type],res:body.res}).catch(()=>{});
     CURS.r[body.type]=body.res;CURS.a[body.type]=body.n||1;CURS.end=Date.now();
     const i=D.ses.findIndex(x=>x.sid===CURS.sid);if(i<0)D.ses.push(CURS);else D.ses[i]=CURS;store(D);   /* 매번 새로 읽어 이 회차만 갈아 끼움 */
     return {ok:true};}
@@ -945,10 +945,30 @@ if(ME.n){const C=COURSES.find(c=>/^고2/.test(ME.g)?c.includes('미적분'):c.in
     for(let i=TOC.length-1;i>=0;i--){const u=TOC[i];if(u.c!==C||!u.t.some(t=>keep.has(t.id)))TOC.splice(i,1);}
     COURSES.splice(0,COURSES.length,C);window.TT_COURSE=C;window.TT_PRESET0='none';}}
 const KEY=[ME.n,ME.s,ME.g].join('|');
-window.TT_LIST=(host)=>{
-  let has=false;try{has=(JSON.parse(localStorage.getItem('tt-check-v2')||'{}').ses||[]).some(x=>x.k===KEY&&Object.keys(x.r||{}).length);}catch(e){}
-  if(!ME.n||!has){host.innerHTML='<div class="st-card"><h2>아직 기록이 없어요</h2><div class="rs-note">새 훈련을 한 번 끝내면 여기에 유형별 결과가 쌓여요. 기록은 이 폰에 저장돼요 — 같은 폰·같은 포털 링크로 열어 주세요.</div></div>';return;}
-  TT_STUDENT(host,KEY,()=>{const b=document.querySelector('.st-top button[data-t="new"]');if(b)b.click();});};
+/* (1112) 기록은 서버(tt_check)에 학생ID 로 — 어느 기기에서 포털을 열어도 결과 조회가 되게(schema_v73).
+   함수가 아직 없으면 예전처럼 이름으로(tt_check_add) 넣고, 결과는 이 기기 기록만 보인다. */
+const RPC=(fn,body)=>fetch(SB.url+'/rest/v1/rpc/'+fn,{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:SB.anon,Authorization:'Bearer '+SB.anon},body:JSON.stringify(body)});
+window.TT_REC=p=>(ME.t?RPC('tt_portal_add',{tok:ME.t,p}).then(r=>{if(!r.ok)throw 0;return r;}):Promise.reject(0)).catch(()=>RPC('tt_check_add',{p}));
+let DBP=null;
+function dbSes(){if(DBP)return DBP;
+  DBP=(ME.t?RPC('tt_portal_records',{tok:ME.t}).then(r=>r.ok?r.json():null):Promise.resolve(null)).then(L=>{
+    if(!Array.isArray(L))return null;
+    const S=[];let cur=null;
+    L.forEach(x=>{if(!x.type)return;if(!cur||x.t-cur.end>40*60*1000){cur={sid:'db'+S.length,k:KEY,start:x.t,end:x.t,ids:[],r:{},a:{},seed:{},titles:{},link:false};S.push(cur);}
+      cur.end=x.t;if(!cur.ids.includes(x.type))cur.ids.push(x.type);cur.r[x.type]=x.res||'';cur.a[x.type]=1;if(x.v)cur.seed[x.type]=x.v;if(x.step)cur.titles[x.type]=String(x.step).split('|');});
+    return S;}).catch(()=>null);
+  return DBP;}
+const api0=window.api;
+window.api=async(path,body)=>{
+  if(path==='/api/h/students'||path.startsWith('/api/h/students/')){const S=await dbSes();
+    if(S){const u={id:KEY,n:ME.n,s:ME.s,g:ME.g,ses:S};return path==='/api/h/students'?(S.length?[u]:[]):u;}}
+  return api0(path,body);};
+window.TT_LIST=(host)=>{host.innerHTML='<div class="st-card"><div class="rs-note">기록을 불러오는 중…</div></div>';
+  api('/api/h/students').then(L=>{
+    if(!ME.n||!L.length||!L[0].ses.length){host.innerHTML='<div class="st-card"><h2>아직 기록이 없어요</h2><div class="rs-note">유형을 하나 끝낼 때마다 결과가 저장되고 여기에 쌓여요.</div></div>';return;}
+    TT_STUDENT(host,L[0].id,()=>{const b=document.querySelector('.st-top button[data-t="new"]');if(b)b.click();});}).catch(()=>{host.innerHTML='<div class="st-card"><h2>불러오지 못했어요</h2></div>';});};
+/* 새 회차를 끝내면 서버 기록을 다시 읽게 */
+const st0=api0;window.TT_DBRESET=()=>{DBP=null;};
 })();
 </script><script>
 (()=>{
