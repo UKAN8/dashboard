@@ -100,6 +100,8 @@ button{font:inherit;cursor:pointer}
 .num .k{flex:none;width:52px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);font-size:20px;font-weight:700}
 .num .ok{flex:1 1 100%;padding:12px;border-radius:12px;border:none;background:var(--acc);color:#1a0d12;font-weight:800;font-size:15px}
 .num.right input{border-color:rgba(126,224,163,.6);color:var(--ok)} .num.wrong input{border-color:rgba(255,143,168,.6);color:#ffd0da}
+.dunno{display:block;width:100%;margin:-2px 0 12px;padding:10px 0;border-radius:12px;border:1px dashed var(--bd);background:none;color:var(--tx2);font-size:14px;font-weight:700}
+.dunno[disabled]{display:none}
 .conf{display:none}
 .conf.show{display:block}
 .conf p{margin:4px 2px 8px;color:var(--tx2);font-size:13px}
@@ -543,10 +545,10 @@ function loopToday(){
     return {items:rest, started:done.size>0, finished:!rest.length};
   }
   if(done.size){   // (1021) 다른 기기·브라우저(카톡 인앱↔크롬): 오늘 처음 세트를 다시 만들어 남은 것만 낸다(전엔 '오늘 완료'로 잘렸다)
-    const again=withoutRound(buildLoop); lset(k, again.map(x=>x.id)); saveLoopSet(again.map(x=>x.id));
+    const again=withCarry(withoutRound(buildLoop)); lset(k, again.map(x=>x.id)); saveLoopSet(again.map(x=>x.id));
     const rest=again.filter(x=>!done.has(x.id)); return {items:rest, started:true, finished:!rest.length};
   }
-  const fresh=buildLoop();
+  const fresh=withCarry(buildLoop());   // (1112) 고1T 일요일 세트 = 토요일 세트의 안 푼 문항 + 새로 다시 볼 칸
   if(fresh.length){ lset(k, fresh.map(x=>x.id)); saveLoopSet(fresh.map(x=>x.id)); }
   return {items:fresh, started:false, finished:false};
 }
@@ -554,6 +556,16 @@ function loopAdd(id){ const k=roundKey(), ids=lget(k,[]); if(!ids.includes(id)){
 // (1028 유강 "루프 이행률 세트 크기 남기는 작업") 이번 회차 루프 세트(낸 문항)를 서버 loop_set 에 남긴다 — 리포트 과제 이행률의 분모.
 //   서버는 같은 회차면 문항을 합친다. 실패해도 루프는 그대로 돈다(리포트가 추정으로 대신한다).
 let LSET_SENT='', LDROP_SENT='';
+let PREV_SET=null;   // (1112) {rnd, ids} — 앞 회차(고1T 토요일) 세트
+/* 앞 세트에서 안 푼 문항 중, 지금도 열려 있고 졸업 안 한 칸의 문항 — 이번 세트 맨 앞에 이어 붙인다 */
+function carryPrev(){
+  if(!PREV_SET||!PREV_SET.ids.length) return [];
+  const solved=new Set(LOG.filter(r=>r[4]==='루프' && r[5]>PREV_SET.rnd).map(r=>r[1]));
+  return PREV_SET.ids.filter(id=>!solved.has(id)).map(id=>ITEMS[id]).filter(Boolean)
+    .filter(x=>(x.key[0]==='C'?cOpen(x.key):tOpen(x.key)) && (keyState(x.key).st!=='grad' || keyState(x.key).chk));
+}
+function withCarry(items){ const c=carryPrev(); if(!c.length) return items; const ks=new Set(c.map(x=>x.key)), ids=new Set(c.map(x=>x.id));
+  return c.concat(items.filter(x=>!ks.has(x.key) && !ids.has(x.id))); }
 /* (1111 권유민 '다 했는데 97%') 화면에서 뺀 안 푼 문항을 서버 세트에서도 뺀다 — 푼 문항은 서버가 절대 안 뺀다 */
 function dropLoopSet(ids){
   if(DEMO||!TOK||!ids||!ids.length) return;
@@ -716,6 +728,7 @@ function drawItem(){
     +`<div class="qcard"><div class="kind"><span>${E(kl)}</span><span>${E(kn)}</span></div><div class="q">${T(x.q)}</div>`
     +(x.key[0]==='T'?`<div class="sheet">✎ 연습지 ${S.q.slice(0,S.i+1).filter(z=>z.key[0]==='T').length}번에 풀고 답만 넣어요</div>`:'')+`</div>`
     +A
+    +(S.mode==='리뷰'?'':`<button class="dunno" id="dk">잘 모르겠어요 — 정답·해설 보기</button>`)
     +`<div class="conf" id="conf"><p>이 답, 얼마나 확실해요?</p><div class="row2"><button class="sure" data-c="확실">확실해요</button><button class="unsure" data-c="애매">애매해요</button></div></div>`
     +`<button class="next" id="nx">${S.i+1<n||(!S.typeBuilt)?'다음':'끝'}</button>`
     +`</div><div class="qside"><div class="res" id="res"></div><div id="cbx"></div><div id="bbx"></div></div></div>`;
@@ -737,6 +750,8 @@ function drawItem(){
       $('ans').querySelectorAll('button').forEach(z=>z.classList.remove('on')); b.classList.add('on'); S.pick=b.dataset.a; showConf(); });
   }
   $('conf').querySelectorAll('button').forEach(b=>b.onclick=()=>grade(b.dataset.c));
+  // (1111 유강) 찍지 말고 '잘 모르겠어요' — 실패로 기록(애매+오답·원인 '모름'), 정답·해설을 바로 보여 준다
+  if($('dk')) $('dk').onclick=()=>{ if($('conf').dataset.lock) return; S.pick='모름'; grade('애매',true); };
   $('nx').onclick=next;
   window.scrollTo(0,0);
 }
@@ -746,20 +761,22 @@ function frac(s){
   return [ (m[1]?-1:1)*+m[2], m[3]?+m[3]:1 ];
 }
 function same(a,b){ const p=frac(a), q=frac(b); return !!p&&!!q&&q[1]!==0&&p[1]!==0&&p[0]*q[1]===q[0]*p[1]; }
-function grade(conf){
+function grade(conf,dunno){
   const x=S.q[S.i]; if($('conf').dataset.lock||S.pick===null) return; $('conf').dataset.lock='1';
-  const ok = x.k==='num' ? same(S.pick,x.a) : S.pick===x.a;
+  const ok = dunno ? false : x.k==='num' ? same(S.pick,x.a) : S.pick===x.a;
+  if($('dk')) $('dk').disabled=true;
   const ms=Date.now()-S.t0;
-  if(x.k==='num'){ $('numIn').value=S.pick; $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); $('ans').classList.add(ok?'right':'wrong'); }
+  if(dunno){ if(x.k==='num'){ $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); } else $('ans').querySelectorAll('button').forEach(b=>{ b.disabled=true; b.classList.remove('on'); if(b.dataset.a===x.a) b.classList.add('right'); }); }
+  else if(x.k==='num'){ $('numIn').value=S.pick; $('numIn').disabled=true; $('ans').querySelectorAll('button').forEach(b=>b.disabled=true); $('ans').classList.add(ok?'right':'wrong'); }
   else $('ans').querySelectorAll('button').forEach(b=>{ b.disabled=true; if(b.dataset.a===x.a) b.classList.add('right'); else if(b.dataset.a===S.pick) b.classList.add('wrong'); });
   $('conf').querySelectorAll('button').forEach(b=>b.disabled=true);
   $('conf').style.display='none';
   const succ=ok&&conf==='확실';
   // (1103 유강) 확실+오답 / 애매+정답 은 '왜?' 를 한 번 묻는다 — 고를 때까지 [다음]을 숨긴다
-  const ask=(!ok&&conf==='확실')?(x.key[0]==='T'?WHY_T:WHY_C):(ok&&conf==='애매')?WHY_U:null;
+  const ask=dunno?null:(!ok&&conf==='확실')?(x.key[0]==='T'?WHY_T:WHY_C):(ok&&conf==='애매')?WHY_U:null;
   const r=$('res'); r.className='res show '+(succ?'o':ok?'u':'x');
-  r.innerHTML=`<div class="h">${succ?'맞았어요':ok?'맞았지만 애매 — 다음 루프에 한 번 더 확인해요':conf==='확실'?'틀렸어요 — 확실하다고 했는데 틀렸어요':'틀렸어요'}</div>`
-    +(ok?'':`<div class="w" style="margin-bottom:6px">정답: <b>${x.k==='ox'?x.a:T(x.a)}</b>${x.k==='num'?` · 내 답 ${E(S.pick)}`:''}</div>`)
+  r.innerHTML=`<div class="h">${dunno?'괜찮아요 — 정답과 해설을 보고 넘어가요. 다음 루프에 다시 와요':succ?'맞았어요':ok?'맞았지만 애매 — 다음 루프에 한 번 더 확인해요':conf==='확실'?'틀렸어요 — 확실하다고 했는데 틀렸어요':'틀렸어요'}</div>`
+    +(ok?'':`<div class="w" style="margin-bottom:6px">정답: <b>${x.k==='ox'?x.a:T(x.a)}</b>${x.k==='num'&&!dunno?` · 내 답 ${E(S.pick)}`:''}</div>`)
     +`<div class="w">${T(x.w)}</div>`
     +(ask?`<div class="why" id="why"><p>${ok?'어땠어요?':'왜 틀렸어요?'} <span style="color:var(--gold)">— 하나 고르면 [다음] 버튼이 나와요</span></p><div class="wb">${ask.map(([v,t])=>`<button data-w="${v}">${t}</button>`).join('')}</div></div>`:'')
     +`<div class="btn2"><button class="cardbtn" id="cb">개념 정리 보기</button>${themeOf(x)&&themeOf(x).book?'<button class="cardbtn bk" id="bb">교재 예제 보기</button>':''}</div>`;
@@ -773,7 +790,8 @@ function grade(conf){
   const tNow=nowKST(), tRow=tNow.slice(0,10)>TODAY?TODAY+'T23:59:59':tNow;
   const row={k:x.key,i:x.id,m:S.mode,a:String(S.pick).slice(0,40),o:ok,c:conf,ms:Math.min(ms,9999999),t:tRow,u:uid()};
   if(ask) row.p=Date.now();                 // 원인 고를 때까지 보내지 않는다(2분 지나거나 그만하면 원인 없이 보낸다)
-  const rres={x,ok:succ,raw:ok,conf,w:''}, lrow=[x.key,x.id,ok,conf,S.mode,tRow,null];
+  if(dunno) row.w='모름';
+  const rres={x,ok:succ,raw:ok,conf,w:dunno?'모름':''}, lrow=[x.key,x.id,ok,conf,S.mode,tRow,dunno?'모름':null];
   S.res.push(rres);
   LOG.push(lrow);
   queue([row]);
@@ -895,6 +913,8 @@ async function boot(){
     }catch(e){}
     try{ const r=await sb.rpc('clinic_supp_open',{tok:TOK}); if(r&&r.data&&r.data.열림) CSUPP=r.data; }catch(e){}   // (1110) 클리닉 보충 루프
     try{ const r=await sb.rpc('loop_set_get',{tok:TOK,skey:SKEY,rnd:ROUND||TODAY}); if(r&&Array.isArray(r.data)&&r.data.length) SRV_SET=r.data.map(String); }catch(e){}
+    /* (1112 유강 ③) 고1T 토→일 — 일요일 세트는 토요일 세트에서 안 푼 문항을 이어받는다(서버가 '루프 안 세는 날'로 연 회차일 때만 준다) */
+    if(ROUND){ try{ const r=await sb.rpc('loop_set_prev',{tok:TOK,skey:SKEY,rnd:ROUND}); if(r&&r.data&&Array.isArray(r.data.문항)) PREV_SET={rnd:String(r.data.회차), ids:r.data.문항.map(String)}; }catch(e){} }
     setup();
     LOG=(d.기록||[]).map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6]||null]);   // (1103 v58) 7번째 = 원인
     UNL=d.열림||{}; SUPP=new Set(d.보충||[]);   // (1104) 1103 편집 때 위 주석에 먹혀 학생별 열림·보충이 안 읽히던 것
