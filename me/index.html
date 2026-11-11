@@ -305,6 +305,18 @@ body.noscroll{overflow:hidden}
 .hw .q .rf{display:flex;gap:8px;margin-top:4px}
 .hw .q .rf input{flex:1;margin-top:0}
 .hw .q .rf button{background:rgba(245,160,160,.12);border:1px solid rgba(245,160,160,.35);color:var(--tx);border-radius:9px;padding:0 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+/* (1111) 대표유형 트레이닝 카드 */
+.ttc{position:relative;display:block;border-radius:16px;padding:16px 16px 15px;margin:0 0 12px;color:var(--tx);text-decoration:none;
+ background:linear-gradient(135deg,rgba(245,160,160,.12),rgba(245,160,160,.03) 70%);border:1px solid rgba(245,160,160,.45)}
+.ttc .ttc-k{display:block;font-size:11px;font-weight:600;color:var(--acc);letter-spacing:.02em}
+.ttc b{display:block;font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif;font-size:18px;font-weight:600;margin:3px 0 1px}
+.ttc .ttc-s{display:block;font-size:13px;color:var(--tx2)}
+.ttc .ttc-f{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.ttc .ttc-f i{font-style:normal;font-size:11px;color:var(--tx2);background:rgba(255,255,255,.06);border-radius:7px;padding:2px 7px;counter-increment:ttf}
+.ttc .ttc-f{counter-reset:ttf}.ttc .ttc-f i:before{content:counter(ttf) ' ';color:var(--acc);font-weight:600}
+.ttc em{position:absolute;right:16px;top:16px;font-style:normal;font-weight:600;font-size:15px;color:var(--acc);white-space:nowrap}
+.ttc:active{background:rgba(245,160,160,.16)}
+@media (hover:hover) and (pointer:fine){.ttc:hover{border-color:rgba(245,160,160,.75)}}
 /* ── (1110) CORE 버튼·지도 (core 페이지 .go/.chip 과 같은 모양) ── */
 .cgo{position:relative;display:block;width:100%;text-align:left;border-radius:16px;padding:16px 16px;margin-bottom:12px;color:var(--tx);
  background:rgba(255,255,255,.05);border:1px solid var(--bd);text-decoration:none}
@@ -1057,8 +1069,17 @@ function partsOf(d){
     qkBasic=`<div class="qk qk-basic"><a href="${E(L+'gorim2k-basic-1.html'+tq)}" target="_blank" rel="noopener">2차 프린트 기본판 · 도함수의 활용<small>7문항 · 한 단계씩 따라 풀기</small></a>`
       +`<a href="${E(L+'gorim2k-basic-2.html'+tq)}" target="_blank" rel="noopener">2차 프린트 기본판 · 적분<small>7문항 · 한 단계씩 따라 풀기</small></a></div>`;
   }
+  // (1111 유강 "대표유형 타겟트레이닝 우리 디자인으로 다듬어서 포털에 카드로") 대표유형 트레이닝 — 고1 공통수학2 · 고2 미적분Ⅰ 기말 범위.
+  //   화면은 dashboard/tt/me/ (조교 점검판 /tt/ 의 문제 파일을 같이 씀). 이름·학교·학년·반을 넘겨 학생 정보 칸을 건너뛴다. 기록 = 그 폰 + tt_check(page='portal|반|학교').
+  let ttCard='';
+  { const bn=String(d.학생.반||'').trim(), gm=bn.match(/^고([12])/);
+    if(gm){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||'', g='고'+gm[1];
+      const tu='https://ukan8.github.io/dashboard/tt/me/?'+new URLSearchParams({t:tk,n:String(d.학생.이름||'').trim(),s:String(d.학생.학교||'').trim(),g,b:bn}).toString();
+      ttCard=`<a class="ttc" href="${E(tu)}"><span class="ttc-k">기말 대비 · NEW</span><b>대표유형 트레이닝</b>`
+        +`<span class="ttc-s">${g==='고1'?'공통수학2 · 명제~무리함수':'미적분Ⅰ · 도함수의 활용~정적분의 활용'}</span>`
+        +`<span class="ttc-f"><i>유형 찾기</i><i>개념 고르기</i><i>풀이 단계</i><i>최종 답</i></span><em>시작 →</em></a>`; } }
   P.qk=`<div class="qk">${qa(qk[0])}<a href="#" id="qk-pref" style="display:none">내 개별과제 설정<small id="qk-pref-s">불러오는 중…</small></a></div>`
-    +qkBasic+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
+    +qkBasic+ttCard+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
   //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
   const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
