@@ -585,6 +585,9 @@ body{font-size:15.5px;-webkit-font-smoothing:antialiased}
 .pt-flow div{background:var(--p-raise);border-radius:10px;padding:9px 4px;text-align:center;font-size:12px;color:var(--tx2);line-height:1.35}
 .pt-flow b{display:block;font-family:Paperlogy,'Pretendard Variable',sans-serif;font-size:15px;font-weight:600;color:var(--acc)}
 #go{height:54px!important;font-size:16px!important}
+.st-card h2 .pt-c{font-family:'Pretendard Variable','Pretendard',sans-serif;font-size:12px;font-weight:600;color:var(--acc);background:rgba(245,160,160,.12);padding:2px 9px;border-radius:9px;margin-left:6px;vertical-align:2px}
+.pt-pick{margin:-4px 0 10px}
+.st-tree.on{border-top:1px solid var(--p-line)}
 /* 결과 */
 .rs-k b{font-family:Paperlogy,'Pretendard Variable',sans-serif;color:var(--tx)!important;font-weight:600}
 .rs-sb{background:#16161d!important;border-color:var(--p-line2)!important;color:var(--tx)!important}
@@ -930,6 +933,11 @@ fb.onclick=()=>{const id=window.TT_P;if(!id)return;const v=LAST&&LAST.seed[id];
 const Q=new URLSearchParams(location.search);
 const ME={t:Q.get('t')||'',n:(Q.get('n')||'').trim(),s:(Q.get('s')||'').trim(),g:(Q.get('g')||'').trim(),b:(Q.get('b')||'').trim()};
 window.TT_ME=ME;window.TT_WHO_PAGE='portal|'+ME.b+'|'+ME.s;
+/* (1111 유강) 과목은 학년으로 고정(고1 공통수학2 · 고2 미적분Ⅰ), 단원은 기말 범위만 보여 주고 아무것도 미리 고르지 않는다 — 학생이 직접 고른다 */
+if(ME.n){const C=COURSES.find(c=>/^고2/.test(ME.g)?c.includes('미적분'):c.includes('공통수학2'));
+  if(C){const keep=new Set(DEFAULTS[C]||[]);
+    for(let i=TOC.length-1;i>=0;i--){const u=TOC[i];if(u.c!==C||!u.t.some(t=>keep.has(t.id)))TOC.splice(i,1);}
+    COURSES.splice(0,COURSES.length,C);DEFAULTS[C]=[];window.TT_COURSE=C;}}
 const KEY=[ME.n,ME.s,ME.g].join('|');
 window.TT_LIST=(host)=>{
   let has=false;try{has=(JSON.parse(localStorage.getItem('tt-check-v1')||'{}').ses||[]).some(x=>x.k===KEY&&Object.keys(x.r||{}).length);}catch(e){}
@@ -980,7 +988,7 @@ function tree(){
     T.appendChild(d);});
 }
 const OPEN={};
-function sum(){const ids=ORDER.filter(i=>sel.has(i));$('#stN').innerHTML='<b>'+ids.length+'유형</b> 선택됨 · 기본은 기말 시험범위';$('#go').disabled=$('#mk').disabled=!ids.length;return ids;}
+function sum(){const ids=ORDER.filter(i=>sel.has(i));$('#stN').innerHTML='<b>'+ids.length+'유형</b> 선택됨';$('#go').disabled=$('#mk').disabled=!ids.length;return ids;}
 function info(){return {n:$('#fN').value.trim(),s:$('#fS').value.trim(),g:$('#fG').value};}
 function need(){if(!$('#fN').value.trim()){UI.toast('학생 이름을 넣어 주세요');$('#fN').focus();return false;}return true;}
 box.innerHTML='<div class="st-top"><button type="button" class="on" data-t="new">새 훈련</button><button type="button" data-t="res">결과 조회</button></div><div id="tNew">'
@@ -1021,8 +1029,10 @@ info.innerHTML='<div class="pt-who"><b>'+esc(ME.n)+'</b>'+(ME.b?'<span class="ba
  +'<div hidden><input id="fN"><input id="fS"><select id="fG"></select></div>';
 $('#fN').value=ME.n;$('#fS').value=ME.s;const g=$('#fG');const o=document.createElement('option');o.textContent=ME.g||'고1';g.appendChild(o);
 /* 학년 → 과목 기본값 */
-const want=/^고2/.test(ME.g)?'미적분':'공통수학2';
-const tb=[...document.querySelectorAll('#stC button')].find(b=>b.textContent.includes(want));if(tb&&!tb.classList.contains('on'))tb.click();
+const rc=$('#stC').closest('.st-card');
+if(window.TT_COURSE){rc.querySelector('h2').innerHTML='범위 <span class="pt-c">'+esc(window.TT_COURSE)+' · 기말</span>';
+  $('#stC').style.display='none';$('#stX').style.display='none';$('#stTree').classList.add('on');
+  const n=document.createElement('div');n.className='rs-note pt-pick';n.textContent='풀고 싶은 단원을 체크하거나, 유형 ▾ 을 눌러 유형만 골라요.';$('#stC').after(n);}
 const mk=$('#mk');if(mk)mk.style.display='none';
 const go=$('#go');go.textContent='시작하기 →';
 })();
