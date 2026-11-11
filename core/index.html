@@ -472,20 +472,31 @@ function suppState(LT){
   return {show:true, can:true, items, started:false, done:false};
 }
 function buildLoopAll(){ const c=LOOP_CAP; LOOP_CAP=0; try{ return buildLoop(); } finally{ LOOP_CAP=c; } }
+// (1111 유강 "김예솔 루프 113문제 — 같은 상황 찾아 수정") 1회 칸의 졸업 확인이 한 회차에 몰리던 것.
+//   첫 성공이 며칠 안에 몰리면 2일 뒤 확인도 한 회차에 몰린다(김예솔 11/10 = 1회 확인 64칸 92문항).
+//   → 1회(마지막이 실패·보류가 아닌) 칸은 회차당 유형 ONE_T · 개념 ONE_C 칸까지, 첫 성공이 오래된 칸부터. 나머지는 다음 회차.
+//     1회 개념은 확인에 필요한 만큼 2문항(평소 3). 실패·확인·처음 보는 칸은 지금처럼 전부.
+const ONE_T=20, ONE_C=4, ONE_C_ITEMS=2;
+function oneKey(k){ const s=keyState(k); return s.st==='one' && !s.chk; }
+function limitOne(keys,q){
+  const one=keys.filter(oneKey).sort((a,b)=>{ const da=keyState(a).days||[], db=keyState(b).days||[]; return String(da[da.length-1]||'').localeCompare(String(db[db.length-1]||''))||a.localeCompare(b); });
+  const keep=new Set(one.slice(0,q)); return keys.filter(k=>!oneKey(k)||keep.has(k));
+}
+function cItems(k){ return oneKey(k)?ONE_C_ITEMS:LOOP_C_ITEMS; }
 function buildLoop(){
   if(LOOP_CAP>0) return buildLoopCap(LOOP_CAP);
   const out=[], used=new Set();
-  reserveNew(dueConcepts(),LOOP_C_KEYS).forEach(k=>pickItems(k,LOOP_C_ITEMS,used).forEach(x=>{ used.add(x.id); out.push(x); }));
+  limitOne(reserveNew(dueConcepts(),LOOP_C_KEYS),ONE_C).forEach(k=>pickItems(k,cItems(k),used).forEach(x=>{ used.add(x.id); out.push(x); }));
   // (1103) 확실하다고 했는데 틀린 유형은 2문항 — 착각을 확실히 고친다
-  reserveNew(dueTypes(new Set()),LOOP_T).forEach(k=>pickItems(k,keyState(k).two?2:1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
+  limitOne(reserveNew(dueTypes(new Set()),LOOP_T),ONE_T).forEach(k=>pickItems(k,keyState(k).two?2:1,used).forEach(x=>{ used.add(x.id); out.push(x); }));
   return out;
 }
 // (1110 유강 "루프 상한") 상한이 있으면 우선순위대로 자른다 — 확인(마지막 실패·보류) → 실패 → 시도 중 → 1회 → 새 칸, 같은 순위는 개념 먼저.
 //   못 들어간 칸은 다음 회차로. 새 칸 한 자리는 남긴다(reserveNew 와 같은 뜻). scripts/loop_forecast.py 시뮬레이션과 같은 규칙.
 function buildLoopCap(cap){
   const pr=k=>{ const s=keyState(k); return s.chk?0:(PRI[s.st]!=null?PRI[s.st]:3); };
-  const blocks=dueConcepts().map(k=>({k,t:0,n:LOOP_C_ITEMS,p:pr(k)}))
-    .concat(dueTypes(new Set()).map(k=>({k,t:1,n:keyState(k).two?2:1,p:pr(k)})))
+  const blocks=limitOne(dueConcepts(),ONE_C).map(k=>({k,t:0,n:cItems(k),p:pr(k)}))
+    .concat(limitOne(dueTypes(new Set()),ONE_T).map(k=>({k,t:1,n:keyState(k).two?2:1,p:pr(k)})))
     .sort((a,b)=>a.p-b.p||a.t-b.t||a.k.localeCompare(b.k));
   const sel=[]; let tot=0;
   for(const b of blocks){ if(tot+b.n<=cap){ sel.push(b); tot+=b.n; } }
@@ -514,6 +525,17 @@ function loopToday(){
     const suppGrad=id=>{ const x=ITEMS[id]; return !!x && SUPP.has(x.key) && keyState(x.key).st==='grad' && !keyState(x.key).chk; };
     const pruned=ids.filter(id=>done.has(id) || !suppGrad(id));
     if(pruned.length!==ids.length){ ids=pruned; lset(k,ids); }
+    // (1111) 이미 고정된 세트도 1회 칸 확인을 같은 기준(유형 ONE_T·개념 ONE_C 칸, 개념 2문항)으로 자른다 — 회차 시작 때 상태 기준
+    { const gate=withoutRound(()=>{ const ks=[...new Set(ids.map(id=>ITEMS[id]&&ITEMS[id].key).filter(Boolean))];
+        const okC=new Set(limitOne(ks.filter(x=>x[0]==='C'),ONE_C)), okT=new Set(limitOne(ks.filter(x=>x[0]==='T'),ONE_T));
+        return {ok:x=>(x[0]==='C'?okC:okT).has(x), oneC:new Set(ks.filter(x=>x[0]==='C'&&oneKey(x)))}; });
+      const started=new Set([...done].map(id=>ITEMS[id]&&ITEMS[id].key).filter(Boolean)), cnt={};
+      [...done].forEach(id=>{ const x=ITEMS[id]; if(x) cnt[x.key]=(cnt[x.key]||0)+1; });
+      const p2=ids.filter(id=>{ if(done.has(id)) return true; const x=ITEMS[id]; if(!x) return true;
+        if(!gate.ok(x.key) && !started.has(x.key)) return false;
+        if(gate.oneC.has(x.key)){ cnt[x.key]=(cnt[x.key]||0)+1; if(cnt[x.key]>ONE_C_ITEMS) return false; }
+        return true; });
+      if(p2.length!==ids.length){ ids=p2; lset(k,ids); } }
     const rest=ids.filter(id=>!done.has(id)).map(id=>ITEMS[id]).filter(Boolean)
       .filter(x=>x.key[0]==='C'?cOpen(x.key):tOpen(x.key));   // (1027) 고정된 세트라도 그 뒤 잠긴 칸(신규생 입원 전 진도)은 뺀다
     saveLoopSet(ids);   // (1028) 첫 저장이 실패했어도 다시 열 때 서버에 남긴다
