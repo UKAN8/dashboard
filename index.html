@@ -7070,13 +7070,25 @@ function mkGate(m) {
     : `<button class="fbtn on" data-mkg="1">${o ? '다시 열기' : '답안 입력 열기'}</button>`}<span class="dim" style="margin-left:6px">열면 지금부터 2일(결시생 재시용)</span></span>`;
 }
 const mkCirc = v => ['①', '②', '③', '④', '⑤'][Number(v) - 1] || (v == null ? '' : String(v));
-function mkJob(j, sub) {
+function mkJob(j, sub, rv) {
   if (!sub) return '<td data-sv="0" class="dim">—</td>';
+  if (!j && rv) return `<td data-sv="1" title="틀린 문항 확인을 끝내면 만들어져요. 안 끝내면 [답안 입력 닫기] 때 자동으로">${chip('mid', '확인 중')}</td>`;   // (v80) 복기 대기
   if (!j) return `<td data-sv="1">${chip('bad', '없음')}</td>`;
   if (j.상태 === '완료' && j.문항수) return `<td data-sv="4" title="${E(j.메시지 || '')}">${chip('ok', 'No.' + j.id + ' · ' + j.문항수 + '문항')}</td>`;
   if (j.상태 === '완료') return `<td data-sv="2" title="${E(j.메시지 || '')}">${chip('mid', '건너뜀')}</td>`;
   if (j.상태 === '실패') return `<td data-sv="1" title="${E(j.메시지 || '')}">${chip('bad', '실패')}</td>`;
   return `<td data-sv="3">${chip('mid', j.상태 === '처리중' ? '만드는 중' : '대기')}</td>`;
+}
+// (v80 유강) 답 제출 뒤 틀린 문항 확인 — 실수·몰랐음·시간 부족·손 못 댐 + 고른 이유·한 줄 메모
+function mkRev(x, pend) {
+  if (!x.제출시각) return '<td></td>';
+  if (pend) return `<td data-sv="1">${chip('mid', '확인 중')}</td>`;
+  const rv = x.복기 || {}, ks = Object.entries(rv);
+  if (!x.복기시각) return `<td data-sv="0" class="dim">${Object.values(x.정오 || {}).some(v => v === false) ? '안 함' : '—'}</td>`;
+  const L = { 실수: '실수', 모름: '몰랐음', 시간: '시간 부족', 못댐: '손 못 댐' }, n = {};
+  ks.forEach(([, v]) => { n[v.k] = (n[v.k] || 0) + 1; });
+  const tip = ks.sort((a, b) => a[0] - b[0]).map(([no, v]) => `${no}번 ${L[v.k] || v.k}${v.r ? ' · ' + v.r : ''}${v.m ? ' — ' + v.m : ''}`).join('\n');
+  return `<td data-sv="${(n.실수 || 0) + (n.시간 || 0)}" title="${E(tip)}">` + Object.entries(n).map(([k, c]) => `${L[k] || k} ${c}`).join(' · ') + `</td>`;
 }
 function mkDraw() {
   const body = $('mk-body'), bar = $('mk-bar'); if (!body) return;
@@ -7091,33 +7103,34 @@ function mkDraw() {
   $('mk-cnt').textContent = `${sub.length}/${st.length}명 제출`;
   const inQ = Q.filter(q => !q.범위밖), full = inQ.reduce((a, q) => a + Number(q.배점 || 0), 0);
   const avg = sub.length ? Math.round(sub.reduce((a, x) => a + Number(x.점수 || 0), 0) / sub.length * 10) / 10 : null;
-  const bad = sub.filter(x => !x.잡 || x.잡.상태 === '실패' || (x.잡.상태 === '완료' && !x.잡.문항수) || x.메모);
+  const pend = x => !x.잡 && !x.복기시각 && !x.메모 && Object.values(x.정오 || {}).some(v => v === false);   // (v80) 틀린 문항 확인 중 — 아직 잡이 없는 게 정상
+  const bad = sub.filter(x => (!x.잡 && !pend(x)) || (x.잡 && (x.잡.상태 === '실패' || (x.잡.상태 === '완료' && !x.잡.문항수))) || x.메모);
   let h = `<div class="card"><div class="mk-sum"><span><b>${E(m.반)}</b> ${E(m.시험지명)} · ${m.회차}회</span>`
     + `<span>제출 <b>${sub.length}</b> / ${st.length}명</span><span>평균 <b>${avg == null ? '—' : avg}</b> / ${Math.round(full * 10) / 10}점</span>`
     + mkGate(m)   // (1112 유강 v78 "내가 액션해야 열리게") 답 입력은 여기서 연다 — publish 는 닫힌 채로 올라온다
     + (bad.length ? `<span style="color:var(--bad,#f08a9a)">개별과제 확인 ${bad.length}명</span>` : '') + `</div></div>`;
   // 문항별 — 수업에서 무엇부터 풀지
-  h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th>틀림</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
+  h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th>틀림</th><th>그중 실수</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
   Q.forEach(q => {
     const k = String(q.번호), ok = sub.filter(x => (x.정오 || {})[k] === true), ng = sub.filter(x => (x.정오 || {})[k] === false);
     const c = x => (((x.답 || {})[k] || {}).c) || '';
     const rate = sub.length ? Math.round(ok.length / sub.length * 100) : null;
     h += `<tr><td data-sv="${q.번호}"><b>${q.번호}번</b>${q.범위밖 ? ' ' + chip('mid', '범위 밖') : ''}</td><td>${q.형식 === 'short' ? E(q.정답) : mkCirc(q.정답)}</td><td class="n">${E(String(q.배점 ?? ''))}</td>`
       + `<td class="n" data-sv="${rate == null ? '' : rate}" style="color:${rate != null && rate < 50 ? 'var(--bad,#f08a9a)' : 'inherit'}">${rate == null ? '—' : rate + '%'}</td>`
-      + `<td class="n">${ng.length}</td><td class="n">${ok.filter(x => c(x) === '찍음').length}</td><td class="n">${ok.filter(x => c(x) === '애매').length}</td>`
+      + `<td class="n">${ng.length}</td><td class="n" title="${E(ng.filter(x => ((x.복기 || {})[k] || {}).k === '실수').map(x => x.이름 + ': ' + (((x.복기 || {})[k] || {}).r || '') + (((x.복기 || {})[k] || {}).m ? ' — ' + x.복기[k].m : '')).join('\n'))}">${ng.filter(x => ((x.복기 || {})[k] || {}).k === '실수').length || ''}</td><td class="n">${ok.filter(x => c(x) === '찍음').length}</td><td class="n">${ok.filter(x => c(x) === '애매').length}</td>`
       + `<td class="n">${sub.filter(x => c(x) === '안풂').length}</td><td class="dim">${E(ng.map(x => x.이름).join(', '))}</td></tr>`;
   });
   h += `</tbody></table></div>`;
   // 학생별
-  h += `<div class="card vs-wrap"><table class="vs-tbl mk-s"><thead><tr><th>학생</th><th>제출</th><th>점수</th><th>틀린 번호</th><th>찍음</th><th>애매</th><th>개별과제</th><th data-nosort></th></tr></thead><tbody>`;
+  h += `<div class="card vs-wrap"><table class="vs-tbl mk-s"><thead><tr><th>학생</th><th>제출</th><th>점수</th><th>틀린 번호</th><th>틀린 문항 확인</th><th>찍음</th><th>애매</th><th>개별과제</th><th data-nosort></th></tr></thead><tbody>`;
   st.forEach(x => {
     const ng = Object.entries(x.정오 || {}).filter(([, v]) => v === false).map(([k]) => +k).sort((a, b) => a - b);
     const cs = Object.values(x.답 || {}).map(v => v && v.c);
     const can = x.제출시각 && (!x.잡 || x.잡.상태 === '실패' || x.잡.상태 === '완료');
     h += `<tr><td>${E(x.이름)}${x.재원 ? '' : ' ' + chip('mid', '다른 반')}</td><td data-sv="${E(x.제출시각 || '')}">${x.제출시각 ? swFmtT(x.제출시각) : chip('bad', '미제출')}</td>`
-      + `<td class="n" data-sv="${x.점수 == null ? '' : x.점수}">${x.점수 == null ? '—' : E(String(x.점수))}</td><td>${E(ng.join(', '))}</td>`
+      + `<td class="n" data-sv="${x.점수 == null ? '' : x.점수}">${x.점수 == null ? '—' : E(String(x.점수))}</td><td>${E(ng.join(', '))}</td>` + mkRev(x, pend(x))
       + `<td class="n">${x.제출시각 ? cs.filter(c => c === '찍음').length : ''}</td><td class="n">${x.제출시각 ? cs.filter(c => c === '애매').length : ''}</td>`
-      + mkJob(x.잡, !!x.제출시각).replace('</td>', (x.메모 ? ` <span class="dim" title="${E(x.메모)}">⚠ ${E(x.메모.replace(/^개별과제 잡을 못 넣음: /, '').slice(0, 30))}</span>` : '') + '</td>')
+      + mkJob(x.잡, !!x.제출시각, pend(x)).replace('</td>', (x.메모 ? ` <span class="dim" title="${E(x.메모)}">⚠ ${E(x.메모.replace(/^개별과제 잡을 못 넣음: /, '').slice(0, 30))}</span>` : '') + '</td>')
       + `<td>${can ? `<button class="fbtn" data-mkr="${E(x.학생ID)}">${x.잡 && x.잡.상태 === '완료' && x.잡.문항수 ? '새로 만들기' : '다시 만들기'}</button>` : ''}</td></tr>`;
   });
   body.innerHTML = h + `</tbody></table></div><div class="dim" id="mk-msg"></div>`;
@@ -7128,7 +7141,7 @@ function mkDraw() {
     const { data, error } = await sb.rpc('staff_mock_gate', { p_ban: m.반, p_day: m.날짜, p_open: open });
     const msg = $('mk-msg');
     if (error || !data || data.오류) { msg.textContent = error ? error.message + (/staff_mock_gate/.test(error.message) ? ' (schema_v78 실행 전)' : '') : (data && data.오류) || '실패'; b.disabled = false; return; }
-    const done = open ? `${m.반} ${m.회차}회 학생 입력을 열었어요 — 포털 오늘 탭에 카드가 떠요` : `${m.반} ${m.회차}회 학생 입력을 닫았어요`;
+    const done = open ? `${m.반} ${m.회차}회 학생 입력을 열었어요 — 포털 오늘 탭에 카드가 떠요` : `${m.반} ${m.회차}회 학생 입력을 닫았어요` + (data.자동제작 ? ` — 틀린 문항 확인을 안 끝낸 ${data.자동제작}명 개별과제를 지금 만들어요` : '');
     await mkLoad(); const mm = $('mk-msg'); if (mm) mm.textContent = done;
   });
   body.querySelectorAll('[data-mkr]').forEach(b => b.onclick = async () => {
