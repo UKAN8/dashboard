@@ -71,6 +71,13 @@ h1{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font
 .msg b{display:block;color:var(--tx);font-size:17px;margin-bottom:6px}
 .err{color:#ffb0b0;font-size:13px;margin-top:6px;text-align:center}
 .katex{font-size:1.04em}
+.rv .me{color:var(--tx2);font-size:13.5px;margin-left:auto}
+.rv .me b{color:var(--tx)}
+.rv .row.k .b.on{background:rgba(255,213,154,.14);border-color:rgba(255,213,154,.55);color:var(--warn)}
+.rv .row.r .b{flex:1 1 40%;font-size:13.5px;padding:9px 6px}
+.rv .row.r .b.on{background:rgba(200,240,218,.12);border-color:rgba(200,240,218,.5);color:var(--good);font-weight:600}
+.rv input.memo{width:100%;font:inherit;font-size:14px;color:var(--tx);background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
+.rv input.memo:focus{outline:none;border-color:rgba(245,160,160,.6)}
 </style></head><body><main id="app"><div class="msg">불러오는 중…</div></main>
 <div class="bar" id="bar" hidden><div class="in"><div class="cnt" id="cnt"></div><button class="go wait" id="go">제출</button></div></div>
 <script>
@@ -144,7 +151,7 @@ app.addEventListener('input',ev=>{
   (A[m[1]]=A[m[1]]||{}).a=v; store(); sure=false; count();
 });
 go.addEventListener('click',async()=>{
-  if(!M||busy) return;
+  if(!M||busy||RR) return;   // (v80) 틀린 문항 확인 화면에선 submitReview 가 맡는다
   const miss=M.문항.filter(q=>!filled(q));
   document.querySelectorAll('.q.miss').forEach(e=>e.classList.remove('miss'));
   if(miss.length){ miss.forEach(q=>document.getElementById('q'+q.번호).classList.add('miss')); document.getElementById('q'+miss[0].번호).scrollIntoView({behavior:'smooth'}); return; }
@@ -159,7 +166,9 @@ go.addEventListener('click',async()=>{
     if(data.번호){ const el=document.getElementById('q'+data.번호); if(el){ el.classList.add('miss'); el.scrollIntoView({behavior:'smooth'}); } } return; }
   try{ localStorage.removeItem(KEY); }catch(e){}
   if(data.이미) return load();
-  result({점수:data.점수, 만점:data.만점, 오답:data.오답, 범위밖오답:data.범위밖오답, 과제:data.과제});
+  const r={점수:data.점수, 만점:data.만점, 오답:data.오답, 범위밖오답:data.범위밖오답, 과제:data.과제, 복기:data.복기||[]};
+  if(r.복기.length) return review(r);
+  result(r);
 });
 function result(r){
   bar.hidden=true;
@@ -168,9 +177,82 @@ function result(r){
     +'<div class="res"><div class="sc">'+E(r.점수)+'<small> / '+E(r.만점)+'점</small></div></div>'
     +'<div class="box"><div class="t">틀린 문항</div>'+(w.length?'<div class="chips">'+w.map(n=>'<span>'+n+'번</span>').join('')+'</div>':'<div>없어요</div>')+'</div>'
     +(o.length?'<div class="box"><div class="t">범위 밖 문항에서 틀린 것 (점수에는 안 들어가요)</div><div class="chips out">'+o.map(n=>'<span>'+n+'번</span>').join('')+'</div></div>':'')
-    +(r.과제===false?'<div class="note">개별과제는 선생님이 확인한 뒤 만들어 줄게요.</div>'
-      :'<div class="note">틀린 문항과 찍거나 애매했던 문항을 바탕으로 <b>개별과제</b>를 만들고 있어요. 몇 분 뒤 포털 과제 탭에서 확인해요.</div>');
+    +(r.과제===false&&!r.복기완료?'<div class="note">개별과제는 선생님이 확인한 뒤 만들어 줄게요.</div>'
+      :'<div class="note">틀린 문항·확인한 내용·찍거나 애매했던 문항을 바탕으로 <b>개별과제</b>를 만들고 있어요. 몇 분 뒤 포털 과제 탭에서 확인해요.</div>');
 }
+// (v80 유강) 제출 직후 틀린 문항 확인 — 실수였는지 + 이유. 끝내야 개별과제를 만든다(안 끝내면 선생님이 입력 닫을 때 자동)
+const RK={실수:['계산 실수','문제·조건을 잘못 읽음','답 옮기기·마킹 실수','기타'], 모름:['개념·공식이 기억 안 남','풀이 방법이 안 떠오름','풀다가 막힘','기타']};
+let RV={}, RR=null, RKEY='';
+function rstore(){ try{ localStorage.setItem(RKEY, JSON.stringify(RV)); }catch(e){} }
+function rdone(it){ const v=RV[it.번호]||{}; return it.안풂 ? (v.k==='시간'||v.k==='못댐') : ((v.k==='실수'||v.k==='모름') && !!v.r); }
+function myAns(it){
+  if(it.안풂) return '<span class="me">안 풀었어요</span>';
+  let a=it.내답;
+  if(it.형식==='pick') a = a==='없음' ? '선지에 없음' : (NUM[(+a)-1]||'')+' '+tex((it.선지||[])[(+a)-1]||'');
+  else if(it.형식!=='short') a = NUM[(+a)-1]||a;
+  return '<span class="me">내 답 <b>'+(it.형식==='pick'?a:E(a))+'</b> · '+E({확실:'확실했어요',애매:'애매했어요',찍음:'찍었어요'}[it.확신]||'')+'</span>';
+}
+function rcard(it){
+  const v=RV[it.번호]||{}, no=it.번호;
+  let h='<div class="q rv'+(rdone(it)?' done':'')+'" id="r'+no+'"><div class="hd"><span class="no">'+no+'번</span>'+myAns(it)+'</div>';
+  if(it.안풂){
+    h+='<div class="lab">왜 못 풀었어요?</div><div class="row k">'
+      +[['시간','시간이 부족했어요'],['못댐','손을 못 댔어요']].map(([k,t])=>'<button class="b'+(v.k===k?' on':'')+'" data-r="'+no+'" data-k="'+k+'">'+t+'</button>').join('')+'</div>';
+  } else {
+    h+='<div class="lab">실수였어요?</div><div class="row k">'
+      +[['실수','실수였어요'],['모름','몰랐어요']].map(([k,t])=>'<button class="b'+(v.k===k?' on':'')+'" data-r="'+no+'" data-k="'+k+'">'+t+'</button>').join('')+'</div>';
+    if(v.k) h+='<div class="lab">'+(v.k==='실수'?'어떤 실수였어요?':'어디서 막혔어요?')+'</div><div class="row r">'
+      +RK[v.k].map(t=>'<button class="b'+(v.r===t?' on':'')+'" data-r="'+no+'" data-rr="'+E(t)+'">'+E(t)+'</button>').join('')+'</div>';
+  }
+  if(v.k) h+='<input class="memo" id="m'+no+'" maxlength="200" placeholder="한 줄로 적어 주세요 (선택) — 예: 부호를 반대로 씀" value="'+E(v.m||'')+'">';
+  return h+'</div>';
+}
+function rcount(){
+  const n=RR.복기.filter(rdone).length, all=RR.복기.length;
+  cnt.innerHTML='<b>'+n+'</b> / '+all+' 문항 확인';
+  go.className='go '+(n===all?'':'wait'); go.textContent= n===all ? '확인 끝 · 과제 만들기' : '남은 문항 보기';
+  RR.복기.forEach(it=>{ const el=document.getElementById('r'+it.번호); if(el) el.classList.toggle('done',rdone(it)); });
+}
+function review(r){
+  RR=r; RKEY='mockrv:'+TOK.slice(0,12)+':'+M.날짜;
+  try{ RV=JSON.parse(localStorage.getItem(RKEY)||'{}')||{}; }catch(e){ RV={}; }
+  const o=r.범위밖오답||[];
+  app.innerHTML='<div class="brand">수학은유강</div><h1>'+E(M.제목)+'</h1><div class="sub">'+E(M.이름)+' · 제출 완료</div>'
+    +'<div class="res"><div class="sc">'+E(r.점수)+'<small> / '+E(r.만점)+'점</small></div></div>'
+    +(o.length?'<div class="box"><div class="t">범위 밖 문항에서 틀린 것 (점수에는 안 들어가요)</div><div class="chips out">'+o.map(n=>'<span>'+n+'번</span>').join('')+'</div></div>':'')
+    +'<div class="note"><b>틀린 문항 확인 '+r.복기.length+'개</b> — 문항마다 실수였는지 몰랐는지 골라 주세요. 정답은 수업에서 같이 봐요.<br>'
+    +'고른 대로 다음 개별과제가 맞춰져요. <b>다 고르면 과제가 만들어져요.</b></div>'
+    +r.복기.map(rcard).join('')+'<div id="err" class="err"></div>';
+  bar.hidden=false; rcount();
+  go.onclick=submitReview;
+}
+async function submitReview(){
+  if(busy) return;
+  const miss=RR.복기.filter(it=>!rdone(it));
+  document.querySelectorAll('.q.miss').forEach(e=>e.classList.remove('miss'));
+  if(miss.length){ miss.forEach(it=>document.getElementById('r'+it.번호).classList.add('miss')); document.getElementById('r'+miss[0].번호).scrollIntoView({behavior:'smooth'}); return; }
+  busy=true; go.textContent='저장하는 중…';
+  const rev={}; RR.복기.forEach(it=>{ const v=RV[it.번호]||{}; rev[it.번호]={k:v.k, r:v.r||'', m:(v.m||'').trim()}; });
+  let data=null, err=null;
+  try{ ({data,error:err}=await sb.rpc('mock_review',{tok:TOK,rev})); }catch(e){ err=e; }
+  busy=false;
+  if(err||!data||data.오류){ rcount(); const el=document.getElementById('err'); el.textContent=(data&&data.오류)||'저장이 안 됐어요. 잠깐 뒤 다시 눌러 주세요.';
+    if(data&&data.번호){ const q=document.getElementById('r'+data.번호); if(q){ q.classList.add('miss'); q.scrollIntoView({behavior:'smooth'}); } } return; }
+  try{ localStorage.removeItem(RKEY); }catch(e){}
+  result(Object.assign({}, RR, {과제:data.과제, 복기완료:true}));
+}
+app.addEventListener('click',ev=>{
+  const b=ev.target.closest('button[data-r]'); if(!b||!RR) return;
+  ev.stopImmediatePropagation();
+  const no=b.dataset.r, it=RR.복기.find(x=>String(x.번호)===String(no)), v=RV[no]=RV[no]||{};
+  if(b.dataset.k!==undefined){ if(v.k!==b.dataset.k){ v.k=b.dataset.k; delete v.r; } }
+  if(b.dataset.rr!==undefined){ v.r=b.dataset.rr; }
+  rstore(); document.getElementById('r'+no).outerHTML=rcard(it); rcount();
+}, true);
+app.addEventListener('input',ev=>{
+  const m=/^m(\d+)$/.exec(ev.target.id||''); if(!m||!RR) return;
+  (RV[m[1]]=RV[m[1]]||{}).m=ev.target.value; rstore();
+}, true);
 async function load(){
   if(!TOK) return say('링크가 올바르지 않아요.','포털에서 다시 열어 주세요.');
   let data=null, err=null;
@@ -179,7 +261,7 @@ async function load(){
   if(!data) return say('만료되었거나 잘못된 링크예요.','포털 링크로 다시 들어와 주세요.');
   if(data.없음) return say('지금 열린 모의테스트가 없어요.','모의테스트를 본 날 다시 열어 주세요.');
   M=data; KEY='mock:'+TOK.slice(0,12)+':'+M.날짜;
-  if(M.제출) return result(M.제출);
+  if(M.제출) return (M.제출.복기||[]).length ? review(M.제출) : result(M.제출);
   try{ A=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ A={}; }
   form();
 }
