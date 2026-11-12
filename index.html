@@ -7085,7 +7085,7 @@ function mkDraw() {
   const bad = sub.filter(x => !x.잡 || x.잡.상태 === '실패' || (x.잡.상태 === '완료' && !x.잡.문항수) || x.메모);
   let h = `<div class="card"><div class="mk-sum"><span><b>${E(m.반)}</b> ${E(m.시험지명)} · ${m.회차}회</span>`
     + `<span>제출 <b>${sub.length}</b> / ${st.length}명</span><span>평균 <b>${avg == null ? '—' : avg}</b> / ${Math.round(full * 10) / 10}점</span>`
-    + `<span>입력 ${E(String(m.열림).slice(5, 16).replace('T', ' '))} ~ ${E(String(m.닫힘).slice(5, 16).replace('T', ' '))}</span>`
+    + `<span>입력 ${E(swFmtT(m.열림))} ~ ${E(swFmtT(m.닫힘))}</span>`   // DB 는 UTC 로 준다 — 이 기기 시각(KST)으로
     + (bad.length ? `<span style="color:var(--bad,#f08a9a)">개별과제 확인 ${bad.length}명</span>` : '') + `</div></div>`;
   // 문항별 — 수업에서 무엇부터 풀지
   h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th>틀림</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
