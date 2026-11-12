@@ -1084,6 +1084,19 @@ function partsOf(d){
         +`<div class="row"><span class="t"><b>오늘 기출테스트 자기평가</b><span class="dim"> 문항마다 내 답 + 확신 · 2분</span></span>`
         +`<a class="n mid" href="${E(url)}" style="text-decoration:none;font-weight:600">시작 →</a></div></div>`;
   } else P.evalNone=`<div class="none">지금 열려 있는 자기평가가 없습니다. 기출테스트 본 날 답안지 걷은 뒤 다시 열어 주세요.</div>`;
+  // (1112 유강) 기말 모의테스트 — 콘솔 없이 학생이 폰으로 답 입력 → 바로 채점·개별과제. 정보는 mock_open 이 따로 준다.
+  const MK=d.모의||null; P.mock='';
+  if(MK && !MK.없음){
+    const murl=`https://ukan8.github.io/dashboard/mock/?t=${encodeURIComponent(d.토큰||'')}`;
+    if(MK.제출)
+      P.mock=`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">${E(MK.제목||'모의테스트')} <b class="good">제출 완료</b>`
+        +`<span class="dim"> ${E(MK.제출.점수)} / ${E(MK.제출.만점)}점</span></span>`
+        +`<a class="n dim" href="${E(murl)}" style="text-decoration:none">결과</a></div></div>`;
+    else
+      P.mock=`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.08)">`
+        +`<div class="row"><span class="t"><b>${E(MK.제목||'모의테스트')} 답 입력</b><span class="dim"> 시험지 답 + 풀이 상태 · 3분</span></span>`
+        +`<a class="n mid" href="${E(murl)}" style="text-decoration:none;font-weight:600">시작 →</a></div></div>`;
+  }
   // ⓪-1 CORE 루프 (1009, P11). 1018 켬(core 1015 배포 + schema_v36 Run 1018 확인).
   const CORE_ON=true;
   P.core='';
@@ -1268,7 +1281,7 @@ function render(d){
   S.오늘.push(P.qk, P.diag);
   // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
   S.오늘.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div>`);
-  S.오늘.push(P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
+  S.오늘.push(P.mock||'', P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
   S.기록.push(`<div id="trend-host"><div class="none">기록을 불러오는 중…</div></div>`, `<h2>기출테스트</h2><div id="pr-host"></div>`);
@@ -2312,6 +2325,7 @@ function wireReport(tok){
   if(!data) return say('만료되었거나 잘못된 링크입니다.','새 링크가 필요하면 원장에게 말씀해 주세요.');
   // (0902) 오늘 기출 자기평가가 열려 있나 — 실패해도 포털은 그냥 뜬다. (학부모 토큰은 0902 폐기 → 분기 없음, 0906)
   try{ const r=await sb.rpc('gt_eval_open',{tok}); if(r&&r.data&&(r.data.문항||r.data.없음)){ data.자평=r.data; data.토큰=tok; } }catch(e){}
+  try{ const r=await sb.rpc('mock_open',{tok}); if(r&&r.data){ data.모의=r.data; data.토큰=tok; } }catch(e){}   // (1112) 함수가 아직 없으면 조용히 넘어간다
   render(data);
 })();
 </script><script src="/dashboard/track.js" data-page="me" defer></script></body></html>
