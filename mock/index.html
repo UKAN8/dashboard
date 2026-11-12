@@ -1,195 +1,187 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>파이널 모의고사 신청 · 수학은유강</title>
+<title>모의테스트 답 입력 · 수학은유강</title>
 <meta name="robots" content="noindex, nofollow">
-<meta property="og:title" content="고3 파이널 모의고사 신청 · 수학은유강">
-<meta property="og:description" content="11/13(금) 10:30~12:10 · 필탑학원 신관 · 응시 무료">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css">
+<meta property="og:title" content="수학은유강 — 기말 모의테스트 답 입력">
+<meta property="og:description" content="개인 링크입니다. 다른 사람에게 전달하지 마세요.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
 <style>
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
 :root{color-scheme:dark;
- --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.07);
- --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0;}
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.08);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0; --good:#c8f0da; --warn:#ffd59a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{max-width:100%;overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--tx);
- font:15px/1.6 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
- padding:22px clamp(16px,4vw,28px) calc(110px + env(safe-area-inset-bottom))}
-main{max-width:620px;margin:0 auto}
-.top{display:flex;justify-content:space-between;align-items:center}
-.brand{display:flex;align-items:center;gap:7px;font-family:'Paperlogy',sans-serif;font-weight:700;font-size:16px}
-.dots{position:relative;width:26px;height:16px}
-.dots i{position:absolute;top:0;width:16px;height:16px;border-radius:50%}
-.dots i:first-child{left:0;background:var(--acc)}
-.dots i:last-child{left:9px;background:#f5f5fa}
-.dday{font-family:'Paperlogy',sans-serif;font-weight:800;font-size:12.5px;color:#1a0d12;background:var(--acc);border-radius:99px;padding:4px 11px}
-.eye{font-family:'Paperlogy',sans-serif;color:var(--acc);font-weight:700;font-size:14px;margin:22px 0 2px}
-h1{font-family:'Paperlogy',sans-serif;font-weight:900;font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.02em}
-.lead{color:var(--tx2);font-size:14px;margin:0 0 16px}
-.ticket{position:relative;display:grid;grid-template-columns:1fr 104px;background:#f4f1ec;color:#141418;border-radius:18px;overflow:hidden;margin-bottom:22px;font-family:'Paperlogy','Pretendard',sans-serif}
-.ticket .main{padding:18px 20px 18px}
-.ticket .ttl{font-size:11px;font-weight:700;letter-spacing:.14em;color:#8a7f78}
-.ticket .nm{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:2px 0 12px}
-.ticket dl{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:0;padding-top:12px;border-top:1.5px solid #e2ddd5}
-.ticket dt{font-size:11.5px;color:#8a7f78;font-weight:600;margin-bottom:2px}
-.ticket dd{margin:0;font-weight:800;font-size:15px;line-height:1.35;letter-spacing:-.01em}
-.ticket dd small{display:block;font-family:'Pretendard',sans-serif;font-weight:500;font-size:12px;color:#6d655f;margin-top:2px}
-.stub{background:var(--acc);border-left:3px dashed #f4f1ec;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#160b0d}
-.stub small{font-size:12px;font-weight:700;color:#5a2c2b}
-.stub b{font-size:52px;font-weight:900;line-height:1;margin:4px 0 2px}
-.stub span{font-weight:800;font-size:15px}
-.notch{position:absolute;right:93px;width:22px;height:22px;border-radius:50%;background:var(--bg)}
-.notch.a{top:-11px}.notch.b{bottom:-11px}
-@media (max-width:420px){.ticket dl{grid-template-columns:1fr}.ticket{grid-template-columns:1fr 88px}.notch{right:77px}.stub b{font-size:44px}}
-.q{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:15px 16px;margin-bottom:11px}
-.q .n{font-size:11px;letter-spacing:.14em;color:var(--acc);margin-bottom:5px}
-.q .t{font-weight:700;margin-bottom:3px}
-.q .s{color:var(--dim);font-size:12.5px;margin-bottom:10px}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
-.opt{display:block;width:100%;text-align:left;font:inherit;font-size:14px;color:var(--tx2);
- background:rgba(255,255,255,.035);border:1px solid var(--bd);border-radius:11px;
- padding:11px 13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
-.opt.on{background:rgba(245,160,160,.16);border-color:rgba(245,160,160,.5);color:#ffe9e9;font-weight:700}
-@media (hover:hover) and (pointer:fine){ .opt:hover{border-color:rgba(245,160,160,.35);color:var(--tx)} }
-.opt small{display:block;font-weight:400;font-size:12px;color:var(--dim)}
-.opt.on small{color:#f3caca}
-input.tx,textarea{width:100%;font:inherit;font-size:16px;color:var(--tx);background:rgba(255,255,255,.035);
- border:1px solid var(--bd);border-radius:11px;padding:11px 13px;margin-top:8px}
-textarea{min-height:76px;resize:vertical;font-size:15px}
-input::placeholder,textarea::placeholder{color:var(--dim)}
-.bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,#0a0a0f 62%,rgba(10,10,15,0));
- padding:14px clamp(16px,4vw,28px) calc(16px + env(safe-area-inset-bottom))}
-.bar .in{max-width:620px;margin:0 auto}
-.hint{color:var(--dim);font-size:12px;text-align:center;margin-bottom:8px;min-height:18px}
-button.send{width:100%;font:inherit;font-size:16px;font-weight:800;color:#1a0d12;
- background:var(--acc);border:none;border-radius:13px;padding:15px;cursor:pointer}
-button.send[disabled]{background:rgba(255,255,255,.08);color:var(--dim);cursor:default}
-.done{text-align:center;padding:60px 10px}
-.done .k{font-size:44px;line-height:1}
-.done b{display:block;font-size:20px;margin:16px 0 8px}
-.done p{color:var(--tx2);font-size:14px;margin:0 0 6px}
-.done button{margin-top:22px;font:inherit;font-size:14px;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:11px;padding:10px 16px;cursor:pointer}
-.closed{padding:60px 4px;color:var(--tx2)}
-.closed b{display:block;color:var(--tx);font-size:18px;margin-bottom:6px}
-footer{color:var(--dim);font-size:12px;text-align:center;margin-top:26px}
-</style></head>
-<body><main id="app"></main>
-<div class="bar" id="bar"><div class="in"><div class="hint" id="hint"></div><button class="send" id="send" disabled>신청하기</button></div></div>
+ font:15px/1.5 'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;
+ padding:16px clamp(12px,4vw,24px) calc(130px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto}
+.brand{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;color:var(--acc);font-size:15px}
+h1{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:6px 0 2px}
+.sub{color:var(--tx2);font-size:13px}
+.note{color:var(--dim);font-size:12.5px;line-height:1.6;margin:10px 0 14px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.note b{color:var(--tx2)}
+.q{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:11px 12px;margin-bottom:9px;scroll-margin-top:12px}
+.q.done{border-color:rgba(200,240,218,.3)}
+.q.miss{border-color:rgba(245,160,160,.7);background:rgba(245,160,160,.06)}
+.hd{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.no{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:17px;color:var(--acc);min-width:36px}
+.pt{color:var(--dim);font-size:12px}
+.tag{font-size:11px;color:var(--warn);border:1px solid rgba(255,213,154,.35);border-radius:8px;padding:0 7px}
+.lab{font-size:11.5px;color:var(--dim);margin:2px 0 5px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.b{flex:1 1 0;min-width:46px;font:inherit;font-size:15px;color:var(--tx2);background:rgba(255,255,255,.035);
+ border:1px solid var(--bd);border-radius:10px;padding:10px 4px;cursor:pointer;text-align:center}
+.b.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.6);color:#ffe9e9;font-weight:700}
+.row.cf .b{font-size:14px}
+.row.cf .b.on{background:rgba(200,240,218,.14);border-color:rgba(200,240,218,.55);color:var(--good)}
+.row.cf .b.skip.on{background:rgba(255,213,154,.12);border-color:rgba(255,213,154,.5);color:var(--warn)}
+.row.pick{flex-direction:column}
+.row.pick .b{text-align:left;padding:10px 12px;flex:none}
+.row.dis{opacity:.35;pointer-events:none}
+@media (hover:hover) and (pointer:fine){ .b:hover{border-color:rgba(245,160,160,.4);color:var(--tx)} }
+.num{display:flex;gap:6px}
+.num input{flex:1 1 auto;min-width:0;font:inherit;font-size:17px;color:var(--tx);background:rgba(255,255,255,.04);
+ border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
+.num input:focus{outline:none;border-color:rgba(245,160,160,.6)}
+.num .b{flex:0 0 52px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(10,10,15,.94);backdrop-filter:blur(8px);
+ border-top:1px solid var(--bd);padding:10px clamp(12px,4vw,24px) calc(10px + env(safe-area-inset-bottom))}
+.bar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.bar .cnt{font-size:13px;color:var(--tx2);flex:1}
+.bar .cnt b{color:var(--tx)}
+.go{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;
+ background:var(--acc);color:#2a0d0d}
+.go.wait{background:rgba(255,255,255,.08);color:var(--tx2)}
+.go.sure{background:#ff8f8f}
+.res{text-align:center;padding:28px 12px 8px}
+.res .sc{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:52px;line-height:1.1}
+.res .sc small{font-size:20px;color:var(--dim)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 14px;margin:12px 0}
+.box .t{font-size:12.5px;color:var(--dim);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:15px;padding:4px 11px;border-radius:9px;
+ background:rgba(245,160,160,.13);color:#ffd9d9}
+.chips.out span{background:rgba(255,213,154,.1);color:var(--warn)}
+.msg{color:var(--tx2);text-align:center;padding:60px 10px}
+.msg b{display:block;color:var(--tx);font-size:17px;margin-bottom:6px}
+.err{color:#ffb0b0;font-size:13px;margin-top:6px;text-align:center}
+.katex{font-size:1.04em}
+</style></head><body><main id="app"><div class="msg">불러오는 중…</div></main>
+<div class="bar" id="bar" hidden><div class="in"><div class="cnt" id="cnt"></div><button class="go wait" id="go">제출</button></div></div>
 <script>
 const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
-const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
-/* 1101 고3 파이널 모의고사(11/13) 신청 — extra_study_submit RPC 재사용 (신청키 final1113)
- * 칸 대응: 반=수강생/외부 학생 · 단원=[선택과목, 고3 재학/재수생] · 희망일=['11/13(금)'] · 메모='연락처 …' + 남길 말 */
-const KEY='final1113', CLOSE='2026-11-12';
-const app=document.getElementById('app');
-const $=s=>app.querySelector(s);
-const st={신청자:'',학생이름:'',학교:'',반:'',구분:'',과목:'',연락처:'',메모:''};
-
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
-const head=()=>`<div class="top"><div class="brand"><span class="dots"><i></i><i></i></span>수학은유강</div><div class="dday">수능 D-6</div></div>`;
-
-function render(){
- if(today()>CLOSE){
-  app.innerHTML=`${head()}<div class="closed"><b>신청이 마감되었습니다</b>문의는 선생님께 직접 연락 주세요.</div>`;
-  document.getElementById('bar').style.display='none';return;
- }
- app.innerHTML=`${head()}
- <div class="eye">고3 · 11/13(금)</div>
- <h1>파이널 모의고사 신청</h1>
- <p class="lead">수능 수학과 같은 시간에 진행합니다.</p>
- <div class="ticket">
-  <div class="notch a"></div><div class="notch b"></div>
-  <div class="main">
-   <div class="ttl">ADMISSION</div>
-   <div class="nm">파이널 모의고사</div>
-   <dl>
-    <div><dt>일시</dt><dd>11/13(금) 10:30~12:10<small>10:20까지 입실 완료</small></dd></div>
-    <div><dt>장소</dt><dd>필탑학원 신관<small>응시는 누구나</small></dd></div>
-    <div><dt>과목</dt><dd>공통 + 선택<small>미적분 · 확률과 통계 중 택1</small></dd></div>
-    <div><dt>풀이 수업</dt><dd>시험 직후 진행<small>수강생만 참여</small></dd></div>
-   </dl>
-  </div>
-  <div class="stub"><small>응시료</small><b>0</b><span>원</span></div>
- </div>
-
- <div class="q"><div class="n">01</div><div class="t">작성하시는 분</div>
-  <div class="opts">${['학생','학부모'].map(v=>opt('신청자',v,v)).join('')}</div></div>
-
- <div class="q"><div class="n">02</div><div class="t">학생 이름</div>
-  <input class="tx" id="nm" maxlength="10" placeholder="예) 홍길동" autocomplete="off" value="${esc(st.학생이름)}"></div>
-
- <div class="q"><div class="n">03</div><div class="t">학교</div><div class="s">재수생은 출신 고등학교를 적어 주세요.</div>
-  <input class="tx" id="sc" maxlength="20" placeholder="예) 필탑고" autocomplete="off" value="${esc(st.학교)}"></div>
-
- <div class="q"><div class="n">04</div><div class="t">수강 여부</div>
-  <div class="opts">${opt('반','수강생','필탑 수강생','풀이 수업 참여')}${opt('반','외부 학생','외부 학생','시험만 응시')}</div></div>
-
- <div class="q"><div class="n">05</div><div class="t">재학생 / 재수생</div>
-  <div class="opts">${opt('구분','고3 재학','고3 재학생')}${opt('구분','재수생','재수생','N수 포함')}</div></div>
-
- <div class="q"><div class="n">06</div><div class="t">선택과목</div>
-  <div class="opts">${['미적분','확률과 통계'].map(v=>opt('과목',v,v)).join('')}</div></div>
-
- <div class="q"><div class="n">07</div><div class="t">연락처</div><div class="s">시험 안내를 보내 드릴 번호예요.</div>
-  <input class="tx" id="ph" type="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000" autocomplete="tel" value="${esc(st.연락처)}"></div>
-
- <div class="q"><div class="n">08</div><div class="t">남길 말 <span style="color:var(--dim);font-weight:400">(선택)</span></div>
-  <textarea id="memo" maxlength="300" placeholder="궁금한 점 등">${esc(st.메모)}</textarea></div>
- <footer>필탑학원 고등수학 · 수학은유강</footer>`;
- app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;render()});
- $('#nm').oninput=e=>{st.학생이름=e.target.value;check()};
- $('#sc').oninput=e=>{st.학교=e.target.value;check()};
- $('#ph').oninput=e=>{st.연락처=e.target.value;check()};
- $('#memo').oninput=e=>{st.메모=e.target.value};
- check();
-}
-function opt(k,v,l,sub){return `<button class="opt ${st[k]===v?'on':''}" data-k="${k}" data-v="${esc(v)}">${esc(l)}${sub?`<small>${esc(sub)}</small>`:''}</button>`}
-const digits=s=>String(s).replace(/\D/g,'');
-function phone(){const d=digits(st.연락처);return d.length===11?d.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):d.length===10?d.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3'):''}
-
-function missing(){
- const m=[];
- if(!st.신청자)m.push('작성자');
- if(st.학생이름.replace(/\s/g,'').length<2)m.push('이름');
- if(st.학교.trim().length<2)m.push('학교');
- if(!st.반)m.push('수강 여부');
- if(!st.구분)m.push('재학/재수');
- if(!st.과목)m.push('선택과목');
- if(!phone())m.push('연락처');
- return m;
-}
-function check(){
- const m=missing();
- document.getElementById('send').disabled=m.length>0;
- document.getElementById('hint').textContent=m.length?('남은 항목: '+m.join(' · ')):'';
-}
-
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk'
 const sb=supabase.createClient(SB_URL,SB_ANON);
-document.getElementById('send').onclick=async()=>{
- if(missing().length)return;
- const btn=document.getElementById('send');btn.disabled=true;btn.textContent='보내는 중…';
- const memo=('연락처 '+phone()+(st.메모.trim()?' · '+st.메모.trim():'')).slice(0,500);
- const p={신청키:KEY,신청자:st.신청자,학생이름:st.학생이름.replace(/\s/g,''),학교:st.학교.trim(),반:st.반,희망일:['11/13(금)'],단원:[st.과목,st.구분],메모:memo};
- try{
-  const {data,error}=await sb.rpc('extra_study_submit',{p});
-  if(error||!data||!data.ok) throw error||new Error(data&&data.why||'실패');
-  done(p,data.수정);
- }catch(e){
-  btn.disabled=false;btn.textContent='신청하기';
-  document.getElementById('hint').textContent='전송에 실패했습니다. 잠시 뒤 다시 눌러 주세요.';
- }
-};
-function done(p,upd){
- document.getElementById('bar').style.display='none';
- app.innerHTML=`${head()}
- <div class="done"><div class="k">✓</div><b>${upd?'신청 내용이 수정되었습니다':'신청이 접수되었습니다'}</b>
- <p>${esc(p.학생이름)} · ${esc(p.학교)} · ${esc(st.구분)} · ${esc(st.과목)}</p>
- <p style="margin-top:14px"><b style="display:inline;font-size:15px;color:var(--acc)">11/13(금) 10:20까지</b> 필탑학원 신관으로 와 주세요.</p>
- <button id="again">내용 고치기</button></div>`;
- document.getElementById('again').onclick=()=>{document.getElementById('bar').style.display='';const b=document.getElementById('send');b.textContent='신청하기';render()};
+const TOK=new URLSearchParams(location.search).get('t')||'';
+const app=document.getElementById('app'), bar=document.getElementById('bar'), cnt=document.getElementById('cnt'), go=document.getElementById('go');
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NUM='①②③④⑤⑥⑦⑧⑨';
+const CF=[['확실','확실해요'],['애매','애매해요'],['찍음','찍었어요'],['안풂','안 풀었어요']];
+let M=null, A={}, KEY='', sure=false, busy=false;
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify(A)); }catch(e){} }
+function tex(s){ // \( … \) 만 KaTeX 로
+  return E(s).replace(/\\\(([\s\S]+?)\\\)/g,(m,x)=>{ try{ return katex.renderToString(x.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),{throwOnError:false}); }catch(e){ return m; } });
 }
-render();
+function say(t,s){ bar.hidden=true; app.innerHTML='<div class="msg"><b>'+E(t)+'</b>'+E(s||'')+'</div>'; }
+function filled(q){ const a=A[q.번호]||{}; return a.c==='안풂' || (a.c && String(a.a||'').trim()!==''); }
+function count(){
+  const n=M.문항.filter(filled).length, all=M.문항.length;
+  cnt.innerHTML='<b>'+n+'</b> / '+all+' 문항 입력';
+  go.className='go '+(n===all?(sure?'sure':''):'wait');
+  go.textContent= n===all ? (sure?'정말 제출할까요? 한 번 더 누르기':'제출') : '남은 문항 보기';
+  M.문항.forEach(q=>{ const el=document.getElementById('q'+q.번호); if(el){ el.classList.toggle('done',filled(q)); } });
+}
+function ansRow(q){
+  const a=A[q.번호]||{}, dis=a.c==='안풂'?' dis':'';
+  if(q.형식==='short'){
+    return '<div class="lab">답 입력</div><div class="num'+dis+'" style="'+(dis?'opacity:.35;pointer-events:none':'')+'">'
+      +'<input id="in'+q.번호+'" inputmode="decimal" autocomplete="off" placeholder="숫자로 입력" value="'+E(a.a||'')+'">'
+      +'<button class="b" data-neg="'+q.번호+'">−</button></div><div style="height:8px"></div>';
+  }
+  if(q.형식==='pick'){
+    const ops=(q.선지||[]).map((t,i)=>'<button class="b'+(String(a.a)===String(i+1)?' on':'')+'" data-q="'+q.번호+'" data-a="'+(i+1)+'">'+NUM[i]+' '+tex(t)+'</button>').join('');
+    return '<div class="lab">답 고르기</div><div class="row pick'+dis+'">'+ops
+      +'<button class="b'+(a.a==='없음'?' on':'')+'" data-q="'+q.번호+'" data-a="없음">선지에 내 답이 없어요</button></div>';
+  }
+  let h='';
+  for(let i=1;i<=(q.선지수||5);i++) h+='<button class="b'+(String(a.a)===String(i)?' on':'')+'" data-q="'+q.번호+'" data-a="'+i+'">'+NUM[i-1]+'</button>';
+  return '<div class="row'+dis+'">'+h+'</div>';
+}
+function card(q){
+  const a=A[q.번호]||{};
+  return '<div class="q" id="q'+q.번호+'"><div class="hd"><span class="no">'+q.번호+'번</span>'
+    +(q.배점!=null?'<span class="pt">'+E(q.배점)+'점</span>':'')+(q.범위밖?'<span class="tag">범위 밖</span>':'')+'</div>'
+    +'<div id="ar'+q.번호+'">'+ansRow(q)+'</div>'
+    +'<div class="lab">이 문제, 어떻게 풀었어요?</div><div class="row cf">'
+    +CF.map(([k,t])=>'<button class="b'+(k==='안풂'?' skip':'')+(a.c===k?' on':'')+'" data-q="'+q.번호+'" data-c="'+k+'">'+t+'</button>').join('')+'</div></div>';
+}
+function form(){
+  app.innerHTML='<div class="brand">수학은유강</div><h1>'+E(M.제목)+'</h1>'
+    +'<div class="sub">'+E(M.이름)+' · '+E(M.반)+' · '+E(M.날짜)+'</div>'
+    +'<div class="note">시험지에 쓴 답을 그대로 옮겨 주세요. 문항마다 <b>확실·애매·찍음·안 풂</b> 중 하나를 꼭 골라요 — 점수가 아니라 다음 과제를 맞추는 데 써요.<br>'
+    +'<b>제출하면 고칠 수 없어요.</b> 제출하자마자 내 개별과제가 만들어져요.</div>'
+    +M.문항.map(card).join('')+'<div id="err" class="err"></div>';
+  bar.hidden=false; count();
+}
+app.addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b||!M) return;
+  if(b.dataset.neg){ const no=b.dataset.neg, el=document.getElementById('in'+no); let v=el.value.trim(); v=v.startsWith('-')?v.slice(1):'-'+v; el.value=v; (A[no]=A[no]||{}).a=v; store(); sure=false; count(); return; }
+  const no=b.dataset.q; if(!no) return;
+  const q=M.문항.find(x=>String(x.번호)===String(no)); const a=A[no]=A[no]||{};
+  if(b.dataset.a!==undefined){ a.a=b.dataset.a; if(a.c==='안풂') delete a.c; }
+  if(b.dataset.c!==undefined){ a.c=b.dataset.c; }
+  store(); sure=false;
+  const el=document.getElementById('q'+no); el.outerHTML=card(q); count();
+});
+app.addEventListener('input',ev=>{
+  const m=/^in(\d+)$/.exec(ev.target.id||''); if(!m) return;
+  const v=ev.target.value.replace(/[^0-9.\-]/g,''); if(v!==ev.target.value) ev.target.value=v;
+  (A[m[1]]=A[m[1]]||{}).a=v; store(); sure=false; count();
+});
+go.addEventListener('click',async()=>{
+  if(!M||busy) return;
+  const miss=M.문항.filter(q=>!filled(q));
+  document.querySelectorAll('.q.miss').forEach(e=>e.classList.remove('miss'));
+  if(miss.length){ miss.forEach(q=>document.getElementById('q'+q.번호).classList.add('miss')); document.getElementById('q'+miss[0].번호).scrollIntoView({behavior:'smooth'}); return; }
+  if(!sure){ sure=true; count(); return; }
+  busy=true; go.textContent='채점하는 중…';
+  const ans={}; M.문항.forEach(q=>{ const a=A[q.번호]||{}; ans[q.번호]={a:a.c==='안풂'?'':String(a.a||'').trim(), c:a.c}; });
+  let data=null, err=null;
+  try{ ({data,error:err}=await sb.rpc('mock_submit',{tok:TOK,ans})); }catch(e){ err=e; }
+  busy=false;
+  if(err||!data){ sure=false; count(); document.getElementById('err').textContent='제출이 안 됐어요. 잠깐 뒤 다시 눌러 주세요.'; return; }
+  if(data.오류 && !data.이미){ sure=false; count(); document.getElementById('err').textContent=data.오류;
+    if(data.번호){ const el=document.getElementById('q'+data.번호); if(el){ el.classList.add('miss'); el.scrollIntoView({behavior:'smooth'}); } } return; }
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  if(data.이미) return load();
+  result({점수:data.점수, 만점:data.만점, 오답:data.오답, 범위밖오답:data.범위밖오답, 과제:data.과제});
+});
+function result(r){
+  bar.hidden=true;
+  const w=r.오답||[], o=r.범위밖오답||[];
+  app.innerHTML='<div class="brand">수학은유강</div><h1>'+E(M.제목)+'</h1><div class="sub">'+E(M.이름)+' · 제출 완료</div>'
+    +'<div class="res"><div class="sc">'+E(r.점수)+'<small> / '+E(r.만점)+'점</small></div></div>'
+    +'<div class="box"><div class="t">틀린 문항</div>'+(w.length?'<div class="chips">'+w.map(n=>'<span>'+n+'번</span>').join('')+'</div>':'<div>없어요</div>')+'</div>'
+    +(o.length?'<div class="box"><div class="t">범위 밖 문항에서 틀린 것 (점수에는 안 들어가요)</div><div class="chips out">'+o.map(n=>'<span>'+n+'번</span>').join('')+'</div></div>':'')
+    +(r.과제===false?'<div class="note">개별과제는 선생님이 확인한 뒤 만들어 줄게요.</div>'
+      :'<div class="note">틀린 문항과 찍거나 애매했던 문항을 바탕으로 <b>개별과제</b>를 만들고 있어요. 몇 분 뒤 포털 과제 탭에서 확인해요.</div>');
+}
+async function load(){
+  if(!TOK) return say('링크가 올바르지 않아요.','포털에서 다시 열어 주세요.');
+  let data=null, err=null;
+  try{ ({data,error:err}=await sb.rpc('mock_open',{tok:TOK})); }catch(e){ err=e; }
+  if(err) return say('지금은 열 수 없어요.','잠시 뒤 다시 열어 주세요.');
+  if(!data) return say('만료되었거나 잘못된 링크예요.','포털 링크로 다시 들어와 주세요.');
+  if(data.없음) return say('지금 열린 모의테스트가 없어요.','모의테스트를 본 날 다시 열어 주세요.');
+  M=data; KEY='mock:'+TOK.slice(0,12)+':'+M.날짜;
+  if(M.제출) return result(M.제출);
+  try{ A=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ A={}; }
+  form();
+}
+load();
 </script></body></html>
