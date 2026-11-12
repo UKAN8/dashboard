@@ -833,10 +833,12 @@ body.cs-on #boot{display:none}
         <div class="cs-info-row">
           <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
           <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
-          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>기출테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>모의테스트</option><option>기출테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
           <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
         </div>
         <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
+        <!-- (1112 유강) 기말 모의테스트 — 학생이 폰으로 답 입력, 선생님이 여기서 연다 -->
+        <div id="mk_setup" class="hidden cs-gt"><div class="cs-info-row" style="align-items:center;gap:10px;flex-wrap:wrap" id="mk_row"><span class="lbl">불러오는 중…</span></div></div>
         <!-- 기출테스트 정답표 (0823) -->
         <div id="gt_setup" class="hidden cs-gt">
           <div class="cs-info-row">
@@ -7060,6 +7062,13 @@ async function mkLoad() {
   if (!MK.pick || !MK.rows.some(r => r.반 + r.날짜 === MK.pick)) MK.pick = MK.rows.length ? MK.rows[0].반 + MK.rows[0].날짜 : null;
   mkDraw();
 }
+function mkGate(m) {
+  const now = Date.now(), o = m.열림 && new Date(m.열림).getTime(), c = m.닫힘 && new Date(m.닫힘).getTime();
+  const on = o && o <= now && (!c || c > now);
+  const st = on ? chip('ok', `학생 입력 열림 · ${swFmtT(m.닫힘)}까지`) : o ? chip('mid', `닫힘 · ${swFmtT(m.닫힘)}`) : chip('mid', '학생 입력 닫힘 · 아직 안 엶');
+  return `<span>${st}</span><span>${on ? '<button class="fbtn" data-mkg="0">답안 입력 닫기</button>'
+    : `<button class="fbtn on" data-mkg="1">${o ? '다시 열기' : '답안 입력 열기'}</button>`}<span class="dim" style="margin-left:6px">열면 지금부터 2일(결시생 재시용)</span></span>`;
+}
 const mkCirc = v => ['①', '②', '③', '④', '⑤'][Number(v) - 1] || (v == null ? '' : String(v));
 function mkJob(j, sub) {
   if (!sub) return '<td data-sv="0" class="dim">—</td>';
@@ -7085,7 +7094,7 @@ function mkDraw() {
   const bad = sub.filter(x => !x.잡 || x.잡.상태 === '실패' || (x.잡.상태 === '완료' && !x.잡.문항수) || x.메모);
   let h = `<div class="card"><div class="mk-sum"><span><b>${E(m.반)}</b> ${E(m.시험지명)} · ${m.회차}회</span>`
     + `<span>제출 <b>${sub.length}</b> / ${st.length}명</span><span>평균 <b>${avg == null ? '—' : avg}</b> / ${Math.round(full * 10) / 10}점</span>`
-    + `<span>입력 ${E(swFmtT(m.열림))} ~ ${E(swFmtT(m.닫힘))}</span>`   // DB 는 UTC 로 준다 — 이 기기 시각(KST)으로
+    + mkGate(m)   // (1112 유강 v78 "내가 액션해야 열리게") 답 입력은 여기서 연다 — publish 는 닫힌 채로 올라온다
     + (bad.length ? `<span style="color:var(--bad,#f08a9a)">개별과제 확인 ${bad.length}명</span>` : '') + `</div></div>`;
   // 문항별 — 수업에서 무엇부터 풀지
   h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th>틀림</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
@@ -7112,6 +7121,16 @@ function mkDraw() {
       + `<td>${can ? `<button class="fbtn" data-mkr="${E(x.학생ID)}">${x.잡 && x.잡.상태 === '완료' && x.잡.문항수 ? '새로 만들기' : '다시 만들기'}</button>` : ''}</td></tr>`;
   });
   body.innerHTML = h + `</tbody></table></div><div class="dim" id="mk-msg"></div>`;
+  body.querySelectorAll('[data-mkg]').forEach(b => b.onclick = async () => {
+    const open = b.dataset.mkg === '1';
+    if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = open ? '열까요? 한 번 더' : '닫을까요? 한 번 더'; return; }   // 실수 방지 두 번 누르기(alert 금지)
+    b.disabled = true; b.textContent = '바꾸는 중…';
+    const { data, error } = await sb.rpc('staff_mock_gate', { p_ban: m.반, p_day: m.날짜, p_open: open });
+    const msg = $('mk-msg');
+    if (error || !data || data.오류) { msg.textContent = error ? error.message + (/staff_mock_gate/.test(error.message) ? ' (schema_v78 실행 전)' : '') : (data && data.오류) || '실패'; b.disabled = false; return; }
+    const done = open ? `${m.반} ${m.회차}회 학생 입력을 열었어요 — 포털 오늘 탭에 카드가 떠요` : `${m.반} ${m.회차}회 학생 입력을 닫았어요`;
+    await mkLoad(); const mm = $('mk-msg'); if (mm) mm.textContent = done;
+  });
   body.querySelectorAll('[data-mkr]').forEach(b => b.onclick = async () => {
     const x = st.find(y => y.학생ID === b.dataset.mkr);
     if (x.잡 && x.잡.상태 === '완료' && x.잡.문항수 && b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '정말? 한 번 더'; return; }   // 이미 나간 판을 갈아엎는 경우만 두 번 누르기(alert 금지)
@@ -7588,6 +7607,13 @@ function applyAuto(){
     /* (1107 유강 "실제 점수랑 점수칸이 다르다") 예전엔 빈 칸만 채웠다 — 리뷰 도중 콘솔을 열면 그때까지의 부분 점수가
        저장되고(출결 찍힌 학생), 나중에 다시 열어도 칸이 차 있어 안 고쳐졌다. 리뷰는 폰 자동 채점이므로
        이 화면에서 손으로 고친 칸(dataset.manual)만 남기고, 저장값이 자동값과 다르면 자동값으로 맞춘다. */
+    if(isMOCK()){                                 // (1112) 모의테스트 = 폰 제출 점수 그대로(손으로 고친 칸은 둔다)
+      const ms=mockScore(id);
+      if(sc&&ms!=null&&!c.classList.contains('na')&&sc.dataset.manual!=='1'&&sc.value.trim()!==String(ms)){
+        sc.value=String(ms);sc.classList.add('autov');sc.title='모의테스트 폰 제출 자동 점수';put=true;}
+      if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
+      return;
+    }
     const v10a=r?reviewScore(r).toFixed(1):'';
     if(sc&&r&&!c.classList.contains('na')&&sc.dataset.manual!=='1'&&sc.value.trim()!==v10a&&!(Math.max(0,parseInt($('c_nq').value)||0))){
       const v10=reviewScore(r);
@@ -7601,7 +7627,7 @@ function applyAuto(){
 /* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
    첫 기출이 무조건 '오름세'로 찍히고(0831 유강), 반대로 기출 뒤 첫 리뷰는 전원 '급락'으로
    잡혀 코멘트 자동생성이 막힌다. RECENT 원소 = {v:점수, gt:기출여부}. */
-const isGTtype=t=>String(t||'').trim()==='기출테스트';
+const isGTtype=t=>['기출테스트','모의테스트'].includes(String(t||'').trim());   // (1112) 모의테스트도 100점 만점 — 최근 점수 비교를 기출과 한 통으로
 function recentOf(id){const cur=isGT();return (RECENT[id]||[]).filter(r=>r.gt===cur).map(r=>r.v);}
 let CHW='';   // 지금 반 전체에 걸려 있는 공통 과제 (개별과제 판정 기준)
 /* 동시 입력(0930 유강 — 조교가 이행률 적는 동안 내가 출석·시험정보를 적으면?)
@@ -7791,6 +7817,9 @@ async function selectClass(cls){
   $('c_nq').value=0;
   // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
   gtRestore(cl&&cl[0]);
+  await mkcLoad(cls,today);
+  if(MKC&&!(cl&&cl[0]&&cl[0]['테스트유형'])&&!isMOCK()){setTest('모의테스트');}   // (1112) 오늘 모의가 올라와 있고 아직 안 정했으면 모의테스트로
+  $('mk_setup').classList.toggle('hidden',!isMOCK());if(isMOCK())mkcDraw();
   $('clogmark').style.display='none';
   renderStudents();
 }
@@ -7799,6 +7828,38 @@ function allPresent(){
     const b=d.querySelector('.seg button[data-v="출석"]');
     if(!d.querySelector('.seg button[class*=a]')) b.click();
   });
+}
+/* ══ 기말 모의테스트 (1112 유강 "콘솔 사용 안 할 거야. 학생이 폰으로만 답 입력" · "내가 액션해야 열리게") ═══════════
+ * 그날 반의 mock_exam(staff_mock_status)이 있으면 테스트 칸 기본값 = 모의테스트. 정답 입력·PT 버튼은 없다(채점·개별과제는 자동).
+ * 여기서 [답안 입력 열기]를 눌러야 학생 포털에 입력 카드가 뜬다(staff_mock_gate). 점수 칸은 제출 점수로 자동. 자세한 건 #mock. */
+let MKC=null;
+function isMOCK(){return $('c_test').value.trim()==='모의테스트';}
+function mockScore(id){const x=MKC&&(MKC.학생||[]).find(s=>s['학생ID']===id);return x&&x.점수!=null?Number(x.점수):null;}
+async function mkcLoad(cls,day){
+  MKC=null;
+  try{const {data}=await sb.rpc('staff_mock_status',{p_days:3});MKC=(data||[]).find(m=>m.반===cls&&String(m.날짜)===day)||null;}catch(e){}
+}
+function mkcFmt(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function mkcDraw(){
+  const row=$('mk_row');if(!row)return;
+  if(!MKC){row.innerHTML='<span class="lbl">오늘 이 반에 올라온 모의테스트 시험지가 없다 — 시험지를 publish 하면 여기 뜬다</span>';return;}
+  const now=Date.now(),o=MKC.열림&&new Date(MKC.열림).getTime(),c=MKC.닫힘&&new Date(MKC.닫힘).getTime(),on=o&&o<=now&&(!c||c>now);
+  const st=(MKC.학생||[]).filter(x=>x.재원||x.제출시각),sub=st.filter(x=>x.제출시각);
+  row.innerHTML='<b>기말 모의테스트 '+MKC.회차+'회</b><span class="lbl">'+esc(MKC.시험지명)+'</span>'
+    +'<span class="badge" style="'+(on?'background:#1f6f43;color:#fff':'')+'">'+(on?'학생 입력 열림 · '+mkcFmt(MKC.닫힘)+'까지':o?'닫힘 · '+mkcFmt(MKC.닫힘):'학생 입력 닫힘')+'</span>'
+    +'<span class="lbl">제출 <b>'+sub.length+'</b> / '+st.length+'명</span><span class="cs-sp"></span>'
+    +(on?'<button class="ghost sm" data-mkcg="0">답안 입력 닫기</button>':'<button class="pill" data-mkcg="1">'+(o?'다시 열기':'답안 입력 열기')+'</button>')
+    +'<button class="ghost sm" data-mkcre="1">새로고침</button><a class="ghost sm" href="#mock" style="text-decoration:none">자세히 ↗</a>';
+  row.querySelectorAll('[data-mkcg]').forEach(b=>b.onclick=async()=>{
+    const open=b.dataset.mkcg==='1';
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=open?'학생 입력 열까요? 한 번 더':'닫을까요? 한 번 더';return;}   // alert 금지 — 두 번 누르기
+    b.disabled=true;
+    const {data,error}=await sb.rpc('staff_mock_gate',{p_ban:MKC.반,p_day:MKC.날짜,p_open:open});
+    if(error||!data||data.오류){toast((error&&error.message)||(data&&data.오류)||'실패');b.disabled=false;return;}
+    toast(open?'학생 입력을 열었다 — 포털 오늘 탭에 카드가 뜬다':'학생 입력을 닫았다');
+    await mkcLoad(MKC.반,String(MKC.날짜));mkcDraw();
+  });
+  const re=row.querySelector('[data-mkcre]');if(re)re.onclick=async()=>{await mkcLoad(MKC.반,String(MKC.날짜));mkcDraw();applyAuto();};
 }
 function isNA(log){const t=log['테스트상태']||'';return t==='미응시'||t==='미시행';}
 /* (1101 유강) 테스트 칸 '미시행' = 반 전체가 오늘 테스트를 안 봤다. 학생 행은 미응시처럼 비우되 상태는 '미시행'으로 남겨
@@ -7876,6 +7937,7 @@ function testChanged(){
   const was=TESTPREV==='미시행', now=isNOTHELD();
   TESTPREV=$('c_test').value.trim();
   $('gt_setup').classList.toggle('hidden',!isGT());
+  $('mk_setup').classList.toggle('hidden',!isMOCK());if(isMOCK()){mkcDraw();applyAuto();}
   $('gt_done2row').classList.toggle('hidden',!isGT());   // (0831) 마감 위 같은 버튼
   if(isGT())gtFillPick();
   gtKeyUpdate();
