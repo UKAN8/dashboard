@@ -1540,7 +1540,7 @@ function renderFinal(d,parts){
   const ban=String(d.학생.반||'').trim(), c=finalCfg(ban), today=todayOf(d);
   const tok=QP.get('t')||d.토큰||'';
   const S={오늘:[],과제:[],기록:[],자료:[]};
-  const todo=[parts.diag,parts.eval,parts.core?CORE_TODAY:''].filter(Boolean);
+  const todo=[parts.mock,parts.diag,parts.eval,parts.core?CORE_TODAY:''].filter(Boolean);   // (1112) 모의테스트 답 입력 카드 — 기말 모드 오늘 할 일 맨 위(빠져 있어서 열어도 안 떴다)
   S.오늘.push(heroCard(d,c,today), parts.qk,
     `<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 리뷰테스트·기출 모의 날 여기에 버튼이 떠요.</div>`)
     +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div>`,
