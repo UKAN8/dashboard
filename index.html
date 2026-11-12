@@ -4390,7 +4390,7 @@ function gcWire(st) {
 function viewScore(st) {
   const G = st.gc = st.gc || gcBuild(st);
   return '<section class="view" id="v-score">'
-    + `<h2>점수표 — 학생별 기출테스트 점수 <span class="cnt">${Object.keys(G.byStu).length}</span>`
+    + `<h2>점수표 — 학생별 기출테스트 · 모의테스트 점수 <span class="cnt">${Object.keys(G.byStu).length}</span>`
     + '<span class="dim" style="font-size:12px"> 행=학생 · 열=시험지(시행일 순). 머리글을 누르면 정렬. 평균은 보이는 시험지 중 응시한 것만</span></h2>'
     + '<div class="gc-bar" id="sc-mode">'
     + [...new Set(G.bans.map(gcGrp))].sort().map(g => `<button class="fbtn" data-sgg="${E(g)}">${E(g)}</button>`).join('')
@@ -4398,11 +4398,53 @@ function viewScore(st) {
     + '<button class="fbtn on" data-sgb="*">반 전체</button>'
     + G.bans.map(b => `<button class="fbtn gc-bb" data-sgb="${E(b)}" data-sgbg="${E(gcGrp(b))}">${E(b)}</button>`).join('')
     + '<span class="gc-sp"></span><input class="gc-q" data-sq placeholder="이름 검색" style="width:110px">'
-    + '</div><div id="sc-body"></div></section>';
+    + '</div><div id="sc-mock"></div><div id="sc-body"></div></section>';
+}
+/* (1113 유강 "점수표에 데이터 쌓으면 될 듯") 기말 모의테스트 — 폰 제출 점수(mock_answer, 범위 밖 제외 점수)를 같은 학년·반 필터로.
+   행=학생 · 열=회차(반마다 그 회차 시험지) · 칸 위에 마우스 = 시험지·날짜·틀린 번호·틀린 문항 확인. 시즌 필터 기간의 회차만. */
+let SCM = null;
+const st0smap = sid => (window.SCST && window.SCST.smap && window.SCST.smap[sid]) ? slink(window.SCST.smap[sid]) : `<span class="nm">${E((((SCM || []).flatMap(m => m.학생 || []).find(x => x.학생ID === sid)) || {}).이름 || sid)}</span>`;
+async function scMockLoad() {
+  if (SCM) return SCM;
+  const { data, error } = await sb.rpc('staff_mock_status', { p_days: 150 });
+  SCM = error ? [] : (data || []);
+  return SCM;
+}
+function scMockHtml(grade, ban, q) {
+  const s = window.SEASON, inS = d => !s || (d >= s.from && (!s.to || d <= s.to));
+  const ex = (SCM || []).filter(m => gcGrp(m.반) === grade && (ban === '*' || m.반 === ban) && inS(String(m.날짜)));
+  if (!ex.length) return '';
+  const rounds = [...new Set(ex.map(m => m.회차))].sort((a, b) => a - b);
+  const stu = {};
+  ex.forEach(m => (m.학생 || []).forEach(x => {
+    if (!x.재원 && !x.제출시각) return;
+    const r = stu[x.학생ID] = stu[x.학생ID] || { sid: x.학생ID, name: x.이름, ban: m.반, sc: {} };
+    if (x.제출시각) {
+      const out = new Set((m.문항 || []).filter(qq => qq.범위밖).map(qq => String(qq.번호)));
+      const ng = Object.entries(x.정오 || {}).filter(([k, v]) => v === false && !out.has(k)).map(([k]) => +k).sort((a, b) => a - b);
+      const rv = Object.values(x.복기 || {}), mis = rv.filter(v => v.k === '실수').length;
+      r.sc[m.회차] = { v: Number(x.점수), tip: `${m.시험지명} · ${m.날짜} · ${x.점수}/${x.만점}점${ng.length ? ' · 틀림 ' + ng.join(',') : ''}${mis ? ' · 그중 실수 ' + mis : ''}` };
+    } else r.sc[m.회차] = r.sc[m.회차] || { miss: true };
+  }));
+  let rows = Object.values(stu); if (q) rows = rows.filter(r => r.name.includes(q));
+  rows.forEach(r => { const g = rounds.map(k => r.sc[k] && r.sc[k].v).filter(v => v != null); r.n = g.length; r.avg = gcMean(g); });
+  rows.sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1) || a.name.localeCompare(b.name, 'ko'));
+  const colAvg = k => gcMean(rows.map(r => r.sc[k] && r.sc[k].v).filter(v => v != null));
+  const cell = c => !c ? '<td class="gc-c na"></td>' : c.miss ? '<td class="gc-c na" title="미제출">미</td>'
+    : `<td class="gc-c ${c.v >= 80 ? 'good' : c.v >= 60 ? '' : 'bad'}" title="${E(c.tip)}"><b>${r1(c.v)}</b></td>`;
+  return `<h3 style="margin:4px 0 8px">모의테스트 <span class="dim" style="font-size:12px">폰 제출 점수 · 100점(범위 밖 제외) · 칸에 마우스 = 틀린 번호·실수</span></h3>`
+    + `<div class="gc-wrap" style="margin-bottom:22px"><table class="gc-tbl gc-score"><thead><tr><th class="gc-fz">학생</th><th>반</th><th>평균</th><th>제출</th>`
+    + rounds.map(k => `<th>${k}회</th>`).join('') + '</tr></thead><tbody>'
+    + rows.map(r => `<tr><td class="gc-fz">${st0smap(r.sid)}</td><td class="dim">${E(r.ban)}</td><td class="gc-c gc-avg"><b>${r.avg == null ? '—' : r1(r.avg)}</b></td><td class="gc-c dim">${r.n}/${rounds.length}</td>`
+      + rounds.map(k => cell(r.sc[k])).join('') + '</tr>').join('')
+    + `</tbody><tfoot><tr><td class="gc-fz">평균 <small class="dim">${rows.length}명</small></td><td></td><td class="gc-c"><b>${(a => a == null ? '—' : r1(a))(gcMean(rows.map(r => r.avg).filter(v => v != null)))}</b></td><td></td>`
+    + rounds.map(k => { const a = colAvg(k); return `<td class="gc-c">${a == null ? '—' : r1(a)}</td>`; }).join('') + '</tr></tfoot></table></div>'
+    + `<h3 style="margin:4px 0 8px">기출테스트</h3>`;
 }
 
 function scWire(st) {
   const G = st.gc || gcBuild(st);
+  window.SCST = st;   // (1113) 모의테스트 칸의 학생 링크
   if (!$('sc-body')) return;
   const grades = [...new Set(G.bans.map(gcGrp))].sort();
   let grade = (G.papers[0] && [...G.papers[0].bans].map(gcGrp)[0]) || grades[0] || '고1';
@@ -4460,6 +4502,7 @@ function scWire(st) {
       b.classList.toggle('on', b.dataset.sgb === ban);
     });
     $('sc-body').innerHTML = table();
+    if ($('sc-mock')) scMockLoad().then(() => { $('sc-mock').innerHTML = scMockHtml(grade, ban, q); });   // (1113) 모의테스트 칸
   }
   document.addEventListener('click', e => {
     const el = e.target.closest('#v-score [data-sgg],#v-score [data-sgb],#v-score [data-ssk]');
@@ -4473,7 +4516,7 @@ function scWire(st) {
   });
   document.addEventListener('input', e => {
     const el = e.target.closest('#v-score [data-sq]'); if (!el) return;
-    q = el.value.trim(); $('sc-body').innerHTML = table();
+    q = el.value.trim(); $('sc-body').innerHTML = table(); if ($('sc-mock') && SCM) $('sc-mock').innerHTML = scMockHtml(grade, ban, q);
   });
   draw();
 }
