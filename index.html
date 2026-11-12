@@ -780,9 +780,9 @@ body.cs-on #boot{display:none}
 <button data-g="수업">수업</button><button data-g="학생">학생</button><button data-g="시험">시험</button><button data-g="관리">관리</button><button data-g="보관" class="arch" title="지금 운영에서 안 쓰는 탭 — 지우지 않고 모아 둠(1023)">보관함</button>
 </div>
 <div class="nt" id="nav-t">
-<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#qame" data-v="qame" data-g="수업">내 답변</a><a href="#sw" data-v="sw" data-g="수업">서술형 채점</a><a href="#mock" data-v="mock" data-g="수업">모의테스트</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
+<a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#qame" data-v="qame" data-g="수업">내 답변</a><a href="#sw" data-v="sw" data-g="수업">서술형 채점</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="기출과제 PDF 를 반·날짜별로 — 문제/해설 두 파일, 미리보기">📂 과제 파일 ↗</a>
 <a href="#student" data-v="student" data-g="학생">학생</a><a href="#class" data-v="class" data-g="학생">반별</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="보관" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
+<a href="#gichul" data-v="gichul" data-g="시험">기출·모의</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a><a href="#cs-load" data-v="cs-load" data-g="보관" title="강사별 성적표 xlsx → 내신(박유강T 시트). 주간고사 적재도 여기">성적 적재</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#links" data-v="links" data-g="관리">학생 포털 링크</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
 <a href="#tower" data-v="tower" data-g="보관">개념의 탑</a><a href="#haebu" data-v="haebu" data-g="보관">타겟 트레이닝</a><a href="#today" data-v="today" data-g="보관">오늘</a><a href="#loop" data-v="loop" data-g="보관">루프(구)</a><a href="#loopstu" data-v="loopstu" data-g="보관">학생별 루프(구)</a><a href="#weak" data-v="weak" data-g="보관">약점</a><a href="#typemap" data-v="typemap" data-g="보관">유형맵</a><a href="#video" data-v="video" data-g="보관">영상</a><a href="#exammeta" data-v="exammeta" data-g="보관">시험메타</a><a href="#clinic" data-v="clinic" data-g="보관">추가학습 현황</a><a href="#apply" data-v="apply" data-g="보관">추가학습 신청</a><!-- (1029) 추가학습 지정 탭 메뉴에서 뺌 — 클리닉 예약 서비스로 옮길 예정. #cs-clinic 주소로는 열린다 --><a href="#cliniclog" data-v="cliniclog" data-g="보관">클리닉 기록</a>
 </div></nav>
@@ -833,7 +833,7 @@ body.cs-on #boot{display:none}
         <div class="cs-info-row">
           <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
           <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
-          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>모의테스트</option><option>기출테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>모의테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
           <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
         </div>
         <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
@@ -2244,7 +2244,6 @@ function render(st) {
     viewQa(st),                                          // 1024 질문 모음 (조교)
     viewQame(st),                                        // 1024 내 답변 (조교 본인)
     viewSw(st),                                          // 1112 서술형 채점 (조교)
-    viewMock(st),                                        // 1112 기말 모의테스트 폰 제출 현황 (조교)
     viewLinks(st),                                       // 1024 학생 포털 링크 (유강만)
     viewVisits(st),                                      // 0928 방문 기록 (유강만)
     viewSurvey(st),                                      // 0930 설문 (관리자)
@@ -2979,7 +2978,7 @@ function viewReport(st) {
     return `<div class="card"><div class="bc-top"><b>${E(ban)}</b>`
       + `<span class="dim">${dfmt(d)} · ${rows.length}명</span></div>`
       + '<div class="bc-row" style="gap:22px;margin-top:8px">'
-      + `<span><div class="lbl">리뷰 평균</div><div class="big ${scoreCls(scAvg)}">${scAvg != null ? py1(r1(scAvg)) : '—'}<small>점</small></div></span>`
+      + `<span data-rpsc="${E(d + '|' + ban)}"><div class="lbl">리뷰 평균</div><div class="big ${scoreCls(scAvg)}">${scAvg != null ? py1(r1(scAvg)) : '—'}<small>점</small></div></span>`
       + `<span><div class="lbl">과제 이행</div><div class="big ${rateCls(rtAvg)}">${rtAvg != null ? pyR0(100 * rtAvg) : '—'}<small>%</small></div></span>`
       + '</div>'
       + (absent.length ? `<div class="chips">${chip('bad', '결석 ' + absent.join(' '))}</div>` : '')
@@ -4034,6 +4033,7 @@ function viewGichul(st) {
   const g1 = G.papers.reduce((s, p) => s + p.takes.filter(t => t.grade === 1).length, 0);
   const cut = G.papers.filter(p => p.meta).length;
   return '<section class="view" id="v-gichul">'
+    + mockBlock()   // (1113 유강 "기출 탭에 모의테스트 정보 — 오늘 페이지가 수업할 때 보기 편했어, 이쪽으로 녹이자")
     + `<h2>기출 — 기출테스트 결과 <span class="cnt">${G.papers.length}</span>`
     + '<span class="dim" style="font-size:12px"> 시험지별 답안표 · 학생별 추이 · 반별 평균. 등급은 시험메타 컷이 있을 때만, 예상치다</span></h2>'
     + '<div class="kpis">'
@@ -4728,6 +4728,7 @@ function wire(st) {
     if (main === 'visits' && !window.VS_OK) main = 'today';
     if (main === 'links' && !window.VS_OK) main = 'today';             // 1024 포털 링크도 유강 계정만            // 0928 방문 기록은 유강 계정만
     if (main === 'video' && window.ROLE !== 'admin') main = 'today';   // 0816 조교 차단
+    if (main === 'mock') { location.replace('#gichul'); return; }   // (1113) 모의테스트는 기출 탭으로 합쳤다
     let id = 'v-' + main;
     if (main === 'gichul' && sub && window.gcOpen) window.gcOpen(sub);   // #gichul/<학생ID> → 그 학생 추이
     // 유형맵 상세에서 넘어온 검색어 (#video/두 원의 교점)
@@ -4742,7 +4743,8 @@ function wire(st) {
     if (main === 'qa') qaLoad();
     if (main === 'qame') qmLoad();
     if (main === 'sw') swLoad();
-    if (main === 'mock') mkLoad();
+    if (main === 'gichul') mkLoad();   // (1113) 기출 탭 맨 위 모의테스트
+    if (main === 'report') rpMock();   // (1113) 모의 날 카드 = 모의 평균
     if (main === 'links') lkLoad();
     if (main === 'survey') svLoad();
     if (main === 'tower') twLoad();
@@ -7048,10 +7050,23 @@ const CO_CSS = `<style>
  * 여기서는 반·회차별 제출 현황, 문항별 정답률(풀이 상태 포함), 학생별 점수·틀린 번호·개별과제 상태를 보고,
  * 개별과제가 막히거나 실패한 학생은 [다시 만들기](staff_mock_remake) 한다. DB = schema_v76·v77. */
 let MK = { rows: null, pick: null };
-function viewMock(st) {
-  return `<section class="view" id="v-mock"><h2>모의테스트 <span class="cnt" id="mk-cnt"></span>`
-    + `<span class="dim" style="font-size:12px"> 학생이 폰으로 낸 답 → 바로 채점 · 개별과제 자동 · 막히거나 실패한 학생만 [다시 만들기]</span></h2>`
-    + `<div class="toolbar" id="mk-bar"></div><div id="mk-body"><div class="dim">탭을 열면 불러옵니다.</div></div></section>`;
+/* (1113 유강 "리포트 탭에서 리뷰테스트를 보고 있네 — 모의테스트로 넘어가야") 모의테스트가 있던 반·날짜 카드는
+   '리뷰 평균 /10' 대신 '모의 평균 /100'(폰 제출 점수, 범위 밖 제외 점수) + 제출 n/m. 콘솔 테스트 칸을 안 바꿨어도 mock_answer 를 본다. */
+async function rpMock() {
+  const els = [...document.querySelectorAll('#v-report [data-rpsc]')]; if (!els.length) return;
+  const { data, error } = await sb.rpc('staff_mock_status', { p_days: 60 }); if (error || !data) return;
+  data.forEach(m => {
+    const el = document.querySelector(`#v-report [data-rpsc="${CSS.escape(m.날짜 + '|' + m.반)}"]`); if (!el) return;
+    const st = (m.학생 || []).filter(x => x.재원 || x.제출시각), sub = st.filter(x => x.제출시각 && x.점수 != null);
+    const avg = sub.length ? sub.reduce((a, x) => a + Number(x.점수), 0) / sub.length : null;
+    el.innerHTML = `<div class="lbl">모의 ${m.회차}회 평균 <span class="dim">/100 · 제출 ${sub.length}/${st.length}</span></div>`
+      + `<div class="big ${avg == null ? 'na' : scoreCls(avg / 10)}">${avg == null ? '—' : py1(r1(avg))}<small>점</small></div>`;
+  });
+}
+function mockBlock() {   // (1113) 따로 있던 #mock 화면 → 시험 › 기출 탭 맨 위. #mock 주소는 #gichul 로 넘긴다
+  return `<div id="mk-wrap" style="margin-bottom:26px"><h2>기말 모의테스트 <span class="cnt" id="mk-cnt"></span>`
+    + `<span class="dim" style="font-size:12px"> 학생이 폰으로 낸 답 → 바로 채점 · 틀린 문항 확인 → 개별과제 자동 · 막히거나 실패한 학생만 [다시 만들기]</span></h2>`
+    + `<div class="toolbar" id="mk-bar"></div><div id="mk-body"><div class="dim">탭을 열면 불러옵니다.</div></div></div>`;
 }
 async function mkLoad() {
   const body = $('mk-body'); if (!body) return;
@@ -7799,12 +7814,12 @@ async function selectClass(cls){
     /* (1109 유강 "진도계획에 따라 콘솔에 진도랑 과제 세팅") 오늘 기록이 없으면 진도계획(hw_assign 공통 세트)으로 채운다.
        계획이 없는 날만 아래의 '직전 수업 값' 제안으로 내려간다. */
     $('c_progress').value=PLANFILL.진도;$('c_hw').value=PLANFILL.과제;
-    setTest(prev&&prev[0]&&prev[0]['테스트유형']!=='미시행'?prev[0]['테스트유형']:'');
+    setTest(prev&&prev[0]&&!['미시행','기출테스트'].includes(prev[0]['테스트유형'])?prev[0]['테스트유형']:'');   // (1113) 기출테스트는 선택지에서 뺐다 — 다음 수업으로 안 넘긴다
   }else if(prev&&prev[0]){
     // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
     $('c_progress').value=prev[0]['진도원문']||'';
     $('c_hw').value=prev[0]['이번과제']||'';
-    setTest(prev[0]['테스트유형']==='미시행'?'':prev[0]['테스트유형']);   // (1101) 미시행은 다음 수업 기본값으로 안 넘긴다
+    setTest(['미시행','기출테스트'].includes(prev[0]['테스트유형'])?'':prev[0]['테스트유형']);   // (1101) 미시행은 다음 수업 기본값으로 안 넘긴다
   }else{
     $('c_progress').value='';$('c_hw').value='';setTest('');
   }
@@ -7831,7 +7846,7 @@ async function selectClass(cls){
   // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
   gtRestore(cl&&cl[0]);
   await mkcLoad(cls,today);
-  if(MKC&&!(cl&&cl[0]&&cl[0]['테스트유형'])&&!isMOCK()){setTest('모의테스트');}   // (1112) 오늘 모의가 올라와 있고 아직 안 정했으면 모의테스트로
+  if(MKC&&!isMOCK()&&(!(cl&&cl[0]&&cl[0]['테스트유형'])||cl[0]['테스트유형']==='기출테스트')){setTest('모의테스트');}   // (1113 유강 '기출은 삭제') 모의 날에 남아 있던 기출테스트도 모의테스트로   // (1112) 오늘 모의가 올라와 있고 아직 안 정했으면 모의테스트로
   $('mk_setup').classList.toggle('hidden',!isMOCK());if(isMOCK())mkcDraw();
   $('clogmark').style.display='none';
   renderStudents();
