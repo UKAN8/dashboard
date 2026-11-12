@@ -241,6 +241,12 @@ svg.spark{display:block;margin-top:8px}
 #asksheet .sh{background:#15151c;color:var(--tx);width:100%;max-width:520px;border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:18px 18px 0 0;
  padding:12px 16px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:asku .2s ease-out}
 #asksheet .grab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 12px}
+#asksheet .hwbox{background:rgba(245,160,160,.08);border:1px solid rgba(245,160,160,.45);border-radius:12px;padding:14px 16px;margin:4px 0}
+#asksheet .hwbox b{display:block;font-size:18px;font-weight:600}
+#asksheet .hwbox small{display:block;color:var(--tx2);font-size:13px;margin-top:4px}
+#asksheet .opt button:disabled{opacity:.45;cursor:default}
+.hw .hwfix{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:16px;font-size:13px}
+.hw .hwfix a{color:var(--tx2);text-decoration:underline}
 #asksheet .ttl{font-size:17px;font-weight:600}
 #asksheet .sub{color:var(--dim);font-size:13px;margin:2px 0 16px}
 #asksheet .opt{display:flex;flex-direction:column;gap:8px}
@@ -1088,7 +1094,11 @@ function partsOf(d){
   const MK=d.모의||null; P.mock='';
   if(MK && !MK.없음){
     const murl=`https://ukan8.github.io/dashboard/mock/?t=${encodeURIComponent(d.토큰||'')}`;
-    if(MK.제출)
+    if(MK.제출 && (MK.제출.복기||[]).length)   // (v80) 답은 냈고 틀린 문항 확인이 남았다 — 끝내야 개별과제가 만들어진다
+      P.mock=`<div class="card" style="border-color:rgba(255,213,154,.5);background:rgba(255,213,154,.07)">`
+        +`<div class="row"><span class="t"><b>${E(MK.제목||'모의테스트')} 틀린 문항 확인</b><span class="dim"> ${MK.제출.복기.length}문항 · 끝내면 개별과제가 만들어져요</span></span>`
+        +`<a class="n mid" href="${E(murl)}" style="text-decoration:none;font-weight:600">이어서 →</a></div></div>`;
+    else if(MK.제출)
       P.mock=`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">${E(MK.제목||'모의테스트')} <b class="good">제출 완료</b>`
         +`<span class="dim"> ${E(MK.제출.점수)} / ${E(MK.제출.만점)}점</span></span>`
         +`<a class="n dim" href="${E(murl)}" style="text-decoration:none">결과</a></div></div>`;
@@ -1701,6 +1711,64 @@ async function mountHW(tok){
   if(!HW.list.length){ host.innerHTML=''; return; }
   drawHW();
 }
+// (1112 유강 "다른 과제에 입력하는 경우가 많다") 과제 이름 · 처음 체크 확인 · 지우기 · 옮기기
+const hwName=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+const hwOkd=a=>{ if(Object.keys(a.체크||{}).length) return true; try{ return localStorage.getItem('hwok:'+a.id)==='1'; }catch(e){ return false; } };
+function hwSheet(html,wire){
+  const old=document.getElementById('asksheet'); if(old) old.remove();
+  const d=document.createElement('div'); d.id='asksheet';
+  d.innerHTML=`<div class="sh" role="dialog" aria-modal="true"><div class="grab"></div>${html}<div id="hs-err" class="bad" style="display:none;margin-top:12px;font-size:13px"></div></div>`;
+  document.body.appendChild(d); document.body.classList.add('noscroll');
+  const close=()=>{ d.remove(); document.body.classList.remove('noscroll'); };
+  d.addEventListener('click',ev=>{ if(ev.target===d) close(); });
+  const err=m=>{ const e=d.querySelector('#hs-err'); e.textContent=m||''; e.style.display=m?'':'none'; };
+  wire(d,close,err);
+}
+const hwBox=a=>`<div class="hwbox"><b>${E(hwName(a))}</b><small>${E([a.개별?'':hwRange(a),a.제목].filter(Boolean).join(' · '))}</small></div>`;
+function hwConfirm(a,go){
+  hwSheet(`<div class="ttl">이 과제에 체크하는 거 맞나요?</div>
+    <div class="sub">지금 보고 있는 종이 맨 위 이름이 아래와 같은지 확인해 주세요.</div>${hwBox(a)}
+    <div class="acts"><button type="button" id="hs-no">다른 과제예요</button><button type="button" class="go" id="hs-ok">맞아요, 체크할게요</button></div>`,
+  (d,close)=>{
+    d.querySelector('#hs-ok').onclick=()=>{ try{ localStorage.setItem('hwok:'+a.id,'1'); }catch(e){} close(); go(); };
+    d.querySelector('#hs-no').onclick=()=>{ close(); HW.open=null; drawHW(); const h=$('hw-host'); if(h) h.scrollIntoView({behavior:'smooth',block:'start'}); };
+  });
+}
+async function hwReload(){ try{ const r=await sb.rpc('hw_open',{tok:HW.tok}); if(!r.error&&r.data){ HW.list=r.data.과제||[]; } }catch(e){} drawHW(); }
+function hwClearSheet(a){
+  const k=Object.keys(a.체크||{}).length;
+  hwSheet(`<div class="ttl">체크 ${k}개를 전부 지울까요?</div>${hwBox(a)}
+    <div class="sub" style="margin-top:12px">조교쌤 답을 기다리던 질문도 같이 취소돼요. 답이 이미 온 질문은 남아요.</div>
+    <div class="acts"><button type="button" id="hs-no">취소</button><button type="button" class="go" id="hs-ok">전부 지우기</button></div>`,
+  (d,close,err)=>{
+    d.querySelector('#hs-no').onclick=close;
+    d.querySelector('#hs-ok').onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; b.textContent='지우는 중…';
+      const fail=m=>{ err(m||'지우지 못했어요. 잠시 뒤 다시 해 주세요.'); b.disabled=false; b.textContent='전부 지우기'; };
+      try{ const r=await sb.rpc('hw_clear',{tok:HW.tok,aid:a.id}); if(r.error||!r.data||r.data.오류){ fail(r.data&&r.data.오류); return; } }catch(e){ fail(); return; }
+      try{ localStorage.removeItem('hwok:'+a.id); }catch(e){}
+      close(); hwReload(); };
+  });
+}
+function hwMoveSheet(a){
+  const k=Object.keys(a.체크||{}).length;
+  const to=HW.list.filter(x=>x.id!==a.id&&!x.지남);
+  hwSheet(`<div class="ttl">체크 ${k}개를 어느 과제로 옮길까요?</div>
+    <div class="sub">번호는 그대로 옮겨져요. 지금 보고 있는 종이 맨 위 이름을 골라 주세요.</div>
+    <div class="opt">${to.length?to.map(x=>{ const busy=Object.keys(x.체크||{}).length, no=!!(busy||x.제출), sub=x.제출?'제출한 과제예요 — 제출 취소 먼저':busy?`이미 체크 ${busy}개가 있어요 — 먼저 지워야 옮길 수 있어요`:[x.개별?'':hwRange(x),x.제목].filter(Boolean).join(' · ');
+      return `<button type="button" data-to="${x.id}"${no?' disabled data-no="1"':''}>${E(hwName(x))}<small>${E(sub)}</small></button>`; }).join(''):'<div class="dim">옮길 수 있는 다른 과제가 없어요.</div>'}</div>
+    <div class="acts"><button type="button" id="hs-no">취소</button></div>`,
+  (d,close,err)=>{
+    d.querySelector('#hs-no').onclick=close;
+    d.querySelectorAll('[data-to]').forEach(b=>b.onclick=async()=>{
+      d.querySelectorAll('[data-to]').forEach(x=>x.disabled=true); err('');
+      let r; try{ r=await sb.rpc('hw_move',{tok:HW.tok,p_from:a.id,p_to:+b.dataset.to}); }catch(e){ r={error:e}; }
+      if(r.error||!r.data||r.data.오류){ err((r.data&&r.data.오류)||'옮기지 못했어요. 잠시 뒤 다시 해 주세요.'); d.querySelectorAll('[data-to]').forEach(x=>x.disabled=!!x.dataset.no); return; }
+      try{ localStorage.removeItem('hwok:'+a.id); localStorage.setItem('hwok:'+b.dataset.to,'1'); }catch(e){}
+      const drop=r.data.버림||0; close(); await hwReload();
+      alertHW(`${r.data.옮김}개를 옮겼어요.${drop?` 그 과제에 없는 번호 ${drop}개는 빠졌어요.`:''}`);
+    });
+  });
+}
 function hwRange(a){
   const th=a.문항.map(x=>x.th).filter(x=>x!=null);
   if(!th.length) return '';
@@ -1779,7 +1847,7 @@ function drawHW(){
     const btn=x=>`<button type="button" data-a="${ai}" data-n="${x.n}" class="${c[x.n]?'s'+c[x.n]:''}" aria-label="${x.n}번"${lock?' disabled':''}>${x.n}</button>`;
     const qs=Object.entries(a.질문||{}).filter(([k,q])=>['대기','답변','해결'].includes(q.상태));
     // (1027 v48) 개별과제 = 판(PDF 한 부) 단위. 종이 머리 No. 와 같은 번호를 보여 주고, 다르면 학생이 고른다(hw_ind_pick)
-    const name=a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+    const name=hwName(a);
     const pans=(a.개별&&!lock&&(a.다른판||[]).length)?a.다른판:[];
     const all=done===n&&n>0;
     return `<div class="card hw" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)">`
@@ -1808,6 +1876,7 @@ function drawHW(){
         +(hwAns(q.id)&&!Array.isArray(hwAns(q.id))?`<div class="rpl">${(hwAns(q.id).댓글||[]).map(c=>`<div class="rc"><span class="dim">나</span> ${E(c.내용)}</div>`).join('')}`
           +`<div class="rf"><input data-rpl="${q.id}" maxlength="300" placeholder="${E(hwWho(q.id)||'쌤')}에게 한마디 (고마워요 · 여기가 또 궁금해요)"><button type="button" data-rplgo="${q.id}">보내기</button></div></div>`:'')
         +`</div>`).join('')}`:'')
+      +(!lock&&doneAll&&!a.제출?`<div class="hwfix"><span class="dim">다른 과제에 체크했나요?</span><a href="#" data-hwmv="${ai}">다른 과제로 옮기기</a><a href="#" data-hwclr="${ai}">전부 지우기</a></div>`:'')
       +`<div class="done">`+(lock
         ?`<div class="dim">${a.제출?'<b class="good">제출 완료</b> · ':''}마감 지남${n-done?` · 체크 안 한 ${n-done}문항은 '안 풀었음'으로 셌어요`:''}</div>`
         :a.제출
@@ -1832,6 +1901,8 @@ function drawHW(){
 
   host.querySelectorAll('[data-open]').forEach(r=>r.onclick=ev=>{ ev.preventDefault(); const f=$('hw-f'+r.dataset.open); f.classList.toggle('open'); HW.open=f.classList.contains('open')?r.dataset.open:null; });
   if(HW.open!=null){ const f=$('hw-f'+HW.open); if(f) f.classList.add('open'); }
+  host.querySelectorAll('[data-hwmv]').forEach(x=>x.onclick=ev=>{ ev.preventDefault(); hwMoveSheet(HW.list[+x.dataset.hwmv]); });
+  host.querySelectorAll('[data-hwclr]').forEach(x=>x.onclick=ev=>{ ev.preventDefault(); hwClearSheet(HW.list[+x.dataset.hwclr]); });
   host.querySelectorAll('[data-pans]').forEach(x=>x.onclick=ev=>{ ev.preventDefault(); const f=$('hw-p'+x.dataset.pans); if(f) f.classList.toggle('open'); });
   host.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{
     b.disabled=true;
@@ -1881,6 +1952,7 @@ function hwRedrawKeep(b){
 async function hwTap(b){
   const a=HW.list[+b.dataset.a], no=+b.dataset.n, cur=(a.체크||{})[no]||0;
   if(a.지남){ alertHW('마감이 지나 체크를 바꿀 수 없어요.'); return; }
+  if(!hwOkd(a)){ hwConfirm(a,()=>hwTap(b)); return; }   // (1112) 이 과제 첫 체크면 과제 이름 확인
   const st=cur===HW.pen?0:HW.pen;
   if(st===5){ askSheet(a,no); return; }   // (1108) ⑤ = 방문 질문 / 온라인 질답 고르기
   b.classList.add('busy');
