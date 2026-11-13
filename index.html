@@ -4502,7 +4502,23 @@ function scWire(st) {
       b.classList.toggle('on', b.dataset.sgb === ban);
     });
     $('sc-body').innerHTML = table();
-    if ($('sc-mock')) scMockLoad().then(() => { $('sc-mock').innerHTML = scMockHtml(grade, ban, q); });   // (1113) 모의테스트 칸
+    if ($('sc-mock')) scMockLoad().then(() => {   // (1113) 모의테스트 칸
+      // 기출이 없는 시즌(기말)엔 학년·반 버튼이 비어 고2 모의를 못 고른다 → 모의가 있는 학년·반 버튼을 더하고, 기출 없는 학년이면 모의 있는 학년으로
+      const ss = window.SEASON, inS = d => !ss || (d >= ss.from && (!ss.to || d <= ss.to));
+      const mb = [...new Set((SCM || []).filter(m => inS(String(m.날짜))).map(m => m.반))].sort();
+      const bar = $('sc-mode'), dv = bar && bar.querySelector('.gc-dv');
+      mb.forEach(b => {
+        const g = gcGrp(b);
+        if (bar && !bar.querySelector(`[data-sgg="${CSS.escape(g)}"]`) && dv) dv.insertAdjacentHTML('beforebegin', `<button class="fbtn" data-sgg="${E(g)}">${E(g)}</button>`);
+        if (bar && !bar.querySelector(`[data-sgb="${CSS.escape(b)}"]`)) { const sp = bar.querySelector('.gc-sp'); sp && sp.insertAdjacentHTML('beforebegin', `<button class="fbtn gc-bb" data-sgb="${E(b)}" data-sgbg="${E(g)}">${E(b)}</button>`); }
+      });
+      const hasGc = G.papers.some(p => [...p.bans].some(x => gcGrp(x) === grade));
+      if (!hasGc && mb.length && !mb.some(b => gcGrp(b) === grade)) { grade = gcGrp(mb[0]); ban = '*'; return draw(); }
+      bar && bar.querySelectorAll('[data-sgg]').forEach(x => x.classList.toggle('on', x.dataset.sgg === grade));
+      bar && bar.querySelectorAll('[data-sgb]').forEach(x => { if (x.dataset.sgbg) x.style.display = x.dataset.sgbg === grade ? '' : 'none'; x.classList.toggle('on', x.dataset.sgb === ban); });
+      $('sc-mock').innerHTML = scMockHtml(grade, ban, q);
+      if (!hasGc && $('sc-mock').innerHTML) $('sc-body').innerHTML = '<div class="dim">이 시즌엔 기출테스트 기록이 없다 — 지난 기출은 위쪽 시즌 버튼에서 \'2학기 중간 대비\'.</div>';
+    });
   }
   document.addEventListener('click', e => {
     const el = e.target.closest('#v-score [data-sgg],#v-score [data-sgb],#v-score [data-ssk]');
@@ -7116,7 +7132,10 @@ async function mkLoad() {
   body.innerHTML = '<div class="dim">불러오는 중…</div>';
   const { data, error } = await sb.rpc('staff_mock_status', { p_days: 28 });
   if (error) { body.innerHTML = `<div class="dim">불러오지 못함 — ${E(error.message)}${/staff_mock_status/.test(error.message) ? ' (schema_v77 실행 전)' : ''}</div>`; return; }
-  MK.rows = data || [];
+  // (1113 유강 "중간 눌러도 기말 게 나온다") 위쪽 시즌 버튼을 따른다 — 그 시즌 기간의 회차만, 없으면 모의 칸을 접는다
+  const ss = window.SEASON, inS = d => !ss || (d >= ss.from && (!ss.to || d <= ss.to));
+  MK.rows = (data || []).filter(r => inS(String(r.날짜)));
+  const wrap = $('mk-wrap'); if (wrap) wrap.style.display = MK.rows.length ? '' : 'none';
   if (!MK.pick || !MK.rows.some(r => r.반 + r.날짜 === MK.pick)) MK.pick = MK.rows.length ? MK.rows[0].반 + MK.rows[0].날짜 : null;
   mkDraw();
 }
