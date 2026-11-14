@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>과제 파일 · 수학은유강</title>
+<title>학생 자료실 · 수학은유강</title>
 <meta name="robots" content="noindex, nofollow">
 <!-- ⚠ 버전을 박는다 (콘솔·포털과 같은 버전) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
@@ -41,14 +41,36 @@ button.pv.on{color:var(--acc);border-color:rgba(245,160,160,.5)}
 .msg{padding:40px 20px;color:var(--dim)} .msg a{color:var(--acc)}
 .sum{color:var(--tx2);font-size:13px;margin:0 0 8px}
 .sum b{color:var(--tx)}
+.tabs{display:inline-flex;gap:4px}
+.tab{font:inherit;font-size:13px;color:var(--tx2);background:transparent;border:1px solid var(--bd);border-radius:8px;padding:5px 11px;cursor:pointer}
+.tab.on{color:var(--tx);border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.10);font-weight:700}
+.ctl{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--tx2)}
+.ctl[hidden]{display:none}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px;font-size:13px;color:var(--tx2)}
+table.lst th.srt{cursor:pointer;user-select:none}
+table.lst th.srt:hover{color:var(--tx)}
+table.lst .sb{margin-left:3px;color:var(--acc);font-size:10.5px}
+table.lst td,table.lst th.no{font-size:13px}
+table.lst td.no,table.lst th.no{color:var(--dim);width:2.4em;text-align:right;padding-right:8px}
+table.lst td.c-자료{font-weight:700}
+table.lst td.c-날짜{white-space:nowrap;color:var(--tx2)}
+table.lst td.fl{white-space:nowrap}
+table.lst td.c-종류,table.lst td.c-단원,table.lst td.c-반,table.lst th{white-space:nowrap}
+body.wide .wrap{grid-template-columns:minmax(700px,62%) 1fr}
 @media (max-width:900px){ .wrap{grid-template-columns:1fr;height:auto} .right{min-height:70vh} }
 </style></head>
 <body>
 <header>
-  <span class="brand">수학은유강</span><span class="t">기출과제 파일</span>
-  <select id="grp"></select>
-  <button class="pv" id="reload" title="작업 현황 다시 읽기">↻</button>
-  <span class="dim">문제 = 문제~빠른정답 · 해설 = 빠른정답~해설 · 링크는 1시간 유효</span>
+  <span class="brand">수학은유강</span><span class="t">학생 자료실</span>
+  <span class="tabs"><button class="tab" data-m="stu">학생별</button><button class="tab" data-m="lib">써킷·교재·기출</button><button class="tab" data-m="grp">반·날짜별 과제</button></span>
+  <span class="ctl" id="ctl-grp"><select id="grp"></select></span>
+  <span class="ctl" id="ctl-stu" hidden><select id="sban"></select> <select id="sstu"></select></span>
+  <span class="ctl" id="ctl-lib" hidden><select id="lban"></select>
+    <label><input type="checkbox" data-lk="써킷" checked> 써킷</label>
+    <label><input type="checkbox" data-lk="교재" checked> 교재</label>
+    <label><input type="checkbox" data-lk="기출" checked> 기출</label></span>
+  <button class="pv" id="reload" title="다시 읽기">↻</button>
+  <span class="dim" id="hint">문제 = 문제~빠른정답 · 해설 = 빠른정답~해설 · 링크는 1시간 유효</span>
 </header>
 <div class="wrap">
   <div class="left" id="left"><div class="msg">불러오는 중…</div></div>
@@ -123,9 +145,7 @@ async function show(k) {
     (fails.length ? ` · <span style="color:var(--warn)">없음 ${fails.length}</span>` : '') +
     (pending.length ? ` · 만드는 중 ${pending.length}` : '') +
     (names.length ? ` <button class="pv" id="zipall" style="margin-left:8px">⤓ 전체 받기 (${names.length}명 · zip)</button>`
-      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs" selected>문제+해설</option><option value="all">전체 파일</option></select>`
-      + ` <button class="pv" id="printall" style="margin-left:6px">🖨 바로 인쇄</button>`
-      + ` <label style="font-size:11.5px;color:var(--dim)" title="Edge 를 --kiosk-printing 으로 띄운 PC 에서만 켠다"><input type="checkbox" id="pauto"> 연속(키오스크)</label>` : '') + '</p>';
+      + ` <select id="zipkind" style="padding:3px 8px;font-size:12px"><option value="q">문제만</option><option value="s">해설만</option><option value="qs">문제+해설</option><option value="all">전체 파일</option></select>` : '') + '</p>';
   html += '<table><tr><th>학생</th><th>파일</th><th></th></tr>';
   for (const n of names) {
     const f = rows[n], u0 = urls[f['키']], u1 = f['문제키'] && urls[f['문제키']], u2 = f['해설키'] && urls[f['해설키']];
@@ -142,82 +162,16 @@ async function show(k) {
     fails.map(x => E(x.이름) + ' — ' + E((x.메시지 || '').slice(0, 90)) + ' <span style="opacity:.6">#' + x.잡 + '</span>').join('<br>') + '</div>';
   if (pending.length) html += '<div class="note">만드는 중: ' + pending.map(x => E(x.이름) + '(' + E(x.상태) + ')').join(', ') + ' — 1~2분 뒤 ↻</div>';
   html += '<div class="note">문제 파일과 해설 파일에 빠른정답 장이 둘 다 들어 있다. 파일명은 학생 이름으로 떨어진다. '
-    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. <b>[🖨 바로 인쇄]</b>는 파일마다 따로 인쇄 작업을 건다(스테이플 1부씩). 인쇄창에서 [인쇄] → 버튼이 "다음 인쇄"로 바뀌면 또 누른다. Edge 를 --kiosk-printing 으로 띄운 PC 면 [연속] 체크 → 창 없이 자동. [전체 받기] zip 을 <b>폴더에 푼 뒤</b> <b>_print_all.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(압축 안에서 실행하면 PDF 0개. SumatraPDF 있으면 조용히 1부씩, 없으면 기본 PDF 앱). 자세한 건 zip 안 _읽어주세요.txt.</div>';
+    + '"분할 전 잡"은 전체 파일만 있다 — 필요하면 세션에 재분할을 시킨다. [전체 받기] zip 을 <b>폴더에 푼 뒤</b> <b>_print_all.bat</b> 을 더블클릭하면 그 폴더 PDF 가 전부 기본 프린터로 나간다(압축 안에서 실행하면 PDF 0개. SumatraPDF 있으면 조용히 1부씩, 없으면 기본 PDF 앱). 자세한 건 zip 안 _읽어주세요.txt.</div>';
   $('#left').innerHTML = html;
   document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
   const zb = $('#zipall'); if (zb) zb.onclick = () => zipAll(zb, g, names, rows, urls);
-  const pb = $('#printall'); if (pb) pb.onclick = () => printAll(pb, names, rows, urls);
 }
 
 /* ── 전체 받기 (0908 유강) — 서명 URL 로 하나씩 받아 무압축 zip 한 파일로. 파일명=학생이름_문제.pdf.
    조회(app.js) makeZip 과 같은 store zip. 브라우저 다운로드 한 번에 끝난다. */
-function wantList(names, rows, urls) {
-  const kind = ($('#zipkind') || {}).value || 'qs';
-  const want = [];
-  for (const n of names) {
-    const f = rows[n];
-    const add = (key, suf) => { const u = f[key] && urls[f[key]]; if (u) want.push({ name: n + suf + '.pdf', url: u }); };
-    if (kind === 'q' || kind === 'qs') add('문제키', '_문제');
-    if (kind === 's' || kind === 'qs') add('해설키', '_해설');
-    if (kind === 'all' || (kind !== 'all' && !f['문제키'] && !f['해설키'])) add('키', '');
-  }
-  return want;
-}
-/* ── 바로 인쇄 (1028 유강 "엣지에서 돌아가게", 1029 수정) — zip·bat·SumatraPDF 없이 브라우저에서.
-   (1029) 학원 프린터는 인쇄 작업 하나마다 스테이플을 찍는다 → 합본 한 작업으로 보내면 전원이 한 묶음으로 찍힌다.
-   ★ 파일 하나 = 인쇄 작업 하나. 미리 전부 받아 둔 뒤 한 파일씩 숨은 iframe 에서 print().
-   - 기본: 버튼이 "다음 인쇄 n/N 이름" 으로 바뀌고, 인쇄창에서 [인쇄] 한 뒤 버튼을 다시 누른다.
-   - 연속: Edge 를 --kiosk-printing 으로 띄운 PC 전용. 인쇄창 없이 기본 프린터로 바로 나가므로 6초 간격 자동. */
-function printOne(url) {
-  const old = document.getElementById('printframe'); if (old) old.remove();
-  const fr = document.createElement('iframe');
-  fr.id = 'printframe'; fr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
-  fr.onload = () => setTimeout(() => {
-    try { fr.contentWindow.focus(); fr.contentWindow.print(); }
-    catch (e) { window.open(url, '_blank'); }   // 막히면 새 탭으로 열어 Ctrl+P
-  }, 600);
-  fr.src = url; document.body.appendChild(fr);
-}
-async function printAll(btn, names, rows, urls) {
-  if (btn._q) {                                   // 진행 중인 큐 — 다음 한 장
-    const q = btn._q;
-    if (q.i >= q.files.length) return;
-    printOne(q.files[q.i].url); q.i++;
-    if (q.i >= q.files.length) {
-      btn.textContent = `${q.files.length}개 다 보냄 ✓` + (q.failed.length ? ` · 실패 ${q.failed.join(', ')}` : '');
-      btn._q = null; setTimeout(() => { btn.textContent = btn._orig; q.files.forEach(f => URL.revokeObjectURL(f.url)); }, 60000);
-    } else btn.textContent = `▶ 다음 인쇄 ${q.i + 1}/${q.files.length} ${q.files[q.i].name}`;
-    return;
-  }
-  const want = wantList(names, rows, urls);
-  if (!want.length) { btn.textContent = '인쇄할 파일이 없다'; return; }
-  btn._orig = btn._orig || btn.textContent; btn.disabled = true;
-  const files = [], failed = [];
-  for (let i = 0; i < want.length; i++) {
-    btn.textContent = `받는 중… ${i + 1}/${want.length}`;
-    try {
-      const r = await fetch(want[i].url); if (!r.ok) throw new Error(r.status);
-      files.push({ name: want[i].name.replace(/\.pdf$/, ''), url: URL.createObjectURL(new Blob([await r.arrayBuffer()], { type: 'application/pdf' })) });
-    } catch (e) { failed.push(want[i].name); }
-  }
-  btn.disabled = false;
-  if (!files.length) { btn.textContent = '하나도 못 받았다 — 링크 만료면 ↻'; setTimeout(() => { btn.textContent = btn._orig; }, 8000); return; }
-  if (($('#pauto') || {}).checked) {              // kiosk 연속
-    btn.disabled = true;
-    for (let i = 0; i < files.length; i++) {
-      btn.textContent = `연속 인쇄 ${i + 1}/${files.length} ${files[i].name}`;
-      printOne(files[i].url); await new Promise(r => setTimeout(r, 6000));
-    }
-    btn.disabled = false;
-    btn.textContent = `${files.length}개 다 보냄 ✓` + (failed.length ? ` · 실패 ${failed.join(', ')}` : '');
-    setTimeout(() => { btn.textContent = btn._orig; files.forEach(f => URL.revokeObjectURL(f.url)); }, 60000);
-    return;
-  }
-  btn._q = { files, failed, i: 0 };
-  printAll(btn);                                  // 첫 장 바로
-}
 async function zipAll(btn, g, names, rows, urls) {
-  const kind = ($('#zipkind') || {}).value || 'qs';
+  const kind = ($('#zipkind') || {}).value || 'q';
   const want = [];
   for (const n of names) {
     const f = rows[n];
@@ -254,7 +208,7 @@ async function zipAll(btn, g, names, rows, urls) {
    → ★ bat 안에는 한글을 한 글자도 넣지 않는다(파일명도 ASCII). 안내문은 zip 안 _읽어주세요.txt 로 따로 넣는다.
       %ProgramFiles(x86)% 도 for in-list 안에서 괄호로 파싱이 깨질 수 있어 if exist 나열로 풀었다.
       PDF 0개면(압축 안에서 실행) 이유를 찍고 멈춘다. 어떤 경로로 끝나든 :end 의 pause 를 지난다. */
-const PRINT_BAT = String.raw`@echo off
+const PRINT_BAT = `@echo off
 setlocal enableextensions
 cd /d "%~dp0"
 set "N=0"
@@ -374,8 +328,285 @@ function preview(b) {
     + `<iframe src="${u}#toolbar=1"></iframe>`;
 }
 
+
+/* ───────── (1114) 학생 자료실 — 학생별 · 써킷·교재·기출 ─────────
+   유강 1114 "조교들이 학생 포털에 있는 자료들에 접근할 수 있게 — 써킷 뽑아달라고 하면 지금 조교들이 처리할 수 없다".
+   · 학생별 = 그 학생 포털에 뜨는 것과 같은 규칙(portal_hw_files: 이름 + 학생ID/반)으로 job_queue 산출물 + 그 반 lib(써킷·교재·기출)
+   · 써킷·교재·기출 = 정적 mathis-lib/lib.json (같은 오리진, 공개)
+   · 읽기만 한다 — 학생 체크·설정은 여기서 못 바꾼다(조교 권한: job_queue·students select, reports 버킷 select 뿐) */
+const LIB_BASE = 'https://ukan8.github.io/mathis-lib/';
+let MODE = 'grp', STU = null, LIB = null, LIST = [], SORT = [], LISTCTX = null;
+const banOf = v => Array.isArray(v) ? v : (v ? [v] : []);
+
+async function hasSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan8.github.io/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
+    return false;
+  }
+  return true;
+}
+async function getLib() {
+  if (!LIB) {
+    const r = await fetch(LIB_BASE + 'lib.json?t=' + Date.now());
+    if (!r.ok) throw new Error('lib.json ' + r.status);
+    LIB = await r.json();
+  }
+  return LIB;
+}
+async function getStu() {
+  if (!STU) {
+    const { data, error } = await sb.from('students').select('학생ID,이름,학교,학년,반,상태');
+    if (error) throw error;
+    STU = (data || []).filter(s => s['상태'] === '재원').map(s => ({ ...s, 반키: (s['학년'] || '') + (s['반'] || '') }));
+  }
+  return STU;
+}
+
+/* 반 자료 — 써킷(정규) · 교재 · 기출(시행 반) */
+function libRows(ban) {
+  const L = LIB || {}, out = [];
+  const f = (k, p) => p ? { k, url: LIB_BASE + p, lib: true } : null;
+  for (const e of (L['정규'] || [])) if (!ban || banOf(e['반']).includes(ban)) {
+    const c = e['써킷'] || {};
+    const files = [f('문제', c['문제']), f('해설', c['해설'])].filter(Boolean);
+    if (files.length) out.push({ 반: banOf(e['반']).join(','), 날짜: e['날짜'] || '', 종류: '써킷', 자료: e['제목'] || '', 단원: e['단원'] || '', 문항: '', files });
+  }
+  for (const e of (L['교재'] || [])) if (!ban || banOf(e['반']).includes(ban)) {
+    const files = [f('문제', e['문제']), f('해설', e['해설'])].filter(Boolean);
+    if (files.length) out.push({ 반: banOf(e['반']).join(','), 날짜: e['날짜'] || '', 종류: '교재', 자료: e['판'] || '', 단원: e['단원'] || '', 문항: '', files });
+  }
+  for (const e of (L['기출'] || [])) for (const s of (e['시행'] || [])) if (!ban || s['반'] === ban) {
+    const files = [f('문제', e['시험']), f('해설', e['해설'])].filter(Boolean);
+    if (files.length) out.push({ 반: s['반'] || '', 날짜: s['날짜'] || e['최근'] || '', 종류: '기출', 자료: [e['학교'], e['학년'], e['학년도'], e['종류']].filter(Boolean).join(' '), 단원: e['과목'] || '', 문항: '', files });
+  }
+  return out;
+}
+
+/* 학생 개인 자료 — 개별과제 판 · 퍼스널/리플레이/커스텀 트레이닝 (포털 portal_hw_files 와 같은 매칭, 기간은 150일) */
+async function stuRows(s) {
+  const since = new Date(Date.now() - 150 * 864e5).toISOString();
+  const { data, error } = await sb.from('job_queue').select('id,종류,상태,파라미터,결과,완료시각,요청시각')
+    .in('종류', ['개별과제', '커스텀트레이닝', '기출과제']).eq('상태', '완료').gte('요청시각', since)
+    .or(`파라미터->>반.eq.${s.반키},파라미터->>학생ID.eq.${s['학생ID']}`)
+    .order('id', { ascending: false }).limit(800);
+  if (error) throw error;
+  const seen = {}, rows = [];
+  for (const j of (data || [])) {
+    const p = j['파라미터'] || {}, r = j['결과'] || {};
+    const mine = p['학생ID'] === s['학생ID'] || (!p['학생ID'] && p['반'] === s.반키 && (!p['학생'] || p['학생'] === s['이름']));
+    if (!mine) continue;
+    const cnt = {}; for (const x of (r['학생'] || [])) if (Array.isArray(x)) cnt[x[0]] = x[1];
+    for (const u of (r['업로드'] || [])) {
+      if (u['이름'] !== s['이름']) continue;
+      const nm = p['시험지명'] || '';
+      const kind = j['종류'] === '개별과제' ? '개별과제' : j['종류'] === '커스텀트레이닝' ? '커스텀 트레이닝'
+        : /리플레이/.test(nm) ? '리플레이 트레이닝' : '퍼스널 트레이닝';
+      const day = p['날짜'] || String(j['완료시각'] || j['요청시각'] || '').slice(0, 10);
+      const dk = kind === '개별과제' ? 'J' + j.id : kind + '|' + day + '|' + nm;   // 다시 구운 잡은 최신(id 큰 것) 하나만
+      if (seen[dk]) continue; seen[dk] = 1;
+      const files = [];
+      const add = (k, key, url) => { if (key || url) files.push({ k, key: key || null, url: key ? null : (url || null) }); };
+      add('문제', u['문제키'], u['문제url']); add('해설', u['해설키'], u['해설url']);
+      if (!files.length) add('전체', u['키'], u['url']);
+      rows.push({ 반: s.반키, 날짜: day, 종류: kind, 자료: kind === '개별과제' ? 'No.' + j.id : nm, 단원: '',
+        문항: Array.isArray(u['문항']) ? u['문항'].length : (cnt[u['이름']] || ''), files });
+    }
+  }
+  const keys = [...new Set(rows.flatMap(x => x.files.filter(f => f.key).map(f => f.key)))];
+  if (keys.length) {
+    const { data: sg } = await sb.storage.from('reports').createSignedUrls(keys, 3600);
+    const m = {}; for (const d of (sg || [])) if (d.signedUrl) m[d.path] = d.signedUrl;
+    for (const x of rows) for (const f of x.files) if (f.key) f.url = m[f.key] || null;
+  }
+  return rows;
+}
+
+/* 정렬 — 누른 순서대로 1·2·3 순위(1031 유강 규칙). 같은 머리를 다시 누르면 방향만 바꾼다. 빈칸은 늘 맨 뒤. */
+function sortRows(rows, order) {
+  return rows.slice().sort((a, b) => {
+    for (const o of order) {
+      const x = a[o.k], y = b[o.k], ex = x === '' || x == null, ey = y === '' || y == null;
+      if (ex || ey) { if (ex !== ey) return ex ? 1 : -1; continue; }
+      const c = (typeof x === 'number' && typeof y === 'number') ? x - y : String(x).localeCompare(String(y), 'ko', { numeric: true });
+      if (c) return c * o.dir;
+    }
+    return 0;
+  });
+}
+const safe = s => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+function fname(x, k) {
+  const o = LISTCTX || {};
+  return safe([o.who, (x.날짜 || '').replace(/-/g, '').slice(4), o.who ? '' : x.반, x.종류, x.자료, k].filter(Boolean).join('_')) + '.pdf';
+}
+function hrefOf(f, name) { return f.lib ? f.url : f.url + (f.url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(name); }
+
+function drawList() {
+  const o = LISTCTX, rows = sortRows(LIST, SORT.length ? SORT : o.defSort);
+  let h = `<p class="sum">${o.head}</p>`;
+  if (!rows.length) { $('#left').innerHTML = h + '<div class="msg">자료가 없다</div>'; return; }
+  h += `<div class="tools"><label><input type="checkbox" id="selall"> 전체 선택</label>`
+    + ` <select id="zk"><option value="q">문제만</option><option value="s">해설만</option><option value="qs" selected>문제+해설</option></select>`
+    + ` <button class="pv" id="zipsel">⤓ 선택한 것 받기 (zip)</button>`
+    + (SORT.length ? ' <button class="pv" id="sortclr">정렬 초기화</button>' : '') + '</div>';
+  h += '<table class="lst"><tr><th class="no">#</th>' + o.cols.map(c => {
+    const i = SORT.findIndex(s => s.k === c.k);
+    return `<th class="srt" data-k="${c.k}" data-num="${c.num ? 1 : ''}">${E(c.label || c.k)}${i >= 0 ? `<span class="sb">${i + 1}${SORT[i].dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`;
+  }).join('') + '<th>파일</th><th></th><th></th></tr>';
+  rows.forEach((x, i) => {
+    const idx = LIST.indexOf(x);
+    const fl = x.files.map(f => f.url
+      ? `<a class="f ${f.k === '문제' ? 'q' : f.k === '해설' ? 's' : ''}" href="${E(hrefOf(f, fname(x, f.k)))}" download="${E(fname(x, f.k))}" target="_blank" rel="noopener">${E(f.k)}</a>`
+      : `<span class="dim" style="font-size:12px">${E(f.k)} 링크 실패</span>`).join('');
+    const pv = (x.files.find(f => f.k === '문제' && f.url) || x.files.find(f => f.url) || {}).url || '';
+    h += `<tr><td class="no">${i + 1}</td>` + o.cols.map(c => `<td class="c-${c.k}">${E(x[c.k] ?? '')}</td>`).join('')
+      + `<td class="fl">${fl}</td><td><button class="pv" data-u="${E(pv)}" data-n="${E([x.종류, x.자료].filter(Boolean).join(' '))}">보기</button></td>`
+      + `<td><input type="checkbox" class="pick" data-i="${idx}"></td></tr>`;
+  });
+  h += '</table>';
+  if (o.note) h += `<div class="note">${o.note}</div>`;
+  $('#left').innerHTML = h;
+  document.querySelectorAll('th.srt').forEach(th => th.onclick = () => {
+    const k = th.dataset.k, i = SORT.findIndex(s => s.k === k);
+    if (i >= 0) SORT[i].dir *= -1; else SORT.push({ k, dir: th.dataset.num ? -1 : 1 });
+    drawList();
+  });
+  const sc = $('#sortclr'); if (sc) sc.onclick = () => { SORT = []; drawList(); };
+  $('#selall').onchange = e => document.querySelectorAll('input.pick').forEach(c => c.checked = e.target.checked);
+  $('#zipsel').onclick = () => zipSel($('#zipsel'));
+  document.querySelectorAll('button.pv[data-u]').forEach(b => b.onclick = () => preview(b));
+}
+
+async function zipSel(btn) {
+  const kind = $('#zk').value, picks = [...document.querySelectorAll('input.pick:checked')].map(c => LIST[+c.dataset.i]).filter(Boolean);
+  if (!picks.length) { btn.textContent = '먼저 오른쪽 칸을 체크'; setTimeout(() => { btn.textContent = '⤓ 선택한 것 받기 (zip)'; }, 3000); return; }
+  const want = [], used = {};
+  for (const x of picks) for (const f of x.files) {
+    if (!f.url) continue;
+    if (f.k === '문제' && kind === 's') continue;
+    if (f.k === '해설' && kind === 'q') continue;
+    let name = fname(x, f.k);
+    if (used[name]) name = name.replace(/\.pdf$/, `_${++used[name]}.pdf`); else used[name] = 1;
+    want.push({ name, url: f.url });
+  }
+  if (!want.length) { btn.textContent = '받을 파일이 없다'; return; }
+  const orig = '⤓ 선택한 것 받기 (zip)'; btn.disabled = true;
+  const entries = [], failed = [];
+  for (const w of want) {
+    btn.textContent = `받는 중… ${entries.length + failed.length + 1}/${want.length}`;
+    try { const r = await fetch(w.url); if (!r.ok) throw new Error(r.status); entries.push({ name: w.name, data: new Uint8Array(await r.arrayBuffer()) }); }
+    catch (e) { failed.push(w.name); }
+  }
+  if (entries.length) {
+    entries.push({ name: '_print_all.bat', data: printBat() });
+    entries.push({ name: '_읽어주세요.txt', data: readMeTxt() });
+    btn.textContent = '압축하는 중…'; await new Promise(r => setTimeout(r, 0));
+    const d = new Date(), md = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    try { dropFile(makeZip(entries), safe(`${LISTCTX.zip}_${md}`) + '.zip'); }
+    catch (e) { btn.disabled = false; btn.textContent = '압축 실패 — 파일을 하나씩 받아 주세요'; return; }
+  }
+  btn.disabled = false;
+  btn.textContent = !entries.length ? '하나도 못 받았다 — 링크가 만료됐으면 ↻' : failed.length ? `${entries.length}개 저장 · 실패 ${failed.length}` : `${entries.length}개 zip 저장됨 ✓`;
+  setTimeout(() => { btn.textContent = orig; }, 8000);
+}
+
+/* 학생별 */
+async function stuInit(wantId) {
+  if (!await hasSession()) return;
+  let st;
+  try { st = await getStu(); } catch (e) { $('#left').innerHTML = '<div class="msg">학생 명단을 못 읽었다: ' + E(e.message) + '</div>'; return; }
+  const bans = [...new Set(st.map(s => s.반키))].filter(Boolean).sort();
+  const sel = $('#sban');
+  if (!sel.options.length) sel.innerHTML = bans.map(b => `<option value="${E(b)}">${E(b)}</option>`).join('');
+  const want = wantId || new URLSearchParams(location.search).get('s');
+  const ws = want && st.find(s => s['학생ID'] === want);
+  if (ws) sel.value = ws.반키;
+  fillStu(ws ? ws['학생ID'] : null);
+}
+function fillStu(id) {
+  const ban = $('#sban').value;
+  const list = (STU || []).filter(s => s.반키 === ban).sort((a, b) => String(a['이름']).localeCompare(String(b['이름']), 'ko'));
+  $('#sstu').innerHTML = '<option value="">학생 고르기</option>' + list.map(s => `<option value="${E(s['학생ID'])}">${E(s['이름'])}${s['학교'] ? ' · ' + E(s['학교']) : ''}</option>`).join('');
+  if (id) $('#sstu').value = id;
+  if ($('#sstu').value) showStu($('#sstu').value);
+  else $('#left').innerHTML = '<div class="msg">반과 학생을 고르면 그 학생 포털에 있는 자료가 전부 나온다<br>(개별과제 판 · 퍼스널/리플레이/커스텀 트레이닝 · 그 반 써킷 · 교재 · 기출)</div>';
+}
+async function showStu(id) {
+  const s = (STU || []).find(x => x['학생ID'] === id); if (!s) return;
+  history.replaceState(null, '', '?s=' + encodeURIComponent(id));
+  $('#left').innerHTML = '<div class="msg">불러오는 중…</div>';
+  let jr = [], lr = [], err = '';
+  try { jr = await stuRows(s); } catch (e) { err += '개인 자료를 못 읽었다: ' + e.message + ' '; }
+  try { await getLib(); lr = libRows(s.반키); } catch (e) { err += '반 자료 목록을 못 읽었다: ' + e.message; }
+  SORT = [];
+  LIST = [...jr, ...lr];
+  LISTCTX = {
+    who: s['이름'], zip: '학생자료_' + s['이름'],
+    head: `<b>${E(s['이름'])}</b> ${E(s.반키)}${s['학교'] ? ' · ' + E(s['학교']) : ''} · 자료 <b>${LIST.length}</b>개 (개인 ${jr.length} · 반 ${lr.length})`
+      + (err ? `<br><span style="color:var(--warn)">${E(err)}</span>` : ''),
+    cols: [{ k: '날짜' }, { k: '종류' }, { k: '자료' }, { k: '단원' }, { k: '문항', num: 1 }],
+    defSort: [{ k: '날짜', dir: -1 }, { k: '종류', dir: 1 }],
+    note: '개인 자료 = 그 학생 포털 「과제 파일」과 같은 규칙(최근 150일, 개별과제는 닫힌 판도 보인다). 반 자료 = 그 반에 나간 써킷·교재·기출. '
+      + 'PDF 링크는 1시간 유효 — 오래 열어 뒀으면 ↻. [선택한 것 받기] zip 을 폴더에 푼 뒤 _print_all.bat 을 더블클릭하면 전부 기본 프린터로 나간다.'
+  };
+  drawList();
+}
+
+/* 써킷·교재·기출 (반 자료) */
+async function libInit() {
+  $('#left').innerHTML = '<div class="msg">불러오는 중…</div>';
+  try { await getLib(); } catch (e) { $('#left').innerHTML = '<div class="msg">수업 자료 목록(lib.json)을 못 읽었다: ' + E(e.message) + '</div>'; return; }
+  const bans = [...new Set([...(LIB['정규'] || []), ...(LIB['교재'] || [])].flatMap(e => banOf(e['반']))
+    .concat((LIB['기출'] || []).flatMap(e => (e['시행'] || []).map(s => s['반']))))].filter(Boolean).sort();
+  const sel = $('#lban');
+  if (!sel.options.length) sel.innerHTML = '<option value="">전체 반</option>' + bans.map(b => `<option value="${E(b)}">${E(b)}</option>`).join('');
+  const want = new URLSearchParams(location.search).get('b');
+  if (want != null && [...sel.options].some(o => o.value === want)) sel.value = want;
+  showLib();
+}
+function showLib() {
+  const ban = $('#lban').value, kinds = [...document.querySelectorAll('#ctl-lib input[data-lk]:checked')].map(x => x.dataset.lk);
+  history.replaceState(null, '', '?m=lib' + (ban ? '&b=' + encodeURIComponent(ban) : ''));
+  SORT = [];
+  LIST = libRows(ban).filter(x => kinds.includes(x.종류));
+  LISTCTX = {
+    who: '', zip: '반자료_' + (ban || '전체'),
+    head: `<b>${E(ban || '전체 반')}</b> · ${E(kinds.join('·') || '종류 없음')} <b>${LIST.length}</b>개 · 목록 ${E((LIB || {})['생성'] || '')} 기준`,
+    cols: [{ k: '반' }, { k: '날짜' }, { k: '종류' }, { k: '자료' }, { k: '단원' }],
+    defSort: [{ k: '날짜', dir: -1 }, { k: '반', dir: 1 }],
+    note: '학생 포털 「수업 자료」와 같은 목록이다. 써킷은 반·DAY 책자 그대로. 체크한 것을 [선택한 것 받기] 로 한 번에 받아 _print_all.bat 으로 인쇄한다.'
+  };
+  drawList();
+}
+
+const HINT = {
+  grp: '문제 = 문제~빠른정답 · 해설 = 빠른정답~해설 · 링크는 1시간 유효',
+  stu: '그 학생 포털에 있는 자료 전부 · 보기·받기만(체크·설정은 못 바꾼다)',
+  lib: '반에 나간 써킷·교재·기출 책자'
+};
+async function setMode(m, first) {
+  MODE = m;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  document.body.classList.toggle('wide', m !== 'grp');
+  ['grp', 'stu', 'lib'].forEach(k => { $('#ctl-' + k).hidden = k !== m; });
+  $('#hint').textContent = HINT[m];
+  $('#right').innerHTML = '<div class="empty">[보기] 를 누르면 여기서 미리 본다</div>';
+  if (m === 'grp') { if (!first) history.replaceState(null, '', location.pathname); return load(); }
+  if (m === 'stu') return stuInit();
+  return libInit();
+}
+
 $('#grp').onchange = e => show(e.target.value);
-$('#reload').onclick = () => load();
-load();
+$('#reload').onclick = () => {
+  if (MODE === 'grp') return load();
+  if (MODE === 'stu') { const id = $('#sstu').value; STU = null; LIB = null; return stuInit(id); }
+  LIB = null; return libInit();
+};
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => setMode(b.dataset.m));
+$('#sban').onchange = () => fillStu(null);
+$('#sstu').onchange = e => { if (e.target.value) showStu(e.target.value); };
+$('#lban').onchange = showLib;
+document.querySelectorAll('#ctl-lib input[data-lk]').forEach(x => x.onchange = showLib);
+{ const q = new URLSearchParams(location.search); setMode(q.get('s') ? 'stu' : q.get('m') === 'lib' ? 'lib' : 'grp', true); }
 </script>
 </body></html>
