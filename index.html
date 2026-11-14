@@ -6814,7 +6814,7 @@ async function coSumRounds() {
   const W = ['일', '월', '화', '수', '목', '금', '토'], nowHM = coKST(Date.now()).slice(11, 16);
   const R = {};
   await Promise.all(bans.map(async b => {
-    const past = [...new Set((cl.data || []).filter(r => r.반 === b).map(r => r.날짜))].sort().slice(-6);
+    const past = [...new Set((cl.data || []).filter(r => r.반 === b).map(r => r.날짜))].sort().slice(-14);
     let next = null;   // 다음 수업(오늘 수업이 아직 안 끝났으면 오늘) = 이번 회차
     for (let i = 0; i < 8 && !next; i++) {
       const d = new Date(Date.parse(T + 'T00:00:00Z') + i * 864e5).toISOString().slice(0, 10), w = W[new Date(d + 'T00:00:00Z').getUTCDay()];
@@ -6823,7 +6823,11 @@ async function coSumRounds() {
     }
     const days = past.concat(next ? [next] : []);
     const res = await Promise.all(days.map(d => sb.rpc('console_hw_rate', { p_cls: b, p_day: d }).then(r => [d, r.data]).catch(() => [d, null])));
-    R[b] = { days, next, res: res.map(([d, x]) => ({ d, now: d === next, map: Object.fromEntries(((x && x.학생) || []).map(s => [s.학생ID, s.루프 || null])) })) };
+    // (1114 유강 "고1T 정규루프 제출이 아닌 날짜 지우자") 아무도 루프를 안 낸 지난 회차(고1T 일요일 등)는 칸에서 뺀다 → 남은 정규 회차 최근 6개
+    const all = res.map(([d, x]) => ({ d, now: d === next, map: Object.fromEntries(((x && x.학생) || []).map(s => [s.학생ID, s.루프 || null])) }));
+    const real = all.filter(x => !x.now && Object.values(x.map).some(v => Array.isArray(v) && v[1] > 0)).slice(-6);
+    const keep = real.concat(all.filter(x => x.now));
+    R[b] = { days: keep.map(x => x.d), next, res: keep };
   }));
   return R;
 }
