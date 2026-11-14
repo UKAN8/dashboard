@@ -55,6 +55,8 @@ table.lst td.no,table.lst th.no{color:var(--dim);width:2.4em;text-align:right;pa
 table.lst td.c-자료{font-weight:700}
 table.lst td.c-날짜{white-space:nowrap;color:var(--tx2)}
 table.lst td.fl{white-space:nowrap}
+table.lst td.c-종류,table.lst td.c-단원,table.lst td.c-반,table.lst th{white-space:nowrap}
+body.wide .wrap{grid-template-columns:minmax(700px,62%) 1fr}
 @media (max-width:900px){ .wrap{grid-template-columns:1fr;height:auto} .right{min-height:70vh} }
 </style></head>
 <body>
@@ -585,6 +587,7 @@ const HINT = {
 async function setMode(m, first) {
   MODE = m;
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  document.body.classList.toggle('wide', m !== 'grp');
   ['grp', 'stu', 'lib'].forEach(k => { $('#ctl-' + k).hidden = k !== m; });
   $('#hint').textContent = HINT[m];
   $('#right').innerHTML = '<div class="empty">[보기] 를 누르면 여기서 미리 본다</div>';
