@@ -272,11 +272,49 @@ function classText(){
 /* (1028 유강) 해부 루프·주간고사 루프와 같은 수식·띄어 읽기 규칙(build_tree 1014):
    lim 은 늘 아래로 · \not= → \ne · 쉼표 뒤 +0.16em · 수식 바로 뒤 한글 0.2em(1110 통일) · 낱말 사이 +0.1em(CSS) */
 function _walkText(el,fn){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentNode&&n.parentNode.closest&&n.parentNode.closest('.katex,script,style')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});const a=[];while(w.nextNode())a.push(w.currentNode);a.forEach(fn);}
+/* (1115 유강) 수식 규칙 §2 를 루프에도 — 정본 02_제작자료/_가이드/_수식_제작규칙.md · v2 theme.py 와 같게
+   ① \frac → \dfrac(첨자 안은 그대로) ② 인라인 ∫ 은 기호·위끝·아래끝만 {\displaystyle\int_a^b}(식 전체 \displaystyle 은 걷어냄)
+   ③ cases 행간: 분수·적분 행은 \\[1.1em], 아니면 \arraystretch 1.45 ④ 본문 괄호 안에 분수 수식이 있으면 괄호를 분수 높이로
+   ⑤ 키 큰 인라인(∫·분수·큰 괄호)은 그 줄만 벌림 ⑥ 한 덩어리 수식이 칸보다 넓으면 그 식만 줄임(최대 72%) */
+const _TG='(?:\\{(?:[^{}]|\\{[^{}]*\\})*\\}|\\\\?[A-Za-z0-9])';
+function _dfrac(t){ let o='',d=[],i=0;   // 첨자(^{…} _{…}) 안의 \frac 은 작게 둔다
+  while(i<t.length){ const c=t[i];
+    if((c==='^'||c==='_')&&t[i+1]==='{'){ d.push(1); o+=c+'{'; i+=2; continue; }
+    if(c==='{'){ d.push(0); o+=c; i++; continue; }
+    if(c==='}'){ d.pop(); o+=c; i++; continue; }
+    if(t.startsWith('\\frac',i)&&!/[a-zA-Z]/.test(t[i+5]||'')&&!d.includes(1)){ o+='\\dfrac'; i+=5; continue; }
+    o+=c; i++; }
+  return o; }
+function texNorm(t){
+  t=t.replace(/\\lim(?![a-zA-Z])(?!\s*\\limits)(?!\s*\\nolimits)/g,'\\lim\\limits').replace(/\\not=/g,'\\ne ');
+  t=_dfrac(t);
+  t=t.replace(/\\displaystyle\s*(?=\\int(?![a-zA-Z]))/g,'');
+  t=t.replace(new RegExp('\\\\int(?![a-zA-Z])\\s*((?:[_^]\\s*'+_TG+'\\s*){0,2})','g'),(m,b)=>'{\\displaystyle\\int'+b.replace(/\s+/g,'')+'}');
+  t=t.replace(/\\begin\{cases\}[\s\S]*?\\end\{cases\}/g,m=>{ const b=m.replace(/\\\\\[[^\]]*\]/g,'\\\\');
+    return /\\[dt]?frac|\\int|\\sum/.test(b) ? b.replace(/\\\\(?![\[a-zA-Z])/g,'\\\\[1.1em]') : '{\\def\\arraystretch{1.45}'+b+'}'; });
+  return t; }
+function bigParen(v){   // 수식 밖 ( … ) 안에 분수 수식이 있으면 괄호를 \left( \vphantom{\dfrac12} \right. 로
+  const tk=v.split(/(\$[^$]*\$)/), st=[], rep={};
+  tk.forEach((t,ti)=>{ if(ti%2) return; for(let ci=0;ci<t.length;ci++){ const ch=t[ci];
+    if(ch==='(') st.push([ti,ci]); else if(ch===')'&&st.length){ const a=st.pop(); let f=false; for(let k=a[0]+1;k<ti;k+=2) if(/\\[dt]?frac/.test(tk[k])) f=true;
+      if(f){ rep[a[0]+','+a[1]]='$\\left(\\vphantom{\\dfrac{1}{2}}\\right.$'; rep[ti+','+ci]='$\\left.\\vphantom{\\dfrac{1}{2}}\\right)$'; } } } });
+  if(!Object.keys(rep).length) return v;
+  return tk.map((t,ti)=>ti%2?t:[...t].map((ch,ci)=>rep[ti+','+ci]||ch).join('')).join(''); }
+function tallFit(el){
+  el.querySelectorAll('.katex').forEach(k=>{ if(k.closest('.katex-display')) return; let H=0,D=0;
+    k.querySelectorAll('.katex-html>.base>.strut').forEach(s=>{ const h=parseFloat(s.style.height)||0, d=-(parseFloat(s.style.verticalAlign)||0); H=Math.max(H,h-d); D=Math.max(D,d); });
+    const pt=Math.max(0,H-0.95), pb=Math.max(0,D-0.32);
+    if(pt>0||pb>0){ k.style.display='inline-block'; k.style.paddingTop=(pt>0?pt*0.5+0.12:0).toFixed(2)+'em'; k.style.paddingBottom=(pb>0?pb*0.5+0.12:0).toFixed(2)+'em'; } });
+  requestAnimationFrame(()=>el.querySelectorAll('.katex').forEach(k=>{ if(k.closest('.katex-display')||k.dataset.shrink) return;
+    const b=k.parentElement&&k.parentElement.closest('div,p,label,button'); if(!b) return; const W=b.clientWidth, w=k.getBoundingClientRect().width;
+    if(W>0&&w>W+1){ const r=Math.max(0.72,W/w*0.98); k.style.fontSize=(1.02*r).toFixed(3)+'em'; k.dataset.shrink=r.toFixed(2); } }));
+}
 function tex(el){
   if(!el || typeof renderMathInElement!=='function') return;
   _walkText(el,n=>{ if(n.nodeValue.indexOf('$')<0) return;
-    n.nodeValue=n.nodeValue.replace(/\\lim(?![a-zA-Z])(?!\s*\\limits)(?!\s*\\nolimits)/g,'\\lim\\limits').replace(/\\not=/g,'\\ne '); });
+    n.nodeValue=bigParen(n.nodeValue.replace(/\$([^$]+)\$/g,(m,t)=>'$'+texNorm(t)+'$')); });
   try{ renderMathInElement(el,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false,strict:'ignore',trust:true}); }catch(e){}
+  try{ tallFit(el); }catch(e){}
   try{
     _walkText(el,n=>{ const v=n.nodeValue; if(!/,/.test(v)) return;
       const parts=v.split(/((?<!\d),(?=\s)|(?<=\D),(?=\D))/); if(parts.length<2) return;
