@@ -167,7 +167,7 @@ var WR = (function () {
       if (f.stages.indexOf(x.stage) < 0) return false;
       if (f.period !== 'all' && daysAgo(x.d) > +f.period) return false;
       if (f.units.length && f.units.indexOf(x.unit) < 0) return false;
-      if (f.types.length && f.types.indexOf(x.k || x.u) < 0) return false;
+      if (f.types.length && f.types.indexOf(x.u || x.k) < 0) return false;
       if (f.levels.indexOf(LVG(x.lv)) < 0) return false;
       if (f.ans && !x.ans) return false;
       return true;
@@ -185,6 +185,11 @@ var WR = (function () {
     var mins = got.reduce(function (s, x) { return s + (MIN[x.lv] || 2) * per; }, 0);
     var cnt = {}; got.forEach(function (x) { var k = x.easy && f.kinds.indexOf(String(x.worst)) < 0 ? 'easy' : String(x.worst); cnt[k] = (cnt[k] || 0) + 1; });
     return { all: all, got: got, n: got.length * per, mins: mins, cnt: cnt, cut: all.length > got.length };
+  }
+  function unitName(P, k) {
+    var m = (P && P.단원명) || {}, n = m[k];
+    if (!n && /^\d{4}$/.test(k)) { var a = m[k.slice(0, 2)], b = m[k.slice(2)]; n = a && b ? a.replace(/함수$/, '') + '·' + b : (a || b); }
+    return n ? String(n).replace(/^\d+\s*/, '') : k + '단원';
   }
   function summary(L) {
     var s = { 남은: 0, 또: 0, 졸업: 0, 회복: 0 };
@@ -299,7 +304,7 @@ var WR = (function () {
       var L = S.L, f = S.f, r = pick(L, f, String(Date.now()).slice(0, 7));
       var units = {}, types = {};
       L.forEach(function (x) { units[x.unit] = (units[x.unit] || 0) + 1; });
-      match(L, withMerge(f, { types: [] })).forEach(function (x) { var k = x.k || x.u; if (k) types[k] = types[k] || { n: 0, name: x.u || k }; if (k) types[k].n++; });
+      match(L, withMerge(f, { types: [] })).forEach(function (x) { var k = x.u || x.k; if (k) { types[k] = types[k] || { n: 0, name: k }; types[k].n++; } });
       var unitKeys = Object.keys(units).sort();
       var mine = (S.P.프리셋 || []);
       var pres = '<div class="wr-pre">' + PRESETS.map(function (p) { return '<button type="button" data-pre="' + E(p.이름) + '" class="' + (S.preset === p.이름 ? 'on' : '') + '"><b>' + E(p.이름) + '</b><small>' + E(p.설명) + '</small></button>'; }).join('')
@@ -311,7 +316,7 @@ var WR = (function () {
         + '<div class="wr-h">처리 상태</div>' + chips('stages', STAGES, null, true, sc)
         + '<div class="wr-h">기간</div>' + chips('period', ['7', '14', '30', 'all'], { 7: '최근 1주', 14: '최근 2주', 30: '최근 한 달', all: '이번 학기 전체' }, false)
         + '<div class="wr-h">출처</div>' + chips('src', ['써킷', '개별과제'], { 써킷: '써킷 공통과제', 개별과제: '개별과제' }, true)
-        + (unitKeys.length > 1 ? '<div class="wr-h">단원 <small style="font-weight:400;color:var(--wr-dim)">안 고르면 전부</small></div>' + chips('units', unitKeys, null, true, units) : '')
+        + (unitKeys.length > 1 ? '<div class="wr-h">단원 <small style="font-weight:400;color:var(--wr-dim)">안 고르면 전부</small></div>' + chips('units', unitKeys, unitLabels(unitKeys), true, units) : '')
         + (Object.keys(types).length ? '<div class="wr-h">유형 <small style="font-weight:400;color:var(--wr-dim)">안 고르면 전부</small></div><div class="wr-chips">' + Object.keys(types).sort(function (a, b) { return types[b].n - types[a].n; }).slice(0, 40).map(function (k) { return '<button type="button" data-k="types" data-v="' + E(k) + '" data-m="1" class="' + (f.types.indexOf(k) >= 0 ? 'on' : '') + '">' + E(types[k].name) + '<small>' + types[k].n + '</small></button>'; }).join('') + '</div>' : '')
         + '<div class="wr-h">난이도</div>' + chips('levels', ['하', '중', '중상', '상'], null, true)
         + '<div class="wr-h">같이 넣기</div>' + chips('sim', ['false', 'true'], { 'false': '원래 문제만', 'true': '원래 문제 + 비슷한 문제 1개씩' }, false)
@@ -332,6 +337,7 @@ var WR = (function () {
         + '<button type="button" class="wr-go" data-go="1"' + (!r.n || why || S.busy ? ' disabled' : '') + '>' + (S.busy ? '보내는 중…' : '이대로 만들기') + '</button>'
         + (why ? '<div class="wr-msg">' + E(why) + '</div>' : '') + (S.msg ? '<div class="wr-msg' + (S.msgBad ? ' bad' : '') + '">' + E(S.msg) + '</div>' : '') + '</div>';
     }
+    function unitLabels(keys) { var o = {}; keys.forEach(function (k) { o[k] = unitName(S.P, k); }); return o; }
     function withMerge(f, o) { var x = clone(f); for (var k in o) x[k] = o[k]; return x; }
     function draw() {
       if (!S.P) return;
@@ -427,9 +433,9 @@ var WR = (function () {
     var max = Math.max.apply(null, Object.keys(U).map(function (k) { return U[k].n; }).concat([1]));
     host.innerHTML = '<h2>내 오답 현황<small>오답 트레이닝</small></h2><div class="wr-card">'
       + '<div class="wr-kpi"><div><b>' + sm.남은 + '</b><small>남은 오답</small></div><div><b>' + (re.length ? Math.round(one * 100 / re.length) + '%' : '—') + '</b><small>다시 풀 때 한 번에</small></div><div><b>' + sm.졸업 + '</b><small>졸업</small></div></div>'
-      + '<div class="wr-h">단원별 남은 오답</div>' + Object.keys(U).sort().map(function (k) { var u = U[k], left = u.n - u.g; return '<div class="wr-bar"><span style="text-align:left;color:inherit">' + E(k) + '단원</span><i style="width:' + Math.max(4, left * 100 / max) + '%"></i><span>' + left + '/' + u.n + '</span></div>'; }).join('')
+      + '<div class="wr-h">단원별 남은 오답</div>' + Object.keys(U).sort().map(function (k) { var u = U[k], left = u.n - u.g; return '<div class="wr-bar"><span style="text-align:left;color:inherit">' + E(unitName(S.P, k)) + '</span><i style="width:' + Math.max(4, left * 100 / max) + '%"></i><span>' + left + '/' + u.n + '</span></div>'; }).join('')
       + '<div class="wr-msg">이번 주 다시 푼 원래 문제 ' + wkRe.length + '개 · 한 번에 맞음 ' + wkRe.filter(function (x) { return x[5] === 1; }).length + '개</div>'
-      + (again.length ? '<div class="wr-h">또 틀린 문항</div><div class="wr-list">' + again.map(function (x) { return '<div>' + E(x.u || x.q) + ' <span style="color:var(--wr-dim)">· ' + E(x.unit) + '단원 · ' + E(x.lv || '') + '</span></div>'; }).join('') + '</div>' : '')
+      + (again.length ? '<div class="wr-h">또 틀린 문항</div><div class="wr-list">' + again.map(function (x) { return '<div>' + E(x.u || x.q) + ' <span style="color:var(--wr-dim)">· ' + E(unitName(S.P, x.unit)) + ' · ' + E(x.lv || '') + '</span></div>'; }).join('') + '</div>' : '')
       + '</div>';
   }
 
