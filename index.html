@@ -371,6 +371,7 @@ th .tk-ar{font-style:normal;font-size:9px;margin-left:3px;color:var(--acc)}
 /* (1112) 모의테스트 */
 .mk-sum{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline;font-size:13.5px}.mk-sum b{font-size:15px}
 .mk-q td,.mk-s td{white-space:nowrap}.mk-q td.dim{white-space:normal;font-size:12px}
+.vs-tbl.mk-q th,.vs-tbl.mk-q td,.vs-tbl.mk-s th,.vs-tbl.mk-s td{text-align:center}.vs-tbl.mk-q td.dim,.vs-tbl.mk-q th:last-child,.vs-tbl.mk-s td:first-child,.vs-tbl.mk-s th:first-child{text-align:left}   /* (1116 유강) 열 가운데 정렬 — 숫자가 오른쪽에 붙어 옆 열 머리와 헷갈렸다 */
 
 /* ── DB 직결판 추가 스타일 (로그인·상태표시) ── */
 #login{max-width:340px;margin:14vh auto}
@@ -7191,13 +7192,15 @@ function mkDraw() {
     + mkGate(m)   // (1112 유강 v78 "내가 액션해야 열리게") 답 입력은 여기서 연다 — publish 는 닫힌 채로 올라온다
     + (bad.length ? `<span style="color:var(--bad,#f08a9a)">개별과제 확인 ${bad.length}명</span>` : '') + `</div></div>`;
   // 문항별 — 수업에서 무엇부터 풀지
-  h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th>틀림</th><th>그중 실수</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
+  h += `<div class="card vs-wrap"><div class="dim" style="margin:0 0 6px">문항별 · 정답률이 낮거나 찍어서 맞힌 학생이 많은 문항부터 풀이</div><table class="vs-tbl mk-q"><thead><tr><th>번호</th><th>정답</th><th>배점</th><th>정답률</th><th title="맞혔고 '확실'로 고른 비율 — 찍어서·애매하게 맞힌 것 제외">실정답률</th><th>틀림</th><th>그중 실수</th><th>찍어서 맞힘</th><th>애매하게 맞힘</th><th>안 풂</th><th>틀린 학생</th></tr></thead><tbody>`;
   Q.forEach(q => {
     const k = String(q.번호), ok = sub.filter(x => (x.정오 || {})[k] === true), ng = sub.filter(x => (x.정오 || {})[k] === false);
     const c = x => (((x.답 || {})[k] || {}).c) || '';
     const rate = sub.length ? Math.round(ok.length / sub.length * 100) : null;
+    const rrate = sub.length ? Math.round(ok.filter(x => c(x) !== '찍음' && c(x) !== '애매').length / sub.length * 100) : null;   // (1116 유강) 실정답률
     h += `<tr><td data-sv="${q.번호}"><b>${q.번호}번</b>${q.범위밖 ? ' ' + chip('mid', '범위 밖') : ''}</td><td>${q.형식 === 'short' ? E(q.정답) : mkCirc(q.정답)}</td><td class="n">${E(String(q.배점 ?? ''))}</td>`
       + `<td class="n" data-sv="${rate == null ? '' : rate}" style="color:${rate != null && rate < 50 ? 'var(--bad,#f08a9a)' : 'inherit'}">${rate == null ? '—' : rate + '%'}</td>`
+      + `<td class="n" data-sv="${rrate == null ? '' : rrate}" style="color:${rrate != null && rrate < 50 ? 'var(--bad,#f08a9a)' : 'inherit'}">${rrate == null ? '—' : rrate + '%'}</td>`
       + `<td class="n">${ng.length}</td><td class="n" title="${E(ng.filter(x => ((x.복기 || {})[k] || {}).k === '실수').map(x => x.이름 + ': ' + (((x.복기 || {})[k] || {}).r || '') + (((x.복기 || {})[k] || {}).m ? ' — ' + x.복기[k].m : '')).join('\n'))}">${ng.filter(x => ((x.복기 || {})[k] || {}).k === '실수').length || ''}</td><td class="n">${ok.filter(x => c(x) === '찍음').length}</td><td class="n">${ok.filter(x => c(x) === '애매').length}</td>`
       + `<td class="n">${sub.filter(x => c(x) === '안풂').length}</td><td class="dim">${E(ng.map(x => x.이름).join(', '))}</td></tr>`;
   });
