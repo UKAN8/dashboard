@@ -2484,12 +2484,26 @@ const FIX={tok:'',list:[],pen:1};
 async function mountFix(tok){
   const host=$('fix-host'); if(!host||!tok) return;
   FIX.tok=tok;
-  try{ const r=await sb.rpc('hw_fix_get',{tok}); FIX.list=(r&&!r.error&&Array.isArray(r.data))?r.data:[]; }catch(e){ FIX.list=[]; }   // 함수가 없으면(v62 전) 조용히 안 그린다
+  try{ const r=await sb.rpc('hw_fix_get',{tok}); FIX.off=!!(r&&r.error); FIX.list=(r&&!r.error&&Array.isArray(r.data))?r.data:[]; }catch(e){ FIX.list=[]; }   // 함수가 없으면(v62 전) 조용히 안 그린다
   drawFix();
-  if(FIX.list.length&&!FIX.timer) FIX.timer=setInterval(async()=>{   // 조교가 [완료]를 누르면 닫혀야 하니 1분마다 다시 본다
-    if(document.visibilityState!=='visible') return;
-    try{ const r=await sb.rpc('hw_fix_get',{tok:FIX.tok}); if(r&&!r.error&&Array.isArray(r.data)){ FIX.list=r.data; drawFix(); } }catch(e){}
-  },60000);
+  if(FIX.off) return;
+  /* (1116 유강 "보완체크를 학생들이 인지하고 체크하도록") 전엔 처음 열 때 비어 있으면 다시 안 봤다 →
+   * 포털을 켜 둔 채 클리닉에 와서 도착하면 새로고침 전까지 카드가 안 떴다. 이제 늘 1분마다 + 화면으로 돌아올 때 바로 다시 본다.
+   * 조교가 [완료]를 누르면 닫히는 것도 같은 확인으로. 예약앱 '보완 체크 하러 가기'는 ?t=..#fix 로 와서 바로 그 카드로 간다. */
+  if(!FIX.timer){
+    FIX.timer=setInterval(()=>{ if(document.visibilityState==='visible') fixPull(); },60000);
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fixPull(); });
+  }
+  if(location.hash==='#fix') setTimeout(fixJump,400);
+}
+async function fixPull(){
+  try{ const r=await sb.rpc('hw_fix_get',{tok:FIX.tok}); if(r&&!r.error&&Array.isArray(r.data)){
+    if(JSON.stringify(r.data)!==JSON.stringify(FIX.list)){ FIX.list=r.data; drawFix(); } } }catch(e){}
+}
+function fixJump(){
+  if(!(FIX.list||[]).length) return;
+  try{ goTab('과제',true); }catch(e){}
+  const c=$('fix-host'); if(c) c.scrollIntoView({block:'start'});
 }
 function drawFix(){
   const host=$('fix-host'); if(!host) return;
