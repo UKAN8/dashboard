@@ -1596,7 +1596,7 @@ function tabSync(){
   const em=$('hw-empty'); if(em) em.style.display=((HW.list||[]).length||fix||(MQ.rows||[]).length)?'none':'';
   const box=$('today-hw'); if(!box) return;
   const dueT=d=>d?`마감 ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
-  const nm=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+  const nm=a=>a.개별&&a.판?`개별과제 No.${a.판}`:a.개별?(a.제목||'과제'):`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
   const R=[];
   if(ans) R.push(`<button type="button" class="tdh ans" data-tgo="ans"><span class="tt"><b>${IC.mail} 조교쌤 답 ${ans}개가 왔어요</b><small>손풀이 보고 핵심 한 줄 적기</small></span><span class="go">확인 →</span></button>`);
   if(fix) R.push(`<button type="button" class="tdh fix" data-tgo="fix"><span class="tt"><b>클리닉 보완 체크</b><small>못 한 문항 체크하기</small></span><span class="go">체크 →</span></button>`);
@@ -2094,7 +2094,7 @@ async function mountHW(tok){
   drawHW();
 }
 // (1112 유강 "다른 과제에 입력하는 경우가 많다") 과제 이름 · 처음 체크 확인 · 지우기 · 옮기기
-const hwName=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+const hwName=a=>a.개별&&a.판?`개별과제 No.${a.판}`:a.개별?(a.제목||'과제'):`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
 const hwOkd=a=>{ if(Object.keys(a.체크||{}).length) return true; try{ return localStorage.getItem('hwok:'+a.id)==='1'; }catch(e){ return false; } };
 function hwSheet(html,wire){
   const old=document.getElementById('asksheet'); if(old) old.remove();
@@ -2106,7 +2106,7 @@ function hwSheet(html,wire){
   const err=m=>{ const e=d.querySelector('#hs-err'); e.textContent=m||''; e.style.display=m?'':'none'; };
   wire(d,close,err);
 }
-const hwBox=a=>`<div class="hwbox"><b>${E(hwName(a))}</b><small>${E([a.개별?'':hwRange(a),a.제목].filter(Boolean).join(' · '))}</small></div>`;
+const hwBox=a=>`<div class="hwbox"><b>${E(hwName(a))}</b><small>${E([a.개별?'':hwRange(a),a.개별&&!a.판?'':a.제목].filter(Boolean).join(' · '))}</small></div>`;  /* (1116) 교과서·학교프린트 과제 = 학생별·판 없음 → 이름이 제목 */
 function hwConfirm(a,go){
   hwSheet(`<div class="ttl">이 과제에 체크하는 거 맞나요?</div>
     <div class="sub">지금 보고 있는 종이 맨 위 이름이 아래와 같은지 확인해 주세요.</div>${hwBox(a)}
@@ -2237,7 +2237,7 @@ function drawHW(){
       +`<span class="dim"> ${a.개별?'':E(hwRange(a))+' · '}${done}/${n}</span></span>`
       +`<a class="n ${all?'good':lock?'dim':'mid'}" href="#" style="text-decoration:none;font-weight:600">${all?'완료':lock?'마감':done?'이어서 →':'체크 →'}</a></div>`
       +`<div class="sub2">${E([a.제목,dueT.replace(/^ · /,'')+(lock?' (지남)':'')+(a.연장&&!lock?' (연장)':'')].filter(Boolean).join(' · '))}</div>`
-      +(a.개별?`<div class="sub2">받은 종이 맨 위의 No. 번호가 같은지 먼저 확인하세요${pans.length?` · <a href="#" data-pans="${ai}" style="text-decoration:underline">번호가 달라요</a>`:''}</div>`+(pans.length?`<div class="fold" id="hw-p${ai}"><div class="hint">내 종이에 찍힌 번호를 고르세요.</div><div class="acts">${pans.map(x=>`<button type="button" data-pick="${x.id}">No.${x.판}${x.체크?` (체크 ${x.체크})`:''}</button>`).join('')}</div></div>`:''):'')
+      +(a.개별&&a.판?`<div class="sub2">받은 종이 맨 위의 No. 번호가 같은지 먼저 확인하세요${pans.length?` · <a href="#" data-pans="${ai}" style="text-decoration:underline">번호가 달라요</a>`:''}</div>`+(pans.length?`<div class="fold" id="hw-p${ai}"><div class="hint">내 종이에 찍힌 번호를 고르세요.</div><div class="acts">${pans.map(x=>`<button type="button" data-pick="${x.id}">No.${x.판}${x.체크?` (체크 ${x.체크})`:''}</button>`).join('')}</div></div>`:''):'')
       +`<div class="bar"><i style="width:${n?Math.round(100*done/n):0}%"></i></div>`
       +`<div class="fold" id="hw-f${ai}">`
       +(lock?`<div class="hint">마감이 지나서 체크가 잠겼어요. 개별과제는 마감 때까지의 체크로 만들어져요.</div>`:`<div class="pal">${HW_ST.slice(1).map((t,i)=>`<button type="button" data-pen="${i+1}" class="${HW.pen===i+1?'on':''}"><i class="k${i+1}"></i>${t[0]} ${t[1]}</button>`).join('')}</div>`
@@ -2618,7 +2618,7 @@ function ansList(){
 function ansCard(){
   const L=ansList(); if(!L.length) return '';
   L.forEach(({q})=>{ if(q.열람||!hwFiles(q.id).length) HW.seen[q.id]=true; });
-  const name=a=>a.개별?`개별과제 No.${a.판}`:`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
+  const name=a=>a.개별&&a.판?`개별과제 No.${a.판}`:a.개별?(a.제목||'과제'):`써킷 ${a.단원명||a.단원코드} ${a.DAY?a.DAY:a.라운드+'라운드'}`;
   // (1109 유강 "너무 크게 펼쳐져 있다") 8개가 사진째 다 펼쳐져 과제 카드가 한참 밑으로 밀렸다.
   //   → 한 줄 목록 + 하나만 펼침. 펼친 상태는 HTML 에 넣지 않는다(넣으면 접고 펴기마다 통째 다시 그려 사진이 재로딩·출렁임) — ansOpenApply 가 붙인다.
   return `<div class="card hw" id="ans-card" style="border-color:rgba(120,170,255,.6);background:rgba(120,170,255,.07)">`
