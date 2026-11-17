@@ -2064,7 +2064,7 @@ function drawLib(host,opt){
       if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">${IC.book}강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
         +`<div class="rp"><a class="${r.g.시험?'':'no'}" href="${r.g.시험?LIB_URL+r.g.시험:'#'}" target="_blank" rel="noopener">시험지 PDF</a>`
-        +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div></div>`;}).join(''));
+        +`<a class="${r.g.해설?'':'no'}" href="${r.g.해설?LIB_URL+r.g.해설:'#'}" target="_blank" rel="noopener">손풀이 해설 PDF</a>${vbtn}</div>${vix}</div>`;   /* (1117) 기출·모의 해설 영상 색인 패널 — 빠져 있어 버튼이 안 눌리던 것 */}).join(''));
     if(rows.length>n) H.push(`<button type="button" class="lib-more">더 보기 (${rows.length-n}개 남음)</button>`);
   }
   H.push(`<div class="note">${E(ban)} 수업 영상 · 수업교재 · 써킷 과제 · 내 개별과제 · 수업에서 본 기출테스트 시험지·해설이 올라옵니다. 영상은 유튜브 '일부공개'라 이 링크로만 열립니다 — 공유하지 마세요.</div>`);
