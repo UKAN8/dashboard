@@ -106,7 +106,7 @@ function tex(s){ return E(s).replace(/\\\(([\s\S]+?)\\\)/g,(m,x)=>{ try{ return 
 const pct=(a,b)=>b?Math.round(a/b*100):null;
 const fmtT=t=>{ if(!t) return ''; const d=new Date(new Date(t).getTime()+9*3600e3); const z=n=>String(n).padStart(2,'0'); return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+z(d.getUTCHours())+':'+z(d.getUTCMinutes()); };
 const mathCls=s=>{ const p=String(s||'').split(',').map(x=>x.trim()).filter(Boolean); return p.find(x=>!/영어|교재비/.test(x))||p[0]||''; };
-let D=null, EX={}, ROWS=[], TAB='stu', FX='', SORT={}, sureGate=false;
+let D=null, EX={}, ROWS=[], TAB='slot', FX='', SORT={}, sureGate=false;
 
 /* ── 계산: 응시 한 건 → 지표 ── */
 function calc(r,a){
@@ -270,12 +270,94 @@ function vRoster(){
   const rs=(D.명단||[]);
   COLS.ro=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b>'},{h:'학교',v:r=>r.학교},{h:'중등 반',l:1,v:r=>mathCls(r.소속)},
     {h:'응시',v:r=>(r.응시||[]).map(a=>(EX[a.시험]||{}).형).join(' '),f:r=>(r.응시||[]).length?(r.응시||[]).map(a=>'<span class="tag t-deep">'+E((EX[a.시험]||{}).형)+' '+a.점수+'</span>').join(' '):'<span class="tag t-dim">미응시</span>'},
-    {h:'학생 번호',v:r=>r.학생폰||''},{h:'학부모 번호',l:1,v:r=>r.부모폰||''},
+    {h:'회차',ns:1,v:r=>0,f:r=>'<select data-asg2="'+r.id+'" style="padding:3px 5px">'+slotOpts(r.회차,true)+'</select>'},{h:'알림',v:r=>(r.알림||{}).결과||'',f:alimTag},{h:'학생 번호',v:r=>r.학생폰||''},{h:'학부모 번호',l:1,v:r=>r.부모폰||''},
     {h:'명단',v:r=>r.현장등록?'확인 필요':'',f:r=>r.현장등록?'<span class="tag t-warn">확인 필요</span> <button data-ok="'+r.id+'">확인함</button>':''},
     {h:'메모',l:1,v:r=>r.메모||'',f:r=>'<span class="dim">'+E(r.메모||'')+'</span>'}];
   const nn=rs.filter(r=>!(r.응시||[]).length).length;
   return '<div class="kpi"><div><b>'+rs.length+'</b><span>명단</span></div><div><b>'+(rs.length-nn)+'</b><span>응시</span></div><div><b class="dim">'+nn+'</b><span>미응시</span></div>'
     +'<div><b class="warn">'+rs.filter(r=>r.현장등록).length+'</b><span>현장 등록·번호 입력(확인 필요)</span></div></div>'+table('ro',COLS.ro,rs);
+}
+
+
+/* ── 탭: 회차 (1117 유강 — 사전 예약제 · 시험 끝나면 자동으로 입력 열고 알림톡 · 일정 밖 신규생은 개별 회차) ── */
+const KST=t=>new Date(new Date(t).getTime()+9*3600e3);
+const z2=n=>String(n).padStart(2,'0');
+const hm=t=>{ const d=KST(t); return z2(d.getUTCHours())+':'+z2(d.getUTCMinutes()); };
+const addMin=(t,m)=>new Date(new Date(t).getTime()+m*60e3).toISOString();
+function slotState(sl){
+  const n=Date.now(), st=new Date(sl.시작).getTime(), end=st+sl.시험분*60e3, inEnd=end+sl.입력분*60e3;
+  if(sl.열림시각){ const cl=sl.닫힘?new Date(sl.닫힘).getTime():inEnd; return n<cl?['on','입력 중 · '+hm(cl)+'까지']:['done','끝']; }
+  if(n<st) return ['wait','예정 · '+hm(end)+'에 '+(sl.자동?'자동으로 열림':'수동')];
+  if(n<end) return ['test','시험 중 · '+hm(end)+'에 '+(sl.자동?'자동으로 열림':'수동')];
+  if(n<inEnd) return [sl.자동?'test':'wait', sl.자동?'곧 열림(1분 안)':'수동 — [지금 열고 알림]을 눌러 주세요'];
+  return ['miss','안 열림(지남)'];
+}
+const STC={on:'t-deep',done:'t-dim',wait:'t-base',test:'t-warn',miss:'t-bad'};
+function alimTag(r){ const a=r.알림; if(!a) return '<span class="dim">—</span>';
+  const res=String(a.결과||''); const c=res.startsWith('성공')||res.startsWith('건너뜀')?'t-deep':res.startsWith('번호')?'t-warn':'t-bad';
+  return '<span class="tag '+c+'" title="'+E(res+' · '+fmtT(a.시각))+'">'+E(res.startsWith('성공(문자)')?'문자 감':res.startsWith('성공')?'알림톡 감':res.startsWith('번호')?'번호 없음':res.startsWith('건너뜀')?'보냄':'실패')+'</span>'; }
+function slotOpts(sel,withNone){ return (withNone?'<option value="">회차 미정</option>':'')+(D.회차||[]).filter(sl=>!sl.열림시각||sl.id===sel||slotState(sl)[0]==='on').map(sl=>'<option value="'+sl.id+'"'+(sl.id===sel?' selected':'')+'>'+E(sl.이름)+'</option>').join(''); }
+function vSlot(){
+  const exs=D.시험||[], ros=D.명단||[], sls=D.회차||[];
+  const today=(()=>{const d=KST(Date.now());return d.getUTCFullYear()+'-'+z2(d.getUTCMonth()+1)+'-'+z2(d.getUTCDate());})();
+  const exBox=cls=>exs.map(e=>'<label><input type="checkbox" class="'+cls+'" value="'+E(e.id)+'" checked>'+E(e.형)+'</label>').join('');
+  let h='<div class="card"><b>회차 추가</b> <span class="dim">시험이 끝나는 시각(시작+시험 시간)에 학생 입력이 자동으로 열리고, 그 회차 학생에게 개인 링크 알림톡이 가요.</span>'
+   +'<div class="gate" style="margin-top:10px"><input type="date" id="sd" value="'+today+'"><input type="time" id="st" value="16:00" step="600">'+exBox('sex')
+   +'<label>시험 <input type="text" id="sm" value="50" size="3">분</label><label>입력 <input type="text" id="si" value="120" size="3">분</label>'
+   +'<input type="text" id="smemo" placeholder="메모 (선택)" size="14"><span style="flex:1"></span><button class="pri" id="sadd">회차 추가</button></div></div>';
+  h+='<div class="grid2"><div class="card"><b>학생 추가 (예약)</b> <span class="dim">명단에 없는 신규생</span>'
+   +'<div class="gate" style="margin-top:10px"><input type="text" id="an" placeholder="이름" size="7"><input type="text" id="as" placeholder="학교" size="7">'
+   +'<input type="text" id="ap" placeholder="학생 번호" size="13"><input type="text" id="aq" placeholder="학부모 번호" size="13">'
+   +'<select id="aslot">'+slotOpts(null,true)+'</select><button class="pri" id="aadd">추가</button></div></div>'
+   +'<div class="card"><b>개별 응시 (일정 밖)</b> <span class="dim">그 학생만의 회차를 만들어요. 명단에 없으면 왼쪽에서 먼저 추가</span>'
+   +'<div class="gate" style="margin-top:10px"><select id="wr"><option value="">학생 고르기</option>'+ros.slice().sort((a,b)=>a.이름.localeCompare(b.이름,'ko')).map(r=>'<option value="'+r.id+'">'+E(r.이름)+(r.학교?' · '+E(r.학교):'')+'</option>').join('')+'</select>'
+   +'<select id="wwhen"><option value="now">지금 시작</option><option value="at">시각 지정</option></select><input type="time" id="wt" step="600" style="display:none">'
+   +exBox('wex')+'<button class="pri" id="wadd">만들기</button></div></div></div>';
+  const un=ros.filter(r=>!r.회차&&!(r.응시||[]).length);
+  if(un.length) h+='<div class="card"><b>회차 미정</b> <span class="dim">'+un.length+'명 — 예약받은 회차로 배정해 주세요</span><div class="gate" style="margin-top:8px">'
+     +un.map(r=>'<label style="background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:9px;padding:3px 4px 3px 9px">'+E(r.이름)+'<select data-asg="'+r.id+'" style="padding:3px 5px">'+slotOpts(null,true)+'</select></label>').join('')+'</div></div>';
+  if(!sls.length) return h+'<div class="card dim">회차가 없어요.</div>';
+  sls.forEach(sl=>{
+    const [k,txt]=slotState(sl), rs=ros.filter(r=>r.회차===sl.id), sub=rs.filter(r=>(r.응시||[]).length).length;
+    const ok=rs.filter(r=>r.알림&&/^(성공|건너뜀)/.test(r.알림.결과||'')).length, job=(sl.잡||[])[0];
+    COLS['sl'+sl.id]=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b>'+(r.현장등록?' <span class="tag t-warn">현장</span>':'')},{h:'학교',v:r=>r.학교||''},
+      {h:'연락',l:1,v:r=>r.학생폰||r.부모폰||'',f:r=>'<span class="dim">'+E(r.학생폰||(r.부모폰?'학부모 '+String(r.부모폰).replace(/\(.\)/g,'').split(',')[0]:'없음'))+'</span>'},
+      {h:'제출',v:r=>(r.응시||[]).map(a=>(EX[a.시험]||{}).형+' '+a.점수).join(' '),f:r=>(r.응시||[]).length?(r.응시||[]).map(a=>'<span class="tag t-deep">'+E((EX[a.시험]||{}).형)+' '+a.점수+'</span>').join(' '):'<span class="dim">—</span>'},
+      {h:'알림',v:r=>(r.알림||{}).결과||'',f:alimTag},
+      {h:'회차 옮기기',ns:1,v:r=>0,f:r=>'<select data-asg="'+r.id+'" style="padding:3px 5px">'+slotOpts(sl.id,true)+'</select>'},
+      {h:'',ns:1,v:r=>0,f:r=>'<button data-link="'+r.id+'">링크 복사</button>'+(sl.열림시각?' <button data-rn="'+r.id+'">알림 다시</button>':'')}];
+    h+='<div class="card"><div class="gate"><b style="font-size:15px">'+E(sl.이름)+'</b><span class="tag '+STC[k]+'">'+E(txt)+'</span>'
+      +'<span class="dim">'+exs.filter(e=>sl.시험.includes(e.id)).map(e=>e.형).join('·')+' · 시험 '+sl.시험분+'분 · 입력 '+sl.입력분+'분 · 배정 '+rs.length+' · 제출 '+sub+(sl.열림시각?' · 알림 '+ok+'/'+rs.length:'')+'</span>'
+      +(job&&job.상태!=='완료'?'<span class="tag '+(job.상태==='실패'?'t-bad':'t-warn')+'" title="'+E(job.메시지||'')+'">알림 '+E(job.상태)+'</span>':'')
+      +'<span style="flex:1"></span>'+(!sl.열림시각?'<button data-open-slot="'+sl.id+'">지금 열고 알림</button> <button data-del-slot="'+sl.id+'">'+(rs.length?'삭제(배정 '+rs.length+'명 풀림)':'삭제')+'</button>':'')+'</div>'
+      +(rs.length?'<div style="margin-top:10px">'+table('sl'+sl.id,COLS['sl'+sl.id],rs)+'</div>':'<div class="dim" style="margin-top:6px">배정된 학생 없음</div>')+'</div>';
+  });
+  return h;
+}
+async function call(fn,args,okMsg){ const {data,error}=await sb.rpc(fn,args); if(error||!data||data.오류){ alert((data&&data.오류)||(error&&error.message)||'실패'); return null; } if(okMsg) toast(okMsg); return data; }
+function toast(t){ let el=document.getElementById('toast'); if(!el){ el=document.createElement('div'); el.id='toast'; el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--bd);border-radius:10px;padding:9px 16px;z-index:20'; document.body.appendChild(el); } el.textContent=t; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',2500); }
+const pickEx=cls=>[...document.querySelectorAll('.'+cls+':checked')].map(x=>x.value);
+function wireSlot(){
+  const $=id=>document.getElementById(id);
+  if($('sadd')) $('sadd').onclick=async()=>{ const d=$('sd').value, t=$('st').value; if(!d||!t) return alert('날짜·시각을 넣어 주세요');
+    if(await call('staff_lt_slot_save',{p_id:null,p_start:d+'T'+t+':00+09:00',p_exams:pickEx('sex'),p_test:+$('sm').value||50,p_input:+$('si').value||120,p_memo:$('smemo').value,p_auto:true},'회차를 추가했어요')) load(); };
+  if($('aadd')) $('aadd').onclick=async()=>{ const sl=$('aslot').value;
+    if(await call('staff_lt_add',{p_name:$('an').value,p_school:$('as').value,p_stu:$('ap').value,p_par:$('aq').value,p_group:null,p_slot:sl?+sl:null,p_memo:'결과 페이지에서 추가'},'학생을 추가했어요')) load(); };
+  if($('wwhen')) $('wwhen').onchange=()=>{ $('wt').style.display=$('wwhen').value==='at'?'':'none'; };
+  if($('wadd')) $('wadd').onclick=async()=>{ const rid=+$('wr').value; if(!rid) return alert('학생을 골라 주세요');
+    const r=(D.명단||[]).find(x=>x.id===rid); let start=new Date().toISOString();
+    if($('wwhen').value==='at'){ const t=$('wt').value; if(!t) return alert('시각을 넣어 주세요'); const d=KST(Date.now()); start=d.getUTCFullYear()+'-'+z2(d.getUTCMonth()+1)+'-'+z2(d.getUTCDate())+'T'+t+':00+09:00'; }
+    const s1=await call('staff_lt_slot_save',{p_id:null,p_start:start,p_exams:pickEx('wex'),p_test:50,p_input:120,p_memo:'개별 · '+r.이름,p_auto:true}); if(!s1) return;
+    if(await call('staff_lt_assign',{p_rid:rid,p_slot:s1.id},r.이름+' 개별 회차를 만들었어요 — 50분 뒤 자동으로 열고 알림')) load(); };
+  app.querySelectorAll('[data-asg]').forEach(el=>el.onchange=async ev=>{ ev.stopPropagation(); const v=el.value;
+    const d=await call('staff_lt_assign',{p_rid:+el.dataset.asg,p_slot:v?+v:null}, v?'배정했어요':'회차를 비웠어요'); if(d){ if(d.알림) toast('이미 열린 회차라 그 학생에게 알림을 보냈어요'); load(); } });
+  app.querySelectorAll('[data-link]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation(); const d=await call('staff_lt_link',{p_rid:+b.dataset.link}); if(!d) return;
+    try{ await navigator.clipboard.writeText(d.주소); toast('개인 링크를 복사했어요'); }catch(e){ prompt('개인 링크', d.주소); } });
+  app.querySelectorAll('[data-rn]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation(); if(await call('staff_lt_renotify',{p_rid:+b.dataset.rn},'알림을 다시 보내요(1~2분)')) load(); });
+  app.querySelectorAll('[data-open-slot]').forEach(b=>b.onclick=async()=>{ if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.className='sure'; b.textContent='지금 열까요? 한 번 더'; return; }
+    if(await call('staff_lt_slot_open',{p_id:+b.dataset.openSlot},'입력을 열고 알림을 보내요')) load(); });
+  app.querySelectorAll('[data-del-slot]').forEach(b=>b.onclick=async()=>{ if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.className='sure'; b.textContent='정말 지울까요? 한 번 더'; return; }
+    if(await call('staff_lt_slot_del',{p_id:+b.dataset.delSlot},'회차를 지웠어요')) load(); });
 }
 
 /* ── 상담 카드 ── */
@@ -339,7 +421,7 @@ function gateBox(){
   if(s) return '<div class="card gate"><span class="st on">● 학생 입력 열림</span><b>'+E(s.이름)+'</b><span class="dim">'+ex.filter(e=>s.시험.includes(e.id)).map(e=>e.형).join('·')+' · '+fmtT(s.닫힘)+'까지 · 점수 '+(s.점수공개?'보여 줌':'숨김')+'</span>'
     +'<span class="dim">학생 주소 <b class="link">ukan8.github.io/dashboard/lt</b></span><span style="flex:1"></span><button id="gclose">'+(sureGate?'정말 닫을까요? 한 번 더':'입력 닫기')+'</button></div>';
   const d=new Date(Date.now()+9*3600e3), md=(d.getUTCMonth()+1)+'/'+d.getUTCDate();
-  return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
+  return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><span class="dim">회차 없이 수동으로 열 때</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
     +ex.map(e=>'<label><input type="checkbox" class="gex" value="'+E(e.id)+'" checked>'+E(e.형)+'</label>').join('')
     +'<select id="gmin"><option value="60">1시간</option><option value="120" selected>2시간</option><option value="180">3시간</option><option value="300">5시간</option></select>'
     +'<label><input type="checkbox" id="gshow" checked>제출 직후 점수 보여 주기</label><span style="flex:1"></span><button class="pri" id="gopen">학생 입력 열기</button></div>';
@@ -356,11 +438,11 @@ async function gate(open){
 /* ── 그리기 ── */
 function draw(){
   const exs=D.시험||[];
-  let body = TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : vRoster();
+  let body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : vRoster();
   app.innerHTML='<div class="top"><div><div class="brand">수학은유강 · 필탑 고등수학과</div><h1>예비고1 레벨테스트 결과</h1></div><span class="sp"></span>'
     +'<button id="rl">새로고침</button><button id="csv">CSV 받기</button></div>'
     +gateBox()
-    +'<div class="flt"><div class="tabs">'+[['stu','학생'],['item','문항 분석'],['heat','레벨·단원'],['ro','명단']].map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('')+'</div>'
+    +'<div class="flt"><div class="tabs">'+[['slot','회차'],['stu','학생'],['item','문항 분석'],['heat','레벨·단원'],['ro','명단']].map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('')+'</div>'
     +'<span class="sp" style="flex:1"></span><select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select></div>'
     +body
     +'<div class="card dim" style="margin-top:18px;font-size:12.5px">판정 기준 — '+exs.map(e=>'<b>'+E(e.형)+'</b> '+E(((e.판정||{}).문구||[]).join(' / '))).join('<br>')+'<br>'+E(((exs[0]||{}).판정||{}).주석||'')+'</div>';
@@ -368,8 +450,10 @@ function draw(){
   document.getElementById('fx').onchange=ev=>{FX=ev.target.value;draw();};
   app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();});
   app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=()=>openCard(tr.dataset.open));
+  app.querySelectorAll('[data-asg2]').forEach(el=>el.onchange=async()=>{ const v=el.value; const d=await call('staff_lt_assign',{p_rid:+el.dataset.asg2,p_slot:v?+v:null},v?'배정했어요':'회차를 비웠어요'); if(d){ if(d.알림) toast('이미 열린 회차라 그 학생에게 알림을 보냈어요'); load(); } });
   app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation(); const r=(D.명단||[]).find(x=>String(x.id)===b.dataset.ok);
     const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
+  if(TAB==='slot') wireSlot();
   const go=document.getElementById('gopen'); if(go) go.onclick=()=>gate(true);
   const gc=document.getElementById('gclose'); if(gc) gc.onclick=()=>{ if(!sureGate){ sureGate=true; draw(); return; } gate(false); };
 }

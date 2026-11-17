@@ -120,6 +120,8 @@ const SV=[
  {k:'시간',t:'오늘 시험 시간은 어땠어요?',o:['시간이 남았어요','딱 맞았어요','모자랐어요'],need:1,w:1},
  {k:'체감',t:'오늘 시험, 느낌은요?',o:['쉬웠어요','적당했어요','어려웠어요'],need:1,w:1},
 ];
+// (1117) 알림톡 개인 링크 ?k=<토큰> — 누르면 이름·번호 없이 바로 시작
+(function(){ try{ const k=new URLSearchParams(location.search).get('k'); if(k&&/^[0-9a-f]{16,64}$/.test(k)){ localStorage.setItem('lt:tok',JSON.stringify(k)); history.replaceState(null,'',location.pathname); } }catch(e){} })();
 let TOK=LS.get('lt:tok',''), ME=null, X=null, A={}, S={}, KEY='', sure=false, busy=false;
 let RV={}, RR=null, RKEY='';
 function say(t,s,btn){ bar.hidden=true; app.innerHTML='<div class="msg"><b>'+E(t)+'</b>'+E(s||'')+(btn||'')+'</div>'; }
