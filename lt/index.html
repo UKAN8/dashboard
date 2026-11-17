@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<!-- 레벨테스트 답 입력 (1117 유강) — 정본. build_lt.py 가 /dashboard/lt/ 로 배포. 모의테스트(_mock/mock.html) 화면 결을 그대로 쓴다 -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>레벨테스트 답 입력 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="수학은유강 — 예비고1 레벨테스트 답 입력">
+<meta property="og:description" content="시험 본 학생만 들어와 주세요.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.08);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0; --good:#c8f0da; --warn:#ffd59a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font:15px/1.5 'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;
+ padding:16px clamp(12px,4vw,24px) calc(130px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto}
+.brand{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;color:var(--acc);font-size:15px}
+h1{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:6px 0 2px}
+.sub{color:var(--tx2);font-size:13px}
+.note{color:var(--dim);font-size:12.5px;line-height:1.6;margin:10px 0 14px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.note b{color:var(--tx2)}
+.q{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:11px 12px;margin-bottom:9px;scroll-margin-top:12px}
+.q.done{border-color:rgba(200,240,218,.3)}
+.q.miss{border-color:rgba(245,160,160,.7);background:rgba(245,160,160,.06)}
+.hd{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.no{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:17px;color:var(--acc);min-width:36px}
+.pt{color:var(--dim);font-size:12px}
+.tag{font-size:11px;color:var(--warn);border:1px solid rgba(255,213,154,.35);border-radius:8px;padding:0 7px}
+.lab{font-size:11.5px;color:var(--dim);margin:2px 0 5px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.b{flex:1 1 0;min-width:46px;font:inherit;font-size:15px;color:var(--tx2);background:rgba(255,255,255,.035);
+ border:1px solid var(--bd);border-radius:10px;padding:10px 4px;cursor:pointer;text-align:center}
+.b.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.6);color:#ffe9e9;font-weight:700}
+.row.cf .b{font-size:14px}
+.row.cf .b.on{background:rgba(200,240,218,.14);border-color:rgba(200,240,218,.55);color:var(--good)}
+.row.cf .b.skip.on{background:rgba(255,213,154,.12);border-color:rgba(255,213,154,.5);color:var(--warn)}
+.row.pick{flex-direction:column}
+.row.pick .b{text-align:left;padding:10px 12px;flex:none}
+.row.dis{opacity:.35;pointer-events:none}
+@media (hover:hover) and (pointer:fine){ .b:hover{border-color:rgba(245,160,160,.4);color:var(--tx)} }
+.num{display:flex;gap:6px}
+.num input{flex:1 1 auto;min-width:0;font:inherit;font-size:17px;color:var(--tx);background:rgba(255,255,255,.04);
+ border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
+.num input:focus{outline:none;border-color:rgba(245,160,160,.6)}
+.num .b{flex:0 0 52px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(10,10,15,.94);backdrop-filter:blur(8px);
+ border-top:1px solid var(--bd);padding:10px clamp(12px,4vw,24px) calc(10px + env(safe-area-inset-bottom))}
+.bar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.bar .cnt{font-size:13px;color:var(--tx2);flex:1}
+.bar .cnt b{color:var(--tx)}
+.go{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;
+ background:var(--acc);color:#2a0d0d}
+.go.wait{background:rgba(255,255,255,.08);color:var(--tx2)}
+.go.sure{background:#ff8f8f}
+.res{text-align:center;padding:28px 12px 8px}
+.res .sc{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:52px;line-height:1.1}
+.res .sc small{font-size:20px;color:var(--dim)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 14px;margin:12px 0}
+.box .t{font-size:12.5px;color:var(--dim);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:15px;padding:4px 11px;border-radius:9px;
+ background:rgba(245,160,160,.13);color:#ffd9d9}
+.chips.out span{background:rgba(255,213,154,.1);color:var(--warn)}
+.msg{color:var(--tx2);text-align:center;padding:60px 10px}
+.msg b{display:block;color:var(--tx);font-size:17px;margin-bottom:6px}
+.err{color:#ffb0b0;font-size:13px;margin-top:6px;text-align:center}
+.katex{font-size:1.04em}
+.rv .me{color:var(--tx2);font-size:13.5px;margin-left:auto}
+.rv .me b{color:var(--tx)}
+.rv .row.k .b.on{background:rgba(255,213,154,.14);border-color:rgba(255,213,154,.55);color:var(--warn)}
+.rv .row.r .b{flex:1 1 40%;font-size:13.5px;padding:9px 6px}
+.rv .row.r .b.on{background:rgba(200,240,218,.12);border-color:rgba(200,240,218,.5);color:var(--good);font-weight:600}
+.rv input.memo{width:100%;font:inherit;font-size:14px;color:var(--tx);background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
+.rv input.memo:focus{outline:none;border-color:rgba(245,160,160,.6)}
+</style></head><body>
+<style>
+.f{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.f label{font-size:12.5px;color:var(--tx2)}
+.f input{font:inherit;font-size:17px;color:var(--tx);background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;width:100%}
+.f input:focus{outline:none;border-color:rgba(245,160,160,.6)}
+.big{width:100%;font:inherit;font-weight:700;font-size:16px;border:0;border-radius:12px;padding:14px;cursor:pointer;background:var(--acc);color:#2a0d0d;margin-top:6px}
+.big.sub{background:rgba(255,255,255,.06);color:var(--tx2);font-weight:600}
+.link{background:none;border:0;color:var(--dim);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:8px 0;display:block;margin:6px auto 0}
+.ex{display:block;width:100%;text-align:left;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer}
+.ex .t{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:19px;color:var(--acc)}
+.ex .s{font-size:13px;color:var(--tx2);margin-top:2px}
+.ex .st{float:right;font-size:12px;color:var(--good);border:1px solid rgba(200,240,218,.35);border-radius:8px;padding:1px 8px}
+.ex .st.go2{color:var(--warn);border-color:rgba(255,213,154,.4)}
+.sv h2{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:17px;margin:22px 0 4px}
+.sv .q .t2{font-size:14.5px;margin-bottom:8px}
+.sv .q .t2 small{color:var(--dim);font-size:12px}
+.sv .row .b{font-size:13.5px;padding:9px 4px}
+.sv .row.w .b{flex:1 1 30%}
+.sv input.memo{width:100%;font:inherit;font-size:14px;color:var(--tx);background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;padding:9px 10px}
+.row.ch .b{font-size:21px;padding:7px 4px;line-height:1.2}
+.sv .row.w2 .b{flex:1 1 40%}
+.who{font-size:12.5px;color:var(--dim);text-align:right;margin-top:-18px}
+</style>
+<main id="app"><div class="msg">불러오는 중…</div></main>
+<div class="bar" id="bar" hidden><div class="in"><div class="cnt" id="cnt"></div><button class="go wait" id="go">제출</button></div></div>
+<script>
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb=supabase.createClient(SB_URL,SB_ANON,{auth:{persistSession:false}});
+const app=document.getElementById('app'), bar=document.getElementById('bar'), cnt=document.getElementById('cnt'), go=document.getElementById('go');
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NUM='①②③④⑤';
+const CF=[['확실','확실해요'],['애매','애매해요'],['찍음','찍었어요'],['안풂','안 풀었어요']];
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}, del(k){try{localStorage.removeItem(k);}catch(e){}}};
+// 설문 — 반 배정·상담에 쓰는 학습 이력 (1117)
+const SV=[
+ {k:'선행',t:'공통수학1(고1 1학기) 선행, 어디까지 했어요?',o:['안 했어요','1회독 하는 중','1회독 끝냈어요','2회독 이상'],need:1,w2:1},
+ {k:'단원',t:'마지막으로 배운 단원은?',o:['다항식의 연산','나머지정리','인수분해','복소수','이차방정식','이차방정식과 이차함수','여러 가지 방정식','여러 가지 부등식','공통수학2까지'],need:1,show:s=>s.선행&&s.선행!=='안 했어요',col:1},
+ {k:'방식',t:'지금까지 수학은 어떻게 공부했어요?',sm:'여러 개 골라도 돼요',o:['학원','과외','인강','혼자'],multi:1},
+ {k:'시간',t:'오늘 시험 시간은 어땠어요?',o:['시간이 남았어요','딱 맞았어요','모자랐어요'],need:1,w:1},
+ {k:'체감',t:'오늘 시험, 느낌은요?',o:['쉬웠어요','적당했어요','어려웠어요'],need:1,w:1},
+];
+let TOK=LS.get('lt:tok',''), ME=null, X=null, A={}, S={}, KEY='', sure=false, busy=false;
+let RV={}, RR=null, RKEY='';
+function say(t,s,btn){ bar.hidden=true; app.innerHTML='<div class="msg"><b>'+E(t)+'</b>'+E(s||'')+(btn||'')+'</div>'; }
+function head(sub){ return '<div class="brand">수학은유강 · 필탑 고등수학과</div><h1>'+E(X?X.제목:'예비고1 레벨테스트')+'</h1>'+(sub?'<div class="sub">'+sub+'</div>':''); }
+async function rpc(fn,args){ let data=null,error=null; try{ ({data,error}=await sb.rpc(fn,args||{})); }catch(e){ error=e; } return {data,error}; }
+
+/* ── 1. 본인 확인 ── */
+function login(msg){
+  bar.hidden=true; X=null;
+  app.innerHTML=head('답 입력 · 처음 한 번만 확인해요')
+   +'<div class="note">시험지에 쓴 답을 그대로 옮겨요. 문항마다 <b>얼마나 확실했는지</b>도 같이 골라요 — 반 배정과 상담에 써요.</div>'
+   +'<div class="f"><label>이름</label><input id="nm" autocomplete="off" placeholder="예: 홍길동">'
+   +'<label>내 휴대폰 번호 뒷 4자리 <span style="color:var(--dim)">(없으면 부모님 번호)</span></label><input id="pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000"></div>'
+   +'<button class="big" id="lg">시작하기</button><div class="err" id="err">'+E(msg||'')+'</div>'
+   +'<button class="link" id="toreg">처음 왔거나 명단에 없어요</button>';
+  document.getElementById('lg').onclick=doLogin;
+  document.getElementById('pin').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+  document.getElementById('toreg').onclick=()=>reg();
+}
+async function doLogin(){
+  if(busy) return;
+  const nm=document.getElementById('nm').value.trim(), pin=document.getElementById('pin').value.replace(/\D/g,'');
+  const er=document.getElementById('err');
+  if(!nm||pin.length!==4){ er.textContent='이름과 뒷 4자리를 넣어 주세요.'; return; }
+  busy=true; er.textContent='확인하는 중…';
+  const {data,error}=await rpc('lt_login',{p_name:nm,p_pin:pin}); busy=false;
+  if(error||!data){ er.textContent='지금 연결이 안 돼요. 잠깐 뒤 다시 눌러 주세요.'; return; }
+  if(data.오류){
+    er.textContent=data.오류;
+    if(data.없음) er.innerHTML=E(data.오류)+'<br><button class="big sub" id="r2" style="margin-top:10px">명단 없이 등록하고 시작하기</button>';
+    const r2=document.getElementById('r2'); if(r2) r2.onclick=()=>reg(nm);
+    return;
+  }
+  TOK=data.tok; LS.set('lt:tok',TOK); home();
+}
+function reg(nm){
+  bar.hidden=true;
+  app.innerHTML=head('처음 왔어요 · 등록')
+   +'<div class="note">선생님이 확인할 수 있게 정확히 적어 주세요.</div>'
+   +'<div class="f"><label>이름</label><input id="nm" autocomplete="off" value="'+E(nm||'')+'">'
+   +'<label>학교</label><input id="sc" autocomplete="off" placeholder="예: 용인중">'
+   +'<label>휴대폰 번호 <span style="color:var(--dim)">(내 번호, 없으면 부모님 번호)</span></label><input id="ph" inputmode="tel" autocomplete="off" placeholder="010-0000-0000"></div>'
+   +'<button class="big" id="rg">등록하고 시작하기</button><div class="err" id="err"></div><button class="link" id="back">이름으로 다시 찾기</button>';
+  document.getElementById('back').onclick=()=>login();
+  document.getElementById('rg').onclick=async()=>{
+    if(busy) return; const er=document.getElementById('err');
+    const a={p_name:document.getElementById('nm').value.trim(),p_school:document.getElementById('sc').value.trim(),p_phone:document.getElementById('ph').value};
+    busy=true; er.textContent='등록하는 중…';
+    const {data,error}=await rpc('lt_register',a); busy=false;
+    if(error||!data){ er.textContent='지금 연결이 안 돼요. 잠깐 뒤 다시 눌러 주세요.'; return; }
+    if(data.오류){ er.textContent=data.오류; return; }
+    TOK=data.tok; LS.set('lt:tok',TOK); home();
+  };
+}
+function logout(){ LS.del('lt:tok'); TOK=''; ME=null; login(); }
+
+/* ── 2. 내 시험지 고르기 ── */
+async function home(){
+  X=null; RR=null; go.onclick=null; bar.hidden=true;
+  const {data,error}=await rpc('lt_me',{tok:TOK});
+  if(error||!data) return say('지금은 열 수 없어요.','잠시 뒤 다시 열어 주세요.');
+  if(data.만료){ LS.del('lt:tok'); TOK=''; return start(); }
+  if(data.닫힘) return say('입력 시간이 끝났어요.','선생님께 말해 주세요.');
+  ME=data;
+  const ex=ME.시험||[];
+  const pend=ex.filter(e=>!e.제출), rv=ex.find(e=>e.제출&&!e.제출.복기끝&&(e.제출.복기||[]).length);
+  if(rv) return review(rv, rv.제출);
+  if(ex.length===1 && !ex[0].제출) return form(ex[0]);
+  app.innerHTML=head(E(ME.이름)+(ME.학교?' · '+E(ME.학교):'')+' · '+E(ME.세션))
+   +'<div class="who"><button class="link" id="lo" style="display:inline;margin:0">내가 아니에요</button></div>'
+   +'<div class="note">시험지 맨 위에 적힌 <b>형(A형·B형)</b>을 골라요. 두 장 다 봤으면 하나씩 입력해요.</div>'
+   +ex.map(e=>'<button class="ex" data-ex="'+E(e.id)+'">'+(e.제출?'<span class="st">제출함</span>':'')
+      +'<div class="t">'+E(e.형)+'</div><div class="s">'+E(e.범위)+' · '+e.문항수+'문항'+(e.제출?(e.제출.점수!=null?' · '+E(e.제출.점수)+'점':''):'')+'</div></button>').join('')
+   +(pend.length?'':'<div class="note">다 냈어요. 수고했어요 🙂 결과는 선생님이 보고 따로 안내해 드려요.</div>');
+  document.getElementById('lo').onclick=logout;
+  app.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{ const e=ex.find(x=>x.id===b.dataset.ex); e.제출?result(e,e.제출):form(e); });
+}
+
+/* ── 3. 답 입력 ── */
+function filled(no){ const a=A[no]||{}; return a.c==='안풂' || (a.c && a.a); }
+function nums(){ return Array.from({length:X.문항수},(_,i)=>i+1); }
+function svOk(){ return SV.every(q=>!q.need || (q.show&&!q.show(S)) || (q.multi?(S[q.k]||[]).length:S[q.k])); }
+function store(){ LS.set(KEY,{A,S}); }
+function count(){
+  const n=nums().filter(filled).length, all=X.문항수, sv=svOk();
+  cnt.innerHTML='<b>'+n+'</b> / '+all+' 문항'+(sv?'':' · 질문 남음');
+  const ok=n===all&&sv;
+  go.className='go '+(ok?(sure?'sure':''):'wait');
+  go.textContent= ok ? (sure?'정말 낼까요? 한 번 더':'제출') : '남은 곳 보기';
+  nums().forEach(no=>{ const el=document.getElementById('q'+no); if(el) el.classList.toggle('done',!!filled(no)); });
+}
+function card(no){
+  const a=A[no]||{}, dis=a.c==='안풂'?' dis':'';
+  let h='';
+  for(let i=1;i<=5;i++) h+='<button class="b'+(String(a.a)===String(i)?' on':'')+'" data-q="'+no+'" data-a="'+i+'">'+NUM[i-1]+'</button>';
+  return '<div class="q" id="q'+no+'"><div class="hd"><span class="no">'+no+'번</span></div>'
+    +'<div class="row ch'+dis+'">'+h+'</div>'
+    +'<div class="lab">이 문제, 어떻게 풀었어요?</div><div class="row cf">'
+    +CF.map(([k,t])=>'<button class="b'+(k==='안풂'?' skip':'')+(a.c===k?' on':'')+'" data-q="'+no+'" data-c="'+k+'">'+t+'</button>').join('')+'</div></div>';
+}
+function svCard(q){
+  if(q.show && !q.show(S)) return '<div id="s_'+q.k+'"></div>';
+  const v=S[q.k];
+  const on=o=> q.multi ? (v||[]).includes(o) : v===o;
+  return '<div id="s_'+q.k+'" class="q'+((q.multi?(v||[]).length:v)?' done':'')+'"><div class="t2">'+E(q.t)+(q.sm?' <small>'+E(q.sm)+'</small>':'')+'</div>'
+    +'<div class="row'+(q.col?' pick':q.w2?' w2':q.w?' w':'')+'">'+q.o.map(o=>'<button class="b'+(on(o)?' on':'')+'" data-s="'+q.k+'" data-o="'+E(o)+'">'+E(o)+'</button>').join('')+'</div></div>';
+}
+function svDraw(){ SV.forEach(q=>{ const el=document.getElementById('s_'+q.k); if(el) el.outerHTML=svCard(q); }); }
+function form(e){
+  X=e; RR=null; sure=false; KEY='lt:a:'+TOK.slice(0,12)+':'+e.id;
+  const d=LS.get(KEY,{}); A=d.A||{}; S=d.S||{};
+  app.innerHTML=head(E(ME.이름)+' · '+E(e.형)+' '+E(e.범위))
+    +'<div class="note">시험지에 쓴 답을 그대로 옮겨요. 문항마다 <b>확실·애매·찍음·안 풂</b> 중 하나를 꼭 골라요 — 점수만이 아니라 <b>어떻게 풀었는지</b>를 같이 봐요.<br>'
+    +'<b>제출하면 고칠 수 없어요.</b></div>'
+    +nums().map(card).join('')
+    +'<div class="sv"><h2>마지막으로 몇 가지만</h2>'+SV.map(svCard).join('')
+    +'<div class="q"><div class="t2">선생님께 하고 싶은 말 <small>(선택)</small></div><input class="memo" id="say" maxlength="200" placeholder="예: 이차함수가 제일 어려워요" value="'+E(S.말||'')+'"></div></div>'
+    +'<div id="err" class="err"></div>'
+    +(ME.시험.length>1?'<button class="link" id="bk">다른 형 고르기</button>':'');
+  const bk=document.getElementById('bk'); if(bk) bk.onclick=home;
+  bar.hidden=false; go.onclick=submit; count(); window.scrollTo(0,0);
+}
+app.addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b||!X||RR) return;
+  if(b.dataset.s){
+    const q=SV.find(x=>x.k===b.dataset.s), o=b.dataset.o;
+    if(q.multi){ const v=S[q.k]=S[q.k]||[]; const i=v.indexOf(o); i<0?v.push(o):v.splice(i,1); } else S[q.k]=o;
+    if(q.k==='선행' && o==='안 했어요') delete S.단원;
+    store(); sure=false; svDraw(); count(); return;
+  }
+  const no=b.dataset.q; if(!no) return;
+  const a=A[no]=A[no]||{};
+  if(b.dataset.a!==undefined){ a.a=b.dataset.a; if(a.c==='안풂') delete a.c; }
+  if(b.dataset.c!==undefined){ a.c=b.dataset.c; if(a.c==='안풂') delete a.a; }
+  store(); sure=false;
+  document.getElementById('q'+no).outerHTML=card(no); count();
+});
+app.addEventListener('input',ev=>{ if(ev.target.id==='say'&&X&&!RR){ S.말=ev.target.value; store(); } });
+async function submit(){
+  if(!X||busy||RR) return;
+  document.querySelectorAll('.q.miss').forEach(e=>e.classList.remove('miss'));
+  const miss=nums().filter(no=>!filled(no)).map(no=>document.getElementById('q'+no));
+  SV.forEach(q=>{ if(q.need && !(q.show&&!q.show(S)) && !(q.multi?(S[q.k]||[]).length:S[q.k])) miss.push(document.getElementById('s_'+q.k)); });
+  if(miss.length){ miss.forEach(el=>el&&el.classList.add('miss')); miss[0]&&miss[0].scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(!sure){ sure=true; count(); return; }
+  busy=true; go.textContent='채점하는 중…';
+  const ans={}; nums().forEach(no=>{ const a=A[no]||{}; ans[no]={a:a.c==='안풂'?'':String(a.a||''), c:a.c}; });
+  const survey=Object.assign({},S,{말:(S.말||'').trim()});
+  const {data,error}=await rpc('lt_submit',{tok:TOK,p_exam:X.id,ans,survey}); busy=false;
+  const er=document.getElementById('err');
+  if(error||!data){ sure=false; count(); er.textContent='제출이 안 됐어요. 잠깐 뒤 다시 눌러 주세요.'; return; }
+  if(data.만료){ LS.del('lt:tok'); return login('처음 화면에서 이름을 다시 넣어 주세요. (입력한 답은 남아 있어요)'); }
+  if(data.이미) return home();
+  if(data.오류){ sure=false; count(); er.textContent=data.오류;
+    const el=data.번호?document.getElementById('q'+data.번호):(data.설문?document.querySelector('.sv'):null);
+    if(el){ el.classList.add('miss'); el.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
+  LS.del(KEY);
+  (data.복기||[]).length ? review(X,data) : result(X,data);
+}
+
+/* ── 4. 틀린 문항 확인 (모의테스트와 같은 결) ── */
+const RK={실수:['계산 실수','문제·조건을 잘못 읽음','답 옮기기 실수','기타'], 모름:['개념·공식이 기억 안 남','풀이 방법이 안 떠오름','풀다가 막힘','배운 적 없음']};
+function rdone(it){ const v=RV[it.번호]||{}; return it.안풂 ? (v.k==='시간'||v.k==='못댐') : ((v.k==='실수'||v.k==='모름') && !!v.r); }
+function rcard(it){
+  const v=RV[it.번호]||{}, no=it.번호;
+  const me=it.안풂?'<span class="me">안 풀었어요</span>':'<span class="me">내 답 <b>'+(NUM[(+it.내답)-1]||E(it.내답))+'</b> · '+E({확실:'확실했어요',애매:'애매했어요',찍음:'찍었어요'}[it.확신]||'')+'</span>';
+  let h='<div class="q rv'+(rdone(it)?' done':'')+'" id="r'+no+'"><div class="hd"><span class="no">'+no+'번</span>'+me+'</div>';
+  if(it.안풂){
+    h+='<div class="lab">왜 못 풀었어요?</div><div class="row k">'
+      +[['시간','시간이 부족했어요'],['못댐','손을 못 댔어요']].map(([k,t])=>'<button class="b'+(v.k===k?' on':'')+'" data-r="'+no+'" data-k="'+k+'">'+t+'</button>').join('')+'</div>';
+  } else {
+    h+='<div class="lab">실수였어요?</div><div class="row k">'
+      +[['실수','실수였어요'],['모름','몰랐어요']].map(([k,t])=>'<button class="b'+(v.k===k?' on':'')+'" data-r="'+no+'" data-k="'+k+'">'+t+'</button>').join('')+'</div>';
+    if(v.k) h+='<div class="lab">'+(v.k==='실수'?'어떤 실수였어요?':'어디서 막혔어요?')+'</div><div class="row r">'
+      +RK[v.k].map(t=>'<button class="b'+(v.r===t?' on':'')+'" data-r="'+no+'" data-rr="'+E(t)+'">'+E(t)+'</button>').join('')+'</div>';
+  }
+  if(v.k) h+='<input class="memo" id="m'+no+'" maxlength="200" placeholder="한 줄로 적어 주세요 (선택) — 예: 부호를 반대로 씀" value="'+E(v.m||'')+'">';
+  return h+'</div>';
+}
+function rcount(){
+  const n=RR.복기.filter(rdone).length, all=RR.복기.length;
+  cnt.innerHTML='<b>'+n+'</b> / '+all+' 문항 확인';
+  go.className='go '+(n===all?'':'wait'); go.textContent= n===all ? '확인 끝' : '남은 문항 보기';
+  RR.복기.forEach(it=>{ const el=document.getElementById('r'+it.번호); if(el) el.classList.toggle('done',rdone(it)); });
+}
+function review(e,r){
+  X=e; RR=r; RKEY='lt:rv:'+TOK.slice(0,12)+':'+e.id; RV=LS.get(RKEY,{});
+  app.innerHTML=head(E(ME.이름)+' · '+E(e.형)+' · 제출 완료')
+    +(r.점수!=null?'<div class="res"><div class="sc">'+E(r.점수)+'<small> / '+E(r.만점)+'점</small></div></div>':'')
+    +'<div class="note"><b>틀린 문항 확인 '+r.복기.length+'개</b> — 문항마다 실수였는지 몰랐는지 골라 주세요. 맞는 답은 따로 안 보여 줘요.<br>'
+    +'고른 내용은 <b>반 배정과 상담</b>에 같이 봐요. 다 고르면 끝나요.</div>'
+    +r.복기.map(rcard).join('')+'<div id="err" class="err"></div>';
+  bar.hidden=false; go.onclick=submitReview; rcount(); window.scrollTo(0,0);
+}
+async function submitReview(){
+  if(busy||!RR) return;
+  const miss=RR.복기.filter(it=>!rdone(it));
+  document.querySelectorAll('.q.miss').forEach(e=>e.classList.remove('miss'));
+  if(miss.length){ miss.forEach(it=>document.getElementById('r'+it.번호).classList.add('miss')); document.getElementById('r'+miss[0].번호).scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  busy=true; go.textContent='저장하는 중…';
+  const rev={}; RR.복기.forEach(it=>{ const v=RV[it.번호]||{}; rev[it.번호]={k:v.k, r:v.r||'', m:(v.m||'').trim()}; });
+  const {data,error}=await rpc('lt_review',{tok:TOK,p_exam:X.id,rev}); busy=false;
+  if(error||!data||data.오류){ rcount(); document.getElementById('err').textContent=(data&&data.오류)||'저장이 안 됐어요. 잠깐 뒤 다시 눌러 주세요.'; return; }
+  LS.del(RKEY); const e=X, r=RR; RR=null; result(e, Object.assign({},r,{복기끝:true}));
+}
+app.addEventListener('click',ev=>{
+  const b=ev.target.closest('button[data-r]'); if(!b||!RR) return;
+  ev.stopImmediatePropagation();
+  const no=b.dataset.r, it=RR.복기.find(x=>String(x.번호)===String(no)), v=RV[no]=RV[no]||{};
+  if(b.dataset.k!==undefined){ if(v.k!==b.dataset.k){ v.k=b.dataset.k; delete v.r; } }
+  if(b.dataset.rr!==undefined){ v.r=b.dataset.rr; }
+  LS.set(RKEY,RV); document.getElementById('r'+no).outerHTML=rcard(it); rcount();
+}, true);
+app.addEventListener('input',ev=>{ const m=/^m(\d+)$/.exec(ev.target.id||''); if(!m||!RR) return; (RV[m[1]]=RV[m[1]]||{}).m=ev.target.value; LS.set(RKEY,RV); }, true);
+
+/* ── 5. 끝 ── */
+function result(e,r){
+  X=e; bar.hidden=true; go.onclick=null;
+  const w=r.오답||[], left=(ME&&ME.시험||[]).filter(x=>x.id!==e.id&&!x.제출);
+  app.innerHTML=head(E(ME.이름)+' · '+E(e.형)+' · 제출 완료')
+    +(r.점수!=null?'<div class="res"><div class="sc">'+E(r.점수)+'<small> / '+E(r.만점)+'점</small></div></div>':'<div class="res"><div class="sc" style="font-size:30px">제출 완료</div></div>')
+    +'<div class="box"><div class="t">틀린 문항</div>'+(w.length?'<div class="chips">'+w.map(n=>'<span>'+n+'번</span>').join('')+'</div>':'<div>없어요</div>')+'</div>'
+    +'<div class="note">수고했어요 🙂 선생님이 답과 풀이 상태를 같이 보고 <b>반 배정·상담</b>을 안내해 드려요.</div>'
+    +(left.length?'<button class="big" id="nx">'+E(left[0].형)+' 이어서 입력하기</button>':'')
+    +'<button class="link" id="hm">처음 화면</button>';
+  const nx=document.getElementById('nx'); if(nx) nx.onclick=()=>form(left[0]);
+  document.getElementById('hm').onclick=home;
+}
+
+async function start(){
+  const {data,error}=await rpc('lt_open');
+  if(error) return say('지금은 열 수 없어요.','잠시 뒤 다시 열어 주세요.');
+  if(!data||data.없음) return say('지금 열린 레벨테스트가 없어요.','시험이 끝나면 선생님이 열어 줘요. 그때 다시 들어와 주세요.','<button class="big sub" style="margin-top:18px" onclick="start()">다시 확인</button>');
+  if(TOK) return home();
+  login();
+}
+start();
+</script>
+</body></html>

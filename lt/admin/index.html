@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<!-- 레벨테스트 결과 (1117 유강) — 정본. build_lt.py 가 /dashboard/lt/admin/ 로 배포. 콘솔(/dashboard/) 로그인을 같이 쓴다(같은 주소라 세션 공유) -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>레벨테스트 결과 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+:root{color-scheme:dark;--bg:#0a0a0f;--card:rgba(255,255,255,.03);--bd:rgba(255,255,255,.09);--tx:#f5f5fa;--tx2:#b8b8c5;--dim:#8a8a98;
+ --acc:#f5a0a0;--good:#9fe3bd;--warn:#ffd59a;--bad:#ff8f8f;--slip:#ffb46b;--gray:#5d5d6b;--blue:#9cc3ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;padding:18px clamp(10px,3vw,28px) 60px}
+main{max-width:1500px;margin:0 auto}
+h1{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:0}
+.brand{font-family:'Paperlogy','Pretendard Variable',sans-serif;color:var(--acc);font-size:14px}
+.top{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.top .sp{flex:1}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.gate{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.gate .st{font-weight:700}
+.gate .st.on{color:var(--good)} .gate .st.off{color:var(--dim)}
+.gate input[type=text],select{font:inherit;color:var(--tx);background:#16161d;border:1px solid var(--bd);border-radius:9px;padding:7px 9px}
+.gate label{color:var(--tx2);font-size:13px;display:inline-flex;gap:4px;align-items:center}
+button{font:inherit;color:var(--tx);background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:9px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:rgba(245,160,160,.5)}
+button.pri{background:var(--acc);color:#2a0d0d;border:0;font-weight:700}
+button.sure{background:var(--bad);color:#2a0d0d;font-weight:700}
+.link{font-size:13px;color:var(--blue)}
+.tabs{display:flex;gap:6px;margin:4px 0 12px;flex-wrap:wrap}
+.tabs button{border-radius:20px;padding:6px 14px}
+.tabs button.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.6);color:#ffe9e9;font-weight:700}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.kpi div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 14px;min-width:110px}
+.kpi b{display:block;font-family:'Paperlogy','Pretendard Variable',sans-serif;font-size:22px;font-weight:600}
+.kpi span{color:var(--dim);font-size:12px}
+.wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+th,td{padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+th{position:sticky;top:0;background:#14141b;color:var(--tx2);font-weight:600;cursor:pointer;user-select:none;font-size:12.5px}
+th.ns{cursor:default}
+th .k{color:var(--acc);font-size:11px;margin-left:2px}
+td.l,th.l{text-align:left}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr.click{cursor:pointer}
+td.n{color:var(--dim);font-size:12px}
+.tag{display:inline-block;font-size:11.5px;border-radius:7px;padding:1px 7px;border:1px solid}
+.t-deep{color:var(--good);border-color:rgba(159,227,189,.45)} .t-base{color:var(--blue);border-color:rgba(156,195,255,.4)}
+.t-warn{color:var(--warn);border-color:rgba(255,213,154,.45)} .t-bad{color:var(--bad);border-color:rgba(255,143,143,.45)}
+.t-dim{color:var(--dim);border-color:var(--bd)}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--acc);vertical-align:middle}
+.dist{display:flex;gap:2px;align-items:flex-end;height:30px}
+.dist i{display:block;width:14px;background:var(--gray);border-radius:2px 2px 0 0;position:relative}
+.dist i.ok{background:var(--good)}
+.dist i em{position:absolute;bottom:-14px;left:0;right:0;font-style:normal;font-size:9.5px;color:var(--dim)}
+.heat td{min-width:52px}
+.dim{color:var(--dim)} .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+.flt{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+/* 상세 */
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 10px;z-index:9}
+#dlg.on{display:flex}
+.sheet{background:#101017;border:1px solid var(--bd);border-radius:16px;max-width:880px;width:100%;padding:22px 24px}
+.sheet h2{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:0 0 2px}
+.sheet h3{font-size:14.5px;margin:20px 0 8px;color:var(--tx2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+.lv{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.lv .nm{width:150px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv .bg{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+.lv .bg i{display:block;height:100%;background:var(--acc)}
+.lv .v{width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.strip{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
+.strip div{border-radius:7px;padding:5px 0;text-align:center;font-size:12px;font-weight:700;color:#111;position:relative}
+.strip div small{display:block;font-size:11px;font-weight:500}
+.c-ok{background:var(--good)} .c-luck{background:var(--warn)} .c-slip{background:var(--slip)} .c-no{background:var(--bad)} .c-skip{background:var(--gray);color:#ddd!important} .c-nr{background:#c98989}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.mis{border-left:3px solid var(--bad);padding:6px 10px;margin:6px 0;background:rgba(255,143,143,.05);border-radius:0 8px 8px 0;font-size:13px}
+.mis.slip{border-color:var(--slip);background:rgba(255,180,107,.05)}
+.mis .h{color:var(--tx2);font-size:12px}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:13px}
+.kv b{color:var(--tx2);font-weight:500}
+.verdict{font-size:13.5px;line-height:1.7;background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px}
+.act{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+@media print{
+ body{background:#fff;color:#111;padding:0} main,#dlg .act{display:none!important}
+ #dlg{position:static;background:none;padding:0;display:block!important}
+ .sheet{border:0;background:#fff;color:#111;max-width:none}
+ .sheet *{color:#111!important}
+ .lv .bg{background:#eee} .lv .bg i{background:#444} .mis{background:#fafafa}
+}
+</style></head><body>
+<main id="app"><div class="dim">불러오는 중…</div></main>
+<div id="dlg"><div class="sheet" id="sheet"></div></div>
+<script>
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb=supabase.createClient(SB_URL,SB_ANON);
+const app=document.getElementById('app'), dlg=document.getElementById('dlg'), sheet=document.getElementById('sheet');
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NUM='①②③④⑤', LV=['','Ⅰ','Ⅱ','Ⅲ','Ⅳ'], LVN=['','Ⅰ 개념','Ⅱ 기본','Ⅲ 응용','Ⅳ 심화'];
+function tex(s){ return E(s).replace(/\\\(([\s\S]+?)\\\)/g,(m,x)=>{ try{ return katex.renderToString(x.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'),{throwOnError:false}); }catch(e){ return m; } }); }
+const pct=(a,b)=>b?Math.round(a/b*100):null;
+const fmtT=t=>{ if(!t) return ''; const d=new Date(new Date(t).getTime()+9*3600e3); const z=n=>String(n).padStart(2,'0'); return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+z(d.getUTCHours())+':'+z(d.getUTCMinutes()); };
+const mathCls=s=>{ const p=String(s||'').split(',').map(x=>x.trim()).filter(Boolean); return p.find(x=>!/영어|교재비/.test(x))||p[0]||''; };
+let D=null, EX={}, ROWS=[], TAB='stu', FX='', SORT={}, sureGate=false;
+
+/* ── 계산: 응시 한 건 → 지표 ── */
+function calc(r,a){
+  const e=EX[a.시험]; if(!e) return null;
+  const J=e.판정||{}, up=J.상위레벨||[3,4], cut=J.심화||{총점:999,상위:999};
+  const o={r,a,e,id:r.id+':'+a.시험,이름:r.이름,학교:r.학교||'',소속:r.소속||'',현장:r.현장등록,형:e.형,
+    점수:+a.점수,만점:+a.만점,lv:{},lvF:{},un:{},unF:{},items:[],
+    확실정답:0,찍음정답:0,애매정답:0,실수:0,모름:0,시간:0,못댐:0,미확인:0,안풂:0,오답:0,
+    찍음점:0,실수점:0,찍음상위:0,실수상위:0,개념틀림:[],설문:a.설문||{}};
+  e.문항.forEach(q=>{
+    const no=String(q.번호), an=(a.답||{})[no]||{}, ok=!!(a.정오||{})[no], rv=(a.복기||{})[no]||null, isUp=up.includes(q.레벨);
+    o.lv[q.레벨]=(o.lv[q.레벨]||0)+(ok?q.배점:0); o.lvF[q.레벨]=(o.lvF[q.레벨]||0)+q.배점;
+    o.un[q.단원]=(o.un[q.단원]||0)+(ok?1:0); o.unF[q.단원]=(o.unF[q.단원]||0)+1;
+    let kind;
+    if(ok){ if(an.c==='찍음'){o.찍음정답++;o.찍음점+=q.배점; if(isUp)o.찍음상위+=q.배점; kind='luck';} else if(an.c==='애매'){o.애매정답++;kind='luck';} else {o.확실정답++;kind='ok';} }
+    else {
+      o.오답++; if(an.c==='안풂') o.안풂++;
+      if(q.레벨===1) o.개념틀림.push(q);
+      if(!rv){o.미확인++;kind=an.c==='안풂'?'skip':'nr';}
+      else if(rv.k==='실수'){o.실수++;o.실수점+=q.배점;if(isUp)o.실수상위+=q.배점;kind='slip';}
+      else if(rv.k==='모름'){o.모름++;kind='no';}
+      else if(rv.k==='시간'){o.시간++;kind='skip';}
+      else {o.못댐++;kind='skip';}
+    }
+    o.items.push({q,an,ok,rv,kind});
+  });
+  o.상위=up.reduce((s,l)=>s+(o.lv[l]||0),0);
+  const pass=(sc,u)=>sc>=cut.총점&&u>=cut.상위;
+  o.심화=pass(o.점수,o.상위);
+  o.찍음보정=o.점수-o.찍음점; o.실수보정=o.점수+o.실수점;
+  o.경계= o.심화&&!pass(o.찍음보정,o.상위-o.찍음상위) ? '찍음' : (!o.심화&&pass(o.실수보정,o.상위+o.실수상위) ? '실수' : '');
+  o.결손=o.개념틀림.length>=(J.결손||2);
+  o.판정=o.심화?'심화':'기본';
+  return o;
+}
+function build(){
+  EX={}; (D.시험||[]).forEach(e=>EX[e.id]=e);
+  ROWS=[]; (D.명단||[]).forEach(r=>(r.응시||[]).forEach(a=>{ const o=calc(r,a); if(o) ROWS.push(o); }));
+}
+
+/* ── 정렬: 누른 순서대로 우선순위 (1031 유강) ── */
+function sortRows(key,rows,cols){
+  const ks=SORT[key]||[]; if(!ks.length) return rows;
+  const val=(row,c)=>{ const v=cols[c].v(row); return v==null||v===''?null:v; };
+  return rows.map((r,i)=>[r,i]).sort((A,B)=>{
+    for(const {c,d} of ks){ const x=val(A[0],c), y=val(B[0],c);
+      if(x===y) continue; if(x==null) return 1; if(y==null) return -1;
+      const r=(typeof x==='number'&&typeof y==='number')?x-y:String(x).localeCompare(String(y),'ko');
+      if(r) return d*r; }
+    return A[1]-B[1]; }).map(x=>x[0]);
+}
+function thead(key,cols){
+  const ks=SORT[key]||[];
+  return '<thead><tr><th class="ns">#</th>'+cols.map((c,i)=>{ const k=ks.findIndex(x=>x.c===i);
+    return '<th class="'+(c.l?'l ':'')+(c.ns?'ns':'')+'" data-sk="'+key+'" data-ci="'+i+'" title="'+E(c.tip||'')+'">'+E(c.h)+(k>=0?'<span class="k">'+(k+1)+(ks[k].d>0?'▲':'▼')+'</span>':'')+'</th>'; }).join('')+'</tr></thead>';
+}
+function table(key,cols,rows,rowAttr){
+  rows=sortRows(key,rows,cols);
+  return '<div class="wrap"><table>'+thead(key,cols)+'<tbody>'+rows.map((r,i)=>'<tr '+(rowAttr?rowAttr(r):'')+'><td class="n">'+(i+1)+'</td>'
+    +cols.map(c=>'<td class="'+(c.l?'l':'')+'">'+(c.f?c.f(r):E(c.v(r)==null?'—':c.v(r)))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'
+    +((SORT[key]||[]).length?'<div style="text-align:right;margin-top:4px"><button class="link" data-sreset="'+key+'" style="background:none;border:0">정렬 초기화</button></div>':'');
+}
+document.addEventListener('click',ev=>{
+  const th=ev.target.closest('th[data-sk]'); if(th&&!th.classList.contains('ns')){
+    const k=th.dataset.sk, c=+th.dataset.ci, ks=SORT[k]=SORT[k]||[], i=ks.findIndex(x=>x.c===c);
+    if(i<0) ks.push({c,d:(COLS[k]&&COLS[k][c]&&COLS[k][c].num)?-1:1}); else ks[i].d*=-1;
+    draw(); return; }
+  const rs=ev.target.closest('[data-sreset]'); if(rs){ SORT[rs.dataset.sreset]=[]; draw(); }
+});
+const COLS={};
+
+/* ── 탭: 학생 ── */
+const tagJ=o=>'<span class="tag '+(o.심화?'t-deep':'t-base')+'">'+o.판정+'</span>'+(o.경계?' <span class="tag t-warn" title="'+(o.경계==='찍음'?'찍어서 맞힌 점수를 빼면 심화 기준 아래':'실수만 없었으면 심화 기준 위')+'">'+o.경계+' 경계</span>':'');
+function stuCols(){
+  return COLS.stu=[
+    {h:'이름',l:1,v:o=>o.이름,f:o=>'<b>'+E(o.이름)+'</b>'+(o.현장?' <span class="tag t-warn">현장</span>':'')},
+    {h:'학교',v:o=>o.학교},{h:'중등 반',l:1,v:o=>o.소속,f:o=>'<span class="dim">'+E(mathCls(o.소속))+'</span>'},
+    {h:'형',v:o=>o.형},
+    {h:'점수',num:1,v:o=>o.점수,f:o=>'<b>'+o.점수+'</b>'},
+    {h:'Ⅰ',num:1,tip:'개념 1~6번 /12',v:o=>o.lv[1]||0},{h:'Ⅱ',num:1,tip:'기본 7~13번 /28',v:o=>o.lv[2]||0},
+    {h:'Ⅲ',num:1,tip:'응용 14~22번 /45',v:o=>o.lv[3]||0},{h:'Ⅳ',num:1,tip:'심화 23~25번 /15',v:o=>o.lv[4]||0},
+    {h:'Ⅲ·Ⅳ',num:1,tip:'판정 기준 점수 /60',v:o=>o.상위,f:o=>'<b>'+o.상위+'</b>'},
+    {h:'판정',v:o=>o.판정+(o.경계?' '+o.경계:''),f:tagJ},
+    {h:'결손',tip:'Ⅰ 개념 2문항 이상 틀림',v:o=>o.결손?'결손':'',f:o=>o.결손?'<span class="tag t-bad" title="'+E(o.개념틀림.map(q=>q.번호+'번 '+q.단원).join(', '))+'">결손 '+o.개념틀림.length+'</span>':''},
+    {h:'확실 정답',num:1,tip:'확실하다고 하고 맞힌 문항 수(실력 정답)',v:o=>o.확실정답,f:o=>o.확실정답+'<span class="dim">/'+o.e.문항.length+'</span>'},
+    {h:'찍어 맞음',num:1,tip:'찍음 정답 수 · 그 점수',v:o=>o.찍음정답,f:o=>o.찍음정답?o.찍음정답+' <span class="dim">(−'+o.찍음점+')</span>':'<span class="dim">0</span>'},
+    {h:'애매 정답',num:1,v:o=>o.애매정답},
+    {h:'실수',num:1,tip:'틀린 문항 중 본인이 실수라고 한 것 · 그 점수',v:o=>o.실수,f:o=>o.실수?'<span style="color:var(--slip)">'+o.실수+'</span> <span class="dim">(+'+o.실수점+')</span>':'<span class="dim">0</span>'},
+    {h:'몰라서',num:1,v:o=>o.모름,f:o=>o.모름?'<span class="bad">'+o.모름+'</span>':'<span class="dim">0</span>'},
+    {h:'안 풂',num:1,tip:'시간 부족 / 손 못 댐',v:o=>o.안풂,f:o=>o.안풂?o.안풂+' <span class="dim">(시간 '+o.시간+'·못댐 '+o.못댐+')</span>':'<span class="dim">0</span>'},
+    {h:'찍음 뺀 점수',num:1,v:o=>o.찍음보정},{h:'실수 없으면',num:1,v:o=>o.실수보정},
+    {h:'선행',l:1,v:o=>o.설문.선행||'',f:o=>E(o.설문.선행||'')+(o.설문.단원?' <span class="dim">· '+E(o.설문.단원)+'</span>':'')},
+    {h:'시간',v:o=>o.설문.시간||'',f:o=>'<span class="'+(o.설문.시간==='모자랐어요'?'warn':'dim')+'">'+E((o.설문.시간||'').replace('어요',''))+'</span>'},
+    {h:'체감',v:o=>o.설문.체감||'',f:o=>'<span class="dim">'+E((o.설문.체감||'').replace('어요',''))+'</span>'},
+    {h:'확인',tip:'틀린 문항 확인 끝냈나',v:o=>o.미확인?'미완':'끝',f:o=>o.오답?(o.미확인?'<span class="tag t-warn">미완 '+o.미확인+'</span>':'<span class="good">끝</span>'):'<span class="dim">—</span>'},
+    {h:'제출',v:o=>o.a.제출시각,f:o=>'<span class="dim">'+fmtT(o.a.제출시각)+'</span>'},
+  ];
+}
+function vStu(){
+  const rows=ROWS.filter(o=>!FX||o.e.id===FX);
+  const n=rows.length, deep=rows.filter(o=>o.심화).length, avg=n?Math.round(rows.reduce((s,o)=>s+o.점수,0)/n*10)/10:'—';
+  const kp='<div class="kpi"><div><b>'+n+'</b><span>제출</span></div><div><b>'+avg+'</b><span>평균 점수</span></div>'
+    +'<div><b class="good">'+deep+'</b><span>심화 기준</span></div><div><b>'+(n-deep)+'</b><span>기본</span></div>'
+    +'<div><b class="warn">'+rows.filter(o=>o.경계).length+'</b><span>경계(찍음·실수)</span></div>'
+    +'<div><b class="bad">'+rows.filter(o=>o.결손).length+'</b><span>개념 결손</span></div>'
+    +'<div><b>'+rows.filter(o=>o.미확인).length+'</b><span>틀린 문항 확인 미완</span></div></div>';
+  return kp+(n?table('stu',stuCols(),rows,o=>'class="click" data-open="'+E(o.id)+'"'):'<div class="card dim">아직 제출한 학생이 없어요.</div>')
+    +'<div style="margin-top:8px" class="dim">행을 누르면 학생 상담 카드가 열려요. 머리글을 누른 순서대로 정렬 우선순위가 붙어요.</div>';
+}
+
+/* ── 탭: 문항 분석 ── */
+function itemStats(e){
+  const rs=ROWS.filter(o=>o.e.id===e.id);
+  return e.문항.map(q=>{
+    const no=String(q.번호), s={q,n:rs.length,ok:0,real:0,luck:0,amb:0,skip:0,slip:0,wrong:0,pick:[0,0,0,0,0,0]};
+    rs.forEach(o=>{ const it=o.items[q.번호-1]; if(!it) return;
+      if(it.an.c==='안풂') s.skip++; else s.pick[+it.an.a]=(s.pick[+it.an.a]||0)+1;
+      if(it.ok){ s.ok++; if(it.an.c==='확실') s.real++; else if(it.an.c==='찍음') s.luck++; else s.amb++; }
+      else { s.wrong++; if(it.rv&&it.rv.k==='실수') s.slip++; } });
+    let top=0; for(let i=1;i<=5;i++) if(i!==q.정답 && s.pick[i]>(s.pick[top]||0)) top=i;
+    s.top=s.pick[top]?top:0; return s; });
+}
+function vItem(){
+  const ids=FX?[FX]:Object.keys(EX); let h='';
+  ids.forEach(id=>{ const e=EX[id], st=itemStats(e); if(!st.length) return;
+    COLS['it'+id]=[
+      {h:'번호',num:1,v:s=>s.q.번호,f:s=>'<b>'+s.q.번호+'</b>'},{h:'레벨',v:s=>s.q.레벨,f:s=>LV[s.q.레벨]},
+      {h:'단원',l:1,v:s=>s.q.단원},{h:'유형',l:1,v:s=>s.q.유형,f:s=>tex(s.q.유형)},
+      {h:'정답률',num:1,v:s=>pct(s.ok,s.n),f:s=>s.n?'<span class="bar" style="width:'+pct(s.ok,s.n)*0.6+'px"></span> '+pct(s.ok,s.n)+'%':'—'},
+      {h:'실정답률',num:1,tip:'확실하다고 하고 맞힌 비율',v:s=>pct(s.real,s.n),f:s=>s.n?pct(s.real,s.n)+'%':'—'},
+      {h:'찍어 맞음',num:1,v:s=>s.luck},{h:'애매 정답',num:1,v:s=>s.amb},{h:'안 풂',num:1,v:s=>s.skip},
+      {h:'선지 분포',ns:1,v:s=>0,f:s=>{const m=Math.max(1,...s.pick.slice(1));return '<div class="dist">'+[1,2,3,4,5].map(i=>'<i class="'+(i===s.q.정답?'ok':'')+'" style="height:'+Math.max(2,s.pick[i]/m*30)+'px" title="'+NUM[i-1]+' '+s.pick[i]+'명"><em>'+(s.pick[i]||'')+'</em></i>').join('')+'</div>';}},
+      {h:'많이 고른 오답 → 오개념',l:1,v:s=>s.top?s.pick[s.top]:0,f:s=>s.top?'<b>'+NUM[s.top-1]+'</b> '+s.pick[s.top]+'명 — <span class="dim" style="white-space:normal">'+tex((s.q.오답||{})[s.top]||'(오개념 메모 없음)')+'</span>':'<span class="dim">—</span>'},
+      {h:'틀린 중 실수',num:1,v:s=>s.wrong?pct(s.slip,s.wrong):null,f:s=>s.wrong?s.slip+'/'+s.wrong:'—'},
+    ];
+    h+='<div class="card"><b>'+E(e.제목)+'</b> <span class="dim">· 응시 '+st[0].n+'명</span></div>'+table('it'+id,COLS['it'+id],st)+'<div style="height:18px"></div>';
+  });
+  return h||'<div class="card dim">시험지가 없어요.</div>';
+}
+
+/* ── 탭: 단원·레벨 히트맵 ── */
+function heatC(p){ if(p==null) return ''; const h=p>=80?'159,227,189':p>=50?'255,213,154':'255,143,143'; return 'background:rgba('+h+','+(0.18+p/100*0.35)+')'; }
+function vHeat(){
+  const ids=FX?[FX]:Object.keys(EX); let h='';
+  ids.forEach(id=>{ const e=EX[id], rs=ROWS.filter(o=>o.e.id===id); if(!rs.length) return;
+    const us=e.단원||[...new Set(e.문항.map(q=>q.단원))];
+    COLS['hm'+id]=[{h:'이름',l:1,v:o=>o.이름,f:o=>'<b>'+E(o.이름)+'</b>'},{h:'점수',num:1,v:o=>o.점수},
+      ...[1,2,3,4].map(l=>({h:LV[l],num:1,v:o=>pct(o.lv[l]||0,o.lvF[l]),f:o=>{const p=pct(o.lv[l]||0,o.lvF[l]);return '<div style="'+heatC(p)+';border-radius:5px">'+(o.lv[l]||0)+'</div>';}})),
+      ...us.map(u=>({h:u,num:1,v:o=>pct(o.un[u]||0,o.unF[u]),f:o=>{const p=pct(o.un[u]||0,o.unF[u]);return o.unF[u]?'<div style="'+heatC(p)+';border-radius:5px">'+(o.un[u]||0)+'/'+o.unF[u]+'</div>':''}}))];
+    const avg={이름:'평균',점수:Math.round(rs.reduce((s,o)=>s+o.점수,0)/rs.length*10)/10};
+    h+='<div class="card"><b>'+E(e.제목)+'</b> <span class="dim">· 레벨은 점수, 단원은 맞힌 문항/문항 수 · 초록 80%↑ 노랑 50%↑ 빨강 그 아래</span></div>'
+      +'<div class="heat">'+table('hm'+id,COLS['hm'+id],rs,o=>'class="click" data-open="'+E(o.id)+'"')+'</div>'
+      +'<div class="card" style="margin-top:8px"><b>단원별 평균 정답률</b><div style="margin-top:8px">'+us.map(u=>{ let a=0,b=0; rs.forEach(o=>{a+=o.un[u]||0;b+=o.unF[u]||0;}); const p=pct(a,b);
+        return '<div class="lv"><span class="nm">'+E(u)+'</span><span class="bg"><i style="width:'+(p||0)+'%"></i></span><span class="v">'+(p==null?'—':p+'%')+'</span></div>'; }).join('')+'</div></div><div style="height:18px"></div>';
+  });
+  return h||'<div class="card dim">아직 제출한 학생이 없어요.</div>';
+}
+
+/* ── 탭: 명단 ── */
+function vRoster(){
+  const rs=(D.명단||[]);
+  COLS.ro=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b>'},{h:'학교',v:r=>r.학교},{h:'중등 반',l:1,v:r=>mathCls(r.소속)},
+    {h:'응시',v:r=>(r.응시||[]).map(a=>(EX[a.시험]||{}).형).join(' '),f:r=>(r.응시||[]).length?(r.응시||[]).map(a=>'<span class="tag t-deep">'+E((EX[a.시험]||{}).형)+' '+a.점수+'</span>').join(' '):'<span class="tag t-dim">미응시</span>'},
+    {h:'학생 번호',v:r=>r.학생폰||''},{h:'학부모 번호',l:1,v:r=>r.부모폰||''},
+    {h:'명단',v:r=>r.현장등록?'확인 필요':'',f:r=>r.현장등록?'<span class="tag t-warn">확인 필요</span> <button data-ok="'+r.id+'">확인함</button>':''},
+    {h:'메모',l:1,v:r=>r.메모||'',f:r=>'<span class="dim">'+E(r.메모||'')+'</span>'}];
+  const nn=rs.filter(r=>!(r.응시||[]).length).length;
+  return '<div class="kpi"><div><b>'+rs.length+'</b><span>명단</span></div><div><b>'+(rs.length-nn)+'</b><span>응시</span></div><div><b class="dim">'+nn+'</b><span>미응시</span></div>'
+    +'<div><b class="warn">'+rs.filter(r=>r.현장등록).length+'</b><span>현장 등록·번호 입력(확인 필요)</span></div></div>'+table('ro',COLS.ro,rs);
+}
+
+/* ── 상담 카드 ── */
+function openCard(id){
+  const o=ROWS.find(x=>x.id===id); if(!o) return;
+  const e=o.e, J=e.판정||{}, cut=J.심화||{}, s=o.설문||{};
+  const lvb=[1,2,3,4].map(l=>'<div class="lv"><span class="nm">'+LVN[l]+'</span><span class="bg"><i style="width:'+pct(o.lv[l]||0,o.lvF[l])+'%"></i></span><span class="v">'+(o.lv[l]||0)+' / '+o.lvF[l]+'</span></div>').join('');
+  const unb=(e.단원||Object.keys(o.unF)).map(u=>'<div class="lv"><span class="nm" title="'+E(u)+'">'+E(u)+'</span><span class="bg"><i style="width:'+pct(o.un[u]||0,o.unF[u])+'%"></i></span><span class="v">'+(o.un[u]||0)+' / '+o.unF[u]+'</span></div>').join('');
+  const KN={ok:['c-ok','확실 정답'],luck:['c-luck','찍음·애매 정답'],slip:['c-slip','실수'],no:['c-no','몰라서'],nr:['c-nr','틀림(확인 안 함)'],skip:['c-skip','안 풂']};
+  const strip=o.items.map(it=>'<div class="'+KN[it.kind][0]+'" title="'+E(it.q.단원+' · '+it.q.유형.replace(/\\\(|\\\)/g,''))+'">'+it.q.번호
+    +'<small>'+(it.an.c==='안풂'?'—':NUM[(+it.an.a)-1]||'')+(it.ok&&it.an.c!=='확실'?' '+(it.an.c==='찍음'?'찍':'애'):'')+'</small></div>').join('');
+  const wrongs=o.items.filter(it=>!it.ok).map(it=>{
+    const mis=it.an.c!=='안풂'?(it.q.오답||{})[it.an.a]:null, rv=it.rv;
+    const why=rv?(rv.k==='실수'?'실수 · '+rv.r:rv.k==='모름'?'몰랐음 · '+rv.r:rv.k==='시간'?'시간 부족':'손 못 댐'):'확인 안 함';
+    return '<div class="mis'+(rv&&rv.k==='실수'?' slip':'')+'"><div class="h">'+it.q.번호+'번 · '+LV[it.q.레벨]+' · '+E(it.q.단원)+' · '+tex(it.q.유형)+'</div>'
+      +(it.an.c==='안풂'?'안 풂':'<b>'+NUM[(+it.an.a)-1]+'</b> 고름 (정답 '+NUM[it.q.정답-1]+') · '+E({확실:'확실했음',애매:'애매했음',찍음:'찍었음'}[it.an.c]||''))
+      +' — <b>'+E(why)+'</b>'+(rv&&rv.m?' <span class="dim">“'+E(rv.m)+'”</span>':'')
+      +(mis?'<div>예상 오개념: '+tex(mis)+'</div>':'')+'</div>'; }).join('')||'<div class="dim">틀린 문항이 없어요.</div>';
+  const luck=o.items.filter(it=>it.ok&&it.an.c==='찍음').map(it=>it.q.번호+'번');
+  const why=[];
+  why.push('총점 <b>'+o.점수+'</b>점 (기준 '+cut.총점+') · Ⅲ·Ⅳ <b>'+o.상위+'</b>점 (기준 '+cut.상위+') → <b>'+o.판정+'반</b> 기준'+(o.심화?' 충족':' 미달'));
+  if(o.경계==='찍음') why.push('찍어서 맞힌 '+luck.join('·')+' ('+o.찍음점+'점)을 빼면 '+o.찍음보정+'점 — 심화 기준 아래. 실력 확인 필요');
+  if(o.경계==='실수') why.push('실수라고 한 문항('+o.실수점+'점)만 없었으면 '+o.실수보정+'점 — 심화 기준 위');
+  if(o.결손) why.push('Ⅰ 개념 문항 '+o.개념틀림.length+'개 틀림('+o.개념틀림.map(q=>q.번호+'번 '+q.단원).join(', ')+') → 반과 관계없이 해당 단원 보강');
+  if(o.안풂) why.push('안 푼 문항 '+o.안풂+'개 (시간 부족 '+o.시간+' · 손 못 댐 '+o.못댐+')'+(s.시간==='모자랐어요'?' — 본인도 시간이 모자랐다고 답함':''));
+  if(o.확실정답<o.e.문항.length-o.오답) why.push('맞힌 '+(o.e.문항.length-o.오답)+'문항 중 확실했던 건 '+o.확실정답+'문항');
+  sheet.innerHTML='<div class="brand">수학은유강 · 필탑 고등수학과</div><h2>'+E(o.이름)+' <span class="dim" style="font-size:15px">'+E(o.학교)+(o.소속?' · '+E(mathCls(o.소속)):'')+'</span></h2>'
+    +'<div class="dim">'+E(e.제목)+' · 제출 '+fmtT(o.a.제출시각)+'</div>'
+    +'<div class="kpi" style="margin-top:12px"><div><b>'+o.점수+'</b><span>점수 / '+o.만점+'</span></div><div><b>'+o.상위+'</b><span>Ⅲ·Ⅳ / 60</span></div>'
+    +'<div><b>'+tagJ(o)+'</b><span>판정</span></div><div><b>'+o.확실정답+'</b><span>확실 정답</span></div><div><b>'+o.찍음보정+'</b><span>찍음 뺀 점수</span></div><div><b>'+o.실수보정+'</b><span>실수 없으면</span></div></div>'
+    +'<div class="verdict">'+why.map(x=>'· '+x).join('<br>')+'</div>'
+    +'<h3>문항별</h3><div class="strip">'+strip+'</div><div class="legend">'+Object.values(KN).map(k=>'<span><i class="'+k[0]+'"></i>'+k[1]+'</span>').join('')+'</div>'
+    +'<div class="grid2"><div><h3>레벨별</h3>'+lvb+'</div><div><h3>단원별</h3>'+unb+'</div></div>'
+    +'<h3>틀린 문항 · 고른 선지로 본 오개념</h3>'+wrongs
+    +'<h3>학습 이력 (본인 응답)</h3><div class="kv"><b>공수1 선행</b><span>'+E(s.선행||'—')+(s.단원?' · 마지막 단원 '+E(s.단원):'')+'</span>'
+    +'<b>공부 방식</b><span>'+E((s.방식||[]).join(', ')||'—')+'</span><b>시험 시간</b><span>'+E(s.시간||'—')+'</span><b>체감 난이도</b><span>'+E(s.체감||'—')+'</span>'
+    +'<b>하고 싶은 말</b><span>'+E(s.말||'—')+'</span></div>'
+    +'<div class="act"><button id="reset" title="답을 잘못 옮겼을 때 — 지우면 학생이 다시 입력할 수 있어요(기록은 따로 보관)">제출 지우고 다시 받기</button><button onclick="window.print()">인쇄</button><button class="pri" id="cls">닫기</button></div>';
+  dlg.classList.add('on');
+  document.getElementById('cls').onclick=()=>dlg.classList.remove('on');
+  const rb=document.getElementById('reset'); let sure=false;
+  rb.onclick=async()=>{ if(!sure){ sure=true; rb.className='sure'; rb.textContent='정말 지울까요? 한 번 더'; return; }
+    const {data,error}=await sb.rpc('staff_lt_reset',{p_rid:o.r.id,p_exam:o.e.id});
+    if(error||!data||data.오류){ rb.textContent='실패: '+((data&&data.오류)||(error&&error.message)||''); return; }
+    dlg.classList.remove('on'); load(); };
+}
+dlg.addEventListener('click',ev=>{ if(ev.target===dlg) dlg.classList.remove('on'); });
+document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') dlg.classList.remove('on'); });
+
+/* ── CSV ── */
+function csv(){
+  const cols=stuCols(), rows=sortRows('stu',ROWS.filter(o=>!FX||o.e.id===FX),cols);
+  const strip=s=>String(s==null?'':s).replace(/<[^>]+>/g,'');
+  const lines=[['#',...cols.map(c=>c.h),'학생 번호','학부모 번호'].join(',')].concat(rows.map((o,i)=>[i+1,...cols.map(c=>c.v(o)),o.r.학생폰||'',o.r.부모폰||''].map(v=>'"'+strip(v).replace(/"/g,'""')+'"').join(',')));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv'})); a.download='레벨테스트_결과.csv'; a.click();
+}
+
+/* ── 입력 창 ── */
+function gateBox(){
+  const s=D.열린, ex=D.시험||[];
+  if(s) return '<div class="card gate"><span class="st on">● 학생 입력 열림</span><b>'+E(s.이름)+'</b><span class="dim">'+ex.filter(e=>s.시험.includes(e.id)).map(e=>e.형).join('·')+' · '+fmtT(s.닫힘)+'까지 · 점수 '+(s.점수공개?'보여 줌':'숨김')+'</span>'
+    +'<span class="dim">학생 주소 <b class="link">ukan8.github.io/dashboard/lt</b></span><span style="flex:1"></span><button id="gclose">'+(sureGate?'정말 닫을까요? 한 번 더':'입력 닫기')+'</button></div>';
+  const d=new Date(Date.now()+9*3600e3), md=(d.getUTCMonth()+1)+'/'+d.getUTCDate();
+  return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
+    +ex.map(e=>'<label><input type="checkbox" class="gex" value="'+E(e.id)+'" checked>'+E(e.형)+'</label>').join('')
+    +'<select id="gmin"><option value="60">1시간</option><option value="120" selected>2시간</option><option value="180">3시간</option><option value="300">5시간</option></select>'
+    +'<label><input type="checkbox" id="gshow" checked>제출 직후 점수 보여 주기</label><span style="flex:1"></span><button class="pri" id="gopen">학생 입력 열기</button></div>';
+}
+async function gate(open){
+  let a;
+  if(open) a={p_name:document.getElementById('gname').value,p_exams:[...document.querySelectorAll('.gex:checked')].map(x=>x.value),p_min:+document.getElementById('gmin').value,p_show:document.getElementById('gshow').checked};
+  else a={p_name:null,p_exams:null,p_min:0,p_show:true};
+  const {data,error}=await sb.rpc('staff_lt_gate',a);
+  if(error||!data||data.오류){ alert((data&&data.오류)||(error&&error.message)||'실패'); return; }
+  sureGate=false; load();
+}
+
+/* ── 그리기 ── */
+function draw(){
+  const exs=D.시험||[];
+  let body = TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : vRoster();
+  app.innerHTML='<div class="top"><div><div class="brand">수학은유강 · 필탑 고등수학과</div><h1>예비고1 레벨테스트 결과</h1></div><span class="sp"></span>'
+    +'<button id="rl">새로고침</button><button id="csv">CSV 받기</button></div>'
+    +gateBox()
+    +'<div class="flt"><div class="tabs">'+[['stu','학생'],['item','문항 분석'],['heat','레벨·단원'],['ro','명단']].map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('')+'</div>'
+    +'<span class="sp" style="flex:1"></span><select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select></div>'
+    +body
+    +'<div class="card dim" style="margin-top:18px;font-size:12.5px">판정 기준 — '+exs.map(e=>'<b>'+E(e.형)+'</b> '+E(((e.판정||{}).문구||[]).join(' / '))).join('<br>')+'<br>'+E(((exs[0]||{}).판정||{}).주석||'')+'</div>';
+  document.getElementById('rl').onclick=load; document.getElementById('csv').onclick=csv;
+  document.getElementById('fx').onchange=ev=>{FX=ev.target.value;draw();};
+  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();});
+  app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=()=>openCard(tr.dataset.open));
+  app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation(); const r=(D.명단||[]).find(x=>String(x.id)===b.dataset.ok);
+    const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
+  const go=document.getElementById('gopen'); if(go) go.onclick=()=>gate(true);
+  const gc=document.getElementById('gclose'); if(gc) gc.onclick=()=>{ if(!sureGate){ sureGate=true; draw(); return; } gate(false); };
+}
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){ app.innerHTML='<div class="card">콘솔에서 먼저 로그인해 주세요. <a class="link" href="../../">콘솔 열기</a> → 로그인 뒤 이 페이지를 새로고침.</div>'; return; }
+  const {data,error}=await sb.rpc('staff_lt_status');
+  if(error){ app.innerHTML='<div class="card">불러오지 못함 — '+E(error.message)+(/staff_lt_status/.test(error.message)?' (schema_v83 실행 전)':'')+'</div>'; return; }
+  if(!data){ app.innerHTML='<div class="card">직원 계정만 볼 수 있어요.</div>'; return; }
+  D=data; build(); draw();
+}
+load();
+setInterval(()=>{ if(D&&D.열린&&!dlg.classList.contains('on')&&document.visibilityState==='visible') load(); }, 30000);  // 열려 있는 동안 30초마다
+</script></body></html>
