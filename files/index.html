@@ -978,7 +978,7 @@ function mountWrStu(s) {
     link: async (j, k) => {
       const key = k === '문제' ? j['문제키'] : j['해설키'];
       if (!key) return k === '문제' ? j['문제url'] : j['해설url'];
-      const { data } = await sb.storage.from('reports').createSignedUrl(key, 3600, { download: safe(`${s['이름']}_오답트레이닝_No${j.id}_${k}`) + '.pdf' });
+      const { data } = await sb.storage.from('reports').createSignedUrl(key, 3600);  // 1117: download 옵션 빼고 새 탭에서 바로 보기(빈 탭 남던 것)
       return data && data.signedUrl;
     }
   });
