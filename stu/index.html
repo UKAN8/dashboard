@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<!-- 학생 개인페이지 (1118 유강 "대시보드 학생 개인페이지가 엉망 — 데이터 적으면 삭제하고 리빌딩").
+     옛 SPA 학생 상세(#student/…)는 죽은 원천(옛 루프·wrong_answers·weekly_exam·clinic_roster·데일리시트 추가학습·0908 포털 임베드)이
+     절반 넘어서 통째로 걷어내고, 지금 매일 쌓이는 원천만 읽는 단독 페이지로 새로 지었다.
+     원천: students · daily_log(출결·테스트·이행률) · report_v5(회차 이행 내역·학부모 리포트) · hw_clinic_check(보완)
+           · hw_assign/hw_check(써킷·개별과제 문항 체크) · hw_question(질문) · mastery_log(CORE 루프) · weekly_link(주간고사)
+           · school_exam(내신) · sw_sub(서술형) · portal_token(포털 링크, 관리자만)
+     로그인은 대시보드 세션 그대로(같은 오리진). 읽기 전용 — 쓰기 없음. 빌드 = build_stu.py (UI 키트 넣기·점검·배포) -->
+<html lang="ko" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학생 개인페이지 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>/* ── UI 키트 (00_대시보드/_ui) ── */
+/* 수학은유강 UI 토큰 (1118) — Meta Astryx 의 "토큰 층" 벤치마킹: 부품은 그대로, 토큰만 바꾸면 테마가 바뀐다.
+   테마 2개:  light = 직원·관리 화면(클리닉 예약 시스템 결)   dark = 학생 폰·수업 화면(모의테스트·포털 결)
+   쓰는 법:  <html data-theme="light|dark">  — 부품(kit.css)은 var(--u-*) 만 쓴다. 색 값을 부품에 직접 쓰지 않는다. */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  /* 색 */
+  --u-bg: #f6f7f9;          --u-surface: #ffffff;     --u-surface-2: #f3f4f7;
+  --u-line: #e3e6eb;        --u-line-strong: #cfd4dc;
+  --u-text: #16191f;        --u-text-2: #4b5260;      --u-muted: #6b7280;    --u-faint: #9aa1ad;
+  --u-accent: #1f5eff;      --u-accent-soft: #e8efff; --u-on-accent: #ffffff;
+  --u-ok: #0f8a5f;          --u-ok-soft: #e3f5ee;
+  --u-warn: #b45309;        --u-warn-soft: #fdf1e1;
+  --u-bad: #c62828;         --u-bad-soft: #fde8e8;
+  --u-slip: #d9730d;        --u-slip-soft: #fff0e0;
+  --u-overlay: rgba(15, 20, 30, .38);
+  --u-shadow-pop: 0 20px 50px rgba(15, 20, 30, .18);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --u-bg: #0a0a0f;          --u-surface: rgba(255,255,255,.03); --u-surface-2: rgba(255,255,255,.06);
+  --u-line: rgba(255,255,255,.08); --u-line-strong: rgba(255,255,255,.16);
+  --u-text: #f5f5fa;        --u-text-2: #b8b8c5;      --u-muted: #8a8a98;    --u-faint: #5d5d6b;
+  --u-accent: #f5a0a0;      --u-accent-soft: rgba(245,160,160,.16); --u-on-accent: #2a0d0d;
+  --u-ok: #c8f0da;          --u-ok-soft: rgba(200,240,218,.12);
+  --u-warn: #ffd59a;        --u-warn-soft: rgba(255,213,154,.12);
+  --u-bad: #ff8f8f;         --u-bad-soft: rgba(255,143,143,.10);
+  --u-slip: #ffb46b;        --u-slip-soft: rgba(255,180,107,.10);
+  --u-overlay: rgba(0, 0, 0, .6);
+  --u-shadow-pop: 0 20px 50px rgba(0, 0, 0, .5);
+}
+:root {
+  /* 글꼴 — 1110 유강: 제목·큰 숫자 = 페이퍼로지, 본문 = Pretendard */
+  --u-font: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --u-font-display: 'Paperlogy', 'Pretendard Variable', Pretendard, sans-serif;
+  --u-fs-xs: 12px; --u-fs-sm: 13px; --u-fs-md: 14px; --u-fs-lg: 16px; --u-fs-xl: 21px; --u-fs-num: 24px;
+  /* 모서리·간격·움직임 */
+  --u-r-sm: 8px; --u-r-md: 12px; --u-r-lg: 16px; --u-r-pill: 999px;
+  --u-sp-1: 4px; --u-sp-2: 8px; --u-sp-3: 12px; --u-sp-4: 16px; --u-sp-5: 20px; --u-sp-6: 28px;
+  --u-h-control: 36px; --u-h-control-sm: 28px;     /* 폰 화면은 kit.css 가 44px 로 키운다 */
+  --u-motion: 160ms ease;
+}
+
+/* 수학은유강 UI 부품 (1118) — 모든 부품은 u- 접두어, 색은 tokens.css 의 var(--u-*) 만 쓴다.
+   목록·쓰는 법·예시는 manifest.json (사람·AI 같은 기준). 바꿀 땐 토큰 먼저, 그래도 안 되면 그 페이지에서 덮어쓴다(부품 원본은 그대로). */
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+*{box-sizing:border-box}
+body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1.5 var(--u-font);-webkit-font-smoothing:antialiased}
+.u-num,.u-display{font-family:var(--u-font-display);font-weight:600;font-variant-numeric:tabular-nums}
+.u-muted{color:var(--u-muted)} .u-ok{color:var(--u-ok)} .u-warn{color:var(--u-warn)} .u-bad{color:var(--u-bad)}
+
+/* 머리 막대 + 탭 (navigation) */
+.u-bar{position:sticky;top:0;z-index:8;background:var(--u-surface);border-bottom:1px solid var(--u-line);backdrop-filter:blur(8px)}
+.u-bar>.in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:10px 22px}
+.u-logo{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.u-logo i{width:26px;height:26px;border-radius:var(--u-r-sm);background:var(--u-accent);color:var(--u-on-accent);font-style:normal;font-size:13px;display:grid;place-items:center}
+.u-logo small{color:var(--u-muted);font-weight:500;font-size:12.5px}
+.u-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.u-tabs button{border:0;background:none;color:var(--u-muted);padding:7px 12px;border-radius:var(--u-r-sm);font:inherit;font-weight:500;cursor:pointer}
+.u-tabs button:hover{background:var(--u-surface-2);color:var(--u-text)}
+.u-tabs button.on{background:var(--u-accent-soft);color:var(--u-accent);font-weight:700}
+.u-bar .u-right{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:var(--u-fs-sm);color:var(--u-muted)}
+
+/* 페이지 틀 */
+.u-main{max-width:1400px;margin:0 auto;padding:20px 22px 60px}
+.u-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.u-head h1{font-size:var(--u-fs-xl);font-weight:800;margin:0;letter-spacing:-.01em}
+.u-head .sub{color:var(--u-muted);font-size:var(--u-fs-sm)}
+.u-head .sp{flex:1}
+.u-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.u-split{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.u-split>aside{position:sticky;top:70px}
+@media (max-width:980px){.u-split{grid-template-columns:1fr}.u-split>aside{position:static}}
+.u-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.u-grid2{grid-template-columns:1fr}}
+.u-section-title{font-weight:800;font-size:var(--u-fs-sm);color:var(--u-muted);margin:18px 2px 8px}
+
+/* 카드 · 숫자 타일 · 빈 상태 */
+.u-card{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md);padding:16px 18px;margin-bottom:14px}
+.u-card.on{border-color:var(--u-ok);box-shadow:0 0 0 3px var(--u-ok-soft)}
+.u-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.u-kpi{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md);padding:12px 14px}
+.u-kpi b{display:block;font-size:var(--u-fs-num);font-weight:800;font-variant-numeric:tabular-nums}
+.u-kpi span{color:var(--u-muted);font-size:12.5px}
+.u-empty{color:var(--u-faint);font-size:var(--u-fs-sm);padding:14px 4px}
+
+/* 입력 */
+.u input[type=text],.u input[type=date],.u input[type=time],.u input[type=tel],.u select,.u textarea{font:inherit;color:var(--u-text);background:var(--u-surface);border:1px solid var(--u-line-strong);border-radius:var(--u-r-sm);height:var(--u-h-control);padding:0 10px}
+.u textarea{height:auto;padding:8px 10px}
+.u input:focus,.u select:focus,.u textarea:focus{outline:2px solid var(--u-accent-soft);border-color:var(--u-accent)}
+
+/* 버튼 */
+.u-btn{font:inherit;color:var(--u-text);background:var(--u-surface);border:1px solid var(--u-line-strong);border-radius:var(--u-r-sm);height:var(--u-h-control);padding:0 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:filter var(--u-motion),border-color var(--u-motion)}
+.u-btn:hover{border-color:var(--u-muted)}
+.u-btn.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on-accent);font-weight:700}
+.u-btn.pri:hover{filter:brightness(1.06)}
+.u-btn.ghost{border-color:transparent;background:none;color:var(--u-muted)}
+.u-btn.ghost:hover{background:var(--u-surface-2);color:var(--u-text)}
+.u-btn.danger{color:var(--u-bad)}
+.u-btn.sure{background:var(--u-bad);border-color:var(--u-bad);color:#fff;font-weight:700}   /* 두 번 누르기 확인 중 */
+.u-btn.sm{height:var(--u-h-control-sm);padding:0 9px;font-size:12.5px}
+.u-btn.block{width:100%;justify-content:center;height:46px;font-size:var(--u-fs-lg)}
+.u-btn:disabled{opacity:.5;cursor:default}
+
+/* 꼬리표 */
+.u-tag{display:inline-block;font-size:12px;border-radius:var(--u-r-pill);padding:1px 9px;font-weight:600;white-space:nowrap;background:var(--u-surface-2);color:var(--u-muted)}
+.u-tag.ok{background:var(--u-ok-soft);color:var(--u-ok)} .u-tag.accent{background:var(--u-accent-soft);color:var(--u-accent)}
+.u-tag.warn{background:var(--u-warn-soft);color:var(--u-warn)} .u-tag.bad{background:var(--u-bad-soft);color:var(--u-bad)}
+.u-tag.slip{background:var(--u-slip-soft);color:var(--u-slip)}
+
+/* 표 — 정렬(누른 순서 우선순위)·# 열은 kit.js U.table 이 만든다 */
+.u-table{overflow-x:auto;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md)}
+.u-table table{border-collapse:collapse;width:100%;font-size:13.5px;white-space:nowrap}
+.u-table th,.u-table td{padding:8px 10px;border-bottom:1px solid var(--u-line);text-align:center}
+.u-table tr:last-child td{border-bottom:0}
+.u-table th{position:sticky;top:0;background:var(--u-surface-2);color:var(--u-muted);font-weight:600;font-size:12.5px;cursor:pointer;user-select:none}
+.u-table th.ns{cursor:default}
+.u-table th .k{color:var(--u-accent);font-size:11px;margin-left:2px}
+.u-table td.l,.u-table th.l{text-align:left}
+.u-table td.n{color:var(--u-muted);font-size:12px}
+.u-table tbody tr:hover td{background:var(--u-surface-2)}
+.u-table tbody tr.click{cursor:pointer}
+.u-table-foot{text-align:right;margin-top:4px}
+
+/* 막대 · 분포 */
+.u-bars .row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:var(--u-fs-sm)}
+.u-bars .nm{width:150px;color:var(--u-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-bars .bg{flex:1;height:10px;background:var(--u-surface-2);border-radius:5px;overflow:hidden}
+.u-bars .bg i{display:block;height:100%;background:var(--u-accent)}
+.u-bars .v{width:64px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* 옆 목록 (aside 안 줄들) */
+.u-list .row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--u-line)}
+.u-list .row:first-child{border-top:0}
+.u-list .row .t{font-size:12px;color:var(--u-muted)}
+
+/* 팝업 (detail · form) */
+.u-modal{position:fixed;inset:0;background:var(--u-overlay);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 10px;z-index:9}
+.u-modal.on{display:flex}
+.u-modal .sheet{background:var(--u-bg);border:1px solid var(--u-line);border-radius:var(--u-r-lg);max-width:560px;width:100%;padding:24px 26px;box-shadow:var(--u-shadow-pop)}
+[data-theme="light"] .u-modal .sheet{background:#fff}
+.u-modal .sheet.wide{max-width:880px}
+.u-modal h2{font-size:19px;font-weight:800;margin:0 0 14px}
+.u-modal .act{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.u-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.u-form .f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--u-muted)}
+.u-form .f.wide{grid-column:1 / -1}
+.u-form .f input,.u-form .f select,.u-form .f textarea{width:100%}
+.u-hint{margin-top:14px;font-size:12.5px;color:var(--u-muted);background:var(--u-surface-2);border-radius:var(--u-r-sm);padding:9px 12px}
+.u-err{color:var(--u-bad);font-size:var(--u-fs-sm);margin-top:8px;min-height:1px}
+@media (max-width:560px){.u-form{grid-template-columns:1fr}}
+
+/* 알림 토스트 */
+.u-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16191f;color:#fff;border-radius:10px;padding:10px 18px;z-index:20;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none}
+.u-toast.on{display:block}
+
+/* ── 폰 입력 (data-entry flow, 학생 화면) ── */
+.u-phone{max-width:560px;margin:0 auto;padding:16px clamp(12px,4vw,24px) calc(130px + env(safe-area-inset-bottom))}
+.u-phone h1{font-family:var(--u-font-display);font-weight:600;font-size:22px;margin:6px 0 2px}
+.u-phone .brand{font-family:var(--u-font-display);color:var(--u-accent);font-size:15px}
+.u-note{color:var(--u-muted);font-size:12.5px;line-height:1.6;margin:10px 0 14px;padding:10px 12px;border:1px solid var(--u-line);border-radius:var(--u-r-md);background:var(--u-surface)}
+.u-note b{color:var(--u-text-2)}
+.u-q{background:var(--u-surface);border:1px solid var(--u-line);border-radius:14px;padding:11px 12px;margin-bottom:9px;scroll-margin-top:12px}
+.u-q.done{border-color:var(--u-ok-soft)} .u-q.miss{border-color:var(--u-bad);background:var(--u-bad-soft)}
+.u-q .no{font-family:var(--u-font-display);font-weight:600;font-size:17px;color:var(--u-accent)}
+.u-q .lab{font-size:11.5px;color:var(--u-muted);margin:6px 0 5px}
+.u-seg{display:flex;gap:6px;flex-wrap:wrap}
+.u-seg button{flex:1 1 0;min-width:46px;min-height:44px;font:inherit;font-size:14px;color:var(--u-text-2);background:var(--u-surface-2);border:1px solid var(--u-line);border-radius:10px;padding:8px 4px;cursor:pointer}
+.u-seg button.on{background:var(--u-accent-soft);border-color:var(--u-accent);color:var(--u-text);font-weight:700}
+.u-seg.big button{font-size:21px}
+.u-seg.col{flex-direction:column} .u-seg.col button{text-align:left;padding:10px 12px;flex:none}
+.u-seg.off{opacity:.35;pointer-events:none}
+.u-bottombar{position:fixed;left:0;right:0;bottom:0;background:var(--u-bg);border-top:1px solid var(--u-line);padding:10px clamp(12px,4vw,24px) calc(10px + env(safe-area-inset-bottom));z-index:7}
+.u-bottombar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.u-bottombar .cnt{flex:1;font-size:var(--u-fs-sm);color:var(--u-text-2)}
+.u-score{text-align:center;padding:28px 12px 8px}
+.u-score b{font-family:var(--u-font-display);font-weight:600;font-size:52px;line-height:1.1}
+.u-score small{font-size:20px;color:var(--u-muted)}
+
+@media print{ .u-bar,.u-acts,.u-modal .act,.u-bottombar{display:none!important} body.u{background:#fff} }
+</style>
+<style>
+.stu-wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
+.stu-wrap>aside{position:sticky;top:70px;max-height:calc(100vh - 90px);overflow:auto}
+@media (max-width:980px){.stu-wrap{grid-template-columns:1fr}.stu-wrap>aside{position:static;max-height:none}}
+.ros-f{display:flex;gap:6px;margin-bottom:8px}
+.ros-f select,.ros-f input{flex:1;min-width:0}
+.ros .row{cursor:pointer;border-radius:var(--u-r-sm);padding-left:6px;padding-right:6px}
+.ros .row:hover{background:var(--u-surface-2)}
+.ros .row.on{background:var(--u-accent-soft)}
+.ros .row b{font-size:14px}
+.ros .tg{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.todo{margin:0 0 14px;padding:0;list-style:none}
+.todo li{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--u-line);font-size:13.5px}
+.todo li:first-child{border-top:0}
+.dots{letter-spacing:1px;font-size:12px}
+.dots .o{color:var(--u-ok)} .dots .x{color:var(--u-bad)}
+.qn{display:inline-block;min-width:22px;padding:1px 5px;margin:1px;border-radius:6px;font-size:12px;text-align:center;background:var(--u-surface-2)}
+.qn.s5{background:var(--u-bad-soft);color:var(--u-bad)} .qn.s6{background:var(--u-warn-soft);color:var(--u-warn)}
+.qn.s3,.qn.s4{background:var(--u-accent-soft);color:var(--u-accent)} .qn.s1,.qn.s2{background:var(--u-ok-soft);color:var(--u-ok)}
+.qn.s7{text-decoration:line-through;color:var(--u-faint)}
+.mini{font-size:12px;color:var(--u-muted)}
+.sea{display:flex;gap:4px}
+</style>
+</head><body class="u">
+<div class="u-bar"><div class="in"><div class="u-logo"><i>S</i>학생 개인페이지 <small>필탑 고등수학과</small></div>
+  <div class="u-tabs" id="tabs"></div><div class="u-right"><span class="sea" id="sea"></span><a class="u-btn ghost sm" href="/dashboard/" title="대시보드로">대시보드</a></div></div></div>
+<main class="u-main"><div class="stu-wrap"><aside id="ros"><div class="u-empty">명단 여는 중…</div></aside><section id="app"><div class="u-empty">여는 중…</div></section></div></main>
+<script>/* ── UI 키트 (00_대시보드/_ui/kit.js) ── */
+/* 수학은유강 UI 도우미 (1118) — window.U. 단일 파일 페이지에 ui_inline.py 가 그대로 넣는다(빌드 도구 없음).
+   유강 규칙을 코드로 박아 둔 것: 모든 표 = 정렬 + 첫 열 번호, 정렬은 머리글 누른 순서대로 우선순위(1031) ·
+   되돌릴 수 없는 버튼 = 두 번 누르기 · 시각은 KST · 목록은 manifest.json 에 같은 이름으로 적혀 있다. */
+(function () {
+  'use strict';
+  const U = {};
+  U.E = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const z2 = n => String(n).padStart(2, '0');
+  U.kst = t => new Date(new Date(t).getTime() + 9 * 3600e3);                       // getUTC* 로 읽는다
+  U.fmt = (t, withDate = true) => { if (!t) return ''; const d = U.kst(t);
+    return (withDate ? (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' : '') + z2(d.getUTCHours()) + ':' + z2(d.getUTCMinutes()); };
+  U.day = t => { const d = U.kst(t); return (d.getUTCMonth() + 1) + '월 ' + d.getUTCDate() + '일 (' + '일월화수목금토'[d.getUTCDay()] + ')'; };
+  U.today = () => { const d = U.kst(Date.now()); return d.getUTCFullYear() + '-' + z2(d.getUTCMonth() + 1) + '-' + z2(d.getUTCDate()); };
+  U.pct = (a, b) => b ? Math.round(a / b * 100) : null;
+
+  /* 토스트 */
+  U.toast = msg => { let el = document.querySelector('.u-toast'); if (!el) { el = document.createElement('div'); el.className = 'u-toast'; document.body.appendChild(el); }
+    el.textContent = msg; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2500); };
+
+  /* 두 번 누르기 확인 — 첫 번째는 빨갛게 '정말요?', 두 번째에 실행 */
+  U.sure = (btn, label, fn) => { btn.onclick = async ev => { ev.stopPropagation();
+    if (btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.dataset.orig = btn.textContent; btn.classList.add('sure'); btn.textContent = label || '정말요? 한 번 더';
+      clearTimeout(btn._t); btn._t = setTimeout(() => { btn.dataset.sure = ''; btn.classList.remove('sure'); btn.textContent = btn.dataset.orig; }, 4000); return; }
+    btn.disabled = true; try { await fn(); } finally { btn.disabled = false; } }; };
+
+  /* 표 — U.table(key, cols, rows, {rowAttr, foot}) → HTML 문자열
+     cols: [{h:'머리글', v:row=>정렬값, f:row=>칸 HTML(없으면 v), l:true 왼쪽 정렬, num:true 숫자(첫 클릭 내림차순), ns:true 정렬 안 함, tip:'설명'}]
+     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향만 바뀐다. 다시 그리려면 opts.redraw 를 넘긴다. */
+  U.SORT = {}; U.COLS = {}; U.REDRAW = {};
+  function sorted(key, rows, cols) {
+    const ks = U.SORT[key] || []; if (!ks.length) return rows;
+    const val = (r, c) => { const v = cols[c].v(r); return v == null || v === '' ? null : v; };
+    return rows.map((r, i) => [r, i]).sort((A, B) => {
+      for (const { c, d } of ks) { const x = val(A[0], c), y = val(B[0], c);
+        if (x === y) continue; if (x == null) return 1; if (y == null) return -1;
+        const r = (typeof x === 'number' && typeof y === 'number') ? x - y : String(x).localeCompare(String(y), 'ko');
+        if (r) return d * r; }
+      return A[1] - B[1]; }).map(x => x[0]);
+  }
+  U.table = (key, cols, rows, opts = {}) => {
+    U.COLS[key] = cols; if (opts.redraw) U.REDRAW[key] = opts.redraw;
+    const ks = U.SORT[key] || [], E = U.E;
+    const head = '<thead><tr><th class="ns">#</th>' + cols.map((c, i) => { const k = ks.findIndex(x => x.c === i);
+      return '<th class="' + (c.l ? 'l ' : '') + (c.ns ? 'ns' : '') + '" data-u-sk="' + key + '" data-u-ci="' + i + '" title="' + E(c.tip || '') + '">' + E(c.h)
+        + (k >= 0 ? '<span class="k">' + (k + 1) + (ks[k].d > 0 ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead>';
+    const body = sorted(key, rows, cols).map((r, i) => '<tr ' + (opts.rowAttr ? opts.rowAttr(r) : '') + '><td class="n">' + (i + 1) + '</td>'
+      + cols.map(c => '<td class="' + (c.l ? 'l' : '') + '">' + (c.f ? c.f(r) : E(c.v(r) == null ? '—' : c.v(r))) + '</td>').join('') + '</tr>').join('');
+    return '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
+      + (ks.length ? '<div class="u-table-foot"><button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 초기화</button></div>' : '')
+      + (opts.foot || '');
+  };
+  document.addEventListener('click', ev => {
+    const th = ev.target.closest('th[data-u-sk]');
+    if (th && !th.classList.contains('ns')) { const k = th.dataset.uSk, c = +th.dataset.uCi, ks = U.SORT[k] = U.SORT[k] || [], i = ks.findIndex(x => x.c === c);
+      if (i < 0) ks.push({ c, d: (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1 }); else ks[i].d *= -1;
+      (U.REDRAW[k] || U.redraw || (() => {}))(); return; }
+    const rs = ev.target.closest('[data-u-sreset]'); if (rs) { U.SORT[rs.dataset.uSreset] = []; (U.REDRAW[rs.dataset.uSreset] || U.redraw || (() => {}))(); }
+  });
+
+  /* 팝업 — U.modal({title, body, ok:'저장', wide, danger:{label, fn}, hint, onOk: async ($, err) => true면 닫힘})
+     body 안 입력칸은 id 로 찾는다: $('id'). 실패 메시지는 err('…') — 팝업 안에 빨갛게. */
+  U.modal = o => {
+    let m = document.querySelector('.u-modal'); if (!m) { m = document.createElement('div'); m.className = 'u-modal'; m.innerHTML = '<div class="sheet"></div>'; document.body.appendChild(m);
+      m.addEventListener('click', ev => { if (ev.target === m) U.close(); }); document.addEventListener('keydown', ev => { if (ev.key === 'Escape') U.close(); }); }
+    const sh = m.querySelector('.sheet'); sh.classList.toggle('wide', !!o.wide);
+    sh.innerHTML = (o.title ? '<h2>' + U.E(o.title) + '</h2>' : '') + (o.body || '') + (o.hint ? '<div class="u-hint">' + o.hint + '</div>' : '') + '<div class="u-err"></div>'
+      + (o.onOk || o.danger ? '<div class="act">' + (o.danger ? '<button class="u-btn danger" data-u-del style="margin-right:auto">' + U.E(o.danger.label) + '</button>' : '')
+        + '<button class="u-btn" data-u-cancel>' + (o.onOk ? '취소' : '닫기') + '</button>' + (o.onOk ? '<button class="u-btn pri" data-u-ok>' + U.E(o.ok || '저장') + '</button>' : '') + '</div>' : '');
+    m.classList.add('on');
+    const $ = id => sh.querySelector('#' + id), err = t => { sh.querySelector('.u-err').textContent = t || ''; };
+    const c = sh.querySelector('[data-u-cancel]'); if (c) c.onclick = U.close;
+    const ok = sh.querySelector('[data-u-ok]'); if (ok) ok.onclick = async () => { ok.disabled = true; err(''); try { if (await o.onOk($, err)) U.close(); } finally { ok.disabled = false; } };
+    const d = sh.querySelector('[data-u-del]'); if (d) U.sure(d, '정말요? 한 번 더', async () => { if (await o.danger.fn($, err)) U.close(); });
+    const f = sh.querySelector('input:not([type=checkbox]),select,textarea'); if (f) f.focus();
+    return { $, err, sheet: sh };
+  };
+  U.close = () => { const m = document.querySelector('.u-modal'); if (m) m.classList.remove('on'); };
+  U.field = (label, inner, wide) => '<label class="f' + (wide ? ' wide' : '') + '"><span>' + label + '</span>' + inner + '</label>';
+
+  /* RPC — U.rpc(sb, 'fn', {…}) → data 또는 null(실패면 err/토스트로 알림). DB 함수가 {오류:'…'} 를 돌려주는 우리 관례를 그대로 처리 */
+  U.rpc = async (sb, fn, args, err) => { let data = null, error = null;
+    try { ({ data, error } = await sb.rpc(fn, args || {})); } catch (e) { error = e; }
+    if (error || data == null || (data && data.오류)) { const m = (data && data.오류) || (error && error.message) || '실패했어요'; (err || U.toast)(m); return null; }
+    return data; };
+
+  window.U = U;
+})();
+</script>
+<script>
+const { E, table, modal, toast } = U;
+const SB_URL = 'https://bkgerndnwukvuuqdgnxt.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+const $ = id => document.getElementById(id);
+
+/* 시즌 — 대시보드와 같은 표·같은 localStorage('season') 열쇠. 새 시즌은 대시보드 app.js SEASONS 와 같이 한 줄 더한다 */
+const SEASONS = [
+  { k: '26여름', name: '여름방학', from: '2026-07-01', to: '2026-08-31' },
+  { k: '26-2중간', name: '2학기 중간', from: '2026-09-01', to: '2026-10-10' },
+  { k: '26-2기말', name: '2학기 기말', from: '2026-10-11', to: '' },
+];
+let SEA = (() => { let k = null; try { k = localStorage.getItem('season'); } catch (e) {} if (k === '*') return null; return SEASONS.find(s => s.k === k) || SEASONS[SEASONS.length - 1]; })();
+const inSea = d => { d = String(d || '').slice(0, 10); return !!d && (!SEA || (d >= SEA.from && (!SEA.to || d <= SEA.to))); };
+const FROM = () => SEA ? SEA.from : '2026-01-01';
+
+const HW_ST = [null, ['①', '한 번에 맞음'], ['②', '고쳐서 맞음'], ['③', '해설 보고 해결'], ['④', '질문해서 해결'], ['⑤', '해설 봐도 모름'], ['⑥', '안 풀었음'], ['⑦', '문항 오류']];
+const TABS = [['round', '회차'], ['hw', '과제·질문'], ['core', 'CORE 루프'], ['exam', '시험']];
+let TAB = (() => { const t = new URLSearchParams(location.search).get('tab'); return TABS.some(x => x[0] === t) ? t : 'round'; })();
+const R = { stu: [], dl: [], v5: [], hc: [], q: [] };     // 명단 단계(한 번)
+const P = {};                                              // 학생별(sid → 상세)
+let SID = new URLSearchParams(location.search).get('sid') || '';
+let FBAN = '*', FQ = '', BANK = null, ROLE = '';
+
+const md = d => { d = String(d || ''); return d ? (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)) : '—'; };
+const wd = d => '일월화수목금토'[new Date(String(d).slice(0, 10) + 'T00:00:00+09:00').getDay()];
+const tag = (cls, t, tip) => `<span class="u-tag ${cls || ''}"${tip ? ` title="${E(tip)}"` : ''}>${E(t)}</span>`;
+const rateCls = v => v == null ? '' : v >= 90 ? 'ok' : v >= 70 ? 'warn' : 'bad';
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : null; };
+const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const r0 = v => v == null ? null : Math.round(v);
+const r1 = v => v == null ? null : Math.round(v * 10) / 10;
+const attCls = a => a === '출석' ? 'ok' : (a === '지각' || a === '늦참' || a === '조퇴') ? 'warn' : a === '결석' ? 'bad' : '';
+const rate100 = v => { const n = num(v); return n == null ? null : (n <= 1 && String(v).includes('.') ? n * 100 : n); };
+
+async function all(q, page = 1000) {             // 1000행 넘는 표는 끊어 읽는다
+  let out = [], from = 0;
+  for (;;) { const { data, error } = await q().range(from, from + page - 1); if (error) throw error; out = out.concat(data || []); if (!data || data.length < page) return out; from += page; }
+}
+const soft = async p => { try { const { data, error } = await p; if (error) { console.warn(error.message); return []; } return data || []; } catch (e) { console.warn(e); return []; } };
+
+/* ── 명단 단계 ── */
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('app').innerHTML = '<div class="u-card">로그인이 필요해요. <a href="/dashboard/">대시보드</a>에서 로그인한 뒤 이 페이지를 새로고침해 주세요.</div>'; $('ros').innerHTML = ''; return; }
+  const pr = await soft(sb.from('profiles').select('role').eq('id', session.user.id).limit(1));
+  ROLE = (pr[0] || {}).role || '';
+  drawSea();
+  try {
+    const f = FROM();
+    const [stu, dl, v5, hc, q] = await Promise.all([
+      sb.from('students').select('"학생ID",이름,학년,반,학교,상태').eq('상태', '재원').then(r => r.data || []),
+      all(() => sb.from('daily_log').select('"학생ID",반,날짜,출결,결석사유,테스트유형,테스트상태,점수,이행률,진도').gte('날짜', f).order('날짜')),
+      all(() => sb.from('report_v5').select('"학생ID",반,날짜,이행,내역,루프출처,url,썸네일바뀜,리뷰').gte('날짜', f).order('날짜')),
+      soft(sb.from('hw_clinic_check').select('*')),
+      soft(sb.from('hw_question').select('id,"학생ID",상태,방식,시각').gte('시각', f)),
+    ]);
+    R.stu = stu.sort((a, b) => (a.반 + a.이름).localeCompare(b.반 + b.이름, 'ko'));
+    R.dl = dl.filter(r => r.출결 || r.테스트상태 || r.점수 != null || num(r.이행률));   // 유령 행(이행률 0 만 있는 행) 제외 — 옛 대시보드 0904 규칙
+    R.v5 = v5; R.hc = hc.filter(r => inSea(String(r.회차).split('|')[1])); R.q = q;
+  } catch (e) { $('app').innerHTML = `<div class="u-card u-bad">명단을 못 읽었어요: ${E(e.message || e)}</div>`; return; }
+  if (!SID) SID = (R.stu[0] || {}).학생ID || '';     // 명단 밖 학생(퇴원 등)도 주소로 오면 그대로 연다
+  drawRos(); openStu(SID);
+}
+function stuBadges(sid) {
+  const v = R.v5.filter(r => r.학생ID === sid).sort((a, b) => a.날짜.localeCompare(b.날짜)).pop();
+  const hc = R.hc.filter(r => r.학생ID === sid && !r.완료 && r.상태 !== '면제' && r.상태 !== '완료');
+  const qw = R.q.filter(r => r.학생ID === sid && r.상태 === '대기').length;
+  return (v && v.이행 != null ? tag(rateCls(v.이행), v.이행 + '%', md(v.날짜) + ' 회차 과제 이행') : '')
+    + (hc.length ? tag('bad', '보완 ' + hc.length, '닫히지 않은 과제 보완') : '')
+    + (qw ? tag('accent', '질문 ' + qw, '답 기다리는 질문') : '');
+}
+function drawRos() {
+  const bans = [...new Set(R.stu.map(s => s.반))].sort();
+  const list = R.stu.filter(s => (FBAN === '*' || s.반 === FBAN) && (!FQ || s.이름.includes(FQ)));
+  $('ros').innerHTML = `<div class="ros-f"><select id="fban" aria-label="반"><option value="*">전체 반 (${R.stu.length})</option>${bans.map(b => `<option value="${E(b)}"${b === FBAN ? ' selected' : ''}>${E(b)} (${R.stu.filter(s => s.반 === b).length})</option>`).join('')}</select>`
+    + `<input id="fq" type="search" placeholder="이름" value="${E(FQ)}" aria-label="이름 검색"></div>`
+    + `<div class="u-card" style="padding:4px 8px"><div class="u-list ros">${list.map(s => `<div class="row${s.학생ID === SID ? ' on' : ''}" data-sid="${E(s.학생ID)}"><div><b>${E(s.이름)}</b><div class="t">${E(s.반)} · ${E(s.학교 || '')}</div></div><div class="tg">${stuBadges(s.학생ID)}</div></div>`).join('') || '<div class="u-empty">없음</div>'}</div></div>`
+    + '<div class="mini" style="margin:8px 2px">꼬리표: 최근 회차 과제 이행 · 닫히지 않은 보완 · 답 기다리는 질문</div>';
+  $('fban').onchange = e => { FBAN = e.target.value; drawRos(); };
+  $('fq').oninput = e => { FQ = e.target.value.trim(); const p = e.target.selectionStart; drawRos(); const n = $('fq'); n.focus(); n.setSelectionRange(p, p); };
+  document.querySelectorAll('.ros [data-sid]').forEach(el => el.onclick = () => openStu(el.dataset.sid));
+}
+function drawSea() {
+  const cur = SEA ? SEA.k : '*';
+  $('sea').innerHTML = SEASONS.slice(-2).map(s => `<button class="u-btn sm ${s.k === cur ? 'pri' : 'ghost'}" data-sea="${E(s.k)}" title="${E(s.from)} ~ ${E(s.to || '지금')}">${E(s.name)}</button>`).join('')
+    + `<button class="u-btn sm ${cur === '*' ? 'pri' : 'ghost'}" data-sea="*">전체</button>`;
+  $('sea').querySelectorAll('[data-sea]').forEach(b => b.onclick = () => { try { localStorage.setItem('season', b.dataset.sea); } catch (e) {} location.reload(); });
+}
+function drawTabs() {
+  $('tabs').innerHTML = TABS.map(([k, t]) => `<button data-tab="${k}" class="${k === TAB ? 'on' : ''}">${t}</button>`).join('');
+  $('tabs').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; syncUrl(); draw(); });
+}
+function syncUrl() { const u = new URL(location.href); u.searchParams.set('sid', SID); u.searchParams.set('tab', TAB); history.replaceState(null, '', u); }
+
+/* ── 학생 단계 ── */
+async function openStu(sid) {
+  if (!sid) { $('app').innerHTML = '<div class="u-empty">학생을 골라 주세요</div>'; return; }
+  SID = sid; syncUrl(); drawTabs();
+  document.querySelectorAll('.ros [data-sid]').forEach(el => el.classList.toggle('on', el.dataset.sid === sid));
+  if (!P[sid]) {
+    $('app').innerHTML = '<div class="u-empty">불러오는 중…</div>';
+    const s = R.stu.find(x => x.학생ID === sid) || { 학생ID: sid, 이름: sid.split('_')[0], 반: sid.split('_')[1] || '' };
+    const f = FROM();
+    const [hck, hq, ml, wl, se, sw, tk] = await Promise.all([
+      soft(sb.from('hw_check').select('assign_id,번호,"문항ID",상태,처음상태,시각').eq('학생ID', sid).limit(5000)),
+      soft(sb.from('hw_question').select('id,assign_id,번호,"문항ID",상태,방식,막힌단계,메모,시각,답변시각,답변자,해결시각,열람시각,핵심,재질문,오류').eq('학생ID', sid).gte('시각', f).order('시각', { ascending: false })),
+      soft(sb.from('mastery_log').select('세트키,키,문항id,모드,정오,확신,원인,ms,시각').eq('학생ID', sid).gte('시각', f).order('시각').limit(5000)),
+      soft(sb.from('weekly_link').select('*').eq('학생ID', sid).order('주차', { ascending: false })),
+      soft(sb.from('school_exam').select('*').eq('이름', s.이름)),
+      soft(sb.from('sw_sub').select('id,item_id,회차,상태,최종,제출시각,공개시각,학생봄').eq('학생ID', sid).order('제출시각', { ascending: false })),
+      ROLE === 'admin' ? soft(sb.from('portal_token').select('토큰,대상,회수,만료일,발급일').eq('학생ID', sid)) : Promise.resolve([]),
+    ]);
+    const aids = [...new Set(hck.map(r => r.assign_id).concat(hq.map(r => r.assign_id)))];
+    const ha = aids.length ? await soft(sb.from('hw_assign').select('id,반,날짜,세트키,과목,단원코드,라운드,마감,상태,메모,"학생ID",판').in('id', aids)) : [];
+    if (ml.length && !BANK) BANK = await loadBank();
+    P[sid] = { s, hck, hq, ml, wl, se: se.filter(r => (r.상태 || '확보') === '확보'), sw, tk, ha };
+  }
+  if (SID === sid) draw();
+}
+async function loadBank() {          // CORE 개념·유형 이름 — 대시보드 coBank 와 같은 방식(/dashboard/core/ 안의 BANK)
+  try {
+    const t = await (await fetch('/dashboard/core/?_=' + Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/const BANK=(\{.*?\});\s*$/m); const b = m ? JSON.parse(m[1]) : null; if (!b) return { t: {}, u: {} };
+    const o = { t: {}, u: {} };
+    Object.values(b.sets).forEach(S => S.units.forEach(Un => Un.concepts.forEach(c => {
+      o.t[c.key] = '개념 ' + c.no + ' ' + c.title; o.u[c.key] = Un.name;
+      (c.themes || []).forEach(th => { o.t[th.key] = '유형 ' + th.no + ' ' + th.name; o.u[th.key] = Un.name; });
+    })));
+    return o;
+  } catch (e) { console.warn('CORE 이름 못 읽음', e); return { t: {}, u: {} }; }
+}
+
+/* 회차 = (반, 날짜). daily_log + report_v5 + hw_clinic_check 를 한 줄로 */
+function rounds(sid) {
+  const m = {};
+  const at = (d, ban) => m[d] = m[d] || { 날짜: d, 반: ban };
+  R.dl.filter(r => r.학생ID === sid).forEach(r => Object.assign(at(r.날짜, r.반), { dl: r }));
+  R.v5.filter(r => r.학생ID === sid).forEach(r => Object.assign(at(r.날짜, r.반), { v5: r }));
+  R.hc.filter(r => r.학생ID === sid).forEach(r => { const [ban, d] = String(r.회차).split('|'); Object.assign(at(d, ban), { hc: r }); });
+  return Object.values(m).filter(x => inSea(x.날짜)).sort((a, b) => b.날짜.localeCompare(a.날짜));
+}
+const rRate = x => x.v5 && x.v5.이행 != null ? +x.v5.이행 : x.dl ? rate100(x.dl.이행률) : null;
+function testOf(r) {
+  if (!r) return null;
+  const t = (r.테스트유형 || '').trim(), sc = num(r.점수), stt = (r.테스트상태 || '').trim();
+  const kind = t || '리뷰', full = (t === '기출테스트' || t === '모의테스트') ? 100 : 10;
+  return { kind, sc, full, stt };
+}
+function hcTxt(h) {
+  if (!h) return '';
+  if (h.완료 || h.상태 === '완료') return tag('ok', '보완 완료' + (h.보완후 != null ? ` ${h.이행률}→${h.보완후}%` : ''));
+  if (h.상태 === '면제') return tag('', '면제');
+  if (h.예약) return tag('warn', (h.결석 ? '결석 보강 ' : '보완 예약 ') + U.fmt(h.예약));
+  return tag('bad', (h.결석 ? '결석 보강 ' : '보완 ') + '예약 안 함');
+}
+const ndn = (a) => Array.isArray(a) ? `${a[0]}/${a[1]}` : '';
+
+function draw() {
+  const D = P[SID]; if (!D) return;
+  const s = D.s, RS = rounds(SID);
+  const att = RS.map(x => x.dl && x.dl.출결).filter(Boolean);
+  const attOk = att.filter(a => a !== '결석').length;
+  const rates = RS.map(rRate).filter(v => v != null);
+  const rv = RS.map(x => testOf(x.dl)).filter(t => t && t.kind === '리뷰' && t.sc != null).map(t => t.sc);
+  const mlRecent = D.ml.filter(r => r.모드 === '루프' && Date.now() - new Date(r.시각) < 14 * 864e5);
+  const qWait = D.hq.filter(r => r.상태 === '대기');
+  const hcOpen = R.hc.filter(r => r.학생ID === SID && !r.완료 && r.상태 !== '면제' && r.상태 !== '완료');
+  const tk = D.tk.find(t => !t.회수 && t.대상 !== '학부모' && (!t.만료일 || t.만료일 >= U.today())) || D.tk.find(t => !t.회수 && (!t.만료일 || t.만료일 >= U.today()));
+  const links = (tk ? `<a class="u-btn sm" href="/dashboard/me/?t=${encodeURIComponent(tk.토큰)}" target="_blank" rel="noopener" data-portal title="학생이 보는 포털 그대로 — 이 기기는 방문 집계에서 빠진다">포털 ↗</a>` : '')
+    + `<a class="u-btn sm" href="/dashboard/files/" target="_blank" rel="noopener" title="학생별 써킷·개별과제·기출 PDF">자료실 ↗</a>`
+    + `<a class="u-btn sm" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_blank" rel="noopener" title="기출·모의테스트 회차별 추이">기출 추이 ↗</a>`;
+
+  let h = `<div class="u-head"><div><h1>${E(s.이름)} <span class="u-tag accent" style="vertical-align:middle">${E(s.반)}</span></h1>`
+    + `<div class="sub">${E(s.학교 || '')}${s.학년 ? ' · ' + E(s.학년) + '학년' : ''} · ${SEA ? E(SEA.name) + ' (' + md(SEA.from) + '~)' : '전체 기간'} · 수업 ${RS.length}회</div></div><span class="sp"></span>${links}</div>`;
+  h += '<div class="u-kpis">'
+    + kpi(att.length ? U.pct(attOk, att.length) + '%' : '—', `출석 (${att.length}회 중 결석 ${att.length - attOk})`)
+    + kpi(rates.length ? r0(avg(rates.slice(0, 5))) + '%' : '—', '과제 이행 · 최근 5회', rateCls(rates.length ? avg(rates.slice(0, 5)) : null))
+    + kpi(rv.length ? r1(avg(rv)) : '—', `리뷰테스트 평균 /10 (${rv.length}회)`)
+    + kpi(mlRecent.length ? U.pct(mlRecent.filter(r => r.정오).length, mlRecent.length) + '%' : '—', `CORE 루프 정답률 · 14일 (${mlRecent.length}문항)`)
+    + kpi(qWait.length, '답 기다리는 질문', qWait.length ? 'warn' : '')
+    + kpi(hcOpen.length, '닫히지 않은 보완', hcOpen.length ? 'bad' : '')
+    + '</div>';
+  const todo = todos(D, RS, hcOpen, qWait);
+  if (todo.length) h += `<div class="u-section-title">지금 챙길 것</div><div class="u-card" style="padding:6px 14px;margin-bottom:16px"><ul class="todo">${todo.join('')}</ul></div>`;
+  h += TAB === 'round' ? tabRound(RS) : TAB === 'hw' ? tabHw(D) : TAB === 'core' ? tabCore(D) : tabExam(D, RS);
+  $('app').innerHTML = h;
+  const pl = document.querySelector('[data-portal]'); if (pl) pl.addEventListener('click', () => { try { localStorage.setItem('mt_skip', '1'); localStorage.setItem('skipgc', 't'); } catch (e) {} });
+  document.querySelectorAll('[data-aid]').forEach(tr => tr.onclick = () => hwDetail(+tr.dataset.aid));
+  document.querySelectorAll('[data-ck]').forEach(tr => tr.onclick = () => coreDetail(tr.dataset.ck));
+}
+const kpi = (v, l, cls) => `<div class="u-kpi"><b class="${cls ? 'u-' + cls : ''}">${E(v)}</b><span>${E(l)}</span></div>`;
+
+function todos(D, RS, hcOpen, qWait) {
+  const out = [], li = (t, x) => out.push(`<li>${t}<span>${x}</span></li>`);
+  hcOpen.forEach(hh => li(tag('bad', '보완'), `${md(String(hh.회차).split('|')[1])} 회차 과제 ${hh.이행률 ?? '?'}%${hh.결석 ? ' · 결석' : ''} → ${hh.예약 ? '예약 ' + E(U.fmt(hh.예약)) : '<b class="u-bad">아직 예약 안 함</b>'}`
+    + ((hh.미완 || []).length ? ` <span class="mini">남은 문항 ${hh.미완.map(m => E(m.제목 || m.과제) + ' ' + (m.번호 || []).length + '개').join(' · ')}</span>` : '')));
+  if (qWait.length) li(tag('accent', '질문'), `답 기다리는 질문 ${qWait.length}건 (온라인 ${qWait.filter(q => q.방식 !== '방문').length} · 방문 ${qWait.filter(q => q.방식 === '방문').length}) — 가장 오래된 것 ${E(U.fmt(qWait[qWait.length - 1].시각))}`);
+  const ab = RS.slice(0, 4).filter(x => x.dl && x.dl.출결 === '결석');
+  if (ab.length) li(tag('bad', '결석'), `최근 4회 중 결석 ${ab.length}회 (${ab.map(x => md(x.날짜) + (x.dl.결석사유 ? ' ' + E(x.dl.결석사유) : '')).join(', ')})`);
+  const low = RS.slice(0, 3).filter(x => { const v = rRate(x); return v != null && v < 80; });
+  if (low.length) li(tag('warn', '과제'), `최근 3회 중 이행 80% 미만 ${low.length}회 (${low.map(x => md(x.날짜) + ' ' + rRate(x) + '%').join(', ')})`);
+  const lastCore = D.ml.filter(r => r.모드 === '루프').pop();
+  if (D.ml.length && (!lastCore || Date.now() - new Date(lastCore.시각) > 7 * 864e5)) li(tag('warn', 'CORE'), `CORE 루프를 7일 넘게 안 풀었어요${lastCore ? ' (마지막 ' + E(U.fmt(lastCore.시각)) + ')' : ''}`);
+  const swWait = D.sw.filter(x => x.상태 === '확인대기').length;
+  if (swWait) li(tag('accent', '서술형'), `서술형 채점 확인 대기 ${swWait}건`);
+  return out;
+}
+
+/* 탭 ① 회차 */
+function tabRound(RS) {
+  if (!RS.length) return '<div class="u-empty">이 기간 수업 기록이 없어요</div>';
+  const cols = [
+    { h: '날짜', l: 1, v: x => x.날짜, f: x => `<b>${md(x.날짜)}</b> <span class="u-muted">(${wd(x.날짜)})</span>${x.반 ? ' <span class="mini">' + E(x.반) + '</span>' : ''}` },
+    { h: '출결', v: x => x.dl && x.dl.출결, f: x => x.dl && x.dl.출결 ? tag(attCls(x.dl.출결), x.dl.출결, x.dl.결석사유 || '') : '<span class="u-faint">—</span>' },
+    { h: '테스트', num: 1, v: x => { const t = testOf(x.dl); return t && t.sc != null ? t.sc / t.full : null; },
+      f: x => { const t = testOf(x.dl); if (!t) return '<span class="u-faint">—</span>'; if (t.sc == null) return `<span class="u-muted">${E(t.kind)} ${E(t.stt || '')}</span>`;
+        const p = t.sc / t.full; return `<span class="mini">${E(t.kind)}</span> ${tag(p >= .8 ? 'ok' : p >= .6 ? 'warn' : 'bad', (r1(t.sc)) + '/' + t.full)}`; } },
+    { h: '과제 이행', num: 1, v: rRate, f: x => { const v = rRate(x); return v == null ? '<span class="u-faint">—</span>' : tag(rateCls(v), r0(v) + '%'); } },
+    { h: '내역', l: 1, ns: 1, v: () => 0, f: x => { const n = x.v5 && x.v5.내역 || {}; return ['써킷', '개별과제', '루프'].filter(k => n[k]).map(k => `<span class="mini">${k} ${ndn(n[k])}</span>`).join(' · ') || '<span class="u-faint">—</span>'; } },
+    { h: '보완', l: 1, v: x => x.hc ? (x.hc.완료 ? 2 : x.hc.예약 ? 1 : 0) : null, f: x => hcTxt(x.hc) || '<span class="u-faint">—</span>' },
+    { h: '진도', l: 1, v: x => x.dl && x.dl.진도, f: x => `<span class="mini">${E(String(x.dl && x.dl.진도 || '').slice(0, 26))}</span>` },
+    { h: '리포트', ns: 1, v: () => 0, f: x => x.v5 && x.v5.url ? `<a class="u-btn sm" href="${E(x.v5.url)}" target="_blank" rel="noopener">열기 ↗</a>${x.v5.썸네일바뀜 ? ' ' + tag('bad', '재발송') : ''}` : '' },
+  ];
+  return `<div class="u-section-title">회차별 — 출결·테스트·과제 이행·보완·학부모 리포트</div>` + table('round', cols, RS, { redraw: draw });
+}
+
+/* 탭 ② 과제·질문 */
+function asgOf(D) {
+  const by = {};
+  D.hck.forEach(c => (by[c.assign_id] = by[c.assign_id] || []).push(c));
+  return D.ha.filter(a => inSea(a.날짜)).map(a => {
+    const cs = (by[a.id] || []).sort((x, y) => x.번호 - y.번호), cnt = [0, 0, 0, 0, 0, 0, 0, 0];
+    cs.forEach(c => cnt[c.상태] = (cnt[c.상태] || 0) + 1);
+    const base = cs.length - cnt[7], done = cnt[1] + cnt[2] + cnt[3] + cnt[4];
+    const ind = !!a.학생ID || /^IND-/.test(a.세트키 || '');
+    const name = ind ? '개별과제' + (a.메모 ? ' ' + String(a.메모).replace(/^개별과제\s*/, '') : '') : `써킷 ${a.과목 || ''} ${a.단원코드 || ''}${a.라운드 != null ? ' R' + a.라운드 : ''}`;
+    return { a, cs, cnt, n: cs.length, rate: base ? U.pct(done, base) : null, ind, name, q: D.hq.filter(q => q.assign_id === a.id) };
+  }).sort((x, y) => String(y.a.날짜).localeCompare(String(x.a.날짜)) || y.a.id - x.a.id);
+}
+function tabHw(D) {
+  const A = asgOf(D);
+  let h = '<div class="u-section-title">과제 — 문항 체크 (학생이 포털에서 ①~⑦로 체크한 것 기준, 줄을 누르면 문항별)</div>';
+  h += A.length ? table('hw', [
+    { h: '낸 날', l: 1, v: x => x.a.날짜, f: x => `<b>${md(x.a.날짜)}</b>` },
+    { h: '과제', l: 1, v: x => x.name, f: x => `${x.ind ? tag('accent', '개별') : tag('', '공통')} ${E(x.name)}` },
+    { h: '마감', v: x => x.a.마감, f: x => `<span class="mini">${x.a.마감 ? E(U.fmt(x.a.마감)) : '—'}</span>` },
+    { h: '체크', num: 1, v: x => x.n },
+    { h: '해결률', num: 1, v: x => x.rate, f: x => x.rate == null ? '<span class="u-faint">—</span>' : tag(rateCls(x.rate), x.rate + '%'), tip: '①~④ ÷ (체크 − ⑦ 문항 오류)' },
+    { h: '①②', num: 1, v: x => x.cnt[1] + x.cnt[2] },
+    { h: '③④', num: 1, v: x => x.cnt[3] + x.cnt[4] },
+    { h: '⑤ 모름', num: 1, v: x => x.cnt[5], f: x => x.cnt[5] ? `<b class="u-bad">${x.cnt[5]}</b>` : '0' },
+    { h: '⑥ 안 품', num: 1, v: x => x.cnt[6], f: x => x.cnt[6] ? `<b class="u-warn">${x.cnt[6]}</b>` : '0' },
+    { h: '질문', num: 1, v: x => x.q.length },
+  ], A, { rowAttr: x => `class="click" data-aid="${x.a.id}"`, redraw: draw }) : '<div class="u-empty">이 기간 체크한 과제가 없어요</div>';
+  const Q = D.hq;
+  h += `<div class="u-section-title" style="margin-top:22px">질문 ${Q.length}건 — 대기 ${Q.filter(q => q.상태 === '대기').length} · 해결 ${Q.filter(q => q.상태 === '해결').length}</div>`;
+  const aOf = id => D.ha.find(a => a.id === id) || {};
+  h += Q.length ? table('q', [
+    { h: '물은 때', l: 1, v: q => q.시각, f: q => E(U.fmt(q.시각)) },
+    { h: '과제', l: 1, v: q => aOf(q.assign_id).날짜, f: q => { const a = aOf(q.assign_id); return `<span class="mini">${md(a.날짜)} ${a.학생ID || /^IND-/.test(a.세트키 || '') ? '개별' : '써킷 ' + E(a.단원코드 || '')}</span> <b>${q.번호}번</b>`; } },
+    { h: '방식', v: q => q.방식 || '온라인', f: q => tag(q.방식 === '방문' ? 'warn' : 'accent', q.방식 || '온라인') },
+    { h: '막힌 곳', l: 1, v: q => q.막힌단계 || q.메모, f: q => `<span class="mini">${E([q.막힌단계, q.메모].filter(Boolean).join(' · ').slice(0, 40))}</span>` },
+    { h: '상태', v: q => q.상태, f: q => q.오류 ? tag('', '문항 오류') : tag(q.상태 === '해결' ? 'ok' : q.상태 === '대기' ? (q.답변시각 ? 'accent' : 'warn') : '', q.상태 === '대기' && q.답변시각 ? '답 보냄' : q.상태) },
+    { h: '답한 조교', l: 1, v: q => q.답변자, f: q => `<span class="mini">${E(q.답변자 || '')}</span>` },
+    { h: '학생', l: 1, v: q => q.핵심 || (q.열람시각 ? '봄' : ''), f: q => q.핵심 ? `<span class="mini" title="이해했어요 — 핵심 한 줄">✓ ${E(String(q.핵심).slice(0, 30))}</span>` : q.답변시각 ? (q.열람시각 ? '<span class="mini">봄</span>' : tag('warn', '아직 안 봄')) : '' },
+  ], Q, { redraw: draw }) : '<div class="u-empty">이 기간 질문이 없어요</div>';
+  return h;
+}
+function hwDetail(aid) {
+  const D = P[SID], x = asgOf(D).find(y => y.a.id === aid); if (!x) return;
+  modal({ title: `${md(x.a.날짜)} ${x.name}`, wide: true,
+    body: `<div class="u-kpis">${[1, 2, 3, 4, 5, 6, 7].map(i => kpi(x.cnt[i], HW_ST[i][0] + ' ' + HW_ST[i][1], i === 5 ? (x.cnt[5] ? 'bad' : '') : i === 6 ? (x.cnt[6] ? 'warn' : '') : '')).join('')}</div>`
+      + `<div class="u-card">${x.cs.map(c => `<span class="qn s${c.상태}" title="${E(HW_ST[c.상태] ? HW_ST[c.상태][1] : '')}${c.처음상태 && c.처음상태 !== c.상태 ? ' (처음 ' + HW_ST[c.처음상태][0] + ')' : ''}">${c.번호}</span>`).join('') || '<span class="u-empty">체크 없음</span>'}</div>`,
+    hint: '칸 색: 초록 ①② · 파랑 ③④ · 빨강 ⑤ 모름 · 주황 ⑥ 안 품 · 줄 그음 ⑦ 오류. 체크하지 않은 문항은 여기 안 나온다(마감 뒤엔 ⑥ 처리).' });
+}
+
+/* 탭 ③ CORE 루프 */
+function coreRows(D) {
+  const by = {};
+  D.ml.forEach(r => { const k = r.키 || '(키 없음)'; (by[k] = by[k] || []).push(r); });
+  return Object.entries(by).map(([k, rs]) => {
+    const ok = rs.filter(r => r.정오).length, sure = rs.filter(r => !r.정오 && r.확신 === '확실').length;
+    const cause = {}; rs.filter(r => !r.정오 && r.원인).forEach(r => cause[r.원인] = (cause[r.원인] || 0) + 1);
+    return { k, rs, n: rs.length, ok, acc: U.pct(ok, rs.length), sure, cause, last: rs[rs.length - 1], unit: BANK && BANK.u[k] || '', title: BANK && BANK.t[k] || k };
+  });
+}
+function tabCore(D) {
+  if (!D.ml.length) return '<div class="u-empty">이 기간 CORE 루프 기록이 없어요</div>';
+  const rows = coreRows(D).sort((a, b) => a.acc - b.acc || b.n - a.n);
+  const wk = D.ml.filter(r => Date.now() - new Date(r.시각) < 7 * 864e5);
+  const ca = {}; D.ml.filter(r => !r.정오 && r.원인).forEach(r => ca[r.원인] = (ca[r.원인] || 0) + 1);
+  const units = {}; rows.forEach(r => { const u = r.unit || '기타'; units[u] = units[u] || { n: 0, ok: 0 }; units[u].n += r.n; units[u].ok += r.ok; });
+  let h = '<div class="u-grid2" style="margin-bottom:14px">'
+    + `<div class="u-card"><div class="u-section-title" style="margin-top:0">단원별 정답률</div><div class="u-bars">${Object.entries(units).map(([u, v]) => `<div class="row"><span class="nm">${E(u)}</span><span class="bg"><i style="width:${U.pct(v.ok, v.n)}%"></i></span><span class="v">${U.pct(v.ok, v.n)}% <span class="mini">${v.n}</span></span></div>`).join('')}</div></div>`
+    + `<div class="u-card"><div class="u-section-title" style="margin-top:0">한눈에</div><div class="u-kpis" style="margin:0">${kpi(D.ml.length, '이 기간 푼 문항')}${kpi(wk.length, '최근 7일')}${kpi(U.pct(D.ml.filter(r => r.정오).length, D.ml.length) + '%', '전체 정답률')}${kpi(D.ml.filter(r => !r.정오 && r.확신 === '확실').length, '확실하다고 했는데 틀림', 'warn')}</div>`
+    + (Object.keys(ca).length ? `<div class="mini" style="margin-top:10px">틀린 이유(학생이 고름): ${Object.entries(ca).sort((a, b) => b[1] - a[1]).map(([k, v]) => E(k) + ' ' + v).join(' · ')}</div>` : '') + '</div></div>';
+  h += '<div class="u-section-title">개념·유형별 — 정답률 낮은 순 (줄을 누르면 문항 기록)</div>' + table('core', [
+    { h: '단원', l: 1, v: r => r.unit, f: r => `<span class="mini">${E(r.unit)}</span>` },
+    { h: '개념·유형', l: 1, v: r => r.k, f: r => `<b>${E(r.title)}</b> <span class="mini">${E(r.k)}</span>` },
+    { h: '푼 수', num: 1, v: r => r.n },
+    { h: '정답률', num: 1, v: r => r.acc, f: r => tag(rateCls(r.acc), r.acc + '%') },
+    { h: '최근 5회', l: 1, ns: 1, v: () => 0, f: r => `<span class="dots">${r.rs.slice(-5).map(x => x.정오 ? '<span class="o">●</span>' : '<span class="x">●</span>').join('')}</span>` },
+    { h: '확실한데 틀림', num: 1, v: r => r.sure, f: r => r.sure ? `<b class="u-warn">${r.sure}</b>` : '0' },
+    { h: '틀린 이유', l: 1, v: r => Object.keys(r.cause).join(), f: r => `<span class="mini">${Object.entries(r.cause).map(([k, v]) => E(k) + ' ' + v).join(' · ')}</span>` },
+    { h: '마지막', v: r => r.last.시각, f: r => `<span class="mini">${E(U.fmt(r.last.시각))}</span>` },
+  ], rows, { rowAttr: r => `class="click" data-ck="${E(r.k)}"`, redraw: draw });
+  return h;
+}
+function coreDetail(k) {
+  const D = P[SID], r = coreRows(D).find(x => x.k === k); if (!r) return;
+  modal({ title: r.title, wide: true, body: table('cored', [
+    { h: '시각', l: 1, v: x => x.시각, f: x => E(U.fmt(x.시각)) },
+    { h: '모드', v: x => x.모드 },
+    { h: '문항', l: 1, v: x => x.문항id, f: x => `<span class="mini">${E(x.문항id)}</span>` },
+    { h: '정오', v: x => x.정오 ? 1 : 0, f: x => x.정오 ? tag('ok', '맞음') : tag('bad', '틀림') },
+    { h: '확신', v: x => x.확신 },
+    { h: '이유', l: 1, v: x => x.원인 },
+    { h: '걸린 시간', num: 1, v: x => x.ms, f: x => x.ms ? Math.round(x.ms / 1000) + '초' : '' },
+  ], r.rs.slice().reverse()) });
+}
+
+/* 탭 ④ 시험 */
+function tabExam(D, RS) {
+  let h = '';
+  const mk = RS.filter(x => x.dl && /모의|기출/.test(x.dl.테스트유형 || ''));
+  h += `<div class="u-section-title">기출·모의테스트 <a class="mini" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_blank" rel="noopener">문항별 추이는 기출 탭 ↗</a></div>`;
+  h += mk.length ? table('mk', [
+    { h: '날짜', l: 1, v: x => x.날짜, f: x => `<b>${md(x.날짜)}</b>` },
+    { h: '종류', v: x => x.dl.테스트유형 },
+    { h: '점수', num: 1, v: x => num(x.dl.점수), f: x => { const v = num(x.dl.점수); return v == null ? `<span class="u-muted">${E(x.dl.테스트상태 || '—')}</span>` : tag(v >= 80 ? 'ok' : v >= 60 ? 'warn' : 'bad', r1(v) + '점'); } },
+    { h: '진도·시험지', l: 1, v: x => x.dl.진도, f: x => `<span class="mini">${E(String(x.dl.진도 || '').slice(0, 40))}</span>` },
+  ], mk, { redraw: draw }) : '<div class="u-empty">이 기간 기출·모의테스트 기록이 없어요</div>';
+  h += '<div class="u-section-title" style="margin-top:22px">주간고사 <span class="mini">클리닉·주간고사 예약 서비스에서 온 성적표</span></div>';
+  h += D.wl.length ? table('wl', [
+    { h: '주차', l: 1, v: r => r.주차, f: r => `<b>${md(r.주차)}</b> 주` },
+    { h: '점수', num: 1, v: r => num(r.점수), f: r => num(r.점수) == null ? `<span class="u-muted">${E(r.점수 || '—')}</span>` : `<b>${E(r.점수)}</b>` },
+    { h: '반 평균', num: 1, v: r => num(r.반평균) },
+    { h: '전체 평균', num: 1, v: r => num(r.전체평균) },
+    { h: '반 대비', num: 1, v: r => num(r.점수) != null && num(r.반평균) != null ? num(r.점수) - num(r.반평균) : null, f: r => { const a = num(r.점수), b = num(r.반평균); if (a == null || b == null) return ''; const d = r1(a - b); return `<b class="${d >= 0 ? 'u-ok' : 'u-bad'}">${d >= 0 ? '+' : ''}${d}</b>`; } },
+    { h: '성적표', ns: 1, v: () => 0, f: r => r.url ? `<a class="u-btn sm" href="${E(r.url)}" target="_blank" rel="noopener">열기 ↗</a>` : '' },
+  ], D.wl, { redraw: draw }) : '<div class="u-empty">주간고사 기록이 없어요</div>';
+  const se = D.se.slice().sort((a, b) => [b.시행년, b.학기, b.시험구분 === '기말' ? 1 : 0].join().localeCompare([a.시행년, a.학기, a.시험구분 === '기말' ? 1 : 0].join()));
+  h += `<div class="u-section-title" style="margin-top:22px">내신 <a class="mini" href="/dashboard/#exam" target="_blank" rel="noopener">내신 탭(컷·설문) ↗</a></div>`;
+  h += se.length ? table('se', [
+    { h: '시험', l: 1, v: r => r.시행년 + r.학기 + r.시험구분, f: r => `<b>${E(r.시행년)} ${E(r.학기)}학기 ${E(r.시험구분)}</b>` },
+    { h: '학교', l: 1, v: r => r.학교 },
+    { h: '점수', num: 1, v: r => num(r.점수) },
+    { h: '등급', num: 1, v: r => num(r.등급 || r.석차등급), f: r => (r.등급 || r.석차등급) ? tag('accent', (r.등급 || r.석차등급) + '등급') : '<span class="u-faint">—</span>' },
+    { h: '과목 평균', num: 1, v: r => num(r.과목평균) },
+  ], se, { redraw: draw }) : '<div class="u-empty">내신 기록이 없어요</div>';
+  h += '<div class="u-section-title" style="margin-top:22px">서술형 대비 <a class="mini" href="/dashboard/#sw" target="_blank" rel="noopener">서술형 채점 ↗</a></div>';
+  h += D.sw.length ? table('sw', [
+    { h: '제출', l: 1, v: r => r.제출시각, f: r => E(U.fmt(r.제출시각)) },
+    { h: '문항', l: 1, v: r => r.item_id, f: r => `<span class="mini">${E(r.item_id)}</span>` },
+    { h: '회차', num: 1, v: r => r.회차 },
+    { h: '상태', v: r => r.상태, f: r => tag(r.상태 === '확인대기' ? 'warn' : r.공개시각 ? 'ok' : '', r.상태) },
+    { h: '최종', l: 1, v: r => typeof r.최종 === 'object' && r.최종 ? (r.최종.점수 ?? '') : r.최종, f: r => { const f = r.최종; if (f == null) return '<span class="u-faint">—</span>'; return E(typeof f === 'object' ? (f.점수 != null ? f.점수 + (f.만점 ? '/' + f.만점 : '') + '점' : JSON.stringify(f).slice(0, 30)) : f); } },
+    { h: '학생 봄', v: r => r.학생봄 ? 1 : 0, f: r => r.학생봄 ? '✓' : '' },
+  ], D.sw, { redraw: draw }) : '<div class="u-empty">서술형 제출이 없어요</div>';
+  return h;
+}
+
+boot();
+</script></body></html>
