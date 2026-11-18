@@ -550,7 +550,7 @@ function asgOf(D) {
     cs.forEach(c => cnt[c.상태] = (cnt[c.상태] || 0) + 1);
     const base = cs.length - cnt[7], done = cnt[1] + cnt[2] + cnt[3] + cnt[4];
     const ind = !!a.학생ID || /^IND-/.test(a.세트키 || '');
-    const name = ind ? '개별과제' + (a.메모 ? ' ' + String(a.메모).replace(/^개별과제\s*/, '') : '') : `써킷 ${a.과목 || ''} ${a.단원코드 || ''}${a.라운드 != null ? ' R' + a.라운드 : ''}`;
+    const name = ind ? '개별과제' + (a.판 ? ' No.' + a.판 : '') : `써킷 ${a.과목 || ''} ${a.단원코드 || ''}${a.라운드 != null ? ' R' + a.라운드 : ''}`;
     return { a, cs, cnt, n: cs.length, rate: base ? U.pct(done, base) : null, ind, name, q: D.hq.filter(q => q.assign_id === a.id) };
   }).sort((x, y) => String(y.a.날짜).localeCompare(String(x.a.날짜)) || y.a.id - x.a.id);
 }
