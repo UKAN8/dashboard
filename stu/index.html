@@ -365,8 +365,10 @@ async function boot() {
       all(() => sb.from('daily_log').select('"학생ID",반,날짜,출결,결석사유,테스트유형,테스트상태,점수,이행률,진도').gte('날짜', f).order('날짜')),
       all(() => sb.from('report_v5').select('"학생ID",반,날짜,이행,내역,루프출처,url,썸네일바뀜,리뷰').gte('날짜', f).order('날짜')),
       soft(sb.from('hw_clinic_check').select('*')),
-      soft(sb.from('hw_question').select('id,"학생ID",상태,방식,시각').gte('시각', f)),
+      soft(sb.from('hw_question').select('id,"학생ID",상태,방식,시각,답변시각').gte('시각', f)),
     ]);
+    // students.반 은 축약(A·S·T), 학년은 '고1' — 합쳐서 '고1A' 로 푼다(대시보드 0811 같은 문제: 고1A·고2A 가 'A' 로 섞임)
+    stu.forEach(x => { const b = String(x.반 || ''); x.반 = /^고/.test(b) ? b : (/^고/.test(String(x.학년 || '')) ? x.학년 : '고' + (x.학년 || '')) + b; });
     R.stu = stu.sort((a, b) => (a.반 + a.이름).localeCompare(b.반 + b.이름, 'ko'));
     R.dl = dl.filter(r => r.출결 || r.테스트상태 || r.점수 != null || num(r.이행률));   // 유령 행(이행률 0 만 있는 행) 제외 — 옛 대시보드 0904 규칙
     R.v5 = v5; R.hc = hc.filter(r => inSea(String(r.회차).split('|')[1])); R.q = q;
@@ -376,11 +378,11 @@ async function boot() {
 }
 function stuBadges(sid) {
   const v = R.v5.filter(r => r.학생ID === sid).sort((a, b) => a.날짜.localeCompare(b.날짜)).pop();
-  const hc = R.hc.filter(r => r.학생ID === sid && !r.완료 && r.상태 !== '면제' && r.상태 !== '완료');
-  const qw = R.q.filter(r => r.학생ID === sid && r.상태 === '대기').length;
+  const hc = R.hc.filter(r => r.학생ID === sid && hcOpenQ(r));
+  const qw = R.q.filter(r => r.학생ID === sid && r.상태 === '대기' && !r.답변시각).length;
   return (v && v.이행 != null ? tag(rateCls(v.이행), v.이행 + '%', md(v.날짜) + ' 회차 과제 이행') : '')
     + (hc.length ? tag('bad', '보완 ' + hc.length, '닫히지 않은 과제 보완') : '')
-    + (qw ? tag('accent', '질문 ' + qw, '답 기다리는 질문') : '');
+    + (qw ? tag('accent', '질문 ' + qw, '아직 답 안 한 질문') : '');
 }
 function drawRos() {
   const bans = [...new Set(R.stu.map(s => s.반))].sort();
@@ -388,7 +390,7 @@ function drawRos() {
   $('ros').innerHTML = `<div class="ros-f"><select id="fban" aria-label="반"><option value="*">전체 반 (${R.stu.length})</option>${bans.map(b => `<option value="${E(b)}"${b === FBAN ? ' selected' : ''}>${E(b)} (${R.stu.filter(s => s.반 === b).length})</option>`).join('')}</select>`
     + `<input id="fq" type="search" placeholder="이름" value="${E(FQ)}" aria-label="이름 검색"></div>`
     + `<div class="u-card" style="padding:4px 8px"><div class="u-list ros">${list.map(s => `<div class="row${s.학생ID === SID ? ' on' : ''}" data-sid="${E(s.학생ID)}"><div><b>${E(s.이름)}</b><div class="t">${E(s.반)} · ${E(s.학교 || '')}</div></div><div class="tg">${stuBadges(s.학생ID)}</div></div>`).join('') || '<div class="u-empty">없음</div>'}</div></div>`
-    + '<div class="mini" style="margin:8px 2px">꼬리표: 최근 회차 과제 이행 · 닫히지 않은 보완 · 답 기다리는 질문</div>';
+    + '<div class="mini" style="margin:8px 2px">꼬리표: 최근 회차 과제 이행 · 닫히지 않은 보완 · 아직 답 안 한 질문</div>';
   $('fban').onchange = e => { FBAN = e.target.value; drawRos(); };
   $('fq').oninput = e => { FQ = e.target.value.trim(); const p = e.target.selectionStart; drawRos(); const n = $('fq'); n.focus(); n.setSelectionRange(p, p); };
   document.querySelectorAll('.ros [data-sid]').forEach(el => el.onclick = () => openStu(el.dataset.sid));
@@ -459,10 +461,12 @@ function testOf(r) {
   const kind = t || '리뷰', full = (t === '기출테스트' || t === '모의테스트') ? 100 : 10;
   return { kind, sc, full, stt };
 }
+const hcOpenQ = r => !r.완료 && !['완료', '면제', '닫힘'].includes(r.상태);    // 닫힘 = 기한 지나 닫힌 것(클리닉 쪽 정리)
 function hcTxt(h) {
   if (!h) return '';
   if (h.완료 || h.상태 === '완료') return tag('ok', '보완 완료' + (h.보완후 != null ? ` ${h.이행률}→${h.보완후}%` : ''));
-  if (h.상태 === '면제') return tag('', '면제');
+  if (h.상태 === '면제' || h.상태 === '닫힘') return tag('', h.상태);
+  if (h.예약 && new Date(h.예약) < Date.now() - 2 * 3600e3) return tag('bad', '예약 ' + U.fmt(h.예약) + ' 지남 · 미완료');
   if (h.예약) return tag('warn', (h.결석 ? '결석 보강 ' : '보완 예약 ') + U.fmt(h.예약));
   return tag('bad', (h.결석 ? '결석 보강 ' : '보완 ') + '예약 안 함');
 }
@@ -476,8 +480,8 @@ function draw() {
   const rates = RS.map(rRate).filter(v => v != null);
   const rv = RS.map(x => testOf(x.dl)).filter(t => t && t.kind === '리뷰' && t.sc != null).map(t => t.sc);
   const mlRecent = D.ml.filter(r => r.모드 === '루프' && Date.now() - new Date(r.시각) < 14 * 864e5);
-  const qWait = D.hq.filter(r => r.상태 === '대기');
-  const hcOpen = R.hc.filter(r => r.학생ID === SID && !r.완료 && r.상태 !== '면제' && r.상태 !== '완료');
+  const qWait = D.hq.filter(r => r.상태 === '대기' && !r.답변시각);
+  const hcOpen = R.hc.filter(r => r.학생ID === SID && hcOpenQ(r));
   const tk = D.tk.find(t => !t.회수 && t.대상 !== '학부모' && (!t.만료일 || t.만료일 >= U.today())) || D.tk.find(t => !t.회수 && (!t.만료일 || t.만료일 >= U.today()));
   const links = (tk ? `<a class="u-btn sm" href="/dashboard/me/?t=${encodeURIComponent(tk.토큰)}" target="_blank" rel="noopener" data-portal title="학생이 보는 포털 그대로 — 이 기기는 방문 집계에서 빠진다">포털 ↗</a>` : '')
     + `<a class="u-btn sm" href="/dashboard/files/" target="_blank" rel="noopener" title="학생별 써킷·개별과제·기출 PDF">자료실 ↗</a>`
@@ -490,7 +494,7 @@ function draw() {
     + kpi(rates.length ? r0(avg(rates.slice(0, 5))) + '%' : '—', '과제 이행 · 최근 5회', rateCls(rates.length ? avg(rates.slice(0, 5)) : null))
     + kpi(rv.length ? r1(avg(rv)) : '—', `리뷰테스트 평균 /10 (${rv.length}회)`)
     + kpi(mlRecent.length ? U.pct(mlRecent.filter(r => r.정오).length, mlRecent.length) + '%' : '—', `CORE 루프 정답률 · 14일 (${mlRecent.length}문항)`)
-    + kpi(qWait.length, '답 기다리는 질문', qWait.length ? 'warn' : '')
+    + kpi(qWait.length, '아직 답 안 한 질문', qWait.length ? 'warn' : '')
     + kpi(hcOpen.length, '닫히지 않은 보완', hcOpen.length ? 'bad' : '')
     + '</div>';
   const todo = todos(D, RS, hcOpen, qWait);
@@ -505,9 +509,9 @@ const kpi = (v, l, cls) => `<div class="u-kpi"><b class="${cls ? 'u-' + cls : ''
 
 function todos(D, RS, hcOpen, qWait) {
   const out = [], li = (t, x) => out.push(`<li>${t}<span>${x}</span></li>`);
-  hcOpen.forEach(hh => li(tag('bad', '보완'), `${md(String(hh.회차).split('|')[1])} 회차 과제 ${hh.이행률 ?? '?'}%${hh.결석 ? ' · 결석' : ''} → ${hh.예약 ? '예약 ' + E(U.fmt(hh.예약)) : '<b class="u-bad">아직 예약 안 함</b>'}`
+  hcOpen.forEach(hh => li(tag('bad', '보완'), `${md(String(hh.회차).split('|')[1])} 회차 과제 ${hh.이행률 ?? '?'}%${hh.결석 ? ' · 결석' : ''} → ${hh.예약 ? (new Date(hh.예약) < Date.now() - 2 * 3600e3 ? '<b class="u-bad">예약 ' + E(U.fmt(hh.예약)) + ' 지났는데 미완료</b>' : '예약 ' + E(U.fmt(hh.예약))) : '<b class="u-bad">아직 예약 안 함</b>'}`
     + ((hh.미완 || []).length ? ` <span class="mini">남은 문항 ${hh.미완.map(m => E(m.제목 || m.과제) + ' ' + (m.번호 || []).length + '개').join(' · ')}</span>` : '')));
-  if (qWait.length) li(tag('accent', '질문'), `답 기다리는 질문 ${qWait.length}건 (온라인 ${qWait.filter(q => q.방식 !== '방문').length} · 방문 ${qWait.filter(q => q.방식 === '방문').length}) — 가장 오래된 것 ${E(U.fmt(qWait[qWait.length - 1].시각))}`);
+  if (qWait.length) li(tag('accent', '질문'), `아직 답 안 한 질문 ${qWait.length}건 (온라인 ${qWait.filter(q => q.방식 !== '방문').length} · 방문 ${qWait.filter(q => q.방식 === '방문').length}) — 가장 오래된 것 ${E(U.fmt(qWait[qWait.length - 1].시각))}`);
   const ab = RS.slice(0, 4).filter(x => x.dl && x.dl.출결 === '결석');
   if (ab.length) li(tag('bad', '결석'), `최근 4회 중 결석 ${ab.length}회 (${ab.map(x => md(x.날짜) + (x.dl.결석사유 ? ' ' + E(x.dl.결석사유) : '')).join(', ')})`);
   const low = RS.slice(0, 3).filter(x => { const v = rRate(x); return v != null && v < 80; });
