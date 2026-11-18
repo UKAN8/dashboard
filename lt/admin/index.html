@@ -525,19 +525,20 @@ const TABS=[['slot','회차·예약','회차를 만들고 예약한 학생을 �
             ['item','문항 분석','정답률·선지 분포·많이 고른 오답의 오개념'],
             ['heat','레벨·단원','학생 × 단원 정답 히트맵'],
             ['ro','명단','응시 명단 · 회차 · 알림 상태'],
-            ['key','선생님 링크','가입 없이 들어오는 선생님별 링크 — 관리자만 보여요']];
+            ['key','선생님 링크','가입 없이 들어오는 선생님별 링크 — 관리자만 보여요'],
+            ['help','사용법','데스크·선생님용 — 예약 배정 · 시험 당일 · 알림 · 결과 보기']];
 function draw(){
   const exs=D.시험||[], tabs=TABS.filter(t=>t[0]!=='key'||(WHO&&WHO.관리));
   if(!tabs.find(t=>t[0]===TAB)) TAB='slot';
   const T=tabs.find(t=>t[0]===TAB);
   document.getElementById('tabs').innerHTML=tabs.map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('');
-  document.getElementById('who').innerHTML='<a href="../guide/" target="_blank" style="color:var(--acc);font-weight:700;text-decoration:none;margin-right:6px">사용법</a>'+(WHO?('<span class="tag '+(WHO.관리?'t-base':'t-deep')+'">'+E(WHO.이름||'선생님')+'</span>'+(WHO.방식==='링크'?'<span>링크로 접속</span>':'')):'');
+  document.getElementById('who').innerHTML=(WHO?('<span class="tag '+(WHO.관리?'t-base':'t-deep')+'">'+E(WHO.이름||'선생님')+'</span>'+(WHO.방식==='링크'?'<span>링크로 접속</span>':'')):'');
   document.querySelectorAll('#tabs [data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();window.scrollTo(0,0);});
-  const body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : TAB==='key'?vKey() : vRoster();
+  const body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : TAB==='key'?vKey() : TAB==='help'?vHelp() : vRoster();
   const fx=['stu','item','heat'].includes(TAB)?'<select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select>':'';
   app.innerHTML='<div class="top"><div><h1>'+E(T[1])+'</h1><div class="sub">'+E(T[2])+'</div></div><span class="sp"></span>'+fx
     +'<button id="rl">새로고침</button>'+(TAB==='stu'?'<button id="csv">CSV 받기</button>':'')+'</div>'
-    +(D.열린?gateBox():'')
+    +(D.열린&&TAB!=='help'?gateBox():'')
     +body
     +(TAB==='slot'&&!D.열린?gateBox():'')
     +'';
@@ -553,6 +554,10 @@ function draw(){
   const go=document.getElementById('gopen'); if(go) go.onclick=()=>gate(true);
   const gc=document.getElementById('gclose'); if(gc) gc.onclick=()=>{ if(!sureGate){ sureGate=true; draw(); return; } gate(false); };
 }
+
+/* ── 탭: 사용법 — /dashboard/lt/guide/ 를 그대로 띄운다(설명서 원본은 guide_src.html 하나) ── */
+function vHelp(){ return '<div class="card" style="padding:0;overflow:hidden"><iframe src="../guide/?in=1" title="사용법" style="display:block;width:100%;height:calc(100vh - 190px);min-height:600px;border:0;background:#fff"></iframe></div>'
+  +'<div style="text-align:right;margin-top:6px"><a class="link" href="../guide/" target="_blank">새 창으로 열기 · 인쇄</a></div>'; }
 
 /* ── 탭: 선생님 링크 (관리자만) ── */
 let KEYS=[];
