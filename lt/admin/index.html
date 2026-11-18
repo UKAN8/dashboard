@@ -531,7 +531,7 @@ function draw(){
   if(!tabs.find(t=>t[0]===TAB)) TAB='slot';
   const T=tabs.find(t=>t[0]===TAB);
   document.getElementById('tabs').innerHTML=tabs.map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('');
-  document.getElementById('who').innerHTML=WHO?('<span class="tag '+(WHO.관리?'t-base':'t-deep')+'">'+E(WHO.이름||'선생님')+'</span>'+(WHO.방식==='링크'?'<span>링크로 접속</span>':'')):'';
+  document.getElementById('who').innerHTML='<a href="../guide/" target="_blank" style="color:var(--acc);font-weight:700;text-decoration:none;margin-right:6px">사용법</a>'+(WHO?('<span class="tag '+(WHO.관리?'t-base':'t-deep')+'">'+E(WHO.이름||'선생님')+'</span>'+(WHO.방식==='링크'?'<span>링크로 접속</span>':'')):'');
   document.querySelectorAll('#tabs [data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();window.scrollTo(0,0);});
   const body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : TAB==='key'?vKey() : vRoster();
   const fx=['stu','item','heat'].includes(TAB)?'<select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select>':'';
@@ -586,7 +586,7 @@ async function load(){
   if(WHO.관리){ const k=await sb.rpc('lt_admin_keys'); KEYS=(k.data||[]); }
   draw();
 }
-function noAccess(msg){ document.getElementById('tabs').innerHTML=''; app.innerHTML='<div class="card" style="max-width:520px;margin:60px auto;text-align:center;padding:30px"><div style="font-size:30px">🔒</div><h1 style="margin:8px 0">레벨테스트 관리</h1><div class="sub">'+E(msg)+'</div></div>'; }
+function noAccess(msg){ document.getElementById('tabs').innerHTML=''; app.innerHTML='<div class="card" style="max-width:520px;margin:60px auto;text-align:center;padding:30px"><div style="font-size:30px">🔒</div><h1 style="margin:8px 0">레벨테스트 관리</h1><div class="sub">'+E(msg)+'</div><div style="margin-top:14px"><a href="../guide/" style="color:var(--acc);font-weight:700">사용법 보기</a></div></div>'; }
 load();
 setInterval(()=>{ if(D&&D.열린&&!dlg.classList.contains('on')&&document.visibilityState==='visible') load(); }, 30000);  // 열려 있는 동안 30초마다
 </script></body></html>
