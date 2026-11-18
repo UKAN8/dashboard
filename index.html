@@ -6086,6 +6086,10 @@ function twLog(rows, B, pool) {
  * 새 신청 회차를 열면 EX_META 에 한 줄(이름·마감) 더한다. 없어도 키 이름으로 보인다.
  */
 const EX_META = {
+  // (1118) 유강 직접 클리닉 — /dashboard/clinic/ · 희망일 = '11/18(수) 13시' 처럼 시간까지 → 날짜별 대신 시간별로 묶는다
+  clinic1118: { 이름: '유강 클리닉 11/18·19', 마감: '2026-11-19', 시간별: true,
+    단원: ['써킷 · 개별과제', '모의테스트', '학교 프린트', '기말 개념 정리', '서술형', '그 외'] },
+  final1113: { 이름: '고3 파이널 모의 11/13', 마감: '2026-11-12' },
   mid2610: { 이름: '2학기 중간 · 고1 공수1', 마감: '2026-10-18',
     단원: ['다항식의 연산', '항등식과 나머지정리', '인수분해', '복소수', '이차방정식', '이차방정식과 이차함수', '여러 가지 방정식', '여러 가지 부등식', '경우의 수', '행렬', '잘 모르겠어요 (선생님 판단)'] },
 };
@@ -6159,7 +6163,7 @@ function exDraw() {
   bar.innerHTML = (keys.length > 1 ? keys.map(k => fb('xk', k, (EX_META[k] || {}).이름 || k, EX.key)).join('') + sep : '')
     + fb('xb', '*', '반 전체', EX.ban) + bans.map(b => fb('xb', b, b, EX.ban)).join('') + sep
     + `<select id="ex-sch" class="fbtn"><option value="*">학교 전체</option>${schs.map(s => `<option${s === EX.sch ? ' selected' : ''}>${E(s)}</option>`).join('')}</select>` + sep
-    + fb('xm', 'stu', '학생별 부족 단원', EX.mode) + fb('xm', 'day', '날짜별', EX.mode) + fb('xm', 'list', '신청 목록', EX.mode) + fb('xm', 'unit', '단원별', EX.mode)
+    + fb('xm', 'stu', meta.시간별 ? '학생별 질문' : '학생별 부족 단원', EX.mode) + fb('xm', 'day', meta.시간별 ? '시간별' : '날짜별', EX.mode) + fb('xm', 'list', '신청 목록', EX.mode) + fb('xm', 'unit', '단원별', EX.mode)
     + `<input id="ex-q" placeholder="이름 검색" value="${E(EX.q)}" style="background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:5px 11px;width:110px;font:inherit;font-size:13px">`
     + `<button class="fbtn" id="ex-re" title="다시 불러오기">↻</button>`;
   bar.querySelectorAll('[data-xk]').forEach(b => b.onclick = () => { EX.key = b.dataset.xk; exDraw(); });
@@ -6171,8 +6175,10 @@ function exDraw() {
 
   // 날짜 → 학생들
   const byDay = {};
-  list.forEach(x => x.days.forEach(dd => { const o = byDay[dd.d] || (byDay[dd.d] = { d: dd.d, l: dd.l, xs: [] }); o.xs.push(x); }));
-  const nToday = (byDay[today] || { xs: [] }).xs.length, nTmr = (byDay[tmr] || { xs: [] }).xs.length;
+  const exHr = l => { const m = String(l).match(/(\d{1,2})\s*시/); return m ? String(m[1]).padStart(2, '0') : ''; };
+  list.forEach(x => x.days.forEach(dd => { const k = meta.시간별 ? dd.d + ' ' + exHr(dd.l) : dd.d;
+    const o = byDay[k] || (byDay[k] = { d: dd.d, k, l: dd.l, xs: [] }); o.xs.push(x); }));
+  const nToday = list.filter(x => x.days.some(dd => dd.d === today)).length, nTmr = list.filter(x => x.days.some(dd => dd.d === tmr)).length;   // (1118) 시간별 키여도 학생 수로 센다
   const nMiss = list.filter(x => !x.s).length;
   const upcoming = Object.values(byDay).filter(o => o.d >= today);
   const peak = upcoming.sort((a, b) => b.xs.length - a.xs.length)[0];
@@ -6209,7 +6215,7 @@ function exDraw() {
     if (tj.length) html += `<div class="dim" style="margin-top:6px">「쌤 판단」 ${tj.length}명 — 본인이 단원을 못 골랐습니다: ${tj.map(x => E(x.r.학생이름)).join(', ')}</div>`;
     html += '<div class="dim" style="margin-top:4px">개수 = 직접 고른 단원 수(쌤 판단 제외) · 머리글을 누르면 그 단원 고른 학생이 위로 정렬됩니다.</div>';
   } else if (EX.mode === 'day') {
-    const days = Object.values(byDay).sort((a, b) => a.d.localeCompare(b.d));
+    const days = Object.values(byDay).sort((a, b) => a.k.localeCompare(b.k));
     html += tbl('<th>날짜</th><th class="n">인원</th><th>학생 (학교)</th><th>많이 고른 단원</th>',
       days.map(o => {
         const uc = {}; o.xs.forEach(x => x.units.forEach(u => uc[u] = (uc[u] || 0) + 1));
