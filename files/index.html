@@ -434,7 +434,7 @@ var WR = (function () {
     host.innerHTML = '<h2>내 오답 현황<small>오답 트레이닝</small></h2><div class="wr-card">'
       + '<div class="wr-kpi"><div><b>' + sm.남은 + '</b><small>남은 오답</small></div><div><b>' + (re.length ? Math.round(one * 100 / re.length) + '%' : '—') + '</b><small>다시 풀 때 한 번에</small></div><div><b>' + sm.졸업 + '</b><small>졸업</small></div></div>'
       + '<div class="wr-h">단원별 남은 오답</div>' + Object.keys(U).sort().map(function (k) { var u = U[k], left = u.n - u.g; return '<div class="wr-bar"><span style="text-align:left;color:inherit">' + E(unitName(S.P, k)) + '</span><i style="width:' + Math.max(4, left * 100 / max) + '%"></i><span>' + left + '/' + u.n + '</span></div>'; }).join('')
-      + '<div class="wr-msg">이번 주 다시 푼 원래 문제 ' + wkRe.length + '개 · 한 번에 맞음 ' + wkRe.filter(function (x) { return x[5] === 1; }).length + '개</div>'
+      + '<div class="wr-msg">이번 주 다시 푼 원래 문제 ' + wkRe.length + '개<br>한 번에 맞음 ' + wkRe.filter(function (x) { return x[5] === 1; }).length + '개</div>'
       + (again.length ? '<div class="wr-h">또 틀린 문항</div><div class="wr-list">' + again.map(function (x) { return '<div>' + E(x.u || x.q) + ' <span style="color:var(--wr-dim)">· ' + E(unitName(S.P, x.unit)) + ' · ' + E(x.lv || '') + '</span></div>'; }).join('') + '</div>' : '')
       + '</div>';
   }
