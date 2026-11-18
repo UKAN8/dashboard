@@ -355,7 +355,7 @@ const soft = async p => { try { const { data, error } = await p; if (error) { co
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('app').innerHTML = '<div class="u-card">로그인이 필요해요. <a href="/dashboard/">대시보드</a>에서 로그인한 뒤 이 페이지를 새로고침해 주세요.</div>'; $('ros').innerHTML = ''; return; }
-  const pr = await soft(sb.from('profiles').select('role').eq('id', session.user.id).limit(1));
+  const pr = await soft(sb.from('profiles').select('role').eq('user_id', session.user.id).limit(1));
   ROLE = (pr[0] || {}).role || '';
   drawSea();
   try {
