@@ -9,96 +9,115 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
 <style>
-@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
-:root{color-scheme:dark;--bg:#0a0a0f;--card:rgba(255,255,255,.03);--bd:rgba(255,255,255,.09);--tx:#f5f5fa;--tx2:#b8b8c5;--dim:#8a8a98;
- --acc:#f5a0a0;--good:#9fe3bd;--warn:#ffd59a;--bad:#ff8f8f;--slip:#ffb46b;--gray:#5d5d6b;--blue:#9cc3ff}
+/* 클리닉 예약 시스템(08_예약서비스) 결 — 밝은 바탕 · 흰 카드 · 파란 포인트 (1118 유강 "클리닉 시스템처럼 밝은 느낌으로") */
+:root{color-scheme:light;
+ --bg:#f6f7f9;--card:#ffffff;--bd:#e3e6eb;--bd2:#cfd4dc;--tx:#16191f;--tx2:#4b5260;--dim:#6b7280;
+ --acc:#1f5eff;--acc-soft:#e8efff;--good:#0f8a5f;--good-soft:#e3f5ee;--warn:#b45309;--warn-soft:#fdf1e1;
+ --bad:#c62828;--bad-soft:#fde8e8;--slip:#d9730d;--slip-soft:#fff0e0;--gray:#9aa1ad;--blue:#1f5eff;--r:12px}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;padding:18px clamp(10px,3vw,28px) 60px}
-main{max-width:1500px;margin:0 auto}
-h1{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:0}
-.brand{font-family:'Paperlogy','Pretendard Variable',sans-serif;color:var(--acc);font-size:14px}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'Pretendard Variable','Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased}
+.bar0{position:sticky;top:0;z-index:8;background:var(--card);border-bottom:1px solid var(--bd)}
+.bar0 .in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:10px 22px}
+.bar0 .logo{font-weight:800;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.bar0 .logo i{display:inline-block;width:26px;height:26px;border-radius:8px;background:var(--acc);color:#fff;font-style:normal;font-size:13px;line-height:26px;text-align:center}
+.bar0 .logo small{color:var(--dim);font-weight:500;font-size:12.5px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap}
+.tabs button{border:0;background:none;color:var(--dim);padding:7px 12px;border-radius:8px;font-weight:500}
+.tabs button:hover{background:var(--bg);color:var(--tx)}
+.tabs button.on{background:var(--acc-soft);color:var(--acc);font-weight:700}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+main{max-width:1400px;margin:0 auto;padding:20px 22px 60px}
+h1{font-size:21px;font-weight:800;margin:0;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:13px}
 .top{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .top .sp{flex:1}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-.gate{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.card > b:first-child{font-size:14.5px}
+.gate{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .gate .st{font-weight:700}
 .gate .st.on{color:var(--good)} .gate .st.off{color:var(--dim)}
-.gate input[type=text],select{font:inherit;color:var(--tx);background:#16161d;border:1px solid var(--bd);border-radius:9px;padding:7px 9px}
-.gate label{color:var(--tx2);font-size:13px;display:inline-flex;gap:4px;align-items:center}
-button{font:inherit;color:var(--tx);background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:9px;padding:7px 12px;cursor:pointer}
-button:hover{border-color:rgba(245,160,160,.5)}
-button.pri{background:var(--acc);color:#2a0d0d;border:0;font-weight:700}
-button.sure{background:var(--bad);color:#2a0d0d;font-weight:700}
-.link{font-size:13px;color:var(--blue)}
-.tabs{display:flex;gap:6px;margin:4px 0 12px;flex-wrap:wrap}
-.tabs button{border-radius:20px;padding:6px 14px}
-.tabs button.on{background:rgba(245,160,160,.18);border-color:rgba(245,160,160,.6);color:#ffe9e9;font-weight:700}
-.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.kpi div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 14px;min-width:110px}
-.kpi b{display:block;font-family:'Paperlogy','Pretendard Variable',sans-serif;font-size:22px;font-weight:600}
-.kpi span{color:var(--dim);font-size:12px}
-.wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px}
-table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
-th,td{padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
-th{position:sticky;top:0;background:#14141b;color:var(--tx2);font-weight:600;cursor:pointer;user-select:none;font-size:12.5px}
+input[type=text],input[type=date],input[type=time],select{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd2);border-radius:8px;height:36px;padding:0 10px}
+input:focus,select:focus{outline:2px solid var(--acc-soft);border-color:var(--acc)}
+.gate label{color:var(--tx2);font-size:13px;display:inline-flex;gap:5px;align-items:center}
+button{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd2);border-radius:8px;height:34px;padding:0 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--dim)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+button.pri:hover{filter:brightness(1.06)}
+button.sure{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:700}
+td button{height:28px;padding:0 9px;font-size:12.5px}
+.link{font-size:13px;color:var(--acc);background:none;border:0;height:auto;padding:0}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi div{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px}
+.kpi b{display:block;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--dim);font-size:12.5px}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:center}
+tr:last-child td{border-bottom:0}
+th{position:sticky;top:0;background:#f3f4f7;color:var(--dim);font-weight:600;cursor:pointer;user-select:none;font-size:12.5px}
 th.ns{cursor:default}
 th .k{color:var(--acc);font-size:11px;margin-left:2px}
 td.l,th.l{text-align:left}
-tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr:hover td{background:#fafbfc}
 tbody tr.click{cursor:pointer}
 td.n{color:var(--dim);font-size:12px}
-.tag{display:inline-block;font-size:11.5px;border-radius:7px;padding:1px 7px;border:1px solid}
-.t-deep{color:var(--good);border-color:rgba(159,227,189,.45)} .t-base{color:var(--blue);border-color:rgba(156,195,255,.4)}
-.t-warn{color:var(--warn);border-color:rgba(255,213,154,.45)} .t-bad{color:var(--bad);border-color:rgba(255,143,143,.45)}
-.t-dim{color:var(--dim);border-color:var(--bd)}
+.tag{display:inline-block;font-size:12px;border-radius:999px;padding:1px 9px;font-weight:600}
+.t-deep{background:var(--good-soft);color:var(--good)} .t-base{background:var(--acc-soft);color:var(--acc)}
+.t-warn{background:var(--warn-soft);color:var(--warn)} .t-bad{background:var(--bad-soft);color:var(--bad)}
+.t-dim{background:#eef0f3;color:var(--dim)}
 .bar{display:inline-block;height:8px;border-radius:4px;background:var(--acc);vertical-align:middle}
 .dist{display:flex;gap:2px;align-items:flex-end;height:30px}
-.dist i{display:block;width:14px;background:var(--gray);border-radius:2px 2px 0 0;position:relative}
+.dist i{display:block;width:14px;background:#d5d9e0;border-radius:2px 2px 0 0;position:relative}
 .dist i.ok{background:var(--good)}
 .dist i em{position:absolute;bottom:-14px;left:0;right:0;font-style:normal;font-size:9.5px;color:var(--dim)}
 .heat td{min-width:52px}
 .dim{color:var(--dim)} .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
-.flt{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-/* 상세 */
-#dlg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 10px;z-index:9}
+.flt{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.chipsel{background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:2px 4px 2px 11px;display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.chipsel select{height:28px;border-radius:999px}
+#dlg{position:fixed;inset:0;background:rgba(15,20,30,.38);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 10px;z-index:9}
 #dlg.on{display:flex}
-.sheet{background:#101017;border:1px solid var(--bd);border-radius:16px;max-width:880px;width:100%;padding:22px 24px}
-.sheet h2{font-family:'Paperlogy','Pretendard Variable',sans-serif;font-weight:600;font-size:22px;margin:0 0 2px}
-.sheet h3{font-size:14.5px;margin:20px 0 8px;color:var(--tx2)}
+.sheet{background:#fff;border:1px solid var(--bd);border-radius:16px;max-width:880px;width:100%;padding:24px 26px;box-shadow:0 20px 50px rgba(15,20,30,.18)}
+.sheet h2{font-size:22px;font-weight:800;margin:0 0 2px}
+.sheet h3{font-size:14px;margin:20px 0 8px;color:var(--tx2)}
+.brand{color:var(--acc);font-size:13px;font-weight:700}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
 .lv{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
 .lv .nm{width:150px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lv .bg{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+.lv .bg{flex:1;height:10px;background:#eef0f3;border-radius:5px;overflow:hidden}
 .lv .bg i{display:block;height:100%;background:var(--acc)}
 .lv .v{width:64px;text-align:right;font-variant-numeric:tabular-nums}
 .strip{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
-.strip div{border-radius:7px;padding:5px 0;text-align:center;font-size:12px;font-weight:700;color:#111;position:relative}
+.strip div{border-radius:7px;padding:5px 0;text-align:center;font-size:12px;font-weight:700;color:#fff;position:relative}
 .strip div small{display:block;font-size:11px;font-weight:500}
-.c-ok{background:var(--good)} .c-luck{background:var(--warn)} .c-slip{background:var(--slip)} .c-no{background:var(--bad)} .c-skip{background:var(--gray);color:#ddd!important} .c-nr{background:#c98989}
+.c-ok{background:#2fae7d} .c-luck{background:#e3a008} .c-slip{background:#f08a24} .c-no{background:#e05252} .c-skip{background:#b6bcc6} .c-nr{background:#c98989}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin-top:8px}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.mis{border-left:3px solid var(--bad);padding:6px 10px;margin:6px 0;background:rgba(255,143,143,.05);border-radius:0 8px 8px 0;font-size:13px}
-.mis.slip{border-color:var(--slip);background:rgba(255,180,107,.05)}
+.mis{border-left:3px solid var(--bad);padding:7px 11px;margin:6px 0;background:var(--bad-soft);border-radius:0 8px 8px 0;font-size:13px}
+.mis.slip{border-color:var(--slip);background:var(--slip-soft)}
 .mis .h{color:var(--tx2);font-size:12px}
 .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:13px}
-.kv b{color:var(--tx2);font-weight:500}
-.verdict{font-size:13.5px;line-height:1.7;background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px}
+.kv b{color:var(--dim);font-weight:500}
+.verdict{font-size:13.5px;line-height:1.75;background:var(--acc-soft);border-radius:10px;padding:11px 14px;color:#1d2b55}
 .act{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16191f;color:#fff;border-radius:10px;padding:10px 18px;z-index:20;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 @media print{
- body{background:#fff;color:#111;padding:0} main,#dlg .act{display:none!important}
+ body{background:#fff;padding:0} main,.bar0,#dlg .act{display:none!important}
  #dlg{position:static;background:none;padding:0;display:block!important}
- .sheet{border:0;background:#fff;color:#111;max-width:none}
- .sheet *{color:#111!important}
- .lv .bg{background:#eee} .lv .bg i{background:#444} .mis{background:#fafafa}
+ .sheet{border:0;box-shadow:none;max-width:none}
 }
 </style></head><body>
+<div class="bar0"><div class="in"><div class="logo"><i>L</i>예비고1 레벨테스트 <small>필탑 고등수학과</small></div><div class="tabs" id="tabs"></div><div class="who" id="who"></div></div></div>
 <main id="app"><div class="dim">불러오는 중…</div></main>
 <div id="dlg"><div class="sheet" id="sheet"></div></div>
 <script>
 const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
-const sb=supabase.createClient(SB_URL,SB_ANON);
+// (1118 유강) 중등부 쌤들은 가입 없이 — 선생님별 링크(?key=)로 들어온다. 키는 머리글 x-lt-key 로 DB 가 확인(schema_v85)
+let KEY=''; try{ const u=new URLSearchParams(location.search).get('key'); if(u&&/^[0-9a-f]{24,64}$/.test(u)){ localStorage.setItem('lt:staffkey',u); history.replaceState(null,'',location.pathname); } KEY=localStorage.getItem('lt:staffkey')||''; }catch(e){}
+const sb=supabase.createClient(SB_URL,SB_ANON, KEY?{global:{headers:{'x-lt-key':KEY}}}:{});
+let WHO=null;
 const app=document.getElementById('app'), dlg=document.getElementById('dlg'), sheet=document.getElementById('sheet');
 const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const NUM='①②③④⑤', LV=['','Ⅰ','Ⅱ','Ⅲ','Ⅳ'], LVN=['','Ⅰ 개념','Ⅱ 기본','Ⅲ 응용','Ⅳ 심화'];
@@ -248,7 +267,7 @@ function vItem(){
 }
 
 /* ── 탭: 단원·레벨 히트맵 ── */
-function heatC(p){ if(p==null) return ''; const h=p>=80?'159,227,189':p>=50?'255,213,154':'255,143,143'; return 'background:rgba('+h+','+(0.18+p/100*0.35)+')'; }
+function heatC(p){ if(p==null) return ''; return 'background:'+(p>=80?'#d9f2e6':p>=50?'#fdf0d5':'#fde3e3'); }
 function vHeat(){
   const ids=FX?[FX]:Object.keys(EX); let h='';
   ids.forEach(id=>{ const e=EX[id], rs=ROWS.filter(o=>o.e.id===id); if(!rs.length) return;
@@ -315,7 +334,7 @@ function vSlot(){
    +exBox('wex')+'<button class="pri" id="wadd">만들기</button></div></div></div>';
   const un=ros.filter(r=>!r.회차&&!(r.응시||[]).length);
   if(un.length) h+='<div class="card"><b>회차 미정</b> <span class="dim">'+un.length+'명 — 예약받은 회차로 배정해 주세요</span><div class="gate" style="margin-top:8px">'
-     +un.map(r=>'<label style="background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:9px;padding:3px 4px 3px 9px">'+E(r.이름)+'<select data-asg="'+r.id+'" style="padding:3px 5px">'+slotOpts(null,true)+'</select></label>').join('')+'</div></div>';
+     +un.map(r=>'<label class="chipsel">'+E(r.이름)+'<select data-asg="'+r.id+'" style="padding:3px 5px">'+slotOpts(null,true)+'</select></label>').join('')+'</div></div>';
   if(!sls.length) return h+'<div class="card dim">회차가 없어요.</div>';
   sls.forEach(sl=>{
     const [k,txt]=slotState(sl), rs=ros.filter(r=>r.회차===sl.id), sub=rs.filter(r=>(r.응시||[]).length).length;
@@ -335,7 +354,7 @@ function vSlot(){
   return h;
 }
 async function call(fn,args,okMsg){ const {data,error}=await sb.rpc(fn,args); if(error||!data||data.오류){ alert((data&&data.오류)||(error&&error.message)||'실패'); return null; } if(okMsg) toast(okMsg); return data; }
-function toast(t){ let el=document.getElementById('toast'); if(!el){ el=document.createElement('div'); el.id='toast'; el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--bd);border-radius:10px;padding:9px 16px;z-index:20'; document.body.appendChild(el); } el.textContent=t; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',2500); }
+function toast(t){ let el=document.getElementById('toast'); if(!el){ el=document.createElement('div'); el.id='toast';  document.body.appendChild(el); } el.textContent=t; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',2500); }
 const pickEx=cls=>[...document.querySelectorAll('.'+cls+':checked')].map(x=>x.value);
 function wireSlot(){
   const $=id=>document.getElementById(id);
@@ -421,7 +440,7 @@ function gateBox(){
   if(s) return '<div class="card gate"><span class="st on">● 학생 입력 열림</span><b>'+E(s.이름)+'</b><span class="dim">'+ex.filter(e=>s.시험.includes(e.id)).map(e=>e.형).join('·')+' · '+fmtT(s.닫힘)+'까지 · 점수 '+(s.점수공개?'보여 줌':'숨김')+'</span>'
     +'<span class="dim">학생 주소 <b class="link">ukan8.github.io/dashboard/lt</b></span><span style="flex:1"></span><button id="gclose">'+(sureGate?'정말 닫을까요? 한 번 더':'입력 닫기')+'</button></div>';
   const d=new Date(Date.now()+9*3600e3), md=(d.getUTCMonth()+1)+'/'+d.getUTCDate();
-  return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><span class="dim">회차 없이 수동으로 열 때</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
+  return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><span class="dim">회차 없이 지금 바로 열 때만 (보통은 회차가 알아서 열어요)</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
     +ex.map(e=>'<label><input type="checkbox" class="gex" value="'+E(e.id)+'" checked>'+E(e.형)+'</label>').join('')
     +'<select id="gmin"><option value="60">1시간</option><option value="120" selected>2시간</option><option value="180">3시간</option><option value="300">5시간</option></select>'
     +'<label><input type="checkbox" id="gshow" checked>제출 직후 점수 보여 주기</label><span style="flex:1"></span><button class="pri" id="gopen">학생 입력 열기</button></div>';
@@ -436,35 +455,72 @@ async function gate(open){
 }
 
 /* ── 그리기 ── */
+const TABS=[['slot','회차·예약','회차를 만들고 예약한 학생을 배정해요. 시험이 끝나는 시각에 입력이 열리고 개인 링크 알림이 가요.'],
+            ['stu','학생 결과','판정·레벨별 점수·찍음/실수까지 — 줄을 누르면 상담 카드'],
+            ['item','문항 분석','정답률·선지 분포·많이 고른 오답의 오개념'],
+            ['heat','레벨·단원','학생 × 단원 정답 히트맵'],
+            ['ro','명단','응시 명단 · 회차 · 알림 상태'],
+            ['key','선생님 링크','가입 없이 들어오는 선생님별 링크 — 관리자만 보여요']];
 function draw(){
-  const exs=D.시험||[];
-  let body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : vRoster();
-  app.innerHTML='<div class="top"><div><div class="brand">수학은유강 · 필탑 고등수학과</div><h1>예비고1 레벨테스트 결과</h1></div><span class="sp"></span>'
-    +'<button id="rl">새로고침</button><button id="csv">CSV 받기</button></div>'
-    +gateBox()
-    +'<div class="flt"><div class="tabs">'+[['slot','회차'],['stu','학생'],['item','문항 분석'],['heat','레벨·단원'],['ro','명단']].map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('')+'</div>'
-    +'<span class="sp" style="flex:1"></span><select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select></div>'
+  const exs=D.시험||[], tabs=TABS.filter(t=>t[0]!=='key'||(WHO&&WHO.관리));
+  if(!tabs.find(t=>t[0]===TAB)) TAB='slot';
+  const T=tabs.find(t=>t[0]===TAB);
+  document.getElementById('tabs').innerHTML=tabs.map(([k,t])=>'<button data-tab="'+k+'" class="'+(TAB===k?'on':'')+'">'+t+'</button>').join('');
+  document.getElementById('who').innerHTML=WHO?('<span class="tag '+(WHO.관리?'t-base':'t-deep')+'">'+E(WHO.이름||'선생님')+'</span>'+(WHO.방식==='링크'?'<span>링크로 접속</span>':'')):'';
+  document.querySelectorAll('#tabs [data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();window.scrollTo(0,0);});
+  const body = TAB==='slot'?vSlot() : TAB==='stu'?vStu() : TAB==='item'?vItem() : TAB==='heat'?vHeat() : TAB==='key'?vKey() : vRoster();
+  const fx=['stu','item','heat'].includes(TAB)?'<select id="fx"><option value="">전체 형</option>'+exs.map(e=>'<option value="'+E(e.id)+'"'+(FX===e.id?' selected':'')+'>'+E(e.형)+' · '+E(e.범위)+'</option>').join('')+'</select>':'';
+  app.innerHTML='<div class="top"><div><h1>'+E(T[1])+'</h1><div class="sub">'+E(T[2])+'</div></div><span class="sp"></span>'+fx
+    +'<button id="rl">새로고침</button>'+(TAB==='stu'?'<button id="csv">CSV 받기</button>':'')+'</div>'
+    +(D.열린?gateBox():'')
     +body
-    +'<div class="card dim" style="margin-top:18px;font-size:12.5px">판정 기준 — '+exs.map(e=>'<b>'+E(e.형)+'</b> '+E(((e.판정||{}).문구||[]).join(' / '))).join('<br>')+'<br>'+E(((exs[0]||{}).판정||{}).주석||'')+'</div>';
-  document.getElementById('rl').onclick=load; document.getElementById('csv').onclick=csv;
-  document.getElementById('fx').onchange=ev=>{FX=ev.target.value;draw();};
-  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();});
+    +(TAB==='slot'&&!D.열린?gateBox():'')
+    +(['stu','item','heat'].includes(TAB)?'<div class="card dim" style="margin-top:18px;font-size:12.5px">판정 기준 — '+exs.map(e=>'<b>'+E(e.형)+'</b> '+E(((e.판정||{}).문구||[]).join(' / '))).join('<br>')+'<br>'+E(((exs[0]||{}).판정||{}).주석||'')+'</div>':'');
+  document.getElementById('rl').onclick=load; const cv=document.getElementById('csv'); if(cv) cv.onclick=csv;
+  const f=document.getElementById('fx'); if(f) f.onchange=ev=>{FX=ev.target.value;draw();};
   app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=()=>openCard(tr.dataset.open));
   app.querySelectorAll('[data-asg2]').forEach(el=>el.onchange=async()=>{ const v=el.value; const d=await call('staff_lt_assign',{p_rid:+el.dataset.asg2,p_slot:v?+v:null},v?'배정했어요':'회차를 비웠어요'); if(d){ if(d.알림) toast('이미 열린 회차라 그 학생에게 알림을 보냈어요'); load(); } });
-  app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation(); const r=(D.명단||[]).find(x=>String(x.id)===b.dataset.ok);
+  app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation();
     const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
   if(TAB==='slot') wireSlot();
+  if(TAB==='key') wireKey();
   const go=document.getElementById('gopen'); if(go) go.onclick=()=>gate(true);
   const gc=document.getElementById('gclose'); if(gc) gc.onclick=()=>{ if(!sureGate){ sureGate=true; draw(); return; } gate(false); };
 }
+
+/* ── 탭: 선생님 링크 (관리자만) ── */
+let KEYS=[];
+function vKey(){
+  COLS.key=[{h:'선생님',l:1,v:k=>k.이름,f:k=>'<b>'+E(k.이름)+'</b>'},{h:'상태',v:k=>k.끔?'꺼짐':'사용 중',f:k=>k.끔?'<span class="tag t-dim">꺼짐</span>':'<span class="tag t-deep">사용 중</span>'},
+    {h:'만든 때',v:k=>k.만든때,f:k=>'<span class="dim">'+fmtT(k.만든때)+'</span>'},{h:'마지막 접속',v:k=>k.마지막||'',f:k=>'<span class="dim">'+(k.마지막?fmtT(k.마지막):'아직 없음')+'</span>'},
+    {h:'',ns:1,v:k=>0,f:k=>k.끔?'':'<button data-kcopy="'+E(k.키)+'">링크 복사</button> <button data-koff="'+E(k.키)+'">끄기</button>'}];
+  return '<div class="card"><b>선생님 링크 만들기</b> <span class="dim">링크를 받은 선생님은 로그인 없이 이 페이지를 보고, 회차 배정·학생 추가까지 할 수 있어요. 학생 번호도 보이니 선생님께만 보내 주세요.</span>'
+    +'<div class="gate" style="margin-top:10px"><input type="text" id="kn" placeholder="예: 임재범쌤" size="14"><button class="pri" id="kadd">링크 만들기</button></div></div>'
+    +(KEYS.length?table('key',COLS.key,KEYS):'<div class="card dim">아직 만든 링크가 없어요.</div>');
+}
+function wireKey(){
+  const b=document.getElementById('kadd'); if(b) b.onclick=async()=>{ const n=document.getElementById('kn').value.trim(); if(!n) return alert('선생님 이름을 넣어 주세요');
+    const d=await call('lt_admin_key_new',{p_name:n}); if(!d) return; await copyKey(d.키); load(); };
+  app.querySelectorAll('[data-kcopy]').forEach(x=>x.onclick=()=>copyKey(x.dataset.kcopy));
+  app.querySelectorAll('[data-koff]').forEach(x=>x.onclick=async()=>{ if(x.dataset.sure!=='1'){ x.dataset.sure='1'; x.className='sure'; x.textContent='끌까요? 한 번 더'; return; }
+    if(await call('lt_admin_key_off',{p_key:x.dataset.koff},'링크를 껐어요 — 그 선생님은 더 못 들어와요')) load(); });
+}
+async function copyKey(k){ const u=location.origin+location.pathname+'?key='+k; try{ await navigator.clipboard.writeText(u); toast('링크를 복사했어요 — 선생님께 보내 주세요'); }catch(e){ prompt('선생님 링크',u); } }
+
 async function load(){
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){ app.innerHTML='<div class="card">콘솔에서 먼저 로그인해 주세요. <a class="link" href="../../">콘솔 열기</a> → 로그인 뒤 이 페이지를 새로고침.</div>'; return; }
+  if(!session && !KEY){ return noAccess('선생님 링크로 들어오거나, 콘솔에서 로그인한 뒤 새로고침해 주세요.'); }
+  const w=await sb.rpc('lt_staff_whoami'); WHO=w.data||null;
+  if(w.error && /lt_staff_whoami/.test(w.error.message)) WHO={staff:!!session,관리:!!session,이름:'관리자',방식:'로그인'};   // v85 전
+  if(!WHO||!WHO.staff){ if(KEY){ try{localStorage.removeItem('lt:staffkey');}catch(e){} } return noAccess(KEY?'링크가 꺼졌거나 잘못됐어요. 유강쌤께 새 링크를 받아 주세요.':'직원 계정만 볼 수 있어요.'); }
   const {data,error}=await sb.rpc('staff_lt_status');
-  if(error){ app.innerHTML='<div class="card">불러오지 못함 — '+E(error.message)+(/staff_lt_status/.test(error.message)?' (schema_v83 실행 전)':'')+'</div>'; return; }
-  if(!data){ app.innerHTML='<div class="card">직원 계정만 볼 수 있어요.</div>'; return; }
-  D=data; build(); draw();
+  if(error){ app.innerHTML='<div class="card">불러오지 못함 — '+E(error.message)+'</div>'; return; }
+  if(!data){ return noAccess('볼 수 있는 권한이 없어요.'); }
+  D=data; build();
+  if(WHO.관리){ const k=await sb.rpc('lt_admin_keys'); KEYS=(k.data||[]); }
+  draw();
 }
+function noAccess(msg){ document.getElementById('tabs').innerHTML=''; app.innerHTML='<div class="card" style="max-width:520px;margin:60px auto;text-align:center;padding:30px"><div style="font-size:30px">🔒</div><h1 style="margin:8px 0">레벨테스트 관리</h1><div class="sub">'+E(msg)+'</div></div>'; }
 load();
 setInterval(()=>{ if(D&&D.열린&&!dlg.classList.contains('on')&&document.visibilityState==='visible') load(); }, 30000);  // 열려 있는 동안 30초마다
 </script></body></html>
