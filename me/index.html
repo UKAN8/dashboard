@@ -2824,10 +2824,10 @@ function mkDetail(m){
     +`<div><small>실정답률</small><b>${s.racc}%</b><span>확실히 맞힌 것만</span></div>`
     +`<div><small>반 평균</small><b>${m.반평균!=null?Math.round(m.반평균*10)/10:'—'}</b><span>${m.반평균!=null?'점':'3명 이상 응시 때'}</span></div></div>`;
   const grid=`<div class="mkg">${(m.문항||[]).map(q=>`<span class="${mkCls(q)}" title="${E(MK_LAB[mkCls(q)])}">${q.번호}</span>`).join('')}</div>`
-    +`<div class="mkc-row">${MK_ORD.map(chip).join('')}${MKS.filt?`<button type="button" class="mkc x" data-mf="">전체 보기</button>`:''}</div>`;
+    +`<div class="mkc-row">${MK_ORD.map(chip).join('')}${MKS.filt!=='all'?`<button type="button" class="mkc x" data-mf="all">전체 ${(m.문항||[]).length}문항 보기</button>`:`<button type="button" class="mkc x" data-mf="">확실히 맞힌 문항 숨기기</button>`}</div>`;
   const SK=[['번호','번호'],['결과','결과'],['난이도','난이도'],['정답률','정답률']];
   const val=(q,k)=>k==='결과'?MK_ORD.indexOf(mkCls(q)):k==='번호'?q.번호:q[k]==null?-1:Number(q[k]);
-  let Q=(m.문항||[]).filter(q=>!MKS.filt||mkCls(q)===MKS.filt);
+  let Q=(m.문항||[]).filter(q=>MKS.filt==='all'?true:MKS.filt?mkCls(q)===MKS.filt:mkCls(q)!=='ok');   // 기본 = 확실히 맞힌 문항은 숨김(폰에서 길어서)
   if(MKS.sort.length) Q=Q.slice().sort((a,b)=>{ for(const [k,dir] of MKS.sort){ const d=val(a,k)-val(b,k); if(d) return d*dir; } return a.번호-b.번호; });
   const sbar=`<div class="mks">정렬 ${SK.map(([k,l])=>{ const i=MKS.sort.findIndex(x=>x[0]===k); return `<button type="button" data-ms="${k}" class="${i>=0?'on':''}">${l}${i>=0?(MKS.sort[i][1]>0?' ↑':' ↓')+(MKS.sort.length>1?`<sup>${i+1}</sup>`:''):''}</button>`; }).join('')}${MKS.sort.length?'<button type="button" data-ms="">초기화</button>':''}</div>`;
   const list=Q.map((q,i)=>{ const k=mkCls(q), rv=q.복기||{}, ty=mkType(m,q);
@@ -2837,8 +2837,8 @@ function mkDetail(m){
       +(ty?`<div class="ty">${ty}</div>`:'')
       +`<div class="aa"><span>내 답 <b>${mkAns(q,q.내답)}</b>${conf?` <i>(${conf})</i>`:''}</span>${!q.정오&&q.정답!=null?`<span>정답 <b>${mkAns(q,q.정답)}</b></span>`:''}</div>`
       +((rv.r||rv.m)?`<div class="rv">${rv.r?E(rv.r):''}${rv.m?`${rv.r?' — ':''}${E(rv.m)}`:''}</div>`:'')
-      +`</div>`; }).join('')||'<div class="dim">해당 문항이 없어요.</div>';
-  return head+grid+sbar+`<div class="mkql">${list}</div>`;
+      +`</div>`; }).join('')||'<div class="dim">해당 문항이 없어요 — 다 확실히 맞혔어요.</div>';
+  return head+grid+sbar+(!MKS.filt&&s.c.ok?`<div class="dim" style="font-size:12px;margin-bottom:6px">확실히 맞힌 ${s.c.ok}문항은 접어 뒀어요.</div>`:'')+`<div class="mkql">${list}</div>`;
 }
 function wireMock(cfg){
   const box=$('mk-rows'); if(!box) return;
