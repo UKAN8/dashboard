@@ -325,7 +325,7 @@ const PAGE = s => ({ page: s });          // 따로 있는 페이지
 const EXT = s => ({ ext: s });            // 새 창
 const MENU = [
   { k: 'home', t: '홈', roles: ['admin', 'staff'] },
-  { k: 'class', t: '수업', roles: ['admin'], subs: [['cs-console', '수업 콘솔', OLD('cs-console')], ['cs-hw', '써킷 과제', OLD('cs-hw')], ['report', '리포트', OLD('report')], ['core', 'CORE 루프', OLD('core')]] },
+  { k: 'class', t: '수업', roles: ['admin'], subs: [['cs-console', '수업 콘솔', OLD('cs-console')], ['report', '리포트', OLD('report')], ['core', 'CORE 루프', OLD('core')], ['cs-hw', '써킷 과제', OLD('cs-hw')]] },   // (1119 유강) 매일 = 콘솔·리포트·CORE·기출·모의 → 앞에
   { k: 'stu', t: '학생', roles: ['admin', 'staff'], subs: [['stu', '학생 개인페이지', PAGE('/dashboard/stu/')], ['ban', '반별', OLD('class')]] },
   { k: 'exam', t: '시험', roles: ['admin'], subs: [['gichul', '기출·모의', OLD('gichul')], ['score', '점수표', OLD('score')], ['exam', '내신', OLD('exam')], ['sched', '시험일정', OLD('sched')]] },
   { k: 'tutor', t: '조교 업무', roles: ['admin', 'staff'], subs: [['qa', '질문 모음', OLD('qa')], ['sw', '서술형 채점', OLD('sw')], ['qame', '내 답변', OLD('qame')], ['files', '학생 자료실', PAGE('/dashboard/files/')], ['clinic', '클리닉 예약 ↗', EXT('https://clinic-booking-black-phi.vercel.app/admin')]] },
@@ -472,7 +472,10 @@ function drawHome() {
   const cnt = k => all.filter(x => x.kind === k).reduce((s, x) => s + (k === 'q' ? x.n : 1), 0);
   const oldest = k => { const a = all.filter(x => x.kind === k); return a.length ? a[0].t : null; };
   const ackWait = H.qw.filter(q => q.답변시각).length;
-  let h = `<div class="u-head"><div><h1>오늘 ${md(T)} (${dow})</h1><div class="sub">처리할 것이 위에, 오늘 수업 반이 아래 · ${E(U.fmt(H.at))} 기준 · 1분마다 새로 읽음</div></div><span class="sp"></span><button class="u-btn sm" id="rl">새로고침</button></div>`;
+  let h = `<div class="u-head"><div><h1>오늘 ${md(T)} (${dow})</h1><div class="sub">처리할 것이 위에, 오늘 수업 반이 아래 · ${E(U.fmt(H.at))} 기준 · 1분마다 새로 읽음</div></div><span class="sp"></span>`
+    // (1119 유강 "맞음") 매일 여는 화면 4개 바로가기 — 원장만(콘솔·출결은 유강이 직접)
+    + (ROLE === 'admin' ? [['class/cs-console', '수업 콘솔'], ['class/report', '리포트'], ['class/core', 'CORE 루프'], ['exam/gichul', '기출·모의']].map(([g, t]) => `<button class="u-btn sm" data-go="${g}">${t}</button>`).join('') : '')
+    + `<button class="u-btn sm ghost" id="rl">새로고침</button></div>`;
   h += '<div class="cards">' + ks.map(([k, t, tip]) => { const n = cnt(k), o = oldest(k);
     return `<button class="cardk${n ? '' : ' zero'}${o && ageH(o) > 24 ? ' old' : ''}${FILTER === k ? ' on' : ''}" data-f="${k}" title="${E(tip)}"><b>${n}</b><span>${E(t)}</span><small>${o ? '가장 오래된 것 ' + ageTxt(o) + ' 전' : '없음'}</small></button>`; }).join('')
     + `<div class="cardk info${ackWait ? '' : ' zero'}" title="답은 보냈고 학생이 [이해했어요]를 아직 안 누름"><b>${ackWait}</b><span>학생 확인 대기</span><small>답 보낸 온라인 질문</small></div></div>`;
