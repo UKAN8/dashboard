@@ -6,7 +6,7 @@
            · hw_assign/hw_check(써킷·개별과제 문항 체크) · hw_question(질문) · mastery_log(CORE 루프) · weekly_link(주간고사)
            · school_exam(내신) · sw_sub(서술형) · portal_token(포털 링크, 관리자만)
      로그인은 대시보드 세션 그대로(같은 오리진). 읽기 전용 — 쓰기 없음. 빌드 = build_stu.py (UI 키트 넣기·점검·배포) -->
-<html lang="ko" data-theme="light"><head><meta charset="utf-8">
+<html lang="ko" data-theme="dark" class="solid"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>학생 개인페이지 · 수학은유강</title>
 <meta name="robots" content="noindex, nofollow">
@@ -42,6 +42,12 @@
   --u-slip: #ffb46b;        --u-slip-soft: rgba(255,180,107,.10);
   --u-overlay: rgba(0, 0, 0, .6);
   --u-shadow-pop: 0 20px 50px rgba(0, 0, 0, .5);
+}
+/* (1119 유강 "화이트가 눈 아프다") 직원 화면 어두운 테마 = dark 와 같은 색, 면만 불투명 — 고정 머리글·고정 열·팝업 뒤가 비치지 않게.
+   쓰는 법: <html data-theme="dark" class="solid"> (대시보드·학생 페이지) */
+html.solid[data-theme="dark"] {
+  --u-bg: #0b0b10; --u-surface: #13131a; --u-surface-2: #1b1b23;
+  --u-line: #262630; --u-line-strong: #383844;
 }
 :root {
   /* 글꼴 — 1110 유강: 제목·큰 숫자 = 페이퍼로지, 본문 = Pretendard */
