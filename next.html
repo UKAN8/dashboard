@@ -208,8 +208,8 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 .cardk b{display:block;font-family:var(--u-font-display);font-size:30px;font-weight:800;line-height:1.1}
 .cardk span{color:var(--u-muted);font-size:12.5px} .cardk small{display:block;color:var(--u-faint);font-size:12px;margin-top:2px}
 .cardk.zero{opacity:.45} .cardk.old b{color:var(--u-bad)} .cardk.on{border-color:var(--u-accent);box-shadow:0 0 0 3px var(--u-accent-soft)} .cardk.info{cursor:default}
-.today{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.today .u-card{display:flex;flex-direction:column;gap:6px} .today .h{display:flex;align-items:baseline;gap:8px} .today .h b{font-size:17px}
+.todaygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.todaygrid .u-card{display:flex;flex-direction:column;gap:6px} .todaygrid .h{display:flex;align-items:baseline;gap:8px} .todaygrid .h b{font-size:17px}
 .mini{font-size:12px;color:var(--u-muted)}
 .age.old{color:var(--u-bad);font-weight:700}
 a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--u-accent)}
@@ -389,15 +389,15 @@ async function coreBank() {
 const N = fn => ({ n: fn }), OLD = s => ({ old: s }), PAGE = s => ({ page: s }), EXT = s => ({ ext: s });
 const LEGACY = '/dashboard/legacy/?embed=1#';
 const MENU = [
-  { k: 'home', t: '홈', roles: ['admin', 'staff'], view: N(() => viewHome()) },
+  { k: 'home', t: '홈', roles: ['admin', 'staff'], view: N(id => viewHome(id)) },
   { k: 'class', t: '수업', roles: ['admin'], ctx: true, subs: [
     ['input', '수업 입력', OLD(() => 'cs-console/' + CTX.ban)],
-    ['result', '결과', N(() => viewResult())],
+    ['result', '결과', N(id => viewResult(id))],
     ['hw', '과제', OLD(() => 'cs-hw')],
-    ['core', 'CORE', N(() => viewClassCore())]] },
+    ['core', 'CORE', N(id => viewClassCore(id))]] },
   { k: 'stu', t: '학생', roles: ['admin', 'staff'], view: PAGE('/dashboard/stu/') },
   { k: 'exam', t: '시험', roles: ['admin'], subs: [
-    ['mock', '모의테스트', N(() => viewMock())],
+    ['mock', '모의테스트', N(id => viewMock(id))],
     ['exam', '내신', OLD('exam')],
     ['sched', '시험일정', OLD('sched')]] },
   { k: 'tutor', t: '조교', roles: ['admin', 'staff'], subs: [
@@ -633,7 +633,7 @@ function drawHome() {
   const tt = [...H.tt].sort((a, b) => +a.시작 - +b.시작);
   h += `<div class="u-section-title" style="margin-top:22px">오늘 수업 ${tt.length ? tt.length + '반' : ''}</div>`;
   if (!tt.length) h += '<div class="u-card u-empty">오늘(시간표 기준) 수업이 없어요</div>';
-  else h += '<div class="today">' + tt.map(r => {
+  else h += '<div class="todaygrid">' + tt.map(r => {
     const b = r.반, v = H.v5.filter(x => x.반 === b && x.이행 != null);
     const ld = v.map(x => x.날짜).sort().pop(), lv = v.filter(x => x.날짜 === ld).map(x => +x.이행), av = lv.length ? Math.round(lv.reduce((s, x) => s + x, 0) / lv.length) : null;
     const mk = H.mk.filter(x => x.반 === b).sort((x, y) => String(y.날짜).localeCompare(String(x.날짜)))[0];
