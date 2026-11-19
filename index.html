@@ -332,7 +332,7 @@ const MENU = [
   { k: 'home', t: '홈', roles: ['admin', 'staff'] },
   { k: 'class', t: '수업', roles: ['admin'], subs: [['cs-console', '수업 콘솔', OLD('cs-console')], ['report', '리포트', OLD('report')], ['core', 'CORE 루프', OLD('core')], ['cs-hw', '써킷 과제', OLD('cs-hw')]] },   // (1119 유강) 매일 = 콘솔·리포트·CORE·기출·모의 → 앞에
   { k: 'stu', t: '학생', roles: ['admin', 'staff'], subs: [['stu', '학생 개인페이지', PAGE('/dashboard/stu/')]] },   // (1119 2단계) 반별은 학생 페이지 명단 위 '반 요약'으로 흡수
-  { k: 'exam', t: '시험', roles: ['admin'], subs: [['gichul', '모의 · 문항 분석', OLD('gichul')], ['score', '모의 · 점수표', OLD('score')], ['exam', '내신', OLD('exam')], ['sched', '시험일정', OLD('sched')]] },
+  { k: 'exam', t: '시험', roles: ['admin'], subs: [['gichul', '모의테스트', OLD('gichul')], ['exam', '내신', OLD('exam')], ['sched', '시험일정', OLD('sched')]] },   // (1119) 모의테스트 = 문항 분석·점수표·기출 이력 한 화면(옛 앱 안 탭)
   { k: 'tutor', t: '조교 업무', roles: ['admin', 'staff'], subs: [['qa', '질문 모음', OLD('qa')], ['sw', '서술형 채점', OLD('sw')], ['qame', '내 답변', OLD('qame')], ['files', '학생 자료실', PAGE('/dashboard/files/')], ['clinic', '클리닉 예약 ↗', EXT('https://clinic-booking-black-phi.vercel.app/admin')]] },
   { k: 'admin', t: '관리', roles: ['admin'], subs: [['ct', '커스텀 트레이닝', OLD('cs-ct')], ['links', '포털 링크', OLD('links')], ['staff', '조교 관리', OLD('cs-staff')], ['visits', '방문 기록', OLD('visits')], ['survey', '설문', OLD('survey')], ['lt', '레벨테스트', PAGE('/dashboard/lt/admin/')]] },
 ];
@@ -378,16 +378,16 @@ const mine = () => MENU.filter(m => m.roles.includes(ROLE));
 /* 옛 주소 → 새 메뉴. 옛 앱의 탭 이름이 #뒤에 오면(북마크·다른 페이지 링크·/console/ 리다이렉트) 여기서 바꾼다.
    뒤에 붙은 값(반·학생ID)은 옛 앱 주소에 그대로 실어 보낸다. 표에 없는 옛 탭(보관함)은 옛 화면을 통째로 연다. */
 const OLDMAP = { 'cs-console': ['class', 'cs-console'], report: ['class', 'report'], core: ['class', 'core'], 'cs-hw': ['class', 'cs-hw'],
-  gichul: ['exam', 'gichul'], mock: ['exam', 'gichul'], score: ['exam', 'score'], sched: ['exam', 'sched'],
+  gichul: ['exam', 'gichul'], mock: ['exam', 'gichul'], score: ['exam', 'gichul', 'score'], sched: ['exam', 'sched'],
   qa: ['tutor', 'qa'], sw: ['tutor', 'sw'], qame: ['tutor', 'qame'],
   'cs-ct': ['admin', 'ct'], links: ['admin', 'links'], 'cs-staff': ['admin', 'staff'], visits: ['admin', 'visits'], survey: ['admin', 'survey'] };
 const ARCHIVED = ['today', 'clinic', 'loop', 'loopstu', 'weak', 'cliniclog', 'exammeta', 'typemap', 'video', 'tower', 'apply', 'haebu', 'cs-load', 'cs-clinic'];
 function translate() {
   const h = decodeURIComponent(location.hash.slice(1)), [a, ...rest] = h.split('/'), b = rest.join('/');
   if (a === 'student') { if (b) NEXT = '/dashboard/stu/?sid=' + encodeURIComponent(b); history.replaceState(null, '', '#stu/stu'); return; }
-  if (OLDMAP[a]) { if (b) NEXT = a + '/' + b; history.replaceState(null, '', '#' + OLDMAP[a].join('/')); return; }
-  if (a === 'class' && b && !MENU[1].subs.some(x => x[0] === b.split('/')[0])) { location.replace('/dashboard/legacy/#' + h); return true; }   // 옛 반별 상세
-  if (ARCHIVED.includes(a)) { location.replace('/dashboard/legacy/#' + h); return true; }
+  if (OLDMAP[a]) { const [m, s2, lh] = OLDMAP[a]; if (b) NEXT = a + '/' + b; else if (lh) NEXT = lh; history.replaceState(null, '', '#' + m + '/' + s2); return; }
+  if (a === 'class' && b && !MENU[1].subs.some(x => x[0] === b.split('/')[0])) { history.replaceState(null, '', '#stu/stu'); return; }   // 옛 반별 상세 → 학생 페이지 반 요약
+  if (ARCHIVED.includes(a)) { history.replaceState(null, '', '#home'); setTimeout(() => toast('보관함 화면은 1119에 지웠어요 — 데이터는 DB에 그대로 있어요'), 300); return; }   // (1119 P16 결재 5)
 }
 function route() {
   if (translate()) return;
@@ -516,7 +516,10 @@ function drawHome() {
     + `<button class="u-btn sm ghost" id="rl">새로고침</button></div>`;
   h += '<div class="cards">' + ks.map(([k, t, tip]) => { const n = cnt(k), o = oldest(k);
     return `<button class="cardk${n ? '' : ' zero'}${o && ageH(o) > 24 ? ' old' : ''}${FILTER === k ? ' on' : ''}" data-f="${k}" title="${E(tip)}"><b>${n}</b><span>${E(t)}</span><small>${o ? '가장 오래된 것 ' + ageTxt(o) + ' 전' : '없음'}</small></button>`; }).join('')
-    + `<div class="cardk info${ackWait ? '' : ' zero'}" title="답은 보냈고 학생이 [이해했어요]를 아직 안 누름"><b>${ackWait}</b><span>학생 확인 대기</span><small>답 보낸 온라인 질문</small></div></div>`;
+    + `<div class="cardk info${ackWait ? '' : ' zero'}" title="답은 보냈고 학생이 [이해했어요]를 아직 안 누름"><b>${ackWait}</b><span>학생 확인 대기</span><small>답 보낸 온라인 질문</small></div>`
+    // (1119 P16) 결재는 실장 아침 페이지(claude.ai 아티팩트 db)에 있어 여기서 숫자를 못 읽는다 → 바로가기만
+    + (ROLE === 'admin' ? `<a class="cardk" href="https://claude.ai/artifact/TarVDpWK3eCKy9ypB5jQ2f" target="_blank" rel="noopener" style="text-decoration:none" title="실장 아침 페이지 — 결재 버튼은 거기서"><b>↗</b><span>결재</span><small>실장 아침 페이지에서</small></a>` : '')
+    + '</div>';
   const list = all.filter(x => ks.some(k => k[0] === x.kind) && (!FILTER || x.kind === FILTER));
   const KN = Object.fromEntries(KINDS.map(k => [k[0], k[1]])), KC = { q: 'accent', sw: 'warn', err: 'bad', fix: 'bad' };
   h += `<div class="u-section-title">처리할 것 ${list.length}건${FILTER ? ` · ${E(KN[FILTER])}만 <button class="u-btn ghost sm" id="fx">전체 보기</button>` : ''}</div>`;
