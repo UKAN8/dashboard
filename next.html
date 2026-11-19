@@ -233,6 +233,11 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .qmnx{flex:1 1 180px;display:flex;flex-direction:column;gap:3px;margin-left:10px}
 .qmfd{padding:7px 2px;border-bottom:1px solid var(--u-line);cursor:pointer;font-size:13.5px}.qmfd:last-child{border:0}
 .nowrap{white-space:nowrap}
+.ctul{max-height:60vh;overflow:auto;border:1px solid var(--u-line);border-radius:8px;padding:6px 10px}
+.ctu{padding:6px 0;border-bottom:1px solid var(--u-line)}.ctu:last-child{border:0}
+.ctr{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 2px;font-size:13.5px;cursor:pointer;border-radius:6px}
+.ctr.on,.ctr:hover{background:var(--u-hover,rgba(0,0,0,.04))}
+.ctav{display:flex;gap:3px}.ctav i{font-style:normal;font-size:11.5px;min-width:22px;text-align:center;padding:1px 3px;border-radius:4px;background:var(--u-line)}.ctav i.z{opacity:.35}
 tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-hover,rgba(0,0,0,.03))}
 .qmsec{padding:8px 0;border-bottom:1px solid var(--u-line)}.qmsec:last-of-type{border:0}
 .qcard{margin-bottom:12px} .qh{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .qh .sp{flex:1}
@@ -478,7 +483,7 @@ const MENU = [
     ['portal', '포털', N(id => viewPortal(id))],
     ['staff', '조교 관리', N(id => viewStaff(id))],
     ['survey', '설문', N(id => viewSurvey(id))],
-    ['ct', '커스텀 트레이닝', OLD('cs-ct')],
+    ['ct', '커스텀 트레이닝', N(id => viewCt(id))],
     ['lt', '레벨테스트', PAGE('/dashboard/lt/admin/')]] },
 ];
 const mine = () => MENU.filter(m => m.roles.includes(ROLE));
@@ -496,7 +501,7 @@ function translate() {
   if (a === 'student') return to('stu', b);
   if (a === 'gichul') return b ? to('stu', b) : to('exam', 'mock');
   if (a === 'cs-console' && b) { CTX.ban = b; saveCtx(); return to('class', 'input'); }
-  if (a === 'cs-ct' && b) { NEXT = 'cs-ct/' + b; return to('admin', 'ct'); }
+  if (a === 'cs-ct' && b) { CT.want = b; return to('admin', 'ct'); }
   if (OLDMAP[a]) return to(...OLDMAP[a]);
   if (ARCHIVED.includes(a)) { to('home'); setTimeout(() => toast('보관함 화면은 1119에 지웠어요 — 데이터는 DB에 그대로 있어요'), 300); }
 }
@@ -1762,6 +1767,199 @@ function svPaint(h) {
   $('view').querySelectorAll('[data-svk]').forEach(b => b.onclick = () => { SV.key = b.dataset.svk; viewSurvey(RENDER_ID, 1); });
   $('view').querySelectorAll('[data-svb]').forEach(b => b.onclick = () => { SV.ban = b.dataset.svb; viewSurvey(RENDER_ID, 1); });
   $('view').querySelectorAll('[data-svt]').forEach(b => b.onclick = () => { SV.tab = b.dataset.svt; viewSurvey(RENDER_ID, 1); });
+}
+
+/* ═══ src/60_ct.js ═══ */
+/* ── ⚙ 관리 › 커스텀 트레이닝 ── (P17 1119, 옛 콘솔 '커스텀 트레이닝' 이식)
+   반 · 학생 고르고 → 구성(유형·난이도·문항 수) → [만들기] = job_queue(종류=커스텀트레이닝) 요청. 서버(pt.yml)가 3~5분에 문제·해설 PDF.
+   구성 채우기: [추천 채우기] = 지난 90일 PT 결과의 유형 그레이드(G1~G4)+출제 횟수로 약한 순 · [직접 고르기] = 단원별 유형 팝업.
+   카탈로그 = /dashboard/ct/types.json (ct_build.py --catalog → build_app --deploy 가 올림). 학생 페이지 [커스텀 만들기] = #cs-ct/<학생ID>. */
+const CT_LV = ['하', '중', '중상', '상', '최상'];
+const CT_GW = { G1: 4, G2: 3, G3: 2, G4: 0.5 }, CT_GLV = { G1: '하', G2: '중', G3: '중상', G4: '상' }, CT_GNM = { G1: '개념붕괴', G2: '불안정', G3: '적용부족', G4: '숙달' };
+const CT = { ban: '', sid: '', sel: [], cat: null, idx: {}, label: '커스텀 트레이닝', want: '', pdf: {}, timer: null };
+const ctCourse = ban => String(ban || '').startsWith('고2') ? '미적분1' : '공통수학2';
+const ctMin = lv => ((CT.cat && CT.cat.분) || { 하: 1, 중: 2, 중상: 3, 상: 5, 최상: 7 })[lv] || 2;
+const ctK = (key, c) => key + '@' + (c || ctCourse(CT.ban));
+const ctAvail = (k, lv) => { const t = CT.idx[k]; return !t ? 0 : lv === '섞음' ? t.n.reduce((a, b) => a + b, 0) : (t.n[CT_LV.indexOf(lv)] || 0); };
+function ctItemMin(s) {
+  if (s.난이도 !== '섞음') return ctMin(s.난이도) * s.문항수;
+  const t = CT.idx[ctK(s.키, s.과목)]; if (!t) return 2 * s.문항수;
+  const lv = CT_LV.filter((_, i) => t.n[i] > 0); return lv.length ? lv.reduce((a, l) => a + ctMin(l), 0) / lv.length * s.문항수 : 0;
+}
+function ctBest(k, want, need) {   // 원하는 난이도에 need 개가 없으면 가까운 난이도로
+  if (ctAvail(k, want) >= need) return want;
+  let i = CT_LV.indexOf(want); if (i < 0) i = 1;
+  const order = CT_LV.map((l, j) => [l, Math.abs(j - i), j]).sort((a, b) => a[1] - b[1] || b[2] - a[2]);
+  for (const [l] of order) if (ctAvail(k, l) >= need) return l;
+  return order.map(([l]) => l).sort((a, b) => ctAvail(k, b) - ctAvail(k, a))[0];
+}
+function ctAdd(k, why) {
+  const t = CT.idx[k]; if (!t || CT.sel.some(s => ctK(s.키, s.과목) === k)) return;
+  const lv = ctBest(k, '중', 5);
+  CT.sel.push({ 키: t.키, 유형명: t.이름, 단원: t.단원, 과목: t.과목, 문항수: Math.max(1, Math.min(5, ctAvail(k, lv))), 난이도: lv, why: why || '' });
+}
+async function ctCat() {
+  if (CT.cat) return true;
+  try { const r = await fetch('/dashboard/ct/types.json', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); CT.cat = await r.json(); }
+  catch (e) { console.warn(e); return false; }
+  for (const [c, units] of Object.entries(CT.cat.과목 || {})) for (const u of units) for (const t of u.유형) CT.idx[t.키 + '@' + c] = CT.idx[t.키 + '@' + c] || { ...t, 단원: u.이름, 과목: c };
+  return true;
+}
+
+async function viewCt(id) {
+  const [stu, ok] = await Promise.all([students(), ctCat()]);
+  if (!alive(id)) return;
+  if (CT.want) { const s = stu.find(x => x.학생ID === CT.want); if (s) { CT.ban = s.ban; CT.sid = s.학생ID; } CT.want = ''; }
+  const bans = [...new Set(stu.map(s => s.ban))].sort();
+  if (!bans.includes(CT.ban)) CT.ban = (CTX && bans.includes(CTX.ban)) ? CTX.ban : bans[0];
+  const roster = stu.filter(s => s.ban === CT.ban);
+  if (!roster.some(s => s.학생ID === CT.sid)) CT.sid = '';
+  const c = ctCourse(CT.ban);
+  if (CT.sel.some(s => s.과목 !== c)) { CT.sel = CT.sel.filter(s => s.과목 === c); toast('과목이 달라 고른 유형을 비웠어요'); }
+  let h = head('커스텀 트레이닝', '학생 한 명 몫 문제·해설 PDF — 요청하면 서버가 3~5분에 만들어요 (PT 와 같은 줄)');
+  if (!ok) h += '<div class="u-card u-err">유형 목록(ct/types.json)을 못 읽었어요 — build_app.py --deploy 로 올려야 해요</div>';
+  h += `<div class="pick"><div class="row">${bans.map(b => `<button class="u-btn sm${b === CT.ban ? ' pri' : ' ghost'}" data-ctb="${E(b)}">${E(b)}</button>`).join('')}<span class="u-muted" style="margin-left:6px">${E(c)}</span></div>`
+    + `<div class="row">${roster.map(s => `<button class="u-btn sm${s.학생ID === CT.sid ? ' pri' : ' ghost'}" data-cts="${E(s.학생ID)}">${E(s.이름)}</button>`).join('')}</div></div>`;
+  // 구성
+  let N = 0, M = 0;
+  const rows = CT.sel.map((s, i) => { const k = ctK(s.키, s.과목), av = ctAvail(k, s.난이도), n = +s.문항수 || 0, m = ctItemMin(s) * (av < n && n ? av / n : 1); N += Math.min(n, av); M += m; return { s, i, k, av, n, m }; });
+  const warn = []; if (CT.sel.length > 8) warn.push('유형 8개 초과 — 목차가 넘쳐요'); if (CT.sel.length && M > 90) warn.push('90분 초과'); else if (CT.sel.length && M < 40) warn.push('40분 미만');
+  h += `<div class="u-card"><div class="u-head" style="margin:0 0 10px"><div><b>구성</b> <span class="mini">${CT.sel.length ? `유형 ${CT.sel.length} · 문항 ${N} · 약 ${Math.round(M)}분` : ''}${warn.length ? ' · <span class="u-warn">⚠ ' + E(warn.join(' · ')) + '</span>' : ''}</span></div><span class="sp"></span>`
+    + `<button class="u-btn sm" id="ctauto">추천 채우기</button> <button class="u-btn sm" id="ctpick">직접 고르기</button>${CT.sel.length ? ' <button class="u-btn sm ghost" id="ctclr">비우기</button>' : ''}</div>`;
+  h += rows.length ? U.table('ctsel', [
+    { h: '유형', l: 1, ns: 1, v: r => r.s.유형명, f: r => { const g = /^G[1-4]/.exec(r.s.why || ''); return `<b>${E(r.s.유형명)}</b><div class="mini">${E(r.s.단원 || '')} · ${E(r.s.키)}${r.s.why ? ' · ' + (g ? tag(g[0] === 'G1' ? 'bad' : g[0] === 'G2' ? 'warn' : '', g[0]) + E(r.s.why.slice(2)) : E(r.s.why)) : ''}</div>`; } },
+    { h: '난이도 (꺼낼 수 있는 수)', ns: 1, v: () => 0, f: r => `<select data-ctlv="${r.i}">${CT_LV.concat(['섞음']).map(l => `<option value="${l}"${l === r.s.난이도 ? ' selected' : ''}>${l} (${ctAvail(r.k, l)})</option>`).join('')}</select>` },
+    { h: '문항 수', ns: 1, v: () => 0, f: r => `<input type="number" min="1" max="20" value="${r.n}" data-ctn="${r.i}" style="width:64px">${r.av < r.n ? ` <span class="u-warn mini">→ ${r.av}개만</span>` : ''}` },
+    { h: '예상', ns: 1, v: () => 0, f: r => `<span class="mini">약 ${Math.round(r.m)}분</span>` },
+    { h: '', ns: 1, v: () => 0, f: r => `<button class="u-btn sm ghost" data-ctx="${r.i}">빼기</button>` },
+  ], rows, {}) : '<div class="u-muted">아직 고른 유형이 없어요 — [추천 채우기] 또는 [직접 고르기]</div>';
+  const sname = CT.sid ? stuOf(CT.sid).이름 : '';
+  h += `<div class="u-form" style="margin-top:12px;align-items:flex-end">${U.field('PDF 제목', `<input type="text" id="ctlab" value="${E(CT.label)}">`)}`
+    + `<button class="u-btn pri" id="ctgo"${CT.sid && CT.sel.length ? '' : ' disabled'}>${CT.sid ? E(sname) + ' 것 만들기' : '학생을 고르세요'}</button></div></div>`;
+  h += '<h3 class="svh">최근 14일 요청</h3><div id="ctjobs"><div class="u-faint">불러오는 중…</div></div>';
+  $('view').innerHTML = h;
+  const re = () => viewCt(RENDER_ID);
+  $('view').querySelectorAll('[data-ctb]').forEach(b => b.onclick = () => { CT.ban = b.dataset.ctb; CT.sid = ''; re(); });
+  $('view').querySelectorAll('[data-cts]').forEach(b => b.onclick = () => { CT.sid = b.dataset.cts; re(); });
+  $('view').querySelectorAll('[data-ctlv]').forEach(e => e.onchange = () => { CT.sel[+e.dataset.ctlv].난이도 = e.value; re(); });
+  $('view').querySelectorAll('[data-ctn]').forEach(e => e.onchange = () => { CT.sel[+e.dataset.ctn].문항수 = Math.max(1, Math.min(20, parseInt(e.value) || 1)); re(); });
+  $('view').querySelectorAll('[data-ctx]').forEach(b => b.onclick = () => { CT.sel.splice(+b.dataset.ctx, 1); re(); });
+  $('ctlab').oninput = e => { CT.label = e.target.value; };
+  if ($('ctclr')) $('ctclr').onclick = () => { CT.sel = []; re(); };
+  $('ctauto').onclick = () => ctAutoOpen();
+  $('ctpick').onclick = () => ctPickOpen();
+  $('ctgo').onclick = () => ctSubmit();
+  ctJobs(id);
+}
+
+function ctPickOpen() {
+  if (!CT.cat) return toast('유형 목록을 못 읽었어요');
+  const c = ctCourse(CT.ban), units = (CT.cat.과목 || {})[c] || [];
+  const draw = q => units.map(u => { const rs = u.유형.filter(t => !q || t.이름.includes(q)); if (!rs.length) return '';
+    return `<div class="ctu"><div class="mini"><b>${E(u.코드)} ${E(u.이름)}</b></div>` + rs.map(t => { const k = t.키 + '@' + c, on = CT.sel.some(s => ctK(s.키, s.과목) === k);
+      return `<label class="ctr${on ? ' on' : ''}"><input type="checkbox" data-ctk="${E(k)}"${on ? ' checked' : ''}> <span>${E(t.이름)} <span class="mini">${E(t.키)}</span></span><span class="ctav">${t.n.map((v, i) => `<i class="${v ? '' : 'z'}" title="${CT_LV[i]}">${v}</i>`).join('')}</span></label>`; }).join('') + '</div>'; }).join('') || '<div class="u-faint">맞는 유형이 없어요</div>';
+  const m = modal({ title: `유형 고르기 · ${c}`, wide: 1, ok: '적용',
+    body: `<input type="search" id="ctq" placeholder="유형 이름 검색" style="width:100%;margin-bottom:8px"><div class="mini" style="margin-bottom:6px">숫자 = 난이도별(하·중·중상·상·최상) 꺼낼 수 있는 문항 수</div><div id="ctul" class="ctul">${draw('')}</div>`,
+    onOk: async () => { const on = [...document.querySelectorAll('#ctul [data-ctk]')].filter(x => x.checked).map(x => x.dataset.ctk);
+      CT.sel = CT.sel.filter(s => on.includes(ctK(s.키, s.과목))); on.forEach(k => ctAdd(k, '직접')); viewCt(RENDER_ID); return true; } });
+  m.$('ctq').oninput = e => { const keep = new Set([...m.sheet.querySelectorAll('[data-ctk]')].filter(x => x.checked).map(x => x.dataset.ctk));
+    m.$('ctul').innerHTML = draw(e.target.value.trim()); m.sheet.querySelectorAll('[data-ctk]').forEach(x => { x.checked = keep.has(x.dataset.ctk) || x.checked; }); };
+}
+
+function ctAutoOpen() {
+  if (!CT.sid) return toast('학생을 먼저 고르세요');
+  modal({ title: `추천 채우기 · ${stuOf(CT.sid).이름}`, ok: '채우기',
+    body: '<div class="u-form">' + U.field('유형 수', '<select id="an"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>')
+      + U.field('난이도', '<select id="alv"><option value="grade" selected>그레이드대로</option><option>기본</option><option>표준</option><option>심화</option></select>')
+      + U.field('총 시간', '<select id="am"><option value="45">45분</option><option value="60" selected>60분</option><option value="80">80분</option></select>') + '</div>',
+    hint: '지난 90일 PT(기출과제·커스텀) 결과의 유형 그레이드 G1 개념붕괴 > G2 불안정 > G3 적용부족 > G4 숙달 + 자주 나온 유형 순',
+    onOk: async ($, err) => { const r = await ctAuto(+$('an').value, $('alv').value, +$('am').value); if (r !== true) { err(r); return false; } viewCt(RENDER_ID); return true; } });
+}
+async function ctAuto(n, mode, total) {
+  const name = stuOf(CT.sid).이름, ban = CT.ban, c = ctCourse(ban);
+  const since = new Date(Date.now() - 90 * 864e5).toISOString();
+  const { data, error } = await sb.from('job_queue').select('id,결과,완료시각').in('종류', ['기출과제', '커스텀트레이닝']).eq('상태', '완료').gte('요청시각', since).contains('파라미터', { 반: ban }).order('id', { ascending: false }).limit(300);
+  if (error) return '못 읽었어요: ' + error.message;
+  const grade = {}, freq = {}, byName = {};
+  for (const u of (CT.cat.과목[c] || [])) for (const t of u.유형) { const kk = u.코드 + '|' + t.이름; if (!byName[kk]) byName[kk] = t.키; }
+  let seen = 0;
+  for (const j of (data || [])) {
+    const ent = ((j.결과 || {}).업로드 || []).find(e => e.이름 === name); if (!ent) continue; seen++;
+    const d = j.완료시각 ? md(KST(j.완료시각).toISOString()) : '';
+    for (const [key, v] of Object.entries(ent.그레이드 || {})) if (!grade[key] && v && v.등급) grade[key] = { g: v.등급, d };
+    for (const it of (ent.문항 || [])) { const u = String(it.id || '').split('-')[0].replace(/v$/, '').split('x')[0], nm = String(it.t || '').split(' + ')[0].trim(), key = byName[u + '|' + nm]; if (key) freq[key] = (freq[key] || 0) + 1; }
+  }
+  const keys = [...new Set([...Object.keys(grade), ...Object.keys(freq)])].filter(k => CT.idx[k + '@' + c]);
+  if (!keys.length) return `${name}: 지난 90일 PT 기록${seen ? `은 ${seen}부 있지만 유형을 못 맞췄어요` : '이 없어요'} — 직접 고르기로`;
+  const score = k => (grade[k] ? CT_GW[grade[k].g] || 1.5 : 1.5) + 0.25 * Math.min(freq[k] || 0, 8);
+  keys.sort((a, b) => score(b) - score(a) || (freq[b] || 0) - (freq[a] || 0));
+  const pick = keys.slice(0, n);
+  CT.sel = pick.map(key => { const k = key + '@' + c, t = CT.idx[k], g = grade[key] && grade[key].g;
+    const want = mode === 'grade' ? (CT_GLV[g] || '중') : ({ 기본: '하', 표준: '중', 심화: '상' })[mode], lv = ctBest(k, want, 2);
+    const cnt = Math.max(1, Math.min(20, ctAvail(k, lv), Math.round(total / pick.length / ctMin(lv))));
+    const why = g ? (g + ' ' + (CT_GNM[g] || '') + (grade[key].d ? ' · ' + grade[key].d + ' PT' : '')) : ('PT ' + (freq[key] || 0) + '회 출제');
+    return { 키: key, 유형명: t.이름, 단원: t.단원, 과목: c, 문항수: cnt, 난이도: lv, why: why + (lv !== want ? ' · ' + want + ' 부족→' + lv : '') }; });
+  toast(`지난 PT ${seen}부에서 약한 순으로 ${CT.sel.length}개`);
+  return true;
+}
+
+async function ctSubmit() {
+  const sid = CT.sid, name = stuOf(sid).이름, c = ctCourse(CT.ban);
+  const 유형 = CT.sel.map(s => ({ 키: s.키, 유형명: s.유형명, 문항수: +s.문항수, 난이도: s.난이도 }));
+  const go = async () => {
+    $('ctgo').disabled = true;
+    const { error } = await sb.from('job_queue').insert({ 종류: '커스텀트레이닝', 상태: '요청', 요청자: '콘솔커스텀',
+      파라미터: { 학생: name, 학생ID: sid, 반: CT.ban, 과목: c, 날짜: today(), 라벨: (CT.label || '커스텀 트레이닝').trim(), 유형 } });
+    $('ctgo').disabled = false;
+    if (error) return toast('요청 실패: ' + error.message);
+    toast(`${name} 요청 — 3~5분 · 구성은 남겨 뒀어요(학생만 바꿔 다시 누르면 같은 구성)`); ctJobs(RENDER_ID);
+  };
+  const pend = await soft(sb.from('job_queue').select('id,파라미터').eq('종류', '커스텀트레이닝').in('상태', ['요청', '처리중']).contains('파라미터', { 학생ID: sid }));
+  if ((pend || []).some(j => JSON.stringify((j.파라미터 || {}).유형) === JSON.stringify(유형)))
+    modal({ title: '같은 구성이 만들어지는 중', body: `<div>${E(name)} 에게 같은 구성이 이미 요청돼 있어요. 한 부 더 만들까요?</div>`, ok: '한 부 더', onOk: async () => { go(); return true; } });
+  else go();
+}
+
+async function ctJobs(id) {
+  if (CT.timer) { clearTimeout(CT.timer); CT.timer = null; }
+  const since = new Date(Date.now() - 14 * 864e5).toISOString();
+  const data = await soft(sb.from('job_queue').select('id,상태,파라미터,결과,메시지,요청시각,시작시각,완료시각').eq('종류', '커스텀트레이닝').gte('요청시각', since).order('id', { ascending: false }).limit(40));
+  if (!alive(id) || !$('ctjobs')) return;
+  const J = data || [];
+  if (!J.length) { $('ctjobs').innerHTML = '<div class="u-faint">아직 없어요</div>'; return; }
+  const stTag = s => s === '완료' ? tag('ok', '완료') : s === '실패' ? tag('bad', '실패') : s === '처리중' ? tag('warn', '만드는 중') : tag('', '대기');
+  $('ctjobs').innerHTML = U.table('ctjobs', [
+    { h: '요청', v: j => j.요청시각, f: j => `<span class="mini">${E(U.fmt(j.요청시각))}</span>` },
+    { h: '학생', l: 1, v: j => (j.파라미터 || {}).학생, f: j => `<b>${E((j.파라미터 || {}).학생 || '?')}</b> <span class="mini">${E((j.파라미터 || {}).반 || '')}</span>` },
+    { h: '상태', v: j => j.상태, f: j => stTag(j.상태) + (j.상태 === '요청' || j.상태 === '처리중' ? ` <span class="mini">${ageTxt(j.시작시각 || j.요청시각)}째</span>` : '') },
+    { h: '구성', l: 1, ns: 1, v: () => 0, f: j => { const p = j.파라미터 || {}, r = j.결과 || {};
+      return `<span class="mini">${E((p.유형 || []).map(t => t.유형명 + ' ' + t.문항수 + (t.난이도 ? '·' + t.난이도 : '')).join(' / '))}</span>`
+        + ((r.부족 || []).length ? `<div class="mini u-warn">모자람: ${E(r.부족.map(b => (b.유형명 || '') + ' ' + b.나옴 + '/' + b.요청).join(' · '))}</div>` : '')
+        + (j.상태 === '실패' && j.메시지 ? `<div class="mini u-bad">${E(j.메시지)}</div>` : ''); } },
+    { h: 'PDF', ns: 1, v: () => 0, f: j => j.상태 === '완료' && ((j.결과 || {}).업로드 || []).length ? `<span data-ctpdf="${j.id}">${CT.pdf[j.id] || `<button class="u-btn sm" data-ctlink="${j.id}">문제·해설 PDF</button>`}</span>` : '' },
+    { h: '', ns: 1, v: () => 0, f: j => `<button class="u-btn sm ghost" data-ctre="${j.id}">구성 불러오기</button>` },
+  ], J, { redraw: () => ctJobs(RENDER_ID) });
+  $('ctjobs').querySelectorAll('[data-ctlink]').forEach(b => b.onclick = () => ctLinks(J.find(j => j.id === +b.dataset.ctlink), b.parentElement));
+  $('ctjobs').querySelectorAll('[data-ctre]').forEach(b => b.onclick = () => { const j = J.find(x => x.id === +b.dataset.ctre), p = j.파라미터 || {}, c = p.과목 || ctCourse(p.반);
+    if (c !== ctCourse(CT.ban)) return toast(`과목이 달라요 — 먼저 ${c} 반을 고르세요`);
+    CT.sel = (p.유형 || []).filter(t => CT.idx[t.키 + '@' + c]).map(t => ({ 키: t.키, 유형명: t.유형명, 단원: CT.idx[t.키 + '@' + c].단원, 과목: c, 문항수: t.문항수, 난이도: t.난이도, why: '#' + j.id + ' 구성' }));
+    toast('구성 불러옴 — 학생 고르고 만들기'); viewCt(RENDER_ID); });
+  if (J.some(j => j.상태 === '요청' || j.상태 === '처리중')) CT.timer = setTimeout(() => { if (alive(id) && document.visibilityState === 'visible') ctJobs(id); }, 10000);
+}
+async function ctLinks(j, el) {   // Storage 키는 해시라 내려받는 이름을 학생 이름으로 박는다 · 링크 1시간
+  el.textContent = '링크 만드는 중…';
+  const out = [];
+  for (const f of ((j.결과 || {}).업로드 || [])) {
+    const { data, error } = await sb.storage.from('reports').createSignedUrl(f.키, 3600, { download: f.이름 + '.pdf' });
+    if (error) { out.push(`<span class="u-bad">${E(f.이름)} 실패</span>`); continue; }
+    let sub = '';
+    for (const [suf, k] of [['문제', '문제키'], ['해설', '해설키']]) { if (!f[k]) continue;
+      const r = await sb.storage.from('reports').createSignedUrl(f[k], 3600, { download: f.이름 + '_' + suf + '.pdf' });
+      if (!r.error) sub += ` <a class="u-btn sm ghost" href="${r.data.signedUrl}" target="_blank" rel="noopener">${suf}</a>`; }
+    out.push(`<a class="u-btn sm" href="${data.signedUrl}" target="_blank" rel="noopener">전체</a>${sub}`);
+  }
+  CT.pdf[j.id] = out.join(' ') + ' <span class="mini">1시간 유효</span>';
+  el.innerHTML = CT.pdf[j.id];
 }
 
 /* ═══ src/99_boot.js ═══ */
