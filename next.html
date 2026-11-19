@@ -852,6 +852,8 @@ const KINDS = [
   ['fix', '과제 보완', '보완 예약 안 함 · 예약 지남', ['admin', 'staff'], ''],
 ];
 
+let H = null, FILTER = '', HTIMER = null;   // (1119 밤) 선언이 빠져 첫 화면(홈)이 ReferenceError 로 멈췄다
+
 async function viewHome(id) {
   clearTimeout(HTIMER);
   if (H) drawHome(); else $('view').innerHTML = skeleton();
