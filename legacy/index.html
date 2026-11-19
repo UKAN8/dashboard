@@ -758,6 +758,8 @@ body.cs-on #boot{display:none}
 #v-qa .qa-errgo{border-color:rgba(240,138,154,.5);background:rgba(240,138,154,.16);color:#ffd9de}
 /* (1119 P16 1단계) v2 셸 안에 끼울 때(?embed=1) 위 막대를 숨긴다 — 메뉴·시즌은 v2 가 그린다 */
 html.embed .topbar{display:none} html.embed #boot{margin-top:8px}
+.mk-tabs{display:flex;gap:4px;margin:0 0 14px} .mk-tabs button{font:inherit;font-size:14px;font-weight:700;padding:7px 14px;border-radius:10px;border:1px solid var(--bd);background:transparent;color:var(--tx2);cursor:pointer}
+.mk-tabs button.on{background:rgba(245,160,160,.14);color:#ffd9d9;border-color:rgba(245,160,160,.3)}
 /* (1119 유강 "아래는 왜 까매") v2(밝은 테마) 안에 끼울 땐 옛 어두운 화면을 뒤집어 밝게 — 색을 하나하나 다시 칠하기 전 임시가 아니라
    옛 화면을 다 새로 만들 때까지의 방식. 사진·영상·캔버스는 한 번 더 뒤집어 원래 색으로 */
 html.embed{filter:invert(1) hue-rotate(180deg);background:#fff}
@@ -792,7 +794,7 @@ html.embed img,html.embed video,html.embed canvas,html.embed iframe,html.embed p
 <div class="nt" id="nav-t">
 <a href="#cs-console" data-v="cs-console" data-g="수업">수업 콘솔</a><a href="#report" data-v="report" data-g="수업">리포트</a><a href="#cs-hw" data-v="cs-hw" data-g="수업">써킷 과제</a><a href="#qa" data-v="qa" data-g="수업">질문 모음</a><a href="#qame" data-v="qame" data-g="수업">내 답변</a><a href="#sw" data-v="sw" data-g="수업">서술형 채점</a><a href="#core" data-v="core" data-g="수업">CORE 루프</a><a href="/dashboard/files/" target="_blank" rel="noopener" data-g="수업" class="ext" title="학생별 포털 자료(써킷·교재·기출·개별과제) 보기·받기 · 오답 트레이닝 대리 출제 · 반·날짜별 과제">📂 학생 자료실 ↗</a>
 <a href="/dashboard/stu/" data-g="학생" class="ext" title="학생 개인페이지(1118 새로 지음) — 회차·과제·질문·CORE·시험">👤 학생 개인페이지</a>
-<a href="#gichul" data-v="gichul" data-g="시험">기출·모의</a><a href="#score" data-v="score" data-g="시험">점수표</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
+<a href="#gichul" data-v="gichul" data-g="시험">모의테스트</a><a href="#exam" data-v="exam" data-g="시험">내신</a><a href="#sched" data-v="sched" data-g="시험">시험일정</a>
 <a href="#cs-ct" data-v="cs-ct" data-g="관리">커스텀 트레이닝</a><a href="#links" data-v="links" data-g="관리">학생 포털 링크</a><a href="#cs-staff" data-v="cs-staff" data-g="관리">조교 관리</a><a href="#visits" data-v="visits" data-g="관리">방문 기록</a><a href="#survey" data-v="survey" data-g="관리">설문</a>
 <!-- (1119 P16) 보관함 탭 삭제 — 원본 _bak/app_shell.html.bak_1119_arch -->
 </div></nav>
@@ -2253,7 +2255,7 @@ function render(st) {
     viewExam(st),
     viewSched(),                                         // 0828 시험일정 (st 안 씀)
     viewGichul(st),                                      // 0907 기출테스트 결과
-    viewScore(st),                                       // 1005 점수표 (학생×시험지)
+    // (1119) 점수표는 viewGichul 안 [점수표] 탭으로 들어감
     viewQa(st),                                          // 1024 질문 모음 (조교)
     viewQame(st),                                        // 1024 내 답변 (조교 본인)
     viewSw(st),                                          // 1112 서술형 채점 (조교)
@@ -2826,8 +2828,13 @@ function viewGichul(st) {
   const takes = G.papers.reduce((s, p) => s + p.takes.length, 0);
   const g1 = G.papers.reduce((s, p) => s + p.takes.filter(t => t.grade === 1).length, 0);
   const cut = G.papers.filter(p => p.meta).length;
+  // (1119 P16 2단계) 모의테스트 한 화면 — [문항 분석](모의 회차별) · [점수표](학생×회차, 옛 '점수표' 탭) · [기출 이력](기출테스트). 고른 탭은 이 브라우저에 기억
+  const sc = viewScore(st).replace('<section class="view" id="v-score">', '<div id="v-score">').replace(/<\/section>$/, '</div>');
   return '<section class="view" id="v-gichul">'
-    + mockBlock()   // (1113 유강 "기출 탭에 모의테스트 정보 — 오늘 페이지가 수업할 때 보기 편했어, 이쪽으로 녹이자")
+    + '<div class="mk-tabs" id="mk-tabs"><button data-mt="mock">모의 · 문항 분석</button><button data-mt="score">점수표</button><button data-mt="gichul">기출 이력</button></div>'
+    + '<div data-mp="mock">' + mockBlock() + '</div>'   // (1113 유강 "기출 탭에 모의테스트 정보 — 오늘 페이지가 수업할 때 보기 편했어, 이쪽으로 녹이자")
+    + '<div data-mp="score" hidden>' + sc + '</div>'
+    + '<div data-mp="gichul" hidden>'
     + `<h2>기출 — 기출테스트 결과 <span class="cnt">${G.papers.length}</span>`
     + '<span class="dim" style="font-size:12px"> 시험지별 답안표 · 학생별 추이 · 반별 평균. 등급은 시험메타 컷이 있을 때만, 예상치다</span></h2>'
     + '<div class="kpis">'
@@ -2850,8 +2857,15 @@ function viewGichul(st) {
     + '<span class="gc-dv"></span>'
     + '<button class="fbtn on" data-gb="*">반 전체</button>'
     + G.bans.map(b => `<button class="fbtn gc-bb" data-gb="${E(b)}" data-gbg="${E(gcGrp(b))}">${E(b)}</button>`).join('')
-    + '</div><div id="gc-body"></div></section>';
+    + '</div><div id="gc-body"></div></div></section>';
 }
+function mkTab(t) {
+  t = ['mock', 'score', 'gichul'].includes(t) ? t : (function () { try { return localStorage.getItem('mkTab') || 'mock'; } catch (e) { return 'mock'; } })();
+  try { localStorage.setItem('mkTab', t); } catch (e) {}
+  document.querySelectorAll('#mk-tabs [data-mt]').forEach(b => b.classList.toggle('on', b.dataset.mt === t));
+  document.querySelectorAll('#v-gichul [data-mp]').forEach(d => { d.hidden = d.dataset.mp !== t; });
+}
+document.addEventListener('click', e => { const b = e.target.closest('#mk-tabs [data-mt]'); if (b) mkTab(b.dataset.mt); });
 
 function gcWire(st) {
   const G = st.gc || gcBuild(st);
@@ -3562,6 +3576,8 @@ function wire(st) {
     if ((main === 'visits' || main === 'links') && !window.VS_OK) main = 'qa';          // 방문 기록·포털 링크는 유강 계정만
     if (main === 'report' && window.ROLE !== 'admin') main = 'qa';
     if (main === 'mock') { location.replace('#gichul'); return; }   // (1113) 모의테스트는 기출 탭으로 합쳤다
+    if (main === 'score') { main = 'gichul'; mkTab('score'); }       // (1119) 점수표 = 모의테스트 화면의 탭
+    else if (main === 'gichul') mkTab(sub ? 'gichul' : undefined);   // #gichul/<학생ID> = 기출 이력의 학생 추이
     let id = 'v-' + main;
     if (main === 'gichul' && sub && window.gcOpen) window.gcOpen(sub);   // #gichul/<학생ID> → 그 학생 추이
     document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
