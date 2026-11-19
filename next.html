@@ -865,11 +865,12 @@ async function viewClassCore(id) {
    과제 내기 = [＋ 과제 내기] → 팝업(이 반 v2 책자 · 수업일 · 마감 — 마감은 hw_default_due 로 미리 채움).
    옛 화면에서 뺀 것: 라운드식(circuit_map) 과제 내기(v2 책자로 대체), 질문 대기열(조교 › 질문이 같은 일을 한다).
    상태 숫자: 1 한 번에 · 2 고쳐서 · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름 · 6 안 풂 · 7 문항 오류(분모에서 뺌). */
-const HW2 = { sets: null, items: null };
-async function hwSetsLoad() {
-  if (HW2.sets) return;
-  const [s, i] = await Promise.all([soft(sb.from('hw_set').select('*').order('세트키')), all(() => sb.from('hw_set_item').select('세트키,번호,"THEME"'))]);
-  HW2.sets = s || []; HW2.items = i || [];
+const HW2 = { sets: null, items: [], got: new Set() };
+async function hwSetsLoad(ban, extra) {   // 책자 목록은 한 번, 문항(THEME)은 필요한 책자만 — 전체 hw_set_item 은 1만 8천 줄이라 11초 걸린다
+  if (!HW2.sets) HW2.sets = (await soft(sb.from('hw_set').select('*').order('세트키'))) || [];
+  const keys = [...new Set(HW2.sets.filter(s => s.반 === ban).map(s => s.세트키).concat(extra || []))].filter(k => k && !HW2.got.has(k));
+  for (let i = 0; i < keys.length; i += 100) { const d = await soft(sb.from('hw_set_item').select('세트키,번호,"THEME"').in('세트키', keys.slice(i, i + 100)).limit(5000)); if (d) HW2.items.push(...d); }
+  keys.forEach(k => HW2.got.add(k));
 }
 const hwSetName = a => { const s = a && a.세트키 && (HW2.sets || []).find(x => x.세트키 === a.세트키); return s ? `${s.단원명} ${s.DAY || ''}`.trim() : a.세트키 || `${a.과목 || ''} ${a.단원코드 || ''} R${a.라운드 ?? ''}`; };
 const hwTh = a => { const t = (HW2.items || []).filter(i => i.세트키 === a.세트키 && i.THEME != null).map(i => i.THEME); return t.length ? [Math.min(...t), Math.max(...t)] : null; };
@@ -880,9 +881,10 @@ async function viewHw(id) {
   const [as, pg, items] = await Promise.all([
     soft(sb.from('hw_assign').select('*').eq('반', ban).is('학생ID', null).gte('날짜', since).order('날짜', { ascending: false }).order('id')),
     soft(sb.from('hw_progress').select('*').eq('반', ban).gte('날짜', since)),
-    soft(sb.from('hw_item_stat').select('*').eq('반', ban)), hwSetsLoad(), students()]);
+    all(() => sb.from('hw_item_stat').select('*').eq('반', ban)), students()]);
   if (!alive(id)) return;
   const A = as || [], ids = A.map(a => a.id);
+  await hwSetsLoad(ban, A.map(a => a.세트키).concat((items || []).map(r => r.세트키)));
   const dn = ids.length ? await soft(sb.from('hw_done').select('assign_id').in('assign_id', ids)) : [];
   if (!alive(id)) return;
   const dc = {}; (dn || []).forEach(r => dc[r.assign_id] = (dc[r.assign_id] || 0) + 1);
