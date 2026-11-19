@@ -2100,7 +2100,7 @@ function drawLib(host,opt){
       const hd=`<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`;
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
       if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
-      if(r.prt) return hd+`<div class="rp">${lk(r.prt.문제,'문제 PDF')}${lk(r.prt.해설,'해설 PDF')}${vbtn}</div>${vix}</div>`;
+      if(r.prt) return hd+`<div class="rp">${lk(r.prt.문제,'문제 PDF')}${lk(r.prt.해설,'해설 PDF')}${lk(r.prt.손풀이,'손풀이 해설 PDF')}${vbtn}</div>${vix}</div>`;   /* (1119) 프린트 손풀이 해설 */
       if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
       if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">${IC.book}강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
