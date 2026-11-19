@@ -756,7 +756,9 @@ body.cs-on #boot{display:none}
 #v-qa .qa-errf{margin:8px 0 0 34px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(240,138,154,.06)}
 #v-qa .qa-errf input{flex:1;min-width:200px;font:inherit;font-size:13px;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit}
 #v-qa .qa-errgo{border-color:rgba(240,138,154,.5);background:rgba(240,138,154,.16);color:#ffd9de}
-</style></head><body>
+/* (1119 P16 1단계) v2 셸 안에 끼울 때(?embed=1) 위 막대를 숨긴다 — 메뉴·시즌은 v2 가 그린다 */
+html.embed .topbar{display:none} html.embed #boot{margin-top:8px}
+</style><script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script></head><body>
 
 <div id="login">
   <div class="logo">수학은유강 <span style="color:var(--tx2)">학습현황</span></div>
@@ -7284,6 +7286,12 @@ async function initClassButtons(){
   // 주소에 반이 실려 왔으면(#cs-console/고1A) 바로 연다
   const m=decodeURIComponent(location.hash||'').match(/^#cs-console\/(.+)$/);
   if(m&&set.includes(m[1])&&!CLS)selectClass(m[1]);
+  // (1119 P16 #1) 반이 안 실려 왔으면 오늘 수업 반을 바로 연다 — 테두리만 있고 빈 화면이라 '눌린 것 같은데 안 뜬다'
+  else if(!CLS&&/^#cs-console\/?$/.test(decodeURIComponent(location.hash||'#cs-console'))){
+    const hr=new Date().getHours(), td=set.filter(c=>today[c]);
+    const pick=td.find(c=>+today[c]['끝']>hr)||td[td.length-1];
+    if(pick)selectClass(pick);
+  }
 }
 let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
 /* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
