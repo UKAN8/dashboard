@@ -232,6 +232,7 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .qmbd{margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .qmnx{flex:1 1 180px;display:flex;flex-direction:column;gap:3px;margin-left:10px}
 .qmfd{padding:7px 2px;border-bottom:1px solid var(--u-line);cursor:pointer;font-size:13.5px}.qmfd:last-child{border:0}
+.nowrap{white-space:nowrap}
 tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-hover,rgba(0,0,0,.03))}
 .qmsec{padding:8px 0;border-bottom:1px solid var(--u-line)}.qmsec:last-of-type{border:0}
 .qcard{margin-bottom:12px} .qh{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .qh .sp{flex:1}
@@ -460,7 +461,7 @@ const MENU = [
   { k: 'class', t: '수업', roles: ['admin'], ctx: true, subs: [
     ['input', '수업 입력', OLD(() => 'cs-console/' + CTX.ban)],
     ['result', '결과', N(id => viewResult(id))],
-    ['hw', '과제', OLD(() => 'cs-hw')],
+    ['hw', '과제', N(id => viewHw(id))],
     ['core', 'CORE', N(id => viewClassCore(id))]] },
   { k: 'stu', t: '학생', roles: ['admin', 'staff'], view: PAGE('/dashboard/stu/') },
   { k: 'exam', t: '시험', roles: ['admin'], subs: [
@@ -856,6 +857,141 @@ async function viewClassCore(id) {
     { h: '틀린 이유', l: 1, v: a => Object.keys(a.cause).join(), f: a => `<span class="mini">${Object.entries(a.cause).sort((x, y) => y[1] - x[1]).map(([k, v]) => E(k) + ' ' + v).join(' · ')}</span>` },
   ], weak, { redraw: () => viewClassCore(RENDER_ID) }) : '<div class="u-card u-empty">아직 3회 이상 푼 개념·유형이 없어요</div>');
   $('view').innerHTML = h;
+}
+
+/* ═══ src/25_hw.js ═══ */
+/* ── 수업 › 과제 ── (P17 1119, 옛 '써킷 과제' 이식)
+   위 '반'(CTX) 의 최근 4주 공통 과제 한 표: 이행률·해결률·자력·⑤ 질문. 행 버튼 → [학생별](팝업: ①~⑦·개별과제·연장) [진도 줄이기] [닫기].
+   과제 내기 = [＋ 과제 내기] → 팝업(이 반 v2 책자 · 수업일 · 마감 — 마감은 hw_default_due 로 미리 채움).
+   옛 화면에서 뺀 것: 라운드식(circuit_map) 과제 내기(v2 책자로 대체), 질문 대기열(조교 › 질문이 같은 일을 한다).
+   상태 숫자: 1 한 번에 · 2 고쳐서 · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름 · 6 안 풂 · 7 문항 오류(분모에서 뺌). */
+const HW2 = { sets: null, items: [], got: new Set() };
+async function hwSetsLoad(ban, extra) {   // 책자 목록은 한 번, 문항(THEME)은 필요한 책자만 — 전체 hw_set_item 은 1만 8천 줄이라 11초 걸린다
+  if (!HW2.sets) HW2.sets = (await soft(sb.from('hw_set').select('*').order('세트키'))) || [];
+  const keys = [...new Set(HW2.sets.filter(s => s.반 === ban).map(s => s.세트키).concat(extra || []))].filter(k => k && !HW2.got.has(k));
+  for (let i = 0; i < keys.length; i += 100) { const d = await soft(sb.from('hw_set_item').select('세트키,번호,"THEME"').in('세트키', keys.slice(i, i + 100)).limit(5000)); if (d) HW2.items.push(...d); }
+  keys.forEach(k => HW2.got.add(k));
+}
+const hwSetName = a => { const s = a && a.세트키 && (HW2.sets || []).find(x => x.세트키 === a.세트키); return s ? `${s.단원명} ${s.DAY || ''}`.trim() : a.세트키 || `${a.과목 || ''} ${a.단원코드 || ''} R${a.라운드 ?? ''}`; };
+const hwTh = a => { const t = (HW2.items || []).filter(i => i.세트키 === a.세트키 && i.THEME != null).map(i => i.THEME); return t.length ? [Math.min(...t), Math.max(...t)] : null; };
+const pc = v => v == null || v === '' || isNaN(+v) ? null : Math.round(+v);
+
+async function viewHw(id) {
+  const ban = CTX.ban, since = new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10);
+  const [as, pg, items] = await Promise.all([
+    soft(sb.from('hw_assign').select('*').eq('반', ban).is('학생ID', null).gte('날짜', since).order('날짜', { ascending: false }).order('id')),
+    soft(sb.from('hw_progress').select('*').eq('반', ban).gte('날짜', since)),
+    all(() => sb.from('hw_item_stat').select('*').eq('반', ban)), students()]);
+  if (!alive(id)) return;
+  const A = as || [], ids = A.map(a => a.id);
+  await hwSetsLoad(ban, A.map(a => a.세트키).concat((items || []).map(r => r.세트키)));
+  const dn = ids.length ? await soft(sb.from('hw_done').select('assign_id').in('assign_id', ids)) : [];
+  if (!alive(id)) return;
+  const dc = {}; (dn || []).forEach(r => dc[r.assign_id] = (dc[r.assign_id] || 0) + 1);
+  const by = {}; (pg || []).forEach(r => (by[r.assign_id] = by[r.assign_id] || []).push(r));
+  const mean = (xs, k) => { const v = xs.map(x => pc(x[k])).filter(x => x != null); return v.length ? Math.round(avg(v)) : null; };
+  const rows = A.map(a => { const ps = by[a.id] || [], th = hwTh(a);
+    return { a, ps, th, lo: a.시작THEME ?? (th ? th[0] : null), hi: a.끝THEME ?? (th ? th[1] : null), n: ps[0] ? +ps[0].전체 : null,
+      st: ps.filter(p => +p.체크 > 0).length, done: dc[a.id] || 0, 이행: mean(ps, '이행률'), 해결: mean(ps, '해결률'), 자력: mean(ps, '자력해결률'), q: ps.reduce((s, p) => s + (+p.n5 || 0), 0) }; });
+  const open = rows.filter(r => r.a.상태 === '열림');
+  let h = head(`과제 · ${E(ban)}`, '최근 4주 공통 과제 · 학생은 포털에서 문항마다 ①~⑦ 체크 · 개별과제는 묶음 제출 또는 마감 때 자동으로 만들어져요', '<button class="u-btn pri sm" id="hwadd">＋ 과제 내기</button>');
+  h += '<div class="u-kpis">' + kpi(open.length, '열린 과제') + kpi(open.length ? Math.round(avg(open.map(r => r.이행).filter(x => x != null)) || 0) + '%' : '—', '열린 과제 평균 이행률')
+    + kpi(open.reduce((s, r) => s + r.q, 0), '⑤ 해설 봐도 모름', open.some(r => r.q) ? 'warn' : '') + '</div>';
+  h += rows.length ? table('hw', [
+    { h: '수업일', v: r => r.a.날짜, f: r => mdw(r.a.날짜) },
+    { h: '과제', l: 1, v: r => hwSetName(r.a), f: r => E(hwSetName(r.a)) + (r.a.이월원 ? ' ' + tag('', '이월') : '') },
+    { h: '범위', v: r => r.lo, f: r => r.hi != null ? `<span class="mini">THEME ${r.lo}~${r.hi}</span>` : '<span class="mini">전체</span>' },
+    { h: '문항', num: 1, v: r => r.n },
+    { h: '체크 학생', v: r => r.st, f: r => `${r.st}/${r.ps.length}` },
+    { h: '제출', num: 1, v: r => r.done },
+    { h: '이행률', num: 1, v: r => r.이행, f: r => r.이행 == null ? dash : `<b class="u-${rateCls(r.이행)}">${r.이행}%</b>` },
+    { h: '해결률', num: 1, v: r => r.해결, f: r => r.해결 == null ? dash : r.해결 + '%' },
+    { h: '자력', num: 1, v: r => r.자력, f: r => r.자력 == null ? dash : r.자력 + '%' },
+    { h: '⑤', num: 1, v: r => r.q, f: r => r.q ? `<b class="u-warn">${r.q}</b>` : '', tip: '해설 봐도 모름 — 질문 대기' },
+    { h: '상태', v: r => r.a.상태, f: r => tag(r.a.상태 === '열림' ? 'ok' : '', r.a.상태) },
+    { h: '', ns: 1, v: () => 0, f: r => `<span class="nowrap"><button class="u-btn sm" data-hws="${r.a.id}">학생별</button> <button class="u-btn sm ghost" data-hwt="${r.a.id}">진도 줄이기</button> <button class="u-btn sm ghost" data-hwc="${r.a.id}">${r.a.상태 === '열림' ? '닫기' : '다시 열기'}</button></span>` },
+  ], rows, { redraw: () => viewHw(RENDER_ID) }) : '<div class="u-card u-muted">최근 4주에 낸 과제가 없어요.</div>';
+  const hot = (items || []).filter(r => (+r.해설) + (+r.모름) > 0).sort((a, b) => ((+b.해설) + 2 * (+b.모름)) - ((+a.해설) + 2 * (+a.모름))).slice(0, 20);
+  if (hot.length) h += '<h3 class="svh">해설·모름이 몰린 문항 <span class="u-muted">상위 20</span></h3>' + table('hwhot', [
+    { h: '문항', l: 1, v: r => hwSetName(r) + ' ' + r.번호, f: r => `${E(hwSetName(r))} <b>${r.번호}번</b>` },
+    { h: '응답', num: 1, v: r => +r.응답 }, { h: '자력(①②)', num: 1, v: r => +r.자력 }, { h: '③ 해설', num: 1, v: r => +r.해설 },
+    { h: '④ 질문', num: 1, v: r => +r.질문 }, { h: '⑤ 모름', num: 1, v: r => +r.모름, f: r => +r.모름 ? `<b class="u-warn">${r.모름}</b>` : '0' },
+  ], hot, { redraw: () => viewHw(RENDER_ID) });
+  $('view').innerHTML = h;
+  const rowOf = x => rows.find(r => r.a.id === +x);
+  $('hwadd').onclick = () => hwNew(ban, (A.find(a => a.세트키) || {}).세트키);
+  $('view').querySelectorAll('[data-hws]').forEach(b => b.onclick = () => hwStu(rowOf(b.dataset.hws)));
+  $('view').querySelectorAll('[data-hwt]').forEach(b => b.onclick = () => hwTrim(rowOf(b.dataset.hwt)));
+  $('view').querySelectorAll('[data-hwc]').forEach(b => b.onclick = async () => { const r = rowOf(b.dataset.hwc), st = r.a.상태 === '열림' ? '닫힘' : '열림';
+    const { error } = await sb.from('hw_assign').update({ 상태: st }).eq('id', r.a.id); if (error) return toast('실패: ' + error.message);
+    toast(st === '닫힘' ? '닫았어요' : '다시 열었어요'); viewHw(RENDER_ID); });
+}
+
+const kstLocal = iso => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 16);
+async function hwNew(ban, last) {   // 기본 선택 = 가장 최근에 낸 책자의 다음 DAY
+  const my = (HW2.sets || []).filter(s => s.반 === ban);
+  if (!my.length) { toast(`${ban} 에 v2 책자가 없어요`); return; }
+  const n = k => (HW2.items || []).filter(i => i.세트키 === k).length, li = my.findIndex(s => s.세트키 === last), pick = li >= 0 ? Math.min(li + 1, my.length - 1) : 0;
+  const m = modal({ title: `${ban} 과제 내기`, ok: '내기',
+    body: '<div class="u-form">' + U.field('책자', `<select id="hk">${my.map((s, i) => `<option value="${E(s.세트키)}"${i === pick ? ' selected' : ''}>${E(s.단원명)} ${E(s.DAY || '')} · THEME ${s.시작THEME ?? ''}~${s.끝THEME ?? ''} · ${n(s.세트키)}문항</option>`).join('')}</select>`, 1)
+      + U.field('수업일', `<input type="date" id="hd" value="${E(CTX.day || today())}">`) + U.field('마감', '<input type="datetime-local" id="hu">') + '</div>',
+    hint: '마감은 다음 수업 30분 전으로 미리 채워요(고1T 는 다음 토요일) — 고치면 그 값으로',
+    onOk: async ($, err) => { const k = $('hk').value, s = my.find(x => x.세트키 === k), due = $('hu').value;
+      const { error } = await sb.from('hw_assign').insert([{ 반: ban, 날짜: $('hd').value, 세트키: k, 과목: s.과목, 단원코드: s.단원코드, 라운드: 0, 마감: due ? new Date(due + ':00+09:00').toISOString() : null }]);
+      if (error) { err(error.message); return false; }
+      toast(`${ban} ${s.단원명} ${s.DAY || ''} 냈어요`); viewHw(RENDER_ID); return true; } });
+  const fill = async () => { const d = await soft(sb.rpc('hw_default_due', { p_ban: ban, p_date: m.$('hd').value })); if (d && !m.$('hu').dataset.edit) m.$('hu').value = kstLocal(d); };
+  m.$('hu').oninput = () => { m.$('hu').dataset.edit = '1'; }; m.$('hd').onchange = fill; fill();
+}
+
+function hwTrim(r) {
+  const has = r.hi != null, opts = has ? Array.from({ length: r.hi - r.lo + 1 }, (_, i) => r.lo + i) : [];
+  modal({ title: '진도 줄이기 · ' + hwSetName(r.a), ok: '줄이기',
+    body: '<div class="u-form">' + (has ? U.field('어디까지 나갔나 — THEME', `<select id="tc">${opts.map(t => `<option${t === r.hi - 1 ? ' selected' : ''}>${t}</option>`).join('')}</select>`)
+      : U.field('어디까지 나갔나 — 번호', '<input type="number" id="tn" min="1">')) + U.field('나머지 이월할 수업일', '<input type="date" id="tcar">') + '</div>',
+    hint: '이월 날짜를 비우면 나머지는 과제에서 그냥 빠져요 · 학생 체크도 따라가요',
+    onOk: async ($, err) => { const { data, error } = await sb.rpc('hw_trim', { aid: r.a.id, cut: has ? +$('tc').value : null, '이월날짜': $('tcar').value || null, cut_no: has ? null : (+$('tn').value || null) });
+      if (error || !data || data.오류) { err((error && error.message) || (data && data.오류) || '실패'); return false; }
+      toast(`남은 ${data.남은문항}문항` + (data.이월과제 ? ' · 나머지 이월' : '')); viewHw(RENDER_ID); return true; } });
+}
+
+async function hwStu(r) {
+  const id = r.a.id;
+  const [jobs, exts] = await Promise.all([soft(sb.from('job_queue').select('id,상태,메시지,파라미터,결과').eq('종류', '개별과제').order('id', { ascending: false }).limit(300)),
+    soft(sb.from('hw_extend').select('"학생ID",마감,사유').eq('assign_id', id))]);
+  const J = {}; (jobs || []).forEach(j => { const p = j.파라미터 || {}; if ((p.과제 || []).map(Number).includes(id) && !J[p.학생ID]) J[p.학생ID] = j; });
+  const jids = Object.values(J).filter(j => j.상태 === '완료').map(j => j.id), P = {};
+  if (jids.length) (await soft(sb.from('hw_progress').select('판,"학생ID",전체,체크,n5,n7,이행률,자력해결률,과제상태').in('판', jids)) || []).forEach(x => { if (!P[x.학생ID] || x.과제상태 === '열림') P[x.학생ID] = x; });
+  const X = {}; (exts || []).forEach(e => X[e.학생ID] = e);
+  const ps = r.ps.slice();
+  const jc = p => { const j = J[p.학생ID]; if (!j) return dash; const g = (j.결과 || {}).개별 || {}, pv = P[p.학생ID];
+    return tag(j.상태 === '완료' ? 'ok' : j.상태 === '실패' ? 'bad' : 'warn', j.상태, j.메시지 || '') + (j.상태 === '완료' ? ` <span class="mini">No.${j.id}${g.문항수 ? ' · ' + g.문항수 + '문항' : ''}</span>` : '')
+      + (pv ? ' ' + tag('', `체크 ${pv.이행률}%`, `체크 ${pv.체크}/${pv.전체} · ⑤ ${pv.n5}${pv.n7 ? ' · ⑦ ' + pv.n7 : ''} · 자력 ${pv.자력해결률}%`) : ''); };
+  const xc = p => { const e = X[p.학생ID]; return e ? `${tag('accent', '~' + U.fmt(e.마감), e.사유 || '')} <button class="u-btn sm ghost" data-xcl="${E(p.학생ID)}">취소</button>` : `<button class="u-btn sm ghost" data-xset="${E(p.학생ID)}">연장</button>`; };
+  const ncol = (k, i) => ({ h: '①②③④⑤⑥⑦'[i], num: 1, v: p => +p[k] || 0 });
+  const m = modal({ title: `학생별 · ${hwSetName(r.a)} (${mdw(r.a.날짜)})`, wide: 1,
+    body: U.table('hwstu', [
+      { h: '학생', l: 1, v: p => p.이름 || stuOf(p.학생ID).이름 }, { h: '체크', v: p => +p.체크, f: p => `${p.체크}/${p.전체}` },
+      ...['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'].map(ncol),
+      { h: '이행률', num: 1, v: p => pc(p.이행률), f: p => `<b class="u-${rateCls(pc(p.이행률))}">${pc(p.이행률) ?? '—'}%</b>` },
+      { h: '해결률', num: 1, v: p => pc(p.해결률), f: p => (pc(p.해결률) ?? '—') + '%' }, { h: '자력', num: 1, v: p => pc(p.자력해결률), f: p => (pc(p.자력해결률) ?? '—') + '%' },
+      { h: '개별과제', l: 1, ns: 1, v: () => 0, f: jc }, { h: '연장', ns: 1, v: () => 0, f: xc },
+    ], ps, {}) + '<div class="mini" style="margin-top:8px">① 한 번에 · ② 고쳐서 · ③ 해설 · ④ 질문 · ⑤ 해설 봐도 모름 · ⑥ 안 풂 · ⑦ 문항 오류(분모 제외)<br>연장 = 그 학생만 마감을 미뤄요. 날짜를 비우면 다음 과제 마감 — 다음 과제와 개별과제 한 부로 묶여요. 개별과제가 이미 만들어졌으면 연장 못 해요.</div>'
+      + '<div class="act"><button class="u-btn" onclick="U.close()">닫기</button></div>' });
+  m.sheet.querySelectorAll('[data-xset]').forEach(b => b.onclick = () => hwExt(r, b.dataset.xset));
+  m.sheet.querySelectorAll('[data-xcl]').forEach(b => sure(b, '연장 취소?', async () => {
+    const { data, error } = await sb.rpc('hw_extend_clear', { aid: id, sid: b.dataset.xcl });
+    if (error || !data || data.오류) return toast('취소 못 함: ' + ((error && error.message) || (data && data.오류) || ''));
+    toast('연장 취소 — 원래 마감으로'); hwStu(r); }));
+}
+function hwExt(r, sid) {
+  modal({ title: `${stuOf(sid).이름} 연장`, ok: '연장',
+    body: '<div class="u-form">' + U.field('언제까지', '<input type="datetime-local" id="xd">') + U.field('사유 (선택)', '<input type="text" id="xw">', 1) + '</div>',
+    hint: '비우면 이 반 다음 과제 마감 — 다음 과제와 한 부로 묶여요',
+    onOk: async ($, err) => { const d = $('xd').value;
+      const { data, error } = await sb.rpc('hw_extend_set', { aid: r.a.id, sid, p_due: d ? new Date(d + ':00+09:00').toISOString() : null, p_why: $('xw').value.trim() || null });
+      if (error || !data || data.오류) { err((error && error.message) || (data && data.오류) || '실패'); return false; }
+      toast('연장 ~' + U.fmt(data.마감)); setTimeout(() => hwStu(r), 50); return true; } });
 }
 
 /* ═══ src/30_exam.js ═══ */
