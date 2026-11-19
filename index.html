@@ -7584,14 +7584,16 @@ async function selectClass(cls){
   CLPREV=(cl&&cl[0])?{'진도원문':cl[0]['진도원문']||'','이번과제':cl[0]['이번과제']||'','테스트유형':cl[0]['테스트유형']||''}:{};
   if(cl&&cl[0]){
     $('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';setTest(cl[0]['테스트유형']);
-  }else if((PLANFILL=await planFill(cls,today))){
+  }else if((PLANFILL=await mockFill(cls,today))||(PLANFILL=await planFill(cls,today))){
     /* (1109 유강 "진도계획에 따라 콘솔에 진도랑 과제 세팅") 오늘 기록이 없으면 진도계획(hw_assign 공통 세트)으로 채운다.
        계획이 없는 날만 아래의 '직전 수업 값' 제안으로 내려간다. */
-    $('c_progress').value=PLANFILL.진도;$('c_hw').value=PLANFILL.과제;
-    setTest(prev&&prev[0]&&!['미시행','기출테스트'].includes(prev[0]['테스트유형'])?prev[0]['테스트유형']:'');   // (1113) 기출테스트는 선택지에서 뺐다 — 다음 수업으로 안 넘긴다
+    $('c_progress').value=PLANFILL.진도;$('c_hw').value=PLANFILL.mock?((prev&&prev[0]&&prev[0]['이번과제'])||''):PLANFILL.과제;
+    if(PLANFILL.mock)setTest('모의테스트');   // (1119) 모의 날
+    else setTest(prev&&prev[0]&&!['미시행','기출테스트','모의테스트'].includes(prev[0]['테스트유형'])?prev[0]['테스트유형']:'');   // (1113) 기출테스트는 선택지에서 뺐다 — 다음 수업으로 안 넘긴다 · (1119) 모의테스트도 안 넘김
   }else if(prev&&prev[0]){
     // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
-    $('c_progress').value=prev[0]['진도원문']||'';
+    // (1119) 직전 수업이 모의테스트였으면 진도를 넘기지 않는다 — 11/18 고1A 가 11/16 '모의 1회 초당고'를 그대로 물려받은 사고
+    $('c_progress').value=/^모의테스트/.test(prev[0]['진도원문']||'')?'':(prev[0]['진도원문']||'');
     $('c_hw').value=prev[0]['이번과제']||'';
     setTest(['미시행','기출테스트'].includes(prev[0]['테스트유형'])?'':prev[0]['테스트유형']);   // (1101) 미시행은 다음 수업 기본값으로 안 넘긴다
   }else{
@@ -9667,6 +9669,19 @@ function hwClsChanged(){
      과제 "[포털] 코어 루프 X\n[프린트] 써킷 트레이닝 X\n[프린트] 커스텀 트레이닝"
    고1T(1108 규칙): 토요일은 루프만, 일요일에 토·일 두 DAY 를 묶어 써킷을 낸다. */
 let PLANFILL=null;
+/* (1119 P16 0단계) 모의 날이면 진도 = 실제로 연 모의(mock_exam)의 회차·시험지. 진도계획(hw_assign)에는 모의가 없어서
+   직전 수업 값이 넘어오거나 옛 계획(상현고)이 남았다 — 11/18 고1A '1회 초당고'·고1S '2회 상현고'(실제 둘 다 신갈고 2회).
+   시험지명 '신갈고_고1_2025_2_기말' → '모의테스트 2회 [25년 신갈고]'. 과제는 직전 값(모의 날 과제는 모의 개별과제). */
+async function mockFill(cls,today){
+  try{
+    const {data,error}=await sb.rpc('staff_mock_status',{p_days:2});
+    if(error||!Array.isArray(data))return null;
+    const m=data.find(x=>x.반===cls&&String(x.날짜).slice(0,10)===today); if(!m||!m.시험지명)return null;
+    const [sch,,yr]=String(m.시험지명).split('_');
+    const 진도='모의테스트 '+(m.회차||'?')+'회 ['+(yr?String(yr).slice(2)+'년 ':'')+sch+']';
+    return {진도,과제:'',mock:true};
+  }catch(e){return null;}
+}
 async function planFill(cls,today){
   try{
     const isT=cls==='고1T', dow=new Date(today+'T00:00:00Z').getUTCDay();
