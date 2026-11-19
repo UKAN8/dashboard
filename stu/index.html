@@ -215,7 +215,15 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 .qn.s7{text-decoration:line-through;color:var(--u-faint)}
 .mini{font-size:12px;color:var(--u-muted)}
 .sea{display:flex;gap:4px}
+/* (1119 P16 2단계) v2 대시보드 안에 끼울 때 — 로고·대시보드 링크·시즌은 v2 가 그린다 */
+html.embed .u-logo,html.embed #sea,html.embed .u-bar a[href="/dashboard/"]{display:none}
+html.embed .stu-wrap>aside{top:56px}
+.bans{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:8px}
+.bans button{display:flex;justify-content:space-between;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:var(--u-r-sm);padding:6px 9px;font:inherit;font-size:12.5px;cursor:pointer;color:inherit;text-align:left}
+.bans button.on{border-color:var(--u-accent);background:var(--u-accent-soft)}
+.bans b{font-size:13.5px}
 </style>
+<script>if(window.top!==window||/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
 </head><body class="u">
 <div class="u-bar"><div class="in"><div class="u-logo"><i>S</i>학생 개인페이지 <small>필탑 고등수학과</small></div>
   <div class="u-tabs" id="tabs"></div><div class="u-right"><span class="sea" id="sea"></span><a class="u-btn ghost sm" href="/dashboard/" title="대시보드로">대시보드</a></div></div></div>
@@ -387,11 +395,22 @@ function stuBadges(sid) {
 function drawRos() {
   const bans = [...new Set(R.stu.map(s => s.반))].sort();
   const list = R.stu.filter(s => (FBAN === '*' || s.반 === FBAN) && (!FQ || s.이름.includes(FQ)));
-  $('ros').innerHTML = `<div class="ros-f"><select id="fban" aria-label="반"><option value="*">전체 반 (${R.stu.length})</option>${bans.map(b => `<option value="${E(b)}"${b === FBAN ? ' selected' : ''}>${E(b)} (${R.stu.filter(s => s.반 === b).length})</option>`).join('')}</select>`
+  // (1119 P16 2단계) 반 요약 — 옛 '반별' 탭 대신. 인원 · 최근 회차 과제 이행 평균 · 최근 모의 평균(100점). 누르면 명단이 그 반으로
+  const banSum = b => {
+    const ids = new Set(R.stu.filter(s => s.반 === b).map(s => s.학생ID));
+    const v = R.v5.filter(r => ids.has(r.학생ID) && r.이행 != null), ld = v.map(r => r.날짜).sort().pop();
+    const lv = v.filter(r => r.날짜 === ld).map(r => +r.이행);
+    const mk = R.dl.filter(r => ids.has(r.학생ID) && r.테스트유형 === '모의테스트' && num(r.점수) != null), md2 = mk.map(r => r.날짜).sort().pop();
+    const mv = mk.filter(r => r.날짜 === md2).map(r => num(r.점수));
+    return `<button data-ban="${E(b)}" class="${FBAN === b ? 'on' : ''}"><span><b>${E(b)}</b> <span class="mini">${ids.size}명</span></span><span class="mini">`
+      + (lv.length ? `이행 <b class="u-${rateCls(avg(lv))}">${r0(avg(lv))}%</b> ` : '') + (mv.length ? `· 모의 <b>${r1(avg(mv))}</b>` : '') + '</span></button>';
+  };
+  $('ros').innerHTML = `<div class="bans">${bans.map(banSum).join('')}</div><div class="ros-f"><select id="fban" aria-label="반"><option value="*">전체 반 (${R.stu.length})</option>${bans.map(b => `<option value="${E(b)}"${b === FBAN ? ' selected' : ''}>${E(b)} (${R.stu.filter(s => s.반 === b).length})</option>`).join('')}</select>`
     + `<input id="fq" type="search" placeholder="이름" value="${E(FQ)}" aria-label="이름 검색"></div>`
     + `<div class="u-card" style="padding:4px 8px"><div class="u-list ros">${list.map(s => `<div class="row${s.학생ID === SID ? ' on' : ''}" data-sid="${E(s.학생ID)}"><div><b>${E(s.이름)}</b><div class="t">${E(s.반)} · ${E(s.학교 || '')}</div></div><div class="tg">${stuBadges(s.학생ID)}</div></div>`).join('') || '<div class="u-empty">없음</div>'}</div></div>`
     + '<div class="mini" style="margin:8px 2px">꼬리표: 최근 회차 과제 이행 · 닫히지 않은 보완 · 아직 답 안 한 질문</div>';
   $('fban').onchange = e => { FBAN = e.target.value; drawRos(); };
+  document.querySelectorAll('.bans [data-ban]').forEach(b => b.onclick = () => { FBAN = FBAN === b.dataset.ban ? '*' : b.dataset.ban; drawRos(); });
   $('fq').oninput = e => { FQ = e.target.value.trim(); const p = e.target.selectionStart; drawRos(); const n = $('fq'); n.focus(); n.setSelectionRange(p, p); };
   document.querySelectorAll('.ros [data-sid]').forEach(el => el.onclick = () => openStu(el.dataset.sid));
 }
@@ -485,7 +504,8 @@ function draw() {
   const tk = D.tk.find(t => !t.회수 && t.대상 !== '학부모' && (!t.만료일 || t.만료일 >= U.today())) || D.tk.find(t => !t.회수 && (!t.만료일 || t.만료일 >= U.today()));
   const links = (tk ? `<a class="u-btn sm" href="/dashboard/me/?t=${encodeURIComponent(tk.토큰)}" target="_blank" rel="noopener" data-portal title="학생이 보는 포털 그대로 — 이 기기는 방문 집계에서 빠진다">포털 ↗</a>` : '')
     + `<a class="u-btn sm" href="/dashboard/files/" target="_blank" rel="noopener" title="학생별 써킷·개별과제·기출 PDF">자료실 ↗</a>`
-    + `<a class="u-btn sm" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_blank" rel="noopener" title="기출·모의테스트 회차별 추이">기출 추이 ↗</a>`;
+    + `<a class="u-btn sm" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_top" title="기출·모의테스트 회차별 추이">기출 추이</a>`
+    + (ROLE === 'admin' ? `<a class="u-btn sm pri" href="/dashboard/#cs-ct/${encodeURIComponent(SID)}" target="_top" title="이 학생을 골라 둔 채 커스텀 트레이닝 화면으로 (1119 P16 — 관리 메뉴에서 이리로)">커스텀 만들기</a>` : '');
 
   let h = `<div class="u-head"><div><h1>${E(s.이름)} <span class="u-tag accent" style="vertical-align:middle">${E(s.반)}</span></h1>`
     + `<div class="sub">${E(s.학교 || '')}${s.학년 ? ' · ' + E(s.학년) + '학년' : ''} · ${SEA ? E(SEA.name) + ' (' + md(SEA.from) + '~)' : '전체 기간'} · 수업 ${RS.length}회</div></div><span class="sp"></span>${links}</div>`;
@@ -640,7 +660,7 @@ function coreDetail(k) {
 function tabExam(D, RS) {
   let h = '';
   const mk = RS.filter(x => x.dl && /모의|기출/.test(x.dl.테스트유형 || ''));
-  h += `<div class="u-section-title">기출·모의테스트 <a class="mini" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_blank" rel="noopener">문항별 추이는 기출 탭 ↗</a></div>`;
+  h += `<div class="u-section-title">기출·모의테스트 <a class="mini" href="/dashboard/#gichul/${encodeURIComponent(SID)}" target="_top">문항별 추이는 기출 탭 ↗</a></div>`;
   h += mk.length ? table('mk', [
     { h: '날짜', l: 1, v: x => x.날짜, f: x => `<b>${md(x.날짜)}</b>` },
     { h: '종류', v: x => x.dl.테스트유형 },
@@ -657,7 +677,7 @@ function tabExam(D, RS) {
     { h: '성적표', ns: 1, v: () => 0, f: r => r.url ? `<a class="u-btn sm" href="${E(r.url)}" target="_blank" rel="noopener">열기 ↗</a>` : '' },
   ], D.wl, { redraw: draw }) : '<div class="u-empty">주간고사 기록이 없어요</div>';
   const se = D.se.slice().sort((a, b) => [b.시행년, b.학기, b.시험구분 === '기말' ? 1 : 0].join().localeCompare([a.시행년, a.학기, a.시험구분 === '기말' ? 1 : 0].join()));
-  h += `<div class="u-section-title" style="margin-top:22px">내신 <a class="mini" href="/dashboard/#exam" target="_blank" rel="noopener">내신 탭(컷·설문) ↗</a></div>`;
+  h += `<div class="u-section-title" style="margin-top:22px">내신 <a class="mini" href="/dashboard/#exam/exam" target="_top">내신 탭(컷·설문) ↗</a></div>`;
   h += se.length ? table('se', [
     { h: '시험', l: 1, v: r => r.시행년 + r.학기 + r.시험구분, f: r => `<b>${E(r.시행년)} ${E(r.학기)}학기 ${E(r.시험구분)}</b>` },
     { h: '학교', l: 1, v: r => r.학교 },
@@ -665,7 +685,7 @@ function tabExam(D, RS) {
     { h: '등급', num: 1, v: r => num(r.등급 || r.석차등급), f: r => (r.등급 || r.석차등급) ? tag('accent', (r.등급 || r.석차등급) + '등급') : '<span class="u-faint">—</span>' },
     { h: '과목 평균', num: 1, v: r => num(r.과목평균) },
   ], se, { redraw: draw }) : '<div class="u-empty">내신 기록이 없어요</div>';
-  h += '<div class="u-section-title" style="margin-top:22px">서술형 대비 <a class="mini" href="/dashboard/#sw" target="_blank" rel="noopener">서술형 채점 ↗</a></div>';
+  h += '<div class="u-section-title" style="margin-top:22px">서술형 대비 <a class="mini" href="/dashboard/#sw" target="_top">서술형 채점 ↗</a></div>';
   h += D.sw.length ? table('sw', [
     { h: '제출', l: 1, v: r => r.제출시각, f: r => E(U.fmt(r.제출시각)) },
     { h: '문항', l: 1, v: r => r.item_id, f: r => `<span class="mini">${E(r.item_id)}</span>` },
