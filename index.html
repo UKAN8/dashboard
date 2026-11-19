@@ -217,6 +217,23 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .tabs2{display:flex;gap:4px;margin:4px 0 12px;border-bottom:1px solid var(--u-line)}
 .tabs2 button{border:0;background:none;font:inherit;font-size:14px;padding:8px 14px;color:var(--u-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs2 button.on{color:var(--u-accent);border-bottom-color:var(--u-accent);font-weight:700}
+/* 설문 · 내 기록 */
+.svh{font-size:15px;margin:18px 0 8px}
+.svgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.svq{margin-bottom:6px}
+.svbar{display:grid;grid-template-columns:minmax(0,1fr) 90px 28px;gap:8px;align-items:center;font-size:13px;padding:2px 0}
+.svbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.svbar i,.qmnx i{display:block;height:6px;background:var(--u-line);border-radius:3px;overflow:hidden}
+.svbar i u,.qmnx i u{display:block;height:100%;background:var(--u-accent)}
+.svbar b{text-align:right;font-size:12.5px}
+.svv{margin-bottom:8px}
+.svans{margin-bottom:14px}.svans h4{margin:0 0 6px;font-size:14px}
+.svrow{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:4px 0;border-bottom:1px solid var(--u-line);font-size:13.5px}
+.qmbd{margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qmnx{flex:1 1 180px;display:flex;flex-direction:column;gap:3px;margin-left:10px}
+.qmfd{padding:7px 2px;border-bottom:1px solid var(--u-line);cursor:pointer;font-size:13.5px}.qmfd:last-child{border:0}
+tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-hover,rgba(0,0,0,.03))}
+.qmsec{padding:8px 0;border-bottom:1px solid var(--u-line)}.qmsec:last-of-type{border:0}
 .qcard{margin-bottom:12px} .qh{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .qh .sp{flex:1}
 .qrk{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--u-accent);color:var(--u-on-accent);font-size:12px;font-weight:800;align-items:center;justify-content:center}
 .qpdf{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap} .qstu>div{padding:7px 0;border-top:1px solid var(--u-line);font-size:13.5px} .qm{color:var(--u-text-2)}
@@ -452,14 +469,14 @@ const MENU = [
     ['sched', '시험일정', N(id => viewSched(id))]] },
   { k: 'tutor', t: '조교', roles: ['admin', 'staff'], subs: [
     ['qa', '질문', N(id => viewQa(id))],
-    ['qame', '내 기록', OLD('qame')],
+    ['qame', '내 기록', N(id => viewQame(id))],
     ['sw', '서술형 채점', N(id => viewSw(id))],
     ['files', '자료실', PAGE('/dashboard/files/')],
     ['clinic', '클리닉 예약 ↗', EXT('https://clinic-booking-black-phi.vercel.app/admin')]] },
   { k: 'admin', t: '⚙ 관리', roles: ['admin'], subs: [
     ['portal', '포털', N(id => viewPortal(id))],
     ['staff', '조교 관리', N(id => viewStaff(id))],
-    ['survey', '설문', OLD('survey')],
+    ['survey', '설문', N(id => viewSurvey(id))],
     ['ct', '커스텀 트레이닝', OLD('cs-ct')],
     ['lt', '레벨테스트', PAGE('/dashboard/lt/admin/')]] },
 ];
@@ -1145,20 +1162,24 @@ async function qaFetch() {
     soft(sb.from('hw_question').select(QSEL).not('오류사유', 'is', null).order('답변시각', { ascending: false }).limit(500))]);
   QA.visit = (w || []).filter(r => r.방식 === '방문').length;
   QA.rows = (w || []).filter(r => r.방식 !== '방문'); QA.done = d || []; QA.err = e || [];
-  const all3 = QA.rows.concat(QA.done, QA.err);
-  const keys = [...new Set(all3.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
-  const pans = [...new Set(all3.map(r => r.hw_assign && r.hw_assign.판).filter(Boolean))].filter(x => !QA.pan[x]);
-  const [s1, s2, jq, ph, rp] = await Promise.all([
+  const [ph, rp] = await Promise.all([
+    QA.rows.length ? soft(sb.rpc('staff_qa_photos', { ids: QA.rows.map(r => r.id) })) : [],
+    QA.rows.length ? soft(sb.from('hw_qa_reply').select('*').in('qid', QA.rows.map(r => r.id).slice(0, 300))) : [],
+    qaMeta(QA.rows.concat(QA.done, QA.err))]);
+  QA.photos = {}; (ph || []).forEach(x => (QA.photos[x.qid] = QA.photos[x.qid] || []).push(x.url));
+  QA.replies = {}; (rp || []).forEach(r => (QA.replies[r.qid] = QA.replies[r.qid] || []).push(r));
+}
+/* 질문 줄들의 과제 정보(세트·문항·개별과제 PDF·자료실) — 질문 화면과 '내 기록'이 같이 쓴다 */
+async function qaMeta(rows) {
+  const keys = [...new Set(rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
+  const pans = [...new Set(rows.map(r => r.hw_assign && r.hw_assign.판).filter(Boolean))].filter(x => !QA.pan[x]);
+  const [s1, s2, jq] = await Promise.all([
     keys.length ? soft(sb.from('hw_set').select('*').in('세트키', keys)) : [],
     keys.length ? soft(sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)) : [],
     pans.length ? soft(sb.from('job_queue').select('id,결과').in('id', pans)) : [],
-    QA.rows.length ? soft(sb.rpc('staff_qa_photos', { ids: QA.rows.map(r => r.id) })) : [],
-    QA.rows.length ? soft(sb.from('hw_qa_reply').select('*').in('qid', QA.rows.map(r => r.id).slice(0, 300))) : [],
     QA.lib ? null : fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }).then(r => r.ok ? r.json() : {}).then(j => { QA.lib = j; }).catch(() => { QA.lib = {}; })]);
   (s1 || []).forEach(s => QA.sets[s.세트키] = s); (s2 || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
   (jq || []).forEach(j => { const u = ((j.결과 || {}).업로드 || [])[0] || {}; QA.pan[j.id] = [['문제', u.문제url || u.url], ['해설', u.해설url]].filter(x => x[1]).map(x => ({ k: x[0], url: x[1] })); });
-  QA.photos = {}; (ph || []).forEach(x => (QA.photos[x.qid] = QA.photos[x.qid] || []).push(x.url));
-  QA.replies = {}; (rp || []).forEach(r => (QA.replies[r.qid] = QA.replies[r.qid] || []).push(r));
 }
 const qaKey = r => { const a = r.hw_assign || {}, it = a.세트키 ? QA.items[a.세트키 + '#' + r.번호] : null, qid = r['문항ID'] || (it && it['문항ID']) || '';
   return qid ? (a.과목 || '?') + ':' + qid : ('a' + r.assign_id + '#' + r.번호); };
@@ -1297,6 +1318,115 @@ function qaErr(g) {
       toast(`${data.n}명 문항 오류로 처리했어요`); viewQa(RENDER_ID); return true; } });
 }
 
+/* ═══ src/46_qame.js ═══ */
+/* ── 조교 › 내 기록 ── (P17 1119, 옛 '내 답변' 이식)
+   조교 본인: 누적 답변·도와준 학생·'이해했어요'·연속일 + 배지 + [답변 기록 · 학생 반응 · 유강쌤 피드백].
+   관리자: 위에서 조교를 골라 그 사람 화면 그대로 본다. 답변 한 줄 → 팝업(문항·손풀이·학생 반응·피드백 남기기).
+   피드백은 hw_qa_feedback(관리자만 쓰기, 본인만 읽기 — RLS). 안 읽은 피드백은 본인이 열 때 qa_feedback_seen 으로 읽음 처리. */
+const QM_BADGES = [
+  ['답', 1, '첫 답변'], ['답', 10, '답변 10'], ['답', 30, '답변 30'], ['답', 50, '답변 50'], ['답', 100, '답변 100'], ['답', 200, '답변 200'], ['답', 500, '답변 500'],
+  ['이해', 1, "첫 '이해했어요'"], ['이해', 10, "'이해했어요' 10"], ['이해', 30, "'이해했어요' 30"], ['이해', 100, "'이해했어요' 100"],
+  ['학생', 5, '학생 5명 도움'], ['학생', 10, '학생 10명 도움'], ['학생', 20, '학생 20명 도움'], ['학생', 40, '학생 40명 도움'],
+  ['연속', 3, '3일 연속'], ['연속', 7, '7일 연속'],
+];
+const QM_FB = { 칭찬: '👍', 보완: '🛠', 메모: '📝' };
+let QM = { email: '', staff: null, d: null, tab: 'log' };
+async function qmIn(t, col, ids, sel) {
+  const out = [], u = [...new Set(ids.filter(x => x != null))];
+  for (let i = 0; i < u.length; i += 200) { const d = await soft(sb.from(t).select(sel || '*').in(col, u.slice(i, i + 200))); if (d) out.push(...d); }
+  return out;
+}
+async function viewQame(id, keep) {
+  const me = String(ME || '').toLowerCase();
+  if (ROLE === 'admin' && !QM.staff) {
+    const [o, past] = await Promise.all([soft(sb.rpc('staff_overview')), soft(sb.from('hw_qa_log').select('조교,답변자,시각').order('시각', { ascending: false }).limit(5000))]);
+    QM.staff = (o || []).filter(x => x.role === 'staff').map(x => ({ email: String(x.email).toLowerCase(), name: x.이름 || x.email.split('@')[0] }));
+    const seen = new Set((o || []).map(x => String(x.email).toLowerCase()));   // 명단에서 빠진 조교도 기록은 남는다 → '(퇴사)'
+    (past || []).forEach(l => { const e = String(l.조교 || '').toLowerCase(); if (e && !seen.has(e)) { seen.add(e); QM.staff.push({ email: e, name: (l.답변자 || e.split('@')[0]) + ' (퇴사)' }); } });
+  }
+  if (!QM.email) QM.email = ROLE === 'admin' ? ((QM.staff || [])[0] || {}).email || '' : me;
+  if (!QM.email) { $('view').innerHTML = head('내 기록') + '<div class="u-card u-muted">조교 명단이 비어 있어요.</div>'; return; }
+  if (!keep || !QM.d || QM.d.email !== QM.email) {
+    const [logs, fb] = await Promise.all([all(() => sb.from('hw_qa_log').select('*').eq('조교', QM.email).order('시각', { ascending: false })),
+      soft(sb.from('hw_qa_feedback').select('*').eq('조교', QM.email).order('시각', { ascending: false }).limit(500)), students()]);
+    const [qs, reps] = await Promise.all([qmIn('hw_question', 'id', logs.map(l => l.qid), QSEL), qmIn('hw_qa_reply', 'log_id', logs.map(l => l.id))]);
+    await qaMeta(qs);
+    if (!alive(id)) return;
+    const qmap = {}; qs.forEach(q => qmap[q.id] = q);
+    QM.d = { email: QM.email, logs, qmap, reps, fb: fb || [] };
+    const unread = QM.d.fb.filter(f => !f.확인시각).map(f => f.id);
+    if (unread.length && QM.email === me) soft(sb.rpc('qa_feedback_seen', { ids: unread }));
+  }
+  const { logs, qmap, reps, fb } = QM.d;
+  const who = (QM.staff || []).find(s => s.email === QM.email), full = (logs[0] && logs[0].답변자) || (who && who.name) || MYNAME;
+  const nm0 = String(full).replace(/\s*\(퇴사\)$/, ''), short = nm0.length >= 3 ? nm0.slice(1) : nm0;   // 서예원 → 예원T
+  const stuN = new Set(logs.map(l => l.학생ID)).size, nOk = logs.filter(l => l.반응 === '이해').length, nNo = logs.filter(l => l.반응 === '모름').length;
+  const nWk = logs.filter(l => Date.parse(l.시각) >= Date.now() - 7 * 864e5).length;
+  const days = new Set(logs.map(l => KST(l.시각).toISOString().slice(0, 10)));
+  let streak = 0; for (let i = 0; i < 400; i++) { const k = KST(Date.now() - i * 864e5).toISOString().slice(0, 10); if (days.has(k)) streak++; else if (i > 0) break; }
+  const val = { 답: logs.length, 이해: nOk, 학생: stuN, 연속: streak };
+  const got = QM_BADGES.filter(([k, n]) => val[k] >= n), next = ['답', '이해', '학생'].map(k => QM_BADGES.find(([k2, n]) => k2 === k && val[k] < n)).filter(Boolean);
+  const isMe = QM.email === String(ME || '').toLowerCase(), nNew = fb.filter(f => !f.확인시각).length;
+  const qlab = qid => { const q = qmap[qid]; if (!q) return ''; const g = qaGroups([q])[0]; return `${g.label} · ${g.no}번`; };
+  const logById = {}; logs.forEach(l => logById[l.id] = l);
+  const rc = {}; reps.forEach(r => rc[r.log_id] = (rc[r.log_id] || 0) + 1);
+  const fc = {}; fb.forEach(f => (fc[f.log_id] = fc[f.log_id] || []).push(f));
+
+  let h = head(ROLE === 'admin' ? '조교 기록' : '내 기록', logs.length ? `${E(short)}T, 학생 ${stuN}명의 막힌 문제 ${logs.length}개를 풀어 줬어요${nWk ? ` · 이번 주 ${nWk}개` : ''}` : `${E(short)}T, 첫 답변을 기다리고 있어요 — 질문 탭에서 시작`);
+  if (ROLE === 'admin') h += `<div class="pick"><div class="row">${(QM.staff || []).map(s => `<button class="u-btn sm${s.email === QM.email ? ' pri' : ' ghost'}" data-qme="${E(s.email)}">${E(s.name)}</button>`).join('')}</div></div>`;
+  h += '<div class="u-kpis">' + kpi(logs.length, '누적 답변') + kpi(stuN, '도와준 학생') + kpi(nOk + nNo ? Math.round(100 * nOk / (nOk + nNo)) + '%' : '—', `'이해했어요' ${nOk}번`)
+    + kpi(nWk, '이번 주') + kpi(streak + '일', '연속 답변') + '</div>';
+  h += `<div class="u-card qmbd">${got.length ? got.map(([, , t]) => tag('ok', '🏅 ' + t)).join(' ') : '<span class="u-faint">아직 배지 없음</span>'}`
+    + next.map(([k, n, t]) => `<div class="qmnx"><span class="mini">다음 <b>${E(t)}</b>까지 ${n - val[k]}</span><i><u style="width:${Math.min(100, Math.round(100 * val[k] / n))}%"></u></i></div>`).join('') + '</div>';
+  h += `<div class="tabs2">${[['log', `답변 기록 ${logs.length}`], ['re', '학생 반응'], ['fb', `유강쌤 피드백${nNew && isMe ? ' · 새 ' + nNew : fb.length ? ' ' + fb.length : ''}`]].map(([k, t]) => `<button data-qmt="${k}" class="${QM.tab === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+
+  if (QM.tab === 'log') {
+    h += logs.length ? table('qmlog', [
+      { h: '답한 때', v: l => l.시각, f: l => `<span class="mini">${E(U.fmt(l.시각))}</span>` },
+      { h: '문항', l: 1, v: l => qlab(l.qid) },
+      { h: '학생', v: l => stuOf(l.학생ID).이름, f: l => E(stuOf(l.학생ID).이름) }, { h: '반', v: l => l.반 || stuOf(l.학생ID).ban },
+      { h: '보낸 답', l: 1, ns: 1, v: () => 0, f: l => (l.오류 ? tag('bad', '문항 오류') + ' ' : '') + (l.대면 ? tag('accent', '수업 때') + ' ' : '') + `<span class="mini">${E(String(l.메모 || '').slice(0, 40))}</span>` + ((l.풀이 || []).length ? ` <span class="mini">📷${l.풀이.length}</span>` : '') },
+      { h: '학생 반응', v: l => l.반응 === '이해' ? 2 : l.반응 === '모름' ? 1 : 0, f: l => l.반응 === '이해' ? tag('ok', '이해했어요') : l.반응 === '모름' ? tag('warn', '아직 모름') : '<span class="u-faint">확인 전</span>' },
+      { h: '댓글', num: 1, v: l => rc[l.id] || 0 },
+      { h: '피드백', v: l => (fc[l.id] || []).length, f: l => (fc[l.id] || []).map(f => QM_FB[f.평가] || '').join(' ') },
+    ], logs, { redraw: () => viewQame(RENDER_ID, 1), rowAttr: l => `class="clk" data-qml="${l.id}"` }) : '<div class="u-card u-muted">아직 보낸 답이 없어요.</div>';
+  } else if (QM.tab === 're') {
+    const feed = reps.map(r => ({ t: r.시각, h: `💬 <b>${E(stuOf(r.학생ID).이름)}</b> “${E(r.내용)}”`, q: (logById[r.log_id] || {}).qid, lid: r.log_id }))
+      .concat(logs.filter(l => l.반응 === '이해').map(l => ({ t: l.반응시각 || l.시각, h: `✅ <b>${E(stuOf(l.학생ID).이름)}</b> 이해했어요${l.핵심 ? ` — “${E(l.핵심)}”` : ''}`, q: l.qid, lid: l.id })))
+      .sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, 80);
+    h += feed.length ? '<div class="u-card">' + feed.map(x => `<div class="qmfd" data-qml="${x.lid}">${x.h} <span class="mini">· ${E(qlab(x.q))} · ${E(U.fmt(x.t))}</span></div>`).join('') + '</div>'
+      : '<div class="u-card u-muted">학생이 답을 확인하면 여기에 쌓여요.</div>';
+  } else {
+    h += '<div class="mini" style="margin-bottom:8px">본인만 볼 수 있어요' + (ROLE === 'admin' ? ' · 피드백은 답변 기록 한 줄을 눌러 남겨요' : '') + '</div>';
+    h += fb.length ? '<div class="u-card">' + fb.map(f => { const l = logById[f.log_id];
+      return `<div class="qmfd" data-qml="${f.log_id}">${!f.확인시각 && isMe ? tag('accent', 'NEW') + ' ' : ''}<b>${QM_FB[f.평가] || ''} ${E(f.평가)}</b> ${E(f.내용 || '')} <span class="mini">· ${E(U.fmt(f.시각))}${l ? ' · ' + E(qlab(l.qid)) + ' · ' + E(stuOf(l.학생ID).이름) : ''}${f.확인시각 ? ' · 읽음' : ''}</span></div>`; }).join('') + '</div>'
+      : '<div class="u-card u-muted">아직 피드백이 없어요.</div>';
+  }
+  $('view').innerHTML = h;
+  $('view').querySelectorAll('[data-qme]').forEach(b => b.onclick = () => { QM.email = b.dataset.qme; viewQame(RENDER_ID, 1); });
+  $('view').querySelectorAll('[data-qmt]').forEach(b => b.onclick = () => { QM.tab = b.dataset.qmt; viewQame(RENDER_ID, 1); });
+  $('view').querySelectorAll('[data-qml]').forEach(el => el.onclick = ev => { if (ev.target.closest('a,button')) return; const l = logById[+el.dataset.qml]; if (l) qmOpen(l, qlab); });
+}
+function qmOpen(l, qlab) {
+  const { qmap, reps, fb } = QM.d, q = qmap[l.qid], g = q ? qaGroups([q])[0] : { pdf: [] }, s = stuOf(l.학생ID);
+  const rs = reps.filter(r => r.log_id === l.id), fs = fb.filter(f => f.log_id === l.id);
+  const sec = (t, x) => `<div class="qmsec"><div class="mini"><b>${t}</b></div>${x}</div>`;
+  let b = sec('문항', `${E(qlab(l.qid))} · ${E(s.이름)} (${E(l.반 || s.ban)})` + (g.pdf.length ? `<div style="margin-top:4px">${g.pdf.map(x => `<a class="u-btn sm ghost" href="${E(x.url)}" target="_blank" rel="noopener">📄 ${x.k}${x.p ? ' ' + x.p + '쪽' : ''}</a>`).join(' ')}</div>` : '')
+    + (q && q.메모 ? `<div class="mini">학생 메모 “${E(q.메모)}”</div>` : '') + (q && q.재질문 ? `<div class="mini">다시 모름 ×${q.재질문}</div>` : ''));
+  b += sec(`보낸 답 · ${E(l.답변자 || '')} · ${E(U.fmt(l.시각))}`, (l.대면 ? tag('accent', '수업 때 직접 설명') + ' ' : '') + (l.메모 ? `<div>${E(l.메모)}</div>` : '') + qaThumbs(l.풀이 || []));
+  b += sec('학생 반응', (l.반응 === '이해' ? tag('ok', '이해했어요') : l.반응 === '모름' ? tag('warn', '아직 모르겠어요') : '<span class="u-faint">아직 확인 전</span>')
+    + (l.반응시각 ? ` <span class="mini">${E(U.fmt(l.반응시각))}</span>` : '') + rs.map(r => `<div>💬 ${E(r.내용)} <span class="mini">${E(U.fmt(r.시각))}</span></div>`).join(''));
+  b += sec('유강쌤 피드백', fs.map(f => `<div><b>${QM_FB[f.평가] || ''} ${E(f.평가)}</b> ${E(f.내용 || '')} <span class="mini">${E(U.fmt(f.시각))}${f.확인시각 ? ' · 읽음' : ''}</span></div>`).join('') || '<span class="u-faint">아직 없음</span>');
+  if (ROLE === 'admin') {
+    b += '<div class="u-form">' + U.field('피드백 한 줄 (선택)', '<input type="text" id="qmft" placeholder="예: 그림이 깔끔해서 좋아요">', 1)
+      + U.field('종류', '<select id="qmfk"><option>칭찬</option><option>보완</option><option>메모</option></select>') + '</div>';
+    modal({ title: '답변 상세', wide: 1, body: b, ok: '피드백 남기기', onOk: async ($, err) => {
+      const { error } = await sb.from('hw_qa_feedback').insert({ log_id: l.id, 조교: l.조교, 평가: $('qmfk').value, 내용: $('qmft').value.trim() || null });
+      if (error) { err(error.message); return false; }
+      toast('피드백을 남겼어요'); QM.d = null; viewQame(RENDER_ID, 0); return true; } });
+  } else modal({ title: '답변 상세', wide: 1, body: b + '<div class="act"><button class="u-btn" onclick="U.close()">닫기</button></div>' });
+}
+
 /* ═══ src/50_admin.js ═══ */
 /* ── ⚙ 관리 › 조교 관리 · 포털 ── (P17 1119)
    [조교 관리] = 옛 콘솔 '조교 관리' — 이메일 넣으면 명단(staff_list), 본인이 로그인하는 순간 권한. 추가는 버튼 → 팝업.
@@ -1361,6 +1491,141 @@ async function viewPortal(id) {
   ], rows, { redraw: () => viewPortal(RENDER_ID) });
   $('view').innerHTML = h;
   $('view').querySelectorAll('[data-cp]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.cp); toast('링크를 복사했어요'); } catch (e) { prompt('링크', b.dataset.cp); } });
+}
+
+/* ═══ src/55_survey.js ═══ */
+/* ── ⚙ 관리 › 설문 ── (P17 1119, 옛 대시보드 '설문' 이식)
+   설문 하나 고르고(위 버튼) → 반 → [제출 현황 · 응답 요약 · 후기]. 답 보기는 팝업.
+   학부모 답도 학생 토큰으로 들어오므로 학생ID 로 학생·학부모 짝을 맞춘다(<앞>_s ↔ <앞>_p).
+   새 설문은 SV_META 에 이름 한 줄(없어도 키 이름으로 보임), 문항 표시 이름은 SV_Q 에 한 묶음. */
+const SV_META = {
+  ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
+  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8 },
+  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan8.github.io/dashboard/diag2/?admin', 단원: 9 },
+  hw0827: { 이름: '기출 오답 과제 (0827)' },
+};
+const SV_PRIVATE = ['바라는점', '요청', '한마디', '개선'];   // 홍보에 안 쓴다고 약속한 칸
+const SV_FREE = ['아까운문제', '적중순간', '달라진점', '고마운점', '바라는점', '한문장', '자녀변화', '요청', '한마디', '개선'];
+const SV_Q = {
+  ex26m2_s: { 점수대: '수학 점수(가채점) 구간', 점수: '정확한 점수', 변화: '지난 시험 대비 점수 변화', 지난점수: '1학기 기말 점수', 만족: '이번 점수 만족도',
+    시간: '시험 시간 배분', 찍음: '찍은 문제 수', 놓친이유: '놓친 문제의 이유', 적중: '학원에서 푼 것과 비슷한 문제가 나왔나', 아까운문제: '제일 아까운 문제',
+    도움: '시험 준비에 제일 도움된 것', 줄여도: '줄여도 되는 것', 수행: '루프·PT 과제 수행량', 해설: '해설 만족도', 공부시간: '시험 전 주 하루 수학 공부 시간',
+    강화: '기말 대비 때 더 해줬으면', 질문: '질문 못 한 적 · 이유', 적중순간: '"학원에서 했던 거다" 순간', 달라진점: '수업 전후 달라진 점', 고마운점: '제일 고마웠던 것',
+    바라는점: '바라는 점·아쉬운 점 (홍보 금지)', 자신감: '시험 후 수학 자신감', 추천: '친구에게 추천 의향', 한문장: '한 문장 소개', 공개: '홍보 공개 범위' },
+  ex26m2_p: { 들음: '시험 결과를 자녀에게 들으셨나', 느낌: '결과에 대한 느낌', 집공부: '집에서 본 수학 공부 모습', 안내: '시험 기간 학원 안내 충분했나',
+    원하는정보: '가장 받고 싶은 정보', 받는법: '정보 받기 편한 방법', 포털: '학생 포털 아시는지', 포털빈도: '포털 보는 빈도', 포털유용: '포털에서 유용한 정보',
+    포털불필요: '포털에서 없어도 되는 것', 포털보기: '포털 보기 편하셨나', 포털안봄: '포털 안 보신 이유', 포털안내: '포털 안내 원하시나', 걱정: '지금 가장 걱정되는 점',
+    목표: '다음 시험 기대 목표', 만족: '시험 대비 과정 만족도', 상담: '통화 상담 희망 시점', 자녀변화: '자녀에게서 느낀 변화', 요청: '바라시는 점 (홍보 금지)',
+    추천: '주변에 추천 의향', 한문장: '한 문장 소개', 공개: '홍보 공개 범위', 자녀공개: '자녀 후기 홍보 사용' },
+  hw0827: { 진행: '과제 어디까지 했나', 못한이유: '다 못 한 이유', 시간: '과제에 쓴 시간', 분량: '문항 수 체감', 난이도: '난이도 체감', 적중: '약점 유형과 맞았나',
+    막힘: '막혔을 때 어떻게 했나', 해설: '해설 충분했나', 효과: '같은 유형 맞힐 자신', 개선: '다음 과제에서 바꾼다면', 한마디: '하고 싶은 말' },
+};
+const svL = (sk, k) => (SV_Q[sk] || {})[k] || k;
+const svBase = k => String(k || '').replace(/_(s|p)$/, '');
+const svIsDiag = k => /^diag_/.test(k || '');
+const svLevel = v => !v || /쓰지 말/.test(v) ? 0 : /익명/.test(v) ? 1 : /이니셜/.test(v) ? 2 : /이름|학부모로|괜찮다/.test(v) ? 3 : 0;
+const SV_LV = ['홍보 안 됨', '익명만', '이니셜', '실명 가능'];
+const svMask = n => n && n.length >= 2 ? n[0] + '○' + n.slice(2) : (n || '');
+function svDiag(r, sk) {
+  const a = (r && r.답) || {}, n = (SV_META[sk] || {}).단원 || 8, self = Object.keys(a.self || {}).length, m = Object.keys(a.r || {}).length;
+  if (a.fin) return { lv: 2, txt: `완료 · ${m}문항`, cls: 'ok' };
+  if (!a.started) return { lv: 0, txt: '미시작', cls: '' };
+  if (!self && !m) return { lv: 1, txt: '시작만 함', cls: 'warn' };
+  return { lv: 1, txt: `진행 중 · 단원 ${self}/${n} · ${m}문항`, cls: 'warn' };
+}
+const svVal = v => Array.isArray(v) ? v.join(', ') : (v && typeof v === 'object') ? '(세부 기록)' : String(v ?? '');
+const svAns = (r, src, sk) => !r ? `<div class="svans"><h4>${src}</h4><div class="u-faint">아직 안 냄</div></div>`
+  : `<div class="svans"><h4>${src} <span class="mini">${E(U.fmt(r.제출시각))}${r.수정횟수 ? ' · 수정 ' + r.수정횟수 : ''}</span></h4>`
+    + Object.keys(r.답 || {}).filter(k => !k.startsWith('_')).map(k => `<div class="svrow"><span class="u-muted">${E(svL(sk, k))}</span><span>${E(svVal(r.답[k]))}</span></div>`).join('') + '</div>';
+
+const SV = { rows: null, key: '', ban: '*', tab: 'who' };
+async function viewSurvey(id, keep) {
+  if (!keep || !SV.rows) {
+    const [stu, rows] = await Promise.all([students(), all(() => sb.from('survey_response').select('설문키,"학생ID",반,답,제출시각,수정횟수').order('제출시각', { ascending: false }))]);
+    if (!alive(id)) return; SV.rows = rows;
+  }
+  const stu = STU || [];
+  // 설문 목록: SV_META 순서가 먼저(지금 돌리는 것), 나머지는 최근 제출순
+  const g = {}; Object.keys(SV_META).forEach(b => g[b] = ''); SV.rows.forEach(r => { const b = svBase(r.설문키); if ((r.제출시각 || '') > (g[b] || '')) g[b] = r.제출시각; });
+  const order = Object.keys(SV_META), rank = b => { const i = order.indexOf(b); return i < 0 ? 99 : i; };
+  const keys = Object.keys(g).sort((a, b) => rank(a) - rank(b) || String(g[b]).localeCompare(String(g[a])));
+  if (!keys.includes(SV.key)) SV.key = keys[0] || '';
+  const meta = SV_META[SV.key] || {}, diag = svIsDiag(SV.key);
+  const pair = !!meta.짝 || SV.rows.some(r => r.설문키 === SV.key + '_p');
+  const kS = pair ? SV.key + '_s' : SV.key, kP = SV.key + '_p';
+  const byS = {}, byP = {};
+  SV.rows.forEach(r => { if (r.설문키 === kS && !byS[r.학생ID]) byS[r.학생ID] = r; if (pair && r.설문키 === kP && !byP[r.학생ID]) byP[r.학생ID] = r; });
+  const who = [...new Set([...Object.keys(byS), ...Object.keys(byP)])].map(sid => { const s = stu.find(x => x.학생ID === sid);
+    return { sid, name: s ? s.이름 : sid.split('_')[0], ban: s ? s.ban : ((byS[sid] || byP[sid] || {}).반 || '') }; });
+  const bans = [...new Set(who.map(x => x.ban).filter(Boolean))].sort();
+  if (SV.ban !== '*' && !bans.includes(SV.ban)) SV.ban = '*';
+  const W = who.filter(x => SV.ban === '*' || x.ban === SV.ban);
+
+  let h = head('설문', '학생·학부모 답은 같은 학생 링크로 들어와 학생 이름으로 묶여요 · 다시 낸 답은 덮어쓰고 수정 횟수만 남아요', '<button class="u-btn sm ghost" id="svre">↻ 새로고침</button>');
+  h += `<div class="pick"><div class="row">${keys.map(k => `<button class="u-btn sm${k === SV.key ? ' pri' : ''}" data-svk="${E(k)}">${E((SV_META[k] || {}).이름 || k)}</button>`).join('')}</div>`
+    + `<div class="row">${['*', ...bans].map(b => `<button class="u-btn sm${b === SV.ban ? ' pri' : ' ghost'}" data-svb="${E(b)}">${b === '*' ? '전체 반' : E(b)}</button>`).join('')}</div></div>`;
+
+  if (diag) {
+    const D = W.map(x => ({ x, r: byS[x.sid], d: svDiag(byS[x.sid], kS) }));
+    h += '<div class="u-kpis">' + kpi(D.filter(o => o.d.lv === 2).length, '완료') + kpi(D.filter(o => o.d.lv === 1).length, '진행 중·시작만', 'warn') + '</div>';
+    if (meta.진단) h += `<div class="u-card mini" style="margin-bottom:12px">문항별 결과·레벨·상담 메모는 진단 교사 화면에서 → <a href="${E(meta.진단)}" target="_blank" rel="noopener">열기 ↗</a></div>`;
+    h += table('svdiag', [
+      { h: '학생', l: 1, v: o => o.x.name, f: o => stuLink(o.x.sid, o.x.name) }, { h: '반', v: o => o.x.ban },
+      { h: '진행', v: o => o.d.lv, f: o => o.d.cls ? tag(o.d.cls, o.d.txt) : `<span class="u-faint">${E(o.d.txt)}</span>` },
+      { h: '마지막 저장', v: o => ((o.r || {}).답 || {}).updated || (o.r || {}).제출시각, f: o => { const t = ((o.r || {}).답 || {}).updated || (o.r || {}).제출시각; return t ? `<span class="mini">${E(U.fmt(t))}</span>` : ''; } },
+    ], D, { redraw: () => viewSurvey(RENDER_ID, 1) });
+    return svPaint(h);
+  }
+
+  const call = W.filter(x => /이번 주|기말 전/.test(((byP[x.sid] || {}).답 || {}).상담 || '')), link = W.filter(x => /링크|설명/.test(((byP[x.sid] || {}).답 || {}).포털안내 || ''));
+  h += '<div class="u-kpis">' + kpi(W.filter(x => byS[x.sid]).length, pair ? '학생 제출' : '제출')
+    + (pair ? kpi(W.filter(x => byP[x.sid]).length, '학부모 제출') + kpi(call.length, '상담 요청', call.length ? 'warn' : '', call.map(x => x.name).join(', '))
+      + kpi(link.length, '포털 안내 원함', link.length ? 'warn' : '', link.map(x => x.name).join(', ')) : '') + '</div>';
+  h += `<div class="tabs2">${[['who', '제출 현황'], ['sum', '응답 요약'], ['voice', '후기']].map(([k, t]) => `<button data-svt="${k}" class="${SV.tab === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  if (!W.length) return svPaint(h + '<div class="u-card u-muted">아직 제출한 사람이 없어요. 링크로 제출하는 순간 여기 떠요 (↻).</div>');
+
+  if (SV.tab === 'who') {
+    const cell = r => r ? `${tag('ok', '✓')} <span class="mini">${E(U.fmt(r.제출시각))}${r.수정횟수 ? ' · 수정 ' + r.수정횟수 : ''}</span>` : dash;
+    h += table('svwho', [
+      { h: '학생', l: 1, v: x => x.name, f: x => stuLink(x.sid, x.name) }, { h: '반', v: x => x.ban },
+      { h: pair ? '학생 설문' : '제출', v: x => (byS[x.sid] || {}).제출시각 || '', f: x => cell(byS[x.sid]) },
+      ...(pair ? [{ h: '학부모 설문', v: x => (byP[x.sid] || {}).제출시각 || '', f: x => cell(byP[x.sid]) },
+        { h: '챙길 것', l: 1, v: x => (call.includes(x) ? 2 : 0) + (link.includes(x) ? 1 : 0), f: x => { const a = (byP[x.sid] || {}).답 || {};
+          return (call.includes(x) ? tag('warn', '상담 ' + a.상담) + ' ' : '') + (link.includes(x) ? tag('warn', '포털 ' + a.포털안내) : ''); } }] : []),
+      { h: '', ns: 1, v: () => 0, f: x => `<button class="u-btn sm ghost" data-sva="${E(x.sid)}">답 보기</button>` },
+    ], W, { redraw: () => viewSurvey(RENDER_ID, 1) });
+  } else if (SV.tab === 'sum') {
+    const sum = (rows, src, sk) => { const c = {};
+      rows.forEach(r => Object.entries(r.답 || {}).forEach(([k, v]) => { if (k.startsWith('_') || SV_FREE.includes(k) || (v && typeof v === 'object' && !Array.isArray(v))) return;
+        const o = c[k] || (c[k] = { n: 0, v: {} }); let any = 0; (Array.isArray(v) ? v : [v]).forEach(x => { if (x === '' || x == null) return; o.v[x] = (o.v[x] || 0) + 1; any = 1; }); o.n += any; }));
+      return `<h3 class="svh">${src} <span class="u-muted">${rows.length}명</span></h3><div class="svgrid">` + Object.entries(c).filter(([, o]) => o.n).map(([k, o]) =>
+        `<div class="u-card svsum"><div class="svq"><b>${E(svL(sk, k))}</b> <span class="mini">${o.n}명</span></div>` + Object.entries(o.v).sort((a, b) => b[1] - a[1]).map(([v, n]) =>
+          `<div class="svbar"><span>${E(v)}</span><i><u style="width:${Math.round(n / o.n * 100)}%"></u></i><b>${n}</b></div>`).join('') + '</div>').join('') + '</div>'; };
+    h += sum(W.map(x => byS[x.sid]).filter(Boolean), pair ? '학생' : '응답', kS) + (pair ? sum(W.map(x => byP[x.sid]).filter(Boolean), '학부모', kP) : '');
+  } else {
+    const items = [];
+    W.forEach(x => { const pa = (byP[x.sid] || {}).답 || {};
+      const push = (r, src) => { if (!r) return; const a = r.답 || {}; let lv = svLevel(a.공개);
+        if (src === '학생' && pair) lv = Math.min(lv, byP[x.sid] ? (/쓰지 말/.test(pa.자녀공개 || '') ? 0 : /익명/.test(pa.자녀공개 || '') ? 1 : pa.자녀공개 ? 2 : 1) : 1);
+        SV_FREE.forEach(k => { const v = String(a[k] || '').trim(); if (v) items.push({ x, src, k, v, lv: SV_PRIVATE.includes(k) ? -1 : lv, sk: r.설문키 }); }); };
+      push(byS[x.sid], pair ? '학생' : '응답'); push(byP[x.sid], '학부모'); });
+    const nm = i => { const p = i.src === '학부모' ? ' 학부모' : ''; return i.lv >= 3 ? i.x.name + p : i.lv === 2 ? svMask(i.x.name) + p : i.x.ban.slice(0, 2) + (p || ' 학생'); };
+    const card = i => `<div class="u-card svv"><div class="svq">${i.lv < 0 ? tag('bad', '홍보 금지 칸') : tag(i.lv ? 'ok' : '', SV_LV[i.lv])} <b>${E(i.lv > 0 ? nm(i) : i.x.name + ' · ' + i.src)}</b> <span class="mini">${E(svL(i.sk, i.k))}</span></div><div>${E(i.v)}</div></div>`;
+    const ok = items.filter(i => i.lv > 0), rest = items.filter(i => i.lv <= 0);
+    h += `<h3 class="svh">홍보에 쓸 수 있는 후기 <span class="u-muted">${ok.length}</span></h3>` + (ok.length ? ok.map(card).join('') : '<div class="u-faint">아직 없어요</div>')
+      + `<h3 class="svh">내부용 <span class="u-muted">${rest.length}</span></h3>` + (rest.length ? rest.map(card).join('') : '<div class="u-faint">없음</div>')
+      + '<div class="mini" style="margin-top:10px">공개 범위는 본인이 고른 것, 학생 후기는 학부모 「자녀 후기」 동의까지 — 둘 중 좁은 쪽 · 「바라는 점」 칸은 어떤 경우에도 홍보에 안 써요</div>';
+  }
+  svPaint(h);
+  $('view').querySelectorAll('[data-sva]').forEach(b => b.onclick = () => { const x = W.find(o => o.sid === b.dataset.sva);
+    modal({ title: `${x.name} · ${x.ban}`, wide: 1, body: svAns(byS[x.sid], pair ? '학생' : '답', kS) + (pair ? svAns(byP[x.sid], '학부모', kP) : '') + '<div class="act"><button class="u-btn" onclick="U.close()">닫기</button></div>' }); });
+}
+function svPaint(h) {
+  $('view').innerHTML = h;
+  $('svre').onclick = () => viewSurvey(RENDER_ID);
+  $('view').querySelectorAll('[data-svk]').forEach(b => b.onclick = () => { SV.key = b.dataset.svk; viewSurvey(RENDER_ID, 1); });
+  $('view').querySelectorAll('[data-svb]').forEach(b => b.onclick = () => { SV.ban = b.dataset.svb; viewSurvey(RENDER_ID, 1); });
+  $('view').querySelectorAll('[data-svt]').forEach(b => b.onclick = () => { SV.tab = b.dataset.svt; viewSurvey(RENDER_ID, 1); });
 }
 
 /* ═══ src/99_boot.js ═══ */
