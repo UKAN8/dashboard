@@ -6,36 +6,36 @@
 <!-- ⚠ 버전을 박는다 (콘솔·포털과 같은 버전) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
 <style>
-:root{color-scheme:light;
- --bg:#f6f7f9; --card:#fff; --bd:#e3e6ea;
- --tx:#15171a; --tx2:#4a5059; --dim:#7a808a; --acc:#2563eb; --good:#15803d; --warn:#b45309;}
+:root{color-scheme:dark;
+ --bg:#0a0a0f; --card:rgba(255,255,255,.03); --bd:rgba(255,255,255,.08);
+ --tx:#f5f5fa; --tx2:#b8b8c5; --dim:#8a8a98; --acc:#f5a0a0; --good:#c8f0da; --warn:#ffd48a;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif}
 header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .brand{font-weight:800;color:var(--acc)}
 header .t{font-weight:700;font-size:16px}
 header .dim{color:var(--dim);font-size:12px}
-select{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
+select{font:inherit;color:var(--tx);background:#15151d;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
 .wrap{display:grid;grid-template-columns:minmax(420px,520px) 1fr;gap:0;height:calc(100vh - 52px)}
 .left{overflow:auto;padding:12px 14px;border-right:1px solid var(--bd)}
-.right{background:#eef0f3;display:flex;flex-direction:column}
+.right{background:#111118;display:flex;flex-direction:column}
 .right .bar{padding:8px 12px;color:var(--tx2);font-size:13px;border-bottom:1px solid var(--bd);display:flex;gap:10px;align-items:center}
 .right iframe{flex:1;border:0;width:100%;background:#fff}
 .right .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dim)}
 table{width:100%;border-collapse:collapse}
 th{font-size:11.5px;color:var(--dim);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--bd);letter-spacing:.04em}
 td{padding:7px 6px;border-bottom:1px solid var(--bd);vertical-align:middle}
-tr.sel td{background:rgba(37,99,235,.06)}
+tr.sel td{background:rgba(245,160,160,.07)}
 td.nm{font-weight:700;font-size:15px}
 td.nm small{display:block;font-weight:400;color:var(--dim);font-size:11.5px}
-a.f{display:inline-block;font:inherit;font-size:13px;color:var(--tx);background:#fff;border:1px solid var(--bd);
+a.f{display:inline-block;font:inherit;font-size:13px;color:var(--tx);background:rgba(255,255,255,.05);border:1px solid var(--bd);
  border-radius:8px;padding:4px 9px;margin:0 3px 0 0;text-decoration:none;white-space:nowrap}
-a.f.q{border-color:rgba(21,128,61,.35)} a.f.s{border-color:rgba(37,99,235,.35)}
+a.f.q{border-color:rgba(200,240,218,.35)} a.f.s{border-color:rgba(245,160,160,.35)}
 a.f small{color:var(--dim);margin-left:3px}
 button.pv{font:inherit;font-size:12px;color:var(--tx2);background:transparent;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;cursor:pointer}
-button.pv.on{color:var(--acc);border-color:rgba(37,99,235,.5)}
-@media (hover:hover) and (pointer:fine){ a.f:hover,button.pv:hover{border-color:rgba(0,0,0,.28)} }
-.miss{margin:12px 0 0;padding:9px 11px;border:1px solid rgba(180,83,9,.35);border-radius:10px;color:var(--warn);font-size:13px}
+button.pv.on{color:var(--acc);border-color:rgba(245,160,160,.5)}
+@media (hover:hover) and (pointer:fine){ a.f:hover,button.pv:hover{border-color:rgba(255,255,255,.3)} }
+.miss{margin:12px 0 0;padding:9px 11px;border:1px solid rgba(255,212,138,.35);border-radius:10px;color:var(--warn);font-size:13px}
 .miss b{display:block;margin-bottom:3px}
 .note{color:var(--dim);font-size:12px;margin:10px 0 0;line-height:1.55}
 .msg{padding:40px 20px;color:var(--dim)} .msg a{color:var(--acc)}
@@ -43,7 +43,7 @@ button.pv.on{color:var(--acc);border-color:rgba(37,99,235,.5)}
 .sum b{color:var(--tx)}
 .tabs{display:inline-flex;gap:4px}
 .tab{font:inherit;font-size:13px;color:var(--tx2);background:transparent;border:1px solid var(--bd);border-radius:8px;padding:5px 11px;cursor:pointer}
-.tab.on{color:var(--tx);border-color:rgba(37,99,235,.6);background:rgba(37,99,235,.08);font-weight:700}
+.tab.on{color:var(--tx);border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.10);font-weight:700}
 .ctl{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--tx2)}
 .ctl[hidden]{display:none}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px;font-size:13px;color:var(--tx2)}
@@ -60,18 +60,6 @@ body.wide .wrap{grid-template-columns:minmax(700px,62%) 1fr}
 h3.wr-sec{font-size:14px;margin:22px 0 8px;color:var(--tx2)} h3.wr-sec small{font-weight:400;color:var(--dim)}
 #wr-stu-box{margin:0 0 14px;padding:0 0 4px;border-bottom:1px solid var(--bd)} #wr-stu-box h3{font-size:14px;margin:4px 0 8px}
 @media (max-width:900px){ .wrap{grid-template-columns:1fr;height:auto} .right{min-height:70vh} }
-header{background:#fff}
-.left{background:#fff}
-/* (P17 1119) 대시보드 안(iframe)에서는 브랜드를 숨긴다 */
-/* (P17 1119) 오답 트레이닝 패널(_wr, 포털과 공용·어두운 색)을 밝은 화면에 맞춘다 */
-html .wr .wr-chips button.on,html .wr .wr-pal button.on{background:rgba(37,99,235,.08);color:var(--acc)}
-html .wr .wr-pre button.on{background:rgba(37,99,235,.06)}
-html .wr .wr-est,html .wr .wr-grid button{background:#f3f4f6}
-html .wr .wr-go{color:#fff}
-html .wr .wr-sum .r b,html .wr .wr-msg.bad{color:#be123c}html .wr .wr-sum .g b{color:#15803d}
-html .wr .s1,html .wr i.k1{color:#14532d!important}html .wr .s2,html .wr i.k2{color:#166534!important}
-html .wr .s3,html .wr i.k3{color:#713f12!important}html .wr .s5,html .wr i.k5{color:#881337!important}html .wr .s7,html .wr i.k7{color:#4c1d95!important}
-html.inframe .brand{display:none}
 </style></head>
 <body>
 <header>
@@ -91,7 +79,6 @@ html.inframe .brand{display:none}
   <div class="left" id="left"><div class="msg">불러오는 중…</div></div>
   <div class="right" id="right"><div class="empty">이름 옆 [보기] 를 누르면 여기서 미리 본다</div></div>
 </div>
-<script>if (window.top !== window) document.documentElement.classList.add('inframe');</script>
 <script>
 /* ───────── (1115 P13) 오답 트레이닝 — 원장 계산 · 출제 패널 · 내 자료(결과 체크) · 기록 ─────────
  * 정본: 00_대시보드/_wr/wr_panel.js — 포털(build_portal.py)과 학생 자료실(build_files.py)이 빌드 때 그대로 끼워 넣는다.
