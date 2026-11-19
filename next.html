@@ -919,7 +919,7 @@ async function viewHw(id) {
   ], hot, { redraw: () => viewHw(RENDER_ID) });
   $('view').innerHTML = h;
   const rowOf = x => rows.find(r => r.a.id === +x);
-  $('hwadd').onclick = () => hwNew(ban);
+  $('hwadd').onclick = () => hwNew(ban, (A.find(a => a.세트키) || {}).세트키);
   $('view').querySelectorAll('[data-hws]').forEach(b => b.onclick = () => hwStu(rowOf(b.dataset.hws)));
   $('view').querySelectorAll('[data-hwt]').forEach(b => b.onclick = () => hwTrim(rowOf(b.dataset.hwt)));
   $('view').querySelectorAll('[data-hwc]').forEach(b => b.onclick = async () => { const r = rowOf(b.dataset.hwc), st = r.a.상태 === '열림' ? '닫힘' : '열림';
@@ -928,12 +928,12 @@ async function viewHw(id) {
 }
 
 const kstLocal = iso => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 16);
-async function hwNew(ban) {
+async function hwNew(ban, last) {   // 기본 선택 = 가장 최근에 낸 책자의 다음 DAY
   const my = (HW2.sets || []).filter(s => s.반 === ban);
   if (!my.length) { toast(`${ban} 에 v2 책자가 없어요`); return; }
-  const n = k => (HW2.items || []).filter(i => i.세트키 === k).length;
+  const n = k => (HW2.items || []).filter(i => i.세트키 === k).length, li = my.findIndex(s => s.세트키 === last), pick = li >= 0 ? Math.min(li + 1, my.length - 1) : 0;
   const m = modal({ title: `${ban} 과제 내기`, ok: '내기',
-    body: '<div class="u-form">' + U.field('책자', `<select id="hk">${my.map(s => `<option value="${E(s.세트키)}">${E(s.단원명)} ${E(s.DAY || '')} · THEME ${s.시작THEME ?? ''}~${s.끝THEME ?? ''} · ${n(s.세트키)}문항</option>`).join('')}</select>`, 1)
+    body: '<div class="u-form">' + U.field('책자', `<select id="hk">${my.map((s, i) => `<option value="${E(s.세트키)}"${i === pick ? ' selected' : ''}>${E(s.단원명)} ${E(s.DAY || '')} · THEME ${s.시작THEME ?? ''}~${s.끝THEME ?? ''} · ${n(s.세트키)}문항</option>`).join('')}</select>`, 1)
       + U.field('수업일', `<input type="date" id="hd" value="${E(CTX.day || today())}">`) + U.field('마감', '<input type="datetime-local" id="hu">') + '</div>',
     hint: '마감은 다음 수업 30분 전으로 미리 채워요(고1T 는 다음 토요일) — 고치면 그 값으로',
     onOk: async ($, err) => { const k = $('hk').value, s = my.find(x => x.세트키 === k), due = $('hu').value;
