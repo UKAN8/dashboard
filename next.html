@@ -252,6 +252,168 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-hover,rgba(0,0,0,.03))}
 .sws input{width:64px} .swt{margin:10px 0;font-size:15px} .swc{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px} #swfb{width:100%} .swre{display:flex;gap:6px;margin-top:10px} .swre input{flex:1}
 .login{max-width:380px;margin:12vh auto 0} .login h1{font-size:22px;margin:0 0 4px} .login input{width:100%;height:44px;font-size:16px;margin:8px 0}
 </style>
+<style>/* (P17 1119) 수업 입력 — 옛 콘솔 엔진(_app/console.js)을 v2 안에 그대로 쓰고 모양만 밝은 키트에 맞춘다. console.css 에서 만든 것 */
+#cs{--acc:var(--u-accent);--bd:var(--u-line);--tx:var(--u-text);--tx2:var(--u-text-2);--dim:var(--u-muted);--card:var(--u-surface);--bad:#be123c;--good:#15803d;--mid:#b45309;
+ --key:var(--u-accent);--key-d:var(--u-accent);--ok:#16a34a;--warn:#ca8a04;--bad2:#dc2626;--line:var(--u-line);--sub:var(--u-muted);--ink:var(--u-text);color:var(--u-text)}
+#cshost{max-width:1500px;margin:0 auto;padding:14px 20px 40px}
+#cs .hidden{display:none!important}
+#cs .card{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md,12px);padding:14px 16px}
+#cs .lbl{display:block;font-size:12px;color:var(--u-muted);margin:0 0 3px}
+#cs .dim{color:var(--u-muted)}
+#cs .cs-classbar{display:none!important}
+#cs .cs-top{display:flex;justify-content:flex-end;gap:8px;margin:0 0 8px}
+#cs #jobpill.busy{border-color:var(--mid);color:var(--mid);font-weight:700}
+#cs .card h2{font-size:13px;font-weight:700;letter-spacing:0;color:var(--u-text)}
+#cs button.danger{color:var(--bad)}
+/* ── 수업 콘솔 (0908 대공사) — 전부 #cs 아래. 데스크톱 전용, 어두운 셸 색을 그대로 쓴다.
+   폰 규칙 없음. :hover 는 미디어쿼리 안에만. 조회 쪽 .grid(display:grid) 와 겹치지 않게
+   표는 .cs-grid 로 부른다. */
+
+#cs main{max-width:none;padding:0}
+#cs .card{margin-bottom:12px}
+#cs .card h2{font-size:12px;letter-spacing:.1em;color:var(--dim);margin:0 0 10px;text-transform:none}
+#cs button{font:inherit;font-size:13px;border:1px solid var(--bd);border-radius:9px;padding:7px 12px;background:#fff;color:var(--tx);cursor:pointer}
+#cs button.key{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:800}
+#cs button.ghost{background:transparent}
+#cs button.sm{padding:5px 10px;font-size:12px}
+#cs button.danger{color:var(--bad);border-color:rgba(220,38,38,.4)}
+#cs button.pill{border-radius:99px;font-size:12px;padding:5px 12px}
+#cs button:disabled{opacity:.4;cursor:default}
+#cs button:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){#cs button:hover{filter:brightness(.96)}}
+#cs input,#cs textarea,#cs select{font:inherit;font-size:13px;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;width:100%;background:#fff;color:var(--tx)}
+#cs input:focus,#cs textarea:focus,#cs select:focus{outline:2px solid var(--acc);border-color:var(--acc)}
+#cs textarea{min-height:34px;resize:vertical}
+#cs input[type=date]{color-scheme:light;height:34px}
+#cs input[type=file]{padding:5px}
+#cs .row{display:flex;gap:8px;align-items:center} #cs .grow{flex:1} #cs .cs-sp{flex:1}
+#cs .warn{color:var(--bad)} #cs .ok{color:var(--good)}
+#cs .badge{font-size:11px;border-radius:99px;padding:2px 8px;background:rgba(37,99,235,.10);color:var(--key-d);font-weight:700}
+#cs .alert{border-color:var(--bad);background:rgba(220,38,38,.05)} #cs .alert h2{color:var(--bad)}
+#cs .prevhw{font-size:13px;background:#f7f8fa;border:1px dashed var(--bd);border-radius:8px;padding:8px 10px;white-space:pre-wrap;color:var(--tx2)}
+#cs .loadout{font-size:13px;line-height:1.55;background:#f7f8fa;border:1px dashed var(--bd);border-radius:10px;padding:11px;white-space:pre-wrap;color:var(--tx2);margin-top:10px;max-height:340px;overflow:auto}
+#cs .loadout b{color:var(--key-d)} #cs .loadout .warn{color:var(--bad)}
+#cs .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#f5f5fa;color:#14141c;padding:9px 18px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
+#cs .toast.show{opacity:.96}
+/* 반 선택 띠 */
+#cs .cs-classbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+#cs .cs-classbar .lbl{margin:0} #cs .cs-classbar input[type=date]{width:150px}
+#cs .classbtns{display:flex;gap:6px;flex-wrap:wrap}
+#cs .classbtns button{padding:7px 16px;font-weight:700}
+#cs .classbtns button.today{border-color:var(--acc);color:var(--key-d)}
+#cs .classbtns button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+/* 수업 정보 띠 */
+#cs .cs-info-head{display:flex;align-items:baseline;gap:10px} #cs .cs-info-head h2{margin:0 0 8px}
+#cs .cs-info-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
+#cs .cs-info-row .f{display:flex;flex-direction:column;min-width:0} #cs .cs-info-row .f.grow{flex:1 1 220px}
+#cs .cs-gt{border-top:1px dashed var(--bd);margin-top:10px;padding-top:6px}
+/* 반 평균 띠 — 채점 중 화면에 붙어 있어야 기준이 된다 */
+#cs .avgbar{position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:7px 14px;margin-bottom:8px;font-size:13px}
+#cs .avgbar b{font-size:16px;color:var(--key-d);font-weight:800}
+#cs .avgbar .t{font-size:11px;font-weight:700;color:#fff;background:var(--acc);border-radius:99px;padding:2px 9px}
+#cs .avgbar .s{color:var(--dim);font-size:12px}
+/* ── 학생 그리드 ── 행=학생. 첫 열 고정, 가로 스크롤(기출 25문항이 한 줄에 선다) */
+#cs .cs-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#cs table.cs-grid{display:table;border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%;white-space:nowrap}
+/* ⚠ .cs-wrap 이 overflow-x:auto 라 sticky 의 기준이 표 감싼 상자다 — top 을 주면 첫 행을 덮는다(0811 함정). top:0 은 무해 */
+#cs .cs-grid th{font-size:11px;color:var(--dim);font-weight:600;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:left;position:sticky;top:0;background:#fff;z-index:4}
+#cs .cs-grid th.q{text-align:center;padding:7px 2px;min-width:34px}
+#cs .cs-grid td{padding:4px 5px;border-bottom:1px solid var(--bd);vertical-align:middle}
+#cs .cs-grid .fz{position:sticky;left:0;background:#fff;z-index:3;min-width:150px;max-width:220px;white-space:normal}
+#cs .cs-grid th.fz{z-index:5}
+#cs .cs-grid .name{font-weight:700;font-size:14px} #cs .cs-grid .school{font-size:11px;color:var(--dim);margin-left:5px}
+#cs .cs-grid .recent{font-size:11px;color:var(--dim);line-height:1.3}
+/* 지각응시(0910) — 회차 날짜에 못 보고 나중에 본 학생. 클릭하면 응시일을 고친다. */
+#cs .cs-grid .late{display:inline-block;margin-left:5px;padding:0 5px;border-radius:8px;font-size:10px;font-weight:700;
+  color:#3b2a00;background:#e8b23a;cursor:pointer;vertical-align:middle}
+#cs .cs-grid .late:hover{background:#f5cc63}
+#cs .cs-grid .indhw{color:#c2410c} #cs .cs-grid .miss{color:var(--bad)}
+#cs .cs-grid input,#cs .cs-grid textarea{padding:5px 7px;font-size:13px}
+#cs .cs-grid textarea{min-height:30px;min-width:200px;resize:both}
+#cs .cs-grid input[type=date]{height:30px;width:130px}
+/* 저장 상태 — 이름 옆 점 하나. ● 수정중(주황) ✓ 저장됨(초록) ✗ 실패(빨강) */
+#cs .st{display:inline-block;min-width:16px;font-size:12px;margin-left:4px;color:var(--dim)}
+#cs tr.stu.dirty .st{color:#c2410c} #cs tr.stu.saving .st{color:var(--dim)}
+#cs tr.stu.saved .st{color:var(--good)} #cs tr.stu.failed .st{color:var(--bad);font-weight:800}
+#cs tr.stu.failed td{background:rgba(220,38,38,.05)}
+/* 출결 3버튼 — 한 글자 */
+#cs .seg{display:flex;gap:3px} #cs .seg button{padding:5px 8px;font-size:12px;min-width:30px}
+#cs .seg button.a1{background:var(--ok);border-color:var(--ok);color:#fff}
+#cs .seg button.a2{background:var(--warn);border-color:var(--warn);color:#fff}
+#cs .seg button.a3{background:var(--bad2);border-color:var(--bad2);color:#fff}
+/* 문항 채점 칸 — 2/1/0 을 친다. 색은 값이 정한다 */
+#cs .it,#cs .gta{width:34px;text-align:center;padding:5px 2px;font-weight:700;font-variant-numeric:tabular-nums}
+#cs .gta{width:46px}
+#cs .it.s2,#cs .gta.ok{background:rgba(22,163,74,.16);border-color:var(--ok)}
+#cs .it.s1{background:rgba(202,138,4,.18);border-color:var(--warn)}
+#cs .it.s0,#cs .gta.bad{background:rgba(220,38,38,.15);border-color:var(--bad2);color:#991b1b}
+#cs .gta.man::placeholder{color:var(--dim)}
+#cs td.q{text-align:center;padding:4px 2px}
+#cs .sum{font-weight:800;color:var(--key-d);text-align:center;min-width:40px}
+#cs .scorecell{display:flex;gap:4px;align-items:center} #cs .scorecell input{width:58px}
+#cs .nabtn{padding:4px 7px;font-size:11px;color:var(--dim)} #cs .nabtn.on{background:var(--dim);color:#fff;border-color:var(--dim)}
+#cs tr.na .it,#cs tr.na .gta,#cs tr.na input[data-f="점수"]{opacity:.3}
+#cs tr.stu.below input[data-f="점수"]{box-shadow:inset 0 0 0 1px #c2410c}
+@media (hover:hover) and (pointer:fine){#cs .cs-grid tbody tr:hover td{background:rgba(0,0,0,.025)} #cs .cs-grid tbody tr:hover .fz{background:#f5f7fa}}
+#cs .kbdhint{font-size:11px;color:var(--dim);margin:0 0 6px}
+#cs .cs-foot{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
+#cs .cs-gtdone{display:inline-flex;gap:8px;align-items:center}
+#cs details.cs-more{margin:6px 0} #cs details.cs-more summary{cursor:pointer;color:var(--tx2);font-size:13px;padding:6px 2px;list-style:none}
+#cs details.cs-more summary::before{content:'▸ '} #cs details.cs-more[open] summary::before{content:'▾ '}
+/* 작업 현황 */
+#cs .jobrow{border-top:1px solid var(--bd);padding:8px 2px;font-size:13px} #cs .jobrow:first-child{border-top:none;padding-top:2px}
+#cs .jstat{font-size:11px;border-radius:8px;padding:2px 7px;color:#fff;vertical-align:1px}
+#cs .jstat.ok{background:var(--ok)} #cs .jstat.bad{background:var(--bad2)} #cs .jstat.run{background:var(--warn)} #cs .jstat.wait{background:#9ca3af}
+/* 추가학습 명단 */
+#cs .ctab{width:100%;border-collapse:collapse;font-size:13px}
+#cs .ctab th{font-size:11px;color:var(--dim);font-weight:600;text-align:left;padding:4px;border-bottom:1px solid var(--bd)}
+#cs .ctab td{padding:6px 4px;border-top:1px solid var(--bd);vertical-align:middle}
+#cs .ctab .seg{margin:0} #cs .ctab a{color:var(--key-d)}
+#cs .time{color:var(--dim);font-size:12px}
+/* ── 커스텀 트레이닝 (0924 P6) ── */
+#cs .ct-course{font-size:14px;font-weight:700;padding:7px 0;color:var(--key-d)}
+#cs .ct-mode{display:inline-flex;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+#cs .ct-mode button{border:0;border-radius:0;background:transparent;padding:7px 14px}
+#cs .ct-mode button.on{background:var(--acc);color:#fff;font-weight:800}
+#cs .ct-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);padding:7px 0;white-space:nowrap}
+#cs .ct-chk input,#cs .ct-row input[type=checkbox]{width:auto;margin:0}
+#cs .ct-units{max-height:460px;overflow:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+#cs .ct-unit>summary{cursor:pointer;padding:9px 12px;font-weight:700;font-size:13px;border-bottom:1px solid var(--bd);list-style:none;display:flex;gap:8px;align-items:center}
+#cs .ct-unit>summary::-webkit-details-marker{display:none}
+#cs .ct-unit>summary .dim{color:var(--dim);font-weight:400;font-size:12px}
+#cs .ct-row{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:6px 12px 6px 18px;border-bottom:1px solid #fff;font-size:13px;cursor:pointer}
+#cs .ct-row.on{background:rgba(37,99,235,.06)}
+#cs .ct-row .k{color:var(--dim);font-size:11px;margin-left:6px}
+#cs .ct-av{display:flex;gap:4px;font-variant-numeric:tabular-nums}
+#cs .ct-av span{min-width:30px;text-align:center;font-size:11px;border-radius:6px;padding:2px 4px;background:#fff;color:var(--tx2)}
+#cs .ct-av span.z{opacity:.35}
+#cs .ct-sel table{width:100%;border-collapse:collapse}
+#cs .ct-sel th{font-size:11px;color:var(--dim);font-weight:600;text-align:left;padding:5px 6px;border-bottom:1px solid var(--bd)}
+#cs .ct-sel td{padding:5px 6px;border-bottom:1px solid #fff;font-size:13px;vertical-align:middle}
+#cs .ct-sel td.nm{font-weight:700} #cs .ct-sel td.nm small{display:block;font-weight:400;color:var(--dim);font-size:11px}
+#cs .ct-sel input[type=number]{width:64px;padding:5px 6px} #cs .ct-sel select{width:auto;padding:5px 6px}
+#cs .ct-sel .why{font-size:11px;color:var(--dim)}
+#cs .ct-sel .short{color:var(--bad);font-size:12px}
+#cs .ct-sel .empty{color:var(--dim);font-size:13px;padding:10px 2px}
+#cs .ct-g{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:4px}
+#cs .ct-g.G1{background:#a83c3c;color:#fff} #cs .ct-g.G2{background:#9a7413;color:#fff} #cs .ct-g.G3{background:#3b5f8a;color:#fff} #cs .ct-g.G4{background:#2f7d4a;color:#fff}
+#cs .ct-job{padding:8px 2px;border-bottom:1px solid #fff;font-size:13px}
+#cs .ct-job .lbl{margin:3px 0 0}
+#cs .short{color:var(--bad)}
+
+/* (1021) 확인 기반 — 이름칸 자동 확인 줄(리뷰·써킷·루프·질문) + 자동으로 채운 칸 */
+#cs .cs-grid .autoline{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+#cs .cs-grid .ac{font-size:10.5px;padding:0 5px;border-radius:8px;border:1px solid var(--line,#d4d8de);color:var(--dim);white-space:nowrap}
+#cs .cs-grid .ac.ok{color:#15803d;border-color:#86efac}
+#cs .cs-grid .ac.bad{color:#be123c;border-color:#fda4af}
+#cs .cs-grid .ac.ext{color:#a16207;border-color:#fcd34d}
+#cs .cs-grid .ac.none{opacity:.65}
+#cs .cs-grid input.autov{color:#2563eb;font-style:italic}
+
+/* (1110) 이름 → 학생 포털 */
+#cs .cs-grid a.name.ptlink{color:inherit;text-decoration:none;border-bottom:1px dashed var(--dim);cursor:pointer}
+#cs .cs-grid a.name.ptlink:hover{color:var(--accent,#7aa2ff)}
+</style>
 </head><body class="u">
 <div class="u-bar"><div class="in"><div class="u-logo"><i>M</i>대시보드 <small>필탑 고등수학과</small></div>
   <div class="u-tabs" id="menu"></div>
@@ -259,6 +421,87 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-hover,rgba(0,0,0,.03))}
 <div class="subbar" id="subbar" hidden><div class="in" id="subs"></div></div>
 <main class="u-main" id="view" hidden></main>
 <div class="frames" id="frames" hidden></div>
+<div id="cshost" hidden><div id="cs"><div class="cs-top"><button class="pill sm" id="jobpill" onclick="toggleJobs()" title="서버 작업 현황">⚙ 작업</button></div><div id="jobpanel" class="card hidden">
+    <h2>서버 작업 — 최근 24시간</h2>
+    <div id="jobrows" class="lbl">불러오는 중…</div>
+    <div class="lbl" style="margin-top:8px">버튼은 요청을 줄 세우고 서버(GitHub)가 집어 실행한다. 요청 즉시 DB가 서버를 깨우고, 못 깨웠으면 1분마다 다시 시도한다(3분 넘게 대기하면 깨우기가 고장 난 것이다). 기출 퍼스널트레이닝만 예외 — 한 번에 하나만 돌고 한 명에 약 3분이라 반 전체(8명)면 25분쯤 걸린다.</div>
+  </div><section id="view-console">
+    <!-- 반 선택 — 오늘 수업 반이 앞에, 진하게. 나머지는 뒤에 흐리게 -->
+    <div class="cs-classbar"><span class="lbl">반</span><div class="classbtns" id="classbtns"></div>
+      <span class="cs-sp"></span>
+      <label class="lbl">보는 날짜</label><input id="v_date" type="date" onchange="changeViewDay()">
+      <button class="ghost sm" onclick="$('v_date').value=todayStr();changeViewDay()">오늘로</button>
+      <span class="lbl warn" id="v_warn" style="display:none">지난 날짜 — 저장도 이 날짜로 들어간다</span>
+    </div>
+    <div id="consolebody" class="hidden">
+      <!-- 불러오기 실패 잠금 (0813) -->
+      <div id="loadfail" class="card alert hidden">
+        <h2>오늘 입력을 못 불러왔다 — 입력을 잠갔다</h2>
+        <div class="lbl" id="loadfailmsg"></div>
+        <div class="lbl" style="margin-top:6px">화면의 빈칸이 서버를 덮는 것을 막으려고 잠근 것이다. <b>이미 저장된 값은 그대로 있다.</b> 새로고침해서 다시 들어와라(로그인이 풀렸으면 코드로 재로그인). 그래도 같으면 세션에 말해라.</div>
+        <button class="key" style="margin-top:8px" onclick="location.reload()">새로고침</button>
+      </div>
+      <!-- 저장 실패 배너 (0817) -->
+      <div id="savefail" class="card alert hidden">
+        <h2>저장이 서버에 들어가지 않는다</h2>
+        <div class="lbl" id="savefailmsg"></div>
+        <div class="lbl" style="margin-top:6px"><b>지금 화면의 입력은 저장 안 된 상태다 — 새로고침하면 사라진다.</b> 입력을 멈추고 관리자에게 알려라. 이 줄은 저장이 다시 성공하면 스스로 사라진다.</div>
+      </div>
+
+      <!-- 수업 정보 — 표 위에 한 띠. 진도·과제·테스트가 한 줄, 기출 정답표는 아래 접힘 -->
+      <div class="card cs-info">
+        <div class="cs-info-head"><h2>수업 정보 <span class="badge" id="sessionstate"></span></h2><span class="lbl ok" id="clogmark" style="display:none">저장됨 ✓</span></div>
+        <div class="cs-info-row">
+          <div class="f grow"><label class="lbl">진도 (엔터로 여러 줄)</label><textarea id="c_progress" rows="1" placeholder="예: OPT:04 도형의 이동 파트2" oninput="autoGrow(this);saveClassLog()"></textarea></div>
+          <div class="f grow"><label class="lbl">이번 과제</label><textarea id="c_hw" rows="1" oninput="autoGrow(this);saveClassLog()"></textarea></div>
+          <div class="f" style="flex:0 0 130px"><label class="lbl">테스트</label><select id="c_test" onchange="testChanged()"><option value="">— 리뷰(폰 자동)</option><option>모의테스트</option><option>미시행</option></select><input id="c_nq" type="hidden" value="0"></div>
+          <div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="ghost sm" onclick="allPresent()">전원 출석</button></div>
+        </div>
+        <div class="cs-info-row"><div class="f grow"><label class="lbl">지난 과제 (직전 수업 — 과제검사 기준)</label><div id="c_prevhw" class="prevhw">—</div></div></div>
+        <!-- (1112 유강) 기말 모의테스트 — 학생이 폰으로 답 입력, 선생님이 여기서 연다 -->
+        <div id="mk_setup" class="hidden cs-gt"><div class="cs-info-row" style="align-items:center;gap:10px;flex-wrap:wrap" id="mk_row"><span class="lbl">불러오는 중…</span></div></div>
+        <!-- 기출테스트 정답표 (0823) -->
+        <div id="gt_setup" class="hidden cs-gt">
+          <div class="cs-info-row">
+            <div class="f" style="flex:1 1 260px"><label class="lbl">시험지 불러오기 (문항DB 기출)</label><select id="gt_pick" onchange="gtPick()"><option value="">— 직접 입력</option></select></div>
+            <div class="f" style="flex:1 1 220px"><label class="lbl">시험지명 (학생 기록·오답 이벤트에 남는다)</label><input id="gt_src" placeholder="예: 흥덕고_고1_1학기기말" onchange="gtKeyUpdate()"></div>
+          </div>
+          <div class="cs-info-row">
+            <div class="f grow"><label class="lbl">정답 (쉼표 · 실답 그대로 · 수동채점 M · 소문항 20-1=212)</label><textarea id="gt_ans" rows="1" placeholder="3,1,4,212,M" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
+            <div class="f grow"><label class="lbl">배점 (쉼표 · 합 100 검산)</label><textarea id="gt_pts" rows="1" placeholder="3.8,3.9,4,4.1,6.5" oninput="autoGrow(this)" onchange="gtKeyUpdate()"></textarea></div>
+          </div>
+          <div class="cs-info-row" style="align-items:center">
+            <span class="lbl" id="gt_stat">정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.</span>
+            <span class="cs-sp"></span>
+            <button class="pill" id="gt_done" onclick="gtDone()">채점 확정 → PT 만들기 <span class="lbl">(채점 고친 뒤 다시 누르면 재제작)</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="clsavg" class="avgbar" style="display:none"></div>
+      <div id="students"></div>
+
+      <div class="cs-foot">
+        <button class="ghost" onclick="genComments()">✎ 코멘트 자동 생성 (빈 칸만)</button>
+        <span class="cs-sp"></span>
+        <span id="gt_done2row" class="hidden cs-gtdone"><button class="pill" id="gt_done2" onclick="gtDone()">① 채점 확정 → PT 만들기</button><span class="lbl">자평 낸 학생별 PT · 서술형까지 넣고 누를 것 · 고쳤으면 다시 눌러 재제작</span></span>
+        <!-- (1107 유강) ② 추가학습 세팅 폐지 — [마감] 이 과제 미흡·결석 학생 클리닉 예약을 만든다 -->
+        <button class="key" onclick="closeSession()">③ [마감] 수업 종료</button>
+      </div>
+      <div class="card" id="closeguide" style="display:none">
+        <h2>마감 후 흐름</h2>
+        <div style="line-height:1.75">
+          <b>자동</b> — 데일리 리포트: 마감이 서버를 깨워 렌더된다(보통 5분 안) → <a href="#report">리포트 탭</a>에서 확인<br>
+          <b>클리닉(추가학습)</b> — 과제 미흡은 <b>과제 마감(수업 30분 전)</b>에, 결석은 마감 뒤 5분 안에 예약 안내가 간다(다음 날 9시까지 직접 예약 · 결석은 2시간). 학생 줄의 '추가학습' 칩 = 그 상태. 리포트 '추가학습' = 렌더 때 예약이 있으면 그 날짜·시간, 없으면 '대상'<br>
+          <b>재마감</b> — 점수·진도 같은 걸 고쳤을 때만. 그날 데이터를 리셋하고 다시 적재·렌더한다(몇 분 걸린다)<br>
+          <b>다음날 9시</b> — 링크 리포트가 학생별 팀톡으로 나간다(보내기 전에 확인 질문이 먼저 온다)<br>
+          진행 상황은 상단 <b>⚙ 작업</b>에서 본다
+        </div>
+      </div>
+
+      <div class="cs-foot" style="justify-content:flex-end"><button class="ghost danger sm" onclick="resetToday()">오늘 입력 전체 리셋</button></div>
+    </div>
+  </section></div></div>
 <script>/* ── UI 키트 (00_대시보드/_ui/kit.js) ── */
 /* 수학은유강 UI 도우미 (1118) — window.U. 단일 파일 페이지에 ui_inline.py 가 그대로 넣는다(빌드 도구 없음).
    유강 규칙을 코드로 박아 둔 것: 모든 표 = 정렬 + 첫 열 번호, 정렬은 머리글 누른 순서대로 우선순위(1031) ·
@@ -459,12 +702,12 @@ async function coreBank() {
 /* ── 셸: 메뉴 · 주소 · 옛 화면 끼우기 · 로그인 ── (P17 1119)
    메뉴 5개 + ⚙. 화면 종류: N = 새로 지은 화면(이 파일들), OLD = 아직 안 옮긴 옛 화면(/dashboard/legacy/?embed=1#탭),
    PAGE = 따로 있는 페이지(학생·자료실·레벨테스트), EXT = 새 창. 옮길 때마다 OLD → N 으로 바꾼다. */
-const N = fn => ({ n: fn }), OLD = s => ({ old: s }), PAGE = s => ({ page: s }), EXT = s => ({ ext: s });
+const CSV = { cs: 1 }, N = fn => ({ n: fn }), OLD = s => ({ old: s }), PAGE = s => ({ page: s }), EXT = s => ({ ext: s });
 const LEGACY = '/dashboard/legacy/?embed=1#';
 const MENU = [
   { k: 'home', t: '홈', roles: ['admin', 'staff'], view: N(id => viewHome(id)) },
   { k: 'class', t: '수업', roles: ['admin'], ctx: true, subs: [
-    ['input', '수업 입력', OLD(() => 'cs-console/' + CTX.ban)],
+    ['input', '수업 입력', CSV],
     ['result', '결과', N(id => viewResult(id))],
     ['hw', '과제', N(id => viewHw(id))],
     ['core', 'CORE', N(id => viewClassCore(id))]] },
@@ -525,15 +768,27 @@ function route() {
   document.title = (sub ? sub[1] : M.t) + ' · 대시보드';
   if (tgt.ext) { window.open(tgt.ext, '_blank', 'noopener'); return; }
   if (M.ctx) drawCtx();
-  const native = !!tgt.n;
-  $('view').hidden = !native; $('frames').hidden = native;
-  if (native) { const id = ++RENDER_ID; $('view').innerHTML = '<div class="u-empty">불러오는 중…</div>'; window.scrollTo(0, 0); tgt.n(id); }
+  const native = !!tgt.n, isCs = !!tgt.cs;
+  $('view').hidden = !native; $('frames').hidden = native || isCs; $('cshost').hidden = !isCs;
+  if (isCs) csOpen();
+  else if (native) { const id = ++RENDER_ID; $('view').innerHTML = '<div class="u-empty">불러오는 중…</div>'; window.scrollTo(0, 0); tgt.n(id); }
   else {
     if (M.k === 'stu' && CUR.s) NEXT = '/dashboard/stu/?sid=' + encodeURIComponent(CUR.s);
     showFrame(tgt);
   }
 }
-const alive = id => id === RENDER_ID;   // 화면을 그리는 동안 다른 화면으로 옮겼으면 그리지 않는다
+const alive = id => id === RENDER_ID;
+
+/* 수업 입력 — 옛 콘솔 엔진(CSE, _app/console.js)을 이 페이지 안에서 그대로 쓴다. 화면(DOM)은 #cshost 에 계속 살아 있어
+   다른 메뉴에 갔다 와도 입력 중이던 것이 그대로다. 반·날짜는 위 CTX 가 정하고, 엔진의 반 버튼 띠는 숨긴다. */
+let CS_ON = false, CS_AT = '';
+async function csOpen() {
+  if (!CS_ON) { CS_ON = true; window.VS_OK = ROLE === 'admin'; CSE.csBoot({ role: ROLE, 이름: MYNAME }); }
+  const days = await daysOf(CTX.ban); if (!days.includes(CTX.day)) CTX.day = days[0];
+  const at = CTX.ban + '|' + CTX.day;
+  if (at === CS_AT) return;
+  CS_AT = at; $('v_date').value = CTX.day; CSE.selectClass(CTX.ban);
+}   // 화면을 그리는 동안 다른 화면으로 옮겼으면 그리지 않는다
 
 /* 옛 화면은 iframe 하나를 계속 쓰고 주소(#)만 바꾼다. 페이지는 페이지마다 하나 */
 function showFrame(t) {
@@ -1962,6 +2217,2870 @@ async function ctLinks(j, el) {   // Storage 키는 해시라 내려받는 이�
   el.innerHTML = CT.pdf[j.id];
 }
 
+/* ═══ _app/console.js (수업 입력 엔진) ═══ */
+const CSE = (function () {
+
+const csRoot=()=>document.getElementById('cs')||document;
+const csAll=sel=>csRoot().querySelectorAll(sel);
+const DAYS=['일','월','화','수','목','금','토'];
+/* 보는 날짜 — 수업 화면(채점·수업정보·마감)이 어느 날을 보고 있는가.
+   비어 있으면 오늘. 이 값이 daily_log·class_log·class_sessions 의 '날짜'가 된다. */
+const vDay=()=>($('v_date')&&$('v_date').value)||todayStr();
+function changeViewDay(){
+  const d=$('v_date').value||todayStr();
+  $('v_warn').style.display = (d===todayStr()) ? 'none' : '';
+  if(CLS) selectClass(CLS);            // 그 날짜로 다시 불러온다
+}
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+let ROLE=null, CLS=null, STUDENTS=[], LOGMAP={};
+/* 불러오기 실패 잠금 (0813) — LOCKED 면 어떤 저장도 나가지 않는다.
+   LOADSEEN 은 '이 브라우저가 이 반·이 날짜에서 본 최대 입력 건수'다. 한 번 봤던 입력이
+   0건으로 돌아오면 서버가 아니라 통신이 거짓말하는 것이다 → 덮어쓰기 전에 멈춘다. */
+let LOCKED=false; const LOADSEEN={};
+function lockConsole(msg){
+  LOCKED=true;
+  const el=$('loadfail'); if(el){el.classList.remove('hidden');$('loadfailmsg').textContent=msg;}
+  document.querySelectorAll('#consolebody .card:not(#loadfail)').forEach(c=>{
+    c.style.opacity='.45'; c.style.pointerEvents='none';
+  });
+  try{window.scrollTo(0,0);}catch(e){}
+}
+function unlockConsole(){
+  LOCKED=false;
+  const el=$('loadfail'); if(el)el.classList.add('hidden');
+  document.querySelectorAll('#consolebody .card').forEach(c=>{c.style.opacity='';c.style.pointerEvents='';});
+}
+
+function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
+function toast(t){U.toast(t);}
+
+/* ── 작업 현황 (0813) ──────────────────────────────────────────────
+ * 각 손잡이(루프·추가학습·오늘 물을 것)는 자기 작업만 메모리로 폴링한다 —
+ * 새로고침하면 추적을 잃고, 다른 탭의 작업은 아예 안 보였다.
+ * 여기는 job_queue 를 직접 읽는다: 새로고침 생존 + 전 종류 한눈에. */
+const JOBNAMES={build_sets:'루프 만들기',send_loop:'루프 보내기',set_plan:'오늘 물을 것 만들기',clinic_build:'추가학습 문제지',review_build:'리뷰테스트'/*UI는 0906 제거, 옛 job_queue 행 표시용*/,진단발송:'채점 확정 → PT 펼치기',진단알림:'진단 알림톡',기출과제:'기출 퍼스널트레이닝',커스텀트레이닝:'커스텀 트레이닝'};
+function toggleJobs(){const p=$('jobpanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))jobsRefresh();}
+function jobParam(j){const p=j['파라미터']||{};return [p['반'],p['학생']&&j['종류']==='커스텀트레이닝'?p['학생']:'',p['단원'],p['날짜'],p['문항수']&&(p['문항수']+'문항'),Array.isArray(p['유형'])&&('유형 '+p['유형'].length+'개')].filter(Boolean).join(' · ');}
+const isPT=k=>k==='기출과제'||k==='커스텀트레이닝';   /* (0924) 둘 다 pt.yml 이 한 줄로 집는다 */
+function jobAge(t){return Math.max(0,Math.round((Date.now()-new Date(t))/60000));}
+function jobWhen(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+async function jobsRefresh(){
+  if(!ROLE)return;
+  const since=new Date(Date.now()-24*3600*1000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('*').neq('종류','loop_index')
+    .gte('요청시각',since).order('요청시각',{ascending:false}).limit(15);
+  if(error)return;                       // 조용히 — 현황판이 새 에러원이 되면 안 된다
+  const act=(data||[]).filter(j=>j['상태']==='요청'||j['상태']==='처리중'||j['상태']==='진행');
+  const pill=$('jobpill');
+  pill.textContent=act.length?('⚙ 작업 '+act.length+' 진행중'):'⚙ 작업';
+  pill.classList.toggle('busy',act.length>0);
+  const box=$('jobrows');
+  if(!box||$('jobpanel').classList.contains('hidden'))return;
+  if(!(data||[]).length){box.innerHTML='최근 24시간 서버 작업이 없다.';return;}
+  box.innerHTML=data.map(j=>{
+    const st=j['상태'];
+    const badge=st==='완료'?'<span class="jstat ok">완료</span>'
+              :st==='실패'?'<span class="jstat bad">실패</span>'
+              :(st==='처리중'||st==='진행')?'<span class="jstat run">만드는 중</span>'
+              :'<span class="jstat wait">대기</span>';
+    let line2='';
+    if(isPT(j['종류'])&&(st==='요청'||st==='처리중'||st==='진행')){
+      /* (0913) PT 는 pt.yml 이 한 번에 하나만 돈다. 반 전체를 한꺼번에 펼치면 뒤쪽은 기다리는 게 정상 —
+         '3분 넘으면 고장' 문구가 거짓 경보를 냈다. 줄 순서로 말한다.
+         (0923 실측 정정) "2명씩 5분 · 한 명에 1~2분" 은 거짓이었다 — 서버에서 **한 명 약 3분**(0923 속도 개선 뒤;
+         그 전엔 4분). 이제 한 런이 큐를 비울 때까지 이어서 집으므로 줄 = 순서 × 3분 + 세팅 2분.
+         멈춘 잡 자동 회수는 pt_worker STALE_MIN = 60분이다(30분이 아니었다). */
+      const PT_MIN=3;
+      const m=jobAge(j['시작시각']||j['요청시각']);
+      const ptq=(data||[]).filter(x=>isPT(x['종류'])&&x['상태']==='요청')
+        .sort((a,b)=>new Date(a['요청시각'])-new Date(b['요청시각']));
+      const running=(data||[]).filter(x=>isPT(x['종류'])&&(x['상태']==='처리중'||x['상태']==='진행')).length;
+      if(st==='요청'){
+        const k=ptq.findIndex(x=>x.id===j.id)+1;
+        const eta=(k+running)*PT_MIN+2;
+        line2=m+'분 경과 · PT 는 한 명 약 '+PT_MIN+'분 — 지금 '+k+'번째 줄, 약 '+eta+'분 남음'
+          +(m>eta+10?' <span class="warn">— 예상보다 많이 늦다. 세션에 알릴 것</span>':'');
+      }else{
+        line2=m+'분째 만드는 중 · 한 명 약 '+PT_MIN+'분(문항 많으면 더)'+(m>=60?' <span class="warn">— 60분 넘으면 실패로 자동 회수된다</span>':(m>=15?' <span class="warn">— 15분 넘었다. 런 로그를 볼 것</span>':''));
+      }
+    }else if(st==='요청'||st==='처리중'||st==='진행'){
+      const m=jobAge(j['시작시각']||j['요청시각']);
+      line2=m>=3
+        ?'<span class="warn">'+m+'분째 '+(st==='요청'
+            ?'대기 — 보통 1분 안에 시작한다. 3분이 넘으면 깨우기가 고장 난 것이니 세션에 알릴 것(schema_v4_wake.sql 맨 아래 점검 SQL)'
+            :'실행 중 — 30분을 넘기면 실패로 자동 회수된다')+'</span>'
+        :m+'분 경과 · 보통 1~2분 안에 끝난다';
+    }else{
+      line2=jobWhen(j['완료시각'])+(j['메시지']?' · '+esc(j['메시지']):'');
+    }
+    const res=(j['결과']&&j['결과']['인원'])?(' · '+j['결과']['인원']+'명'):'';
+    /* (0828) 기출과제 완료 → 학생별 PDF 받기. hw_watch 가 Storage(reports/gt/)에 올리고
+       결과.업로드에 [{이름,파일,키}]를 남긴다. 서명 URL은 누를 때 만든다(1시간). */
+    let pdfline='';
+    /* (0831) 진단발송 완료 → 학생별 진단 링크 + [진단 알림톡 보내기] (승인 게이트) */
+    const dg=(j['종류']==='진단발송'&&st==='완료'&&j['결과']&&j['결과']['목록'])||null;
+    if(dg&&dg.length)
+      pdfline='<div class="lbl" style="margin:3px 0 0">'
+        +dg.map(x=>'<a href="'+esc(x.url)+'" target="_blank">'+esc(x.이름)+'('+esc(String(x.문항수))+')</a>').join(' · ')
+        +' <button type="button" class="pill dgsend-btn" data-j="'+j.id+'">진단 알림톡 보내기 ('+dg.length+')</button></div>';
+    const up=(isPT(j['종류'])&&st==='완료'&&j['결과']&&j['결과']['업로드'])||null;
+    if(up&&up.length)
+      pdfline='<div class="lbl gtpdf" data-j="'+j.id+'" style="margin:3px 0 0">'
+        +(GTPDF[j.id]?GTPDF[j.id].html:'<button type="button" class="pill gtpdf-btn" data-j="'+j.id+'">학생별 PDF 받기 ('+up.length+')</button>')
+        +'</div>';
+    return '<div class="jobrow"><div><b>'+esc(JOBNAMES[j['종류']]||j['종류'])+'</b> '
+      +'<span class="lbl" style="display:inline">'+esc(jobParam(j))+res+'</span> '+badge+'</div>'
+      +'<div class="lbl" style="margin:2px 0 0">'+line2+'</div>'+pdfline+'</div>';
+  }).join('');
+  box.querySelectorAll('.gtpdf-btn').forEach(b=>{b.onclick=()=>{
+    const j=(data||[]).find(x=>String(x.id)===b.dataset.j);
+    if(j)gtJobLinks(j,b.parentElement);
+  };});
+  /* (0831) 진단 알림톡 — 버튼 클릭이 곧 발송 승인. 같은 반·날짜 진단알림 잡이 있으면 중복 금지 */
+  box.querySelectorAll('.dgsend-btn').forEach(b=>{b.onclick=async()=>{
+    const j=(data||[]).find(x=>String(x.id)===b.dataset.j);
+    if(!j)return;
+    const p=j['파라미터']||{};
+    const {data:pend}=await sb.from('job_queue').select('id,상태').eq('종류','진단알림')
+      .in('상태',['요청','처리중','진행','완료']).contains('파라미터',{'반':p['반'],'날짜':p['날짜']});
+    if((pend||[]).length){toast('이미 보냈거나 보내는 중');return;}
+    const {error}=await sb.from('job_queue').insert({'종류':'진단알림','상태':'요청','요청자':'콘솔진단발송',
+      '파라미터':{'반':p['반'],'날짜':p['날짜']}});
+    toast(error?'요청 실패: '+error.message:'알림톡 발송 큐로 넘김 — 1~2분 내 발송');
+    jobsRefresh();
+  };});
+  box.querySelectorAll('.gtzip').forEach(b=>{b.onclick=()=>gtZip(b.closest('.gtpdf').dataset.j,b);});
+}
+/* 기출과제 PDF 서명 URL — 만든 걸 캐시해 20초 재렌더에도 링크·zip이 유지된다.
+ * ⚠ Storage 키는 해시(한글 금지, 0811)라 download 파일명은 학생 이름으로 박는다(0828 유강). */
+const GTPDF={};
+async function gtJobLinks(j,el){
+  el.textContent='링크 만드는 중…';
+  const files=(j['결과']||{})['업로드']||[];
+  const out=[],zf=[];
+  for(const f of files){
+    const {data,error}=await sb.storage.from('reports').createSignedUrl(f['키'],3600,{download:f['이름']+'.pdf'});
+    if(error){out.push('<span class="warn">'+esc(f['이름'])+' 실패</span>');continue;}
+    /* (0905 유강) 문제~빠른정답 / 빠른정답~해설 두 파일 — hw_watch 가 나눠 올린 잡만 링크가 붙는다.
+       조교가 한 파일을 쪽 기준으로 잘라 두 번 뽑던 일을 없앤 것. 전체 파일은 이름에 그대로. */
+    let sub='';
+    for(const [suf,k] of [['문제','문제키'],['해설','해설키']]){
+      if(!f[k])continue;
+      const r=await sb.storage.from('reports').createSignedUrl(f[k],3600,{download:f['이름']+'_'+suf+'.pdf'});
+      if(!r.error)sub+=' <a href="'+r.data.signedUrl+'" target="_blank" rel="noopener" style="opacity:.85">['+suf+(f[suf+'쪽']?' '+f[suf+'쪽']+'쪽':'')+']</a>';
+    }
+    out.push('<span style="white-space:nowrap"><a href="'+data.signedUrl+'" target="_blank" rel="noopener">'+esc(f['이름'])+'</a>'+sub+'</span>');
+    zf.push({name:f['이름']+'.pdf',url:data.signedUrl});
+  }
+  const p=j['파라미터']||{};
+  GTPDF[j.id]={files:zf,tag:[p['반'],(p['날짜']||'').replace(/-/g,'').slice(4)].filter(Boolean).join('_'),
+    html:(zf.length?'<button type="button" class="pill gtzip">⤓ 전체 저장 ('+zf.length+'명 · zip)</button> ':'')
+      +out.join(' · ')+' <span style="opacity:.6">· 링크 1시간 유효</span>'};
+  el.innerHTML=GTPDF[j.id].html;
+  const zb=el.querySelector('.gtzip'); if(zb)zb.onclick=()=>gtZip(j.id,zb);
+}
+/* zip 한 방 저장 — 조회 리포트와 같은 원리(무압축 store zip, 파일명=학생이름.pdf).
+ * makeZip·dropFile 은 통합 셸(app.js)의 전역 — 단독 콘솔에서는 이름을 눌러 한 명씩. */
+async function gtZip(jid,btn){
+  const c=GTPDF[jid];
+  if(!c||!c.files.length)return;
+  if(typeof makeZip!=='function'||typeof dropFile!=='function'){toast('zip 저장은 통합 셸(/dashboard/)에서만 — 이름을 눌러 한 명씩 받아라');return;}
+  const orig=btn.textContent;btn.disabled=true;
+  const entries=[],failed=[];
+  for(const f of c.files){
+    btn.textContent='받는 중… '+(entries.length+failed.length+1)+'/'+c.files.length;
+    try{
+      const r=await fetch(f.url);
+      if(!r.ok)throw new Error(r.status+'');
+      entries.push({name:f.name,data:new Uint8Array(await r.arrayBuffer())});
+    }catch(e){failed.push(f.name);}
+  }
+  if(entries.length){
+    btn.textContent='압축하는 중…';
+    await new Promise(r=>setTimeout(r,0));
+    try{dropFile(makeZip(entries),'기출과제_'+c.tag+'.zip');}
+    catch(e){btn.disabled=false;btn.textContent='압축 실패 — 이름을 눌러 한 명씩';return;}
+  }
+  btn.disabled=false;
+  btn.textContent=!entries.length?'하나도 못 받았다 — 링크가 만료됐으면 새로고침'
+    :failed.length?entries.length+'명 저장 · 실패: '+failed.join(', ')
+    :entries.length+'명 zip 저장됨 ✓';
+  setTimeout(()=>{btn.textContent=orig;},8000);
+}
+
+
+
+let JOBTIMER=null;
+/* 콘솔 기동 — **로그인·역할 판정이 끝난 뒤** 부르는 유일한 입구. app.js 의 boot() 이 부른다. */
+function csBoot(prof){
+  ROLE=prof.role;
+  const who=null; if(who) who.textContent=(prof['이름']||'')+' · '+(ROLE==='admin'?'관리자':'조교');
+  // 적재는 전 테이블 쓰기 권한이 필요하다 — RLS 상 staff 는 어차피 막히므로 탭도 숨긴다
+  document.querySelectorAll('[data-v="cs-load"],[data-v="cs-staff"]').forEach(a=>a.classList.toggle('hidden',ROLE!=='admin'));
+  jobsRefresh();                                         // 작업 현황 — 진행 중이면 헤더 pill이 바로 알린다
+  // 두 번 기동해도 폴링이 겹치지 않게(0910) — app.js 의 boot 이 한 번만 돌지만 여기서도 눌러 둔다
+  if(JOBTIMER)clearInterval(JOBTIMER);
+  JOBTIMER=setInterval(()=>{if(document.visibilityState==='visible')jobsRefresh();},20000);
+  initClassButtons();
+}
+
+/* ── 수업 콘솔 ── 반 버튼. 오늘 수업 반(시간표)이 앞에 서고 테두리가 붙는다 (0908 — 옛 '오늘' 탭의 몫). */
+async function initClassButtons(){
+  const dow=DAYS[new Date().getDay()];
+  const [{data:stu},{data:tt}]=await Promise.all([
+    sb.from('students').select('학년,반').eq('상태','재원'),
+    sb.from('timetable').select('반,시작,끝').eq('요일',dow)]);
+  const today={};(tt||[]).forEach(r=>today[r['반']]=r);
+  const set=[...new Set((stu||[]).map(r=>(r['학년']||'')+(r['반']||'')))]
+    .sort((a,b)=>((b in today)-(a in today))||((today[a]?+today[a]['시작']:0)-(today[b]?+today[b]['시작']:0))||a.localeCompare(b));
+  const box=$('classbtns');box.innerHTML='';
+  set.forEach(c=>{
+    const b=document.createElement('button');b.dataset.cls=c;
+    b.innerHTML=esc(c)+(today[c]?` <small class="time">${esc(String(today[c]['시작']))}~${esc(String(today[c]['끝']))}시</small>`:'');
+    if(today[c])b.classList.add('today');
+    b.title=today[c]?'오늘 수업':'';
+    b.onclick=()=>selectClass(c);
+    box.appendChild(b);
+  });
+  // 주소에 반이 실려 왔으면(#cs-console/고1A) 바로 연다
+  const m=decodeURIComponent(location.hash||'').match(/^#cs-console\/(.+)$/);
+  if(m&&set.includes(m[1])&&!CLS)selectClass(m[1]);
+  // (1119 P16 #1) 반이 안 실려 왔으면 오늘 수업 반을 바로 연다 — 테두리만 있고 빈 화면이라 '눌린 것 같은데 안 뜬다'
+  else if(!CLS&&/^#cs-console\/?$/.test(decodeURIComponent(location.hash||'#cs-console'))){
+    const hr=new Date().getHours(), td=set.filter(c=>today[c]);
+    const pick=td.find(c=>+today[c]['끝']>hr)||td[td.length-1];
+    if(pick)selectClass(pick);
+  }
+}
+let PREVHW='', PREVHW_MAP={}, PREVHW_DATE={}, RECENT={}, NOTES={}, NEXT=null;
+/* (1021 유강) 콘솔은 '입력'이 아니라 '확인'이다 — 리뷰테스트(폰)·루프 과제·써킷 과제 체크는 학생이 남긴 기록으로
+   자동 집계된다. console_auto(schema_v42) 한 번으로 학생별 요약을 받아 이름칸 한 줄 + 빈 칸 자동 채움.
+   옛 loop_overdue(구 저녁 루프 미제출 → 이행률 0) 배지는 은퇴 — 구 루프가 끝나 10/07 같은 옛 기록이 2주씩 남았다. */
+let PTOK={};   // (1110) 학생ID → 학생 포털 토큰(유강 계정만)
+let AUTO={}, AUTOB=null, LOOPSTART=null, HWR={}, HWRB=null, HWC={};   // (1028) HWR = console_hw_rate 학생별 · (1106) HWC = 클리닉 과제 보완(hw_clinic_check, v60)
+/* (1021 유강) '최근 점수' 누적은 새 체계 시작일 이후 기록만 — 이전 체계 점수와 섞이면 비교가 틀린다. 학기 바뀌면 갱신 */
+const CYCLE_START='2026-10-21';   // (1022 유강 "오늘이 스타트") 새 체계 시작일 — 리포트 HISTORY_START 와 같다
+async function loadAuto(cls,day){
+  AUTO={};AUTOB=null;LOOPSTART=null;HWR={};HWRB=null;HWC={};
+  try{
+    // (1106) 과제 보완 클리닉 — 최근 10일, 학생마다 가장 최근 회차 하나. 표가 없으면(v60 전) 조용히 건너뛴다
+    await Promise.resolve(sb.from('hw_clinic_check').select('*').eq('반',cls).gte('갱신',new Date(Date.now()-10*864e5).toISOString()).order('회차',{ascending:false}))
+      .then(r=>{(r&&r.data||[]).forEach(x=>{if(!HWC[x['학생ID']])HWC[x['학생ID']]=x;});}).catch(()=>{});
+    const [ra,rl,rh]=await Promise.all([sb.rpc('console_auto',{p_cls:cls,p_day:day}),
+                                     Promise.resolve(sb.rpc('console_loop_start',{p_cls:cls,p_day:day})).catch(()=>null),
+                                     Promise.resolve(sb.rpc('console_hw_rate',{p_cls:cls,p_day:day})).catch(()=>null)]);
+    LOOPSTART=(rl&&!rl.error&&rl.data)?String(rl.data).slice(0,10):null;
+    if(rh&&!rh.error&&rh.data){HWRB=rh.data;(rh.data['학생']||[]).forEach(r=>HWR[r['학생ID']]=r);}   // (1028) 과제 이행 = 써킷+개별과제+루프 (schema_v52)
+    const {data,error}=ra;
+    if(error){console.warn('console_auto',error.message);return;}
+    if(!data)return;
+    AUTOB=data;(data['학생']||[]).forEach(r=>AUTO[r['학생ID']]=r);
+  }catch(e){console.warn('console_auto',e);}
+}
+function kstDay(iso){return iso?new Date(Date.parse(iso)+9*3600e3).toISOString().slice(0,10):'';}
+function fmtDue(iso){
+  if(!iso)return '';
+  const d=new Date(Date.parse(iso)+9*3600e3).toISOString();
+  return (+d.slice(5,7))+'/'+(+d.slice(8,10))+' '+d.slice(11,16);
+}
+/* 오늘 검사할 써킷 묶음 = 반 마감이 오늘(보는 날)인 묶음. 마감이 지났어야 값이 확정이다. */
+function autoHwDue(){const B=AUTOB&&AUTOB['묶음'];return !!(B&&kstDay(B['마감'])===vDay());}
+/* (1028 유강) 과제 이행 = 리포트 v5 와 같은 규칙 — 써킷 + 개별과제 + 루프 문항 총합(console_hw_rate, schema_v52).
+   확정(루프 마감 = 수업 1시간 전 지남) 뒤에만 채운다. 함수가 없을 때(SQL 전)만 옛 써킷 이행률. */
+function hwrParts(h){
+  return [['써킷',h&&h['써킷']],['개별과제',h&&h['개별과제']],['루프',h&&h['루프']]].filter(x=>x[1]).map(x=>`${x[0]} ${x[1][0]}/${x[1][1]}`).join(' · ');
+}
+function autoRate(id){
+  if(HWRB){
+    const h=HWR[id];
+    if(!HWRB['확정']||!h||h['이행률']===null||h['이행률']===undefined)return null;
+    return h['이행률'];
+  }
+  const a=AUTO[id],B=AUTOB&&AUTOB['묶음'];
+  if(!a||!autoHwDue()||!B['지남']||a['연장']||!a['써킷'])return null;
+  const v=a['써킷']['이행률'];return (v===null||v===undefined)?null:v;
+}
+function autoReview(id){const a=AUTO[id];return (!isGT()&&a&&a['리뷰'])?a['리뷰']:null;}
+/* 리뷰 만점 = 오늘 반에서 가장 많이 푼 문항 수(A안 7). 문항 칸을 쓰면 그 칸 수×2. */
+/* (1021 유강) 리뷰테스트 점수는 10점 만점으로 환산 — 확실 정답 ÷ 그날 반 리뷰 문항 수 × 10, 소수 한 자리.
+   문항 수 = 오늘 그 반에서 가장 많이 푼 학생의 문항 수(A안 7, 유형이 덜 열린 날은 5 등). 개념을 놓쳐 일찍 끝난 학생도 같은 수로 나눈다. */
+function reviewN(){return Math.max(0,...Object.values(AUTO).map(a=>(a['리뷰']&&a['리뷰'].n)||0))||7;}
+function reviewScore(r){const N=reviewN();return r?Math.round(Math.min(r.ok,N)/N*100)/10:null;}
+function autoReviewFull(){return Object.values(AUTO).some(a=>a['리뷰'])?10:0;}
+function reviewFull(){const nq=Math.max(0,parseInt($('c_nq').value)||0);return nq?nq*2:autoReviewFull();}
+/* (1022) 루프 '한 날 / 지난 날' 의 분모 — 반 루프 시작일(console_loop_start)과 새 체계 시작일 중 늦은 날부터 오늘까지, 최대 7.
+   리포트 report_v4 의 루프 달력과 같은 규칙. 0 = 시작 전. */
+function loopSpan(){
+  const st=[LOOPSTART||'',CYCLE_START].sort().pop(), d=vDay();
+  if(!LOOPSTART||st>d)return 0;
+  return Math.min(7,Math.round((Date.parse(d)-Date.parse(st))/864e5)+1);
+}
+function autoLine(id){
+  const a=AUTO[id];if(!a)return '';
+  const out=[],B=AUTOB&&AUTOB['묶음'];
+  if(!isGT()){
+    const r=a['리뷰'];
+    out.push(r?`<span class="ac ${r.ok>=Math.ceil(r.n*0.7)?'ok':r.ok*2<r.n?'bad':''}" title="오늘 리뷰테스트 — 10점 환산 (확실히 맞힌 문항 / 반 리뷰 문항 수, 문항별 첫 시도) · 푼 문항 ${r.n}">리뷰 ${reviewScore(r).toFixed(1)}점 (${r.ok}/${reviewN()})</span>`
+             :`<span class="ac none" title="오늘 리뷰테스트 기록 없음">리뷰 —</span>`);
+  }
+  const h=a['써킷'], hr0=HWR[id], merged=!!(HWRB&&hr0&&hr0['이행률']!==null&&hr0['이행률']!==undefined);   // (1029 리뉴얼)
+  if(a['연장'])out.push(`<span class="ac ext" title="써킷 과제 학생별 연장 — 써킷 과제 화면에서 취소">써킷 연장 ~${fmtDue(a['연장'])}</span>`);
+  else if(!merged&&h&&B&&autoHwDue()){
+    const t=`써킷 ${(B['세트']||[]).join('+')} · 마감 ${fmtDue(B['마감'])} · 체크 ${h['체크']}/${h['전체']} · ①${h.n1} ②${h.n2} ③${h.n3} ④${h.n4} ⑤${h.n5} ⑥${h.n6} · 자력 ${h['자력']}%`;
+    out.push(B['지남']
+      ?`<span class="ac ${h['이행률']>=100?'ok':h['이행률']<50?'bad':''}" title="${esc(t)}">써킷 ${h['이행률']}% · 자력 ${h['자력']}%</span>`
+      :`<span class="ac none" title="${esc(t)}">써킷 마감 전 ${h['체크']}/${h['전체']}</span>`);
+  }
+  /* (1022 유강) 루프 과제 = 수업당 1회 — 지난 수업 끝 ~ 이 수업 시작(console_auto '루프회차')에 푼 문항 */
+  const l=a['루프']||{}, LR=AUTOB&&AUTOB['루프회차'];
+  if(merged){}
+  else if(!LR)out.push(`<span class="ac none" title="시간표로 지난 수업을 못 찾았다">루프 —</span>`);
+  else{
+    const rt=`지난 수업 뒤 루프 ${String(LR['시작']).slice(5).replace('T',' ')} ~ ${String(LR['끝']).slice(5).replace('T',' ')}${l.last?' · 마지막 '+String(l.last).slice(5).replace('T',' '):''}`;
+    out.push(l.n?`<span class="ac ok" title="${esc(rt)} · 확실 ${l.ok}/${l.n}">루프 ✓ ${l.n}문항</span>`
+                :`<span class="ac bad" title="${esc(rt)}">루프 ✗</span>`);
+  }
+  const hr=HWR[id];
+  if(HWRB&&hr&&hr['이행률']!==null&&hr['이행률']!==undefined){
+    const t=`과제 이행 = ${hwrParts(hr)}${hr['루프출처']&&hr['루프출처']!=='기록'?' (루프 낸 문항: '+hr['루프출처']+')':''}${HWRB['확정']?'':' · 아직 마감 전'}`;
+    out.push(`<span class="ac ${!HWRB['확정']?'none':hr['이행률']>=100?'ok':hr['이행률']<50?'bad':''}" title="${esc(t)}">과제 ${hr['이행률']}%</span>`);
+  }
+  if(a['질문'])out.push(`<span class="ac bad" title="써킷 ⑤ 질문 대기 — 써킷 과제 화면에서 답한다">질문 ${a['질문']}</span>`);
+  /* (1106) 과제 보완 클리닉 — 이행 100% 미만이면 클리닉 예약(학생 선택 → 22시 지나면 자동) → 조교 [완료] = 보완 완료(이행률은 그대로) */
+  const hc=HWC[id];
+  if(hc){
+    /* (1110 유강 "그렇게 된 경우 콘솔에 자동으로 추가학습이 잡혀져서") 과제 미흡은 과제 마감(수업 30분 전)에,
+       결석은 [마감] 뒤에 클리닉이 잡힌다 — 이 칩이 콘솔의 '추가학습'이다. 리포트도 같은 값(예약 있으면 날짜, 없으면 대상). */
+    const kd='추가학습 · '+(hc['결석']?'결석 보강':'과제 보완');   // (1107 v62) 결석 2시간 · 도착~완료 동안 보완 체크 · 완료 뒤 보완 후 이행률
+    const ht=`${hc['결석']?'결석 보강(2시간)':'과제 보완'} 클리닉 · ${hc['회차']} 회차 이행 ${hc['이행률']??'-'}%${hc['보완후']!=null?' → 보완 후 '+hc['보완후']+'%':''}`;
+    out.push(hc['상태']==='완료'?`<span class="ac ok" title="${esc(ht)}">${kd} 완료 ✓${hc['보완후']!=null?' '+(hc['이행률']??'-')+'→'+hc['보완후']+'%':''}</span>`
+      :hc['상태']==='도착'?`<span class="ac" title="${esc(ht)}">${kd} 중 (클리닉실)</span>`
+      :hc['상태']==='예약'?`<span class="ac" title="${esc(ht)}">${kd} ${fmtDue(hc['예약'])}</span>`
+      :hc['상태']==='예약대기'?`<span class="ac bad" title="${esc(ht)}">${kd} 대상 · 예약 전</span>`:'');
+  }
+  return `<div class="recent autoline">${out.join('')}</div>`;
+}
+/* 빈 칸 자동 채움 — 손으로 적은 값은 건드리지 않는다.
+   이행률 = 오늘 마감 써킷 묶음의 이행률(마감 지남 · 연장 아님). 점수(리뷰 모드) = 리뷰 확실 정답 수.
+   ⚠ (0904 규칙 그대로) 오늘 행이 이미 있는 학생(출결 찍힘)만 저장한다 — 반 버튼만 눌러도 행이 생기면
+   대시보드 추이가 꺾인다. 나머지는 칸에만 채워 두고, 출결을 찍는 순간 그 카드의 save 가 같이 올린다. */
+function applyAuto(){
+  csRoot().querySelectorAll('#students .stu').forEach(c=>{
+    const id=c.dataset.id;let put=false;
+    const inp=c.querySelector('[data-f="이행률"]'), v=autoRate(id);
+    if(inp&&v!==null){
+      inp.title=(HWRB?'과제 이행 자동값 '+v+'% ('+hwrParts(HWR[id])+')':'써킷 체크 자동값 '+v+'%')+' — 손으로 고치면 그 값이 남는다';
+      if(inp.value.trim()===''){inp.value=String(v);inp.classList.add('autov');put=true;}
+    }
+    const sc=c.querySelector('[data-f="점수"]'), r=autoReview(id);
+    /* (1107 유강 "실제 점수랑 점수칸이 다르다") 예전엔 빈 칸만 채웠다 — 리뷰 도중 콘솔을 열면 그때까지의 부분 점수가
+       저장되고(출결 찍힌 학생), 나중에 다시 열어도 칸이 차 있어 안 고쳐졌다. 리뷰는 폰 자동 채점이므로
+       이 화면에서 손으로 고친 칸(dataset.manual)만 남기고, 저장값이 자동값과 다르면 자동값으로 맞춘다. */
+    if(isMOCK()){                                 // (1112) 모의테스트 = 폰 제출 점수 그대로(손으로 고친 칸은 둔다)
+      const ms=mockScore(id);
+      if(sc&&ms!=null&&!c.classList.contains('na')&&sc.dataset.manual!=='1'&&sc.value.trim()!==String(ms)){
+        sc.value=String(ms);sc.classList.add('autov');sc.title='모의테스트 폰 제출 자동 점수';put=true;}
+      if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
+      return;
+    }
+    const v10a=r?reviewScore(r).toFixed(1):'';
+    if(sc&&r&&!c.classList.contains('na')&&sc.dataset.manual!=='1'&&sc.value.trim()!==v10a&&!(Math.max(0,parseInt($('c_nq').value)||0))){
+      const v10=reviewScore(r);
+      sc.value=v10.toFixed(1);sc.classList.add('autov');sc.title='리뷰테스트 자동값 — 10점 환산 (확실 정답 '+r.ok+'/'+reviewN()+')';
+      const sm=c.querySelector('.sum');if(sm)sm.textContent=v10.toFixed(1);
+      put=true;
+    }
+    if(put&&LOGMAP[id]&&LOGMAP[id]['출결'])save(id,c);
+  });
+}
+/* '최근 점수'는 같은 만점끼리만 비교한다 — 리뷰(10점)와 기출(100점)을 한 통에 담으면
+   첫 기출이 무조건 '오름세'로 찍히고(0831 유강), 반대로 기출 뒤 첫 리뷰는 전원 '급락'으로
+   잡혀 코멘트 자동생성이 막힌다. RECENT 원소 = {v:점수, gt:기출여부}. */
+const isGTtype=t=>['기출테스트','모의테스트'].includes(String(t||'').trim());   // (1112) 모의테스트도 100점 만점 — 최근 점수 비교를 기출과 한 통으로
+function recentOf(id){const cur=isGT();return (RECENT[id]||[]).filter(r=>r.gt===cur).map(r=>r.v);}
+let CHW='';   // 지금 반 전체에 걸려 있는 공통 과제 (개별과제 판정 기준)
+/* 동시 입력(0930 유강 — 조교가 이행률 적는 동안 내가 출석·시험정보를 적으면?)
+   저장은 카드/머리 전체를 읽어 upsert 한다. 화면은 반을 열 때 한 번 읽은 값이라,
+   **읽을 때 이미 있던 값**을 남이 고친 뒤 내가 같은 행의 다른 칸을 건드리면 내 화면의 옛 값이
+   같이 올라가 남의 수정을 되돌렸다. → 기준값(마지막으로 읽거나 저장한 값)과 **같은 칸은 보내지 않는다.**
+   upsert 페이로드에 키가 없으면 ON CONFLICT UPDATE 가 그 칸을 안 건드린다 — 남의 값이 산다.
+   실제로 바뀐 칸끼리 겹치면(같은 학생·같은 칸) 그땐 나중 저장이 이긴다. */
+let CLPREV={};   // 오늘 class_log 의 진도원문·이번과제·테스트유형 기준값
+let HDR0={진도:'',과제:''};   // 반을 열 때 머리칸(진도·공통과제)에 그려진 값 — '내가 머리를 고쳤나' 판정
+let CPROG='';    // 지금 반 전체에 걸린 진도 (CHW 의 진도판) — 진도 고칠 때 학생 행도 옮긴다
+function sameVal(a,b){
+  const x=a==null?'':String(a).trim(), y=b==null?'':String(b).trim();
+  if(x===y)return true;
+  if(x!==''&&y!==''&&!isNaN(x)&&!isNaN(y))return Number(x)===Number(y);
+  return false;
+}
+/* row 에서 기준값(base)과 같은 칸을 뺀다. null 은 그대로 둔다(가드·미응시 규칙이 쓰는 뜻이 있다).
+   keep = 키·표시용 칸(항상 보냄). 반환 = 뺀 칸 이름 목록(테스트용). */
+function dropUnchanged(row,base,keep){
+  const out=[];
+  Object.keys(row).forEach(k=>{
+    if(keep.includes(k)||row[k]===null)return;
+    if(sameVal(row[k],base[k])){delete row[k];out.push(k);}
+  });
+  return out;
+}
+// 지난 과제가 반 공통과 다른 학생만 이름칸에 한 줄 — 과제검사 기준이 사람마다 다르다는 걸 눈으로 알아야 한다
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function prevHwLine(id){
+  const v=(PREVHW_MAP[id]||'').trim();
+  if(!v||v===(PREVHW||'').trim())return '';
+  const d=(PREVHW_DATE[id]||'').slice(5);
+  return `<div class="recent indhw" style="margin-left:0">📌 지난과제(개별${d?' '+d:''}): ${esc(v).replace(/\n/g,' / ')}</div>`;
+}
+const TTCACHE={};
+/* 시간표를 요일별로 들고 있는다 — 다음 수업일 계산과 '수업 전/후' 판정이 같은 표를 본다.
+   시작·끝은 시(hour) 숫자다(예: 18, 20). */
+async function loadTT(cls){
+  if(!(cls in TTCACHE)){
+    const {data}=await sb.from('timetable').select('요일,시작,끝').eq('반',cls);
+    const byDow={};(data||[]).forEach(r=>{byDow[r['요일']]=r;});
+    TTCACHE[cls]={dows:new Set(Object.keys(byDow)),byDow};
+  }
+  return TTCACHE[cls];
+}
+const hourOf=v=>{const m=String(v==null?'':v).match(/(\d{1,2})/);return m?parseInt(m[1],10):null;};
+/* 추가학습이 '언제'인지 판정한다 — 코멘트 표현이 여기서 갈린다(0814 유강).
+     before : 오늘 수업 전에 등원해서 이미 하고 왔다   → 과거형
+     after  : 오늘 수업이 끝난 뒤 남아서 한다          → 오늘 남아서
+     future : 다음 수업일 이후로 잡아 두었다           → 예정
+   기준은 추가학습 시작시각 vs 그날 수업 끝시각이다. 시간을 안 적었으면 수업 전(기본 규칙이
+   수업 전 2시간이라)으로 본다. 날짜가 비어 있으면 판정하지 않는다(null). */
+function clinicWhen(dateStr,timeStr){
+  const today=vDay();
+  if(!dateStr)return null;
+  if(dateStr>today)return 'future';
+  if(dateStr<today)return 'before';                     // 지난 날짜 = 이미 지나간 일
+  const tt=TTCACHE[CLS];
+  const dw=DAYS[new Date(today+'T00:00:00').getDay()];
+  const end=tt&&tt.byDow&&tt.byDow[dw]?hourOf(tt.byDow[dw]['끝']):null;
+  const start=hourOf(String(timeStr||'').split('-')[0]);
+  if(start==null||end==null)return 'before';
+  return start>=end?'after':'before';
+}
+/* 다음 수업일 + 반별 추가학습 기본 시간 규칙 */
+async function nextClinic(cls){
+  const {dows}=await loadTT(cls);
+  if(!dows.size)return null;
+  for(let i=1;i<=14;i++){
+    const d=new Date(Date.now()+i*864e5), dw=DAYS[d.getDay()];
+    if(dows.has(dw)){
+      const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      let time='';
+      // 0812 유강: A반은 18-20, S반은 16-18 로 교체. 토요일 고2A 는 수업 자체가 낮이라 예외 유지.
+      if(cls==='고1A')time='18-20';
+      else if(cls==='고1S')time='16-18';
+      else if(cls==='고2A')time=dw==='토'?'14-16':'18-20';
+      else if(cls==='고1T')time=dw==='토'?'12-15':dw==='일'?'15-18':'';
+      return {date,dow:dw,time};
+    }
+  }
+  return null;
+}
+async function selectClass(cls){
+  CLS=cls;
+  // 주소에 반을 싣는다(#cs-console/고1A) — 새로고침·뒤로가기가 같은 반을 연다. replaceState 라 라우터는 안 돈다
+  if(window.CS_ROUTED){const h='#cs-console/'+cls;if(location.hash!==h)history.replaceState(null,'',h);}
+  if($('v_date')&&!$('v_date').value)$('v_date').value=todayStr();
+  if($('v_warn'))$('v_warn').style.display=(vDay()===todayStr())?'none':'';
+  document.querySelectorAll('#classbtns button').forEach(b=>b.classList.toggle('on',b.dataset.cls===cls));
+  $('consolebody').classList.remove('hidden');
+  const today=vDay();
+  const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+  unlockConsole();
+  const RES=await Promise.all([
+    sb.from('students').select('*').eq('상태','재원'),
+    sb.from('daily_log').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_sessions').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_log').select('*').eq('반',cls).eq('날짜',today),
+    sb.from('class_log').select('날짜,진도원문,이번과제,테스트유형').eq('반',cls).lt('날짜',today).order('날짜',{ascending:false}).limit(1),
+    sb.from('daily_log').select('학생ID,날짜,점수,특이사항,이번과제,테스트유형').eq('반',cls).gte('날짜',since).lt('날짜',today).order('날짜',{ascending:false}),
+  ]);
+  /* ⛔ 0813 사고의 급소였던 자리다. 예전엔 여기서 error 를 통째로 버리고 data(null)만 꺼내
+     빈 화면을 그렸다 — 세션 만료·RLS 거부·네트워크 어느 쪽이든 "데이터가 사라진" 얼굴이 된다.
+     그 위에서 출석 한 번만 다시 찍으면 빈 행이 서버를 덮었다. 이제 못 읽으면 잠근다. */
+  const bad=RES.find(r=>r&&r.error);
+  if(bad){lockConsole(bad.error.message||String(bad.error));return;}
+  const [{data:stu},{data:logs},{data:sess},{data:cl},{data:prev},{data:hist}]=RES;
+  {
+    const key=cls+'|'+today;
+    // '값이 들어 있는 행' 수로 센다. 출결만 찍힌 행은 아직 잃을 게 없다.
+    const filled=(logs||[]).filter(r=>r['점수']||r['문항점수']||r['답안']||r['이행률']||r['코멘트']||r['테스트상태']).length;
+    if(filled===0&&(LOADSEEN[key]||0)>0){
+      lockConsole('아까는 '+LOADSEEN[key]+'명분 입력이 있었는데 지금은 0건으로 돌아왔다. 서버 응답을 믿을 수 없어 잠갔다.');
+      return;
+    }
+    LOADSEEN[key]=Math.max(LOADSEEN[key]||0,filled);
+  }
+  STUDENTS=(stu||[]).filter(r=>((r['학년']||'')+(r['반']||''))===cls).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+  /* (1110 유강 "콘솔에서 학생이름 누르면 학생 포털 열리게") 학생 토큰 — portal_token 은 관리자(유강 계정)만 읽힌다. 조교 화면은 이름 그대로 */
+  PTOK={};
+  if(window.VS_OK&&STUDENTS.length){
+    try{
+      const td=new Date(Date.now()+9*36e5).toISOString().slice(0,10);
+      const {data:tk}=await sb.from('portal_token').select('"학생ID",토큰,대상,회수,만료일,발급일').in('학생ID',STUDENTS.map(x=>x['학생ID']));
+      (tk||[]).filter(t=>(t.대상||'학생')==='학생'&&!t.회수&&(!t.만료일||String(t.만료일)>=td)).forEach(t=>{
+        const o=PTOK[t['학생ID']]; if(!o||String(t.발급일||'')>String(o.발급일||''))PTOK[t['학생ID']]=t; });
+    }catch(e){}
+  }
+  LOGMAP={};(logs||[]).forEach(r=>LOGMAP[r['학생ID']]=r);
+  /* (1106 유강 "며칠 전부터 안 지워지고 있다") 특이사항(⚑)은 직전 수업 1회분만 — 그 반의 오늘 전 마지막 수업일.
+     (1021~1105 는 최근 14일이라, 한 번 적은 메모가 2주 동안 수업마다 떠 있었다.) */
+  const prevDay=(hist||[]).reduce((m,r)=>{const d=String(r['날짜']||'');return d<today&&d>m?d:m;},'');
+  RECENT={};NOTES={};PREVHW_MAP={};PREVHW_DATE={};(hist||[]).forEach(r=>{
+    if(r['점수']&&String(r['날짜']||'')>=CYCLE_START)(RECENT[r['학생ID']]=RECENT[r['학생ID']]||[]).push({v:r['점수'],gt:isGTtype(r['테스트유형'])});
+    if(r['특이사항']&&prevDay&&String(r['날짜']||'')===prevDay)(NOTES[r['학생ID']]=NOTES[r['학생ID']]||[]).push(r['날짜'].slice(5)+' '+r['특이사항']);
+    if(r['이번과제']&&!(r['학생ID'] in PREVHW_MAP)){PREVHW_MAP[r['학생ID']]=r['이번과제'];PREVHW_DATE[r['학생ID']]=r['날짜']||'';}
+  });
+  PREVHW=(prev&&prev[0]&&prev[0]['이번과제'])||'';
+  NEXT=await nextClinic(cls);
+  await loadAuto(cls,today);
+  $('c_prevhw').textContent=PREVHW||'— (직전 수업 기록 없음)';
+  const isClosed=(sess&&sess[0]&&sess[0]['상태']==='closed');
+  $('sessionstate').textContent=isClosed?'마감됨':'진행중';
+  $('closeguide').style.display=isClosed?'':'none';   // 마감 후 흐름 안내 (0813)
+  const setTest=v=>{
+    const sel=$('c_test');
+    if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o);}
+    sel.value=v||'';TESTPREV=sel.value;   // (1101) 미시행 켜고 끄기 비교 기준
+  };
+  CLPREV=(cl&&cl[0])?{'진도원문':cl[0]['진도원문']||'','이번과제':cl[0]['이번과제']||'','테스트유형':cl[0]['테스트유형']||''}:{};
+  if(cl&&cl[0]){
+    $('c_progress').value=cl[0]['진도원문']||'';$('c_hw').value=cl[0]['이번과제']||'';setTest(cl[0]['테스트유형']);
+  }else if((PLANFILL=await mockFill(cls,today))||(PLANFILL=await planFill(cls,today))){
+    /* (1109 유강 "진도계획에 따라 콘솔에 진도랑 과제 세팅") 오늘 기록이 없으면 진도계획(hw_assign 공통 세트)으로 채운다.
+       계획이 없는 날만 아래의 '직전 수업 값' 제안으로 내려간다. */
+    $('c_progress').value=PLANFILL.진도;$('c_hw').value=PLANFILL.mock?((prev&&prev[0]&&prev[0]['이번과제'])||''):PLANFILL.과제;
+    if(PLANFILL.mock)setTest('모의테스트');   // (1119) 모의 날
+    else setTest(prev&&prev[0]&&!['미시행','기출테스트','모의테스트'].includes(prev[0]['테스트유형'])?prev[0]['테스트유형']:'');   // (1113) 기출테스트는 선택지에서 뺐다 — 다음 수업으로 안 넘긴다 · (1119) 모의테스트도 안 넘김
+  }else if(prev&&prev[0]){
+    // 오늘 기록이 없으면 직전 수업 값을 제안 기본값으로 (수정해서 쓰기)
+    // (1119) 직전 수업이 모의테스트였으면 진도를 넘기지 않는다 — 11/18 고1A 가 11/16 '모의 1회 초당고'를 그대로 물려받은 사고
+    $('c_progress').value=/^모의테스트/.test(prev[0]['진도원문']||'')?'':(prev[0]['진도원문']||'');
+    $('c_hw').value=prev[0]['이번과제']||'';
+    setTest(['미시행','기출테스트'].includes(prev[0]['테스트유형'])?'':prev[0]['테스트유형']);   // (1101) 미시행은 다음 수업 기본값으로 안 넘긴다
+  }else{
+    $('c_progress').value='';$('c_hw').value='';setTest('');
+  }
+  /* CHW = '지금 반 전체에 걸려 있는 공통 과제'. 개별과제 칸의 판정 기준이 이것이다.
+     예전엔 입력칸(c_hw)의 현재 값과 비교했는데, **공통 과제를 나중에 고치면** 이미 저장된
+     학생 행(옛 공통 텍스트)이 죄다 '개별과제'로 보였다 — 적지도 않은 지난 과제가 칸에
+     들어가 있는 사고(0812 유강). CHW 를 따로 들고, 공통이 바뀌면 행까지 같이 옮긴다. */
+  CHW=$('c_hw').value.trim();
+  CPROG=$('c_progress').value.trim();
+  HDR0={진도:$('c_progress').value.trim(),과제:CHW};
+  /* 이미 생긴 잔재 정정 — '이번과제 == 직전 수업 과제'인데 오늘 공통은 다르다면
+     프리필된 값 그대로 저장된 행이다(개별 지시가 아니다). */
+  if(CHW&&PREVHW&&CHW!==PREVHW.trim()){
+    const stale=Object.keys(LOGMAP).filter(k=>(LOGMAP[k]['이번과제']||'').trim()===PREVHW.trim());
+    if(stale.length){
+      const {error}=await sb.from('daily_log').update({'이번과제':CHW}).eq('반',cls).eq('날짜',today).in('학생ID',stale);
+      if(!error){stale.forEach(k=>LOGMAP[k]['이번과제']=CHW);
+        toast('개별과제 칸에 남은 지난 과제 '+stale.length+'건을 공통으로 정정');}
+    }
+  }
+  autoGrow($('c_progress'));autoGrow($('c_hw'));
+  /* (1029 리뉴얼) 종이 리뷰 채점 폐지 — 리뷰는 폰 자동. 문항 칸은 기출테스트(정답표)에서만 생긴다. */
+  $('c_nq').value=0;
+  // 기출 정답표 복원 — 문항수 복원보다 뒤에 둔다(기출이면 정답 개수가 문항수를 이긴다)
+  gtRestore(cl&&cl[0]);
+  await mkcLoad(cls,today);
+  if(MKC&&!isMOCK()&&(!(cl&&cl[0]&&cl[0]['테스트유형'])||cl[0]['테스트유형']==='기출테스트')){setTest('모의테스트');}   // (1113 유강 '기출은 삭제') 모의 날에 남아 있던 기출테스트도 모의테스트로   // (1112) 오늘 모의가 올라와 있고 아직 안 정했으면 모의테스트로
+  $('mk_setup').classList.toggle('hidden',!isMOCK());if(isMOCK())mkcDraw();
+  $('clogmark').style.display='none';
+  renderStudents();
+}
+function allPresent(){
+  csAll('.stu').forEach(d=>{
+    const b=d.querySelector('.seg button[data-v="출석"]');
+    if(!d.querySelector('.seg button[class*=a]')) b.click();
+  });
+}
+/* ══ 기말 모의테스트 (1112 유강 "콘솔 사용 안 할 거야. 학생이 폰으로만 답 입력" · "내가 액션해야 열리게") ═══════════
+ * 그날 반의 mock_exam(staff_mock_status)이 있으면 테스트 칸 기본값 = 모의테스트. 정답 입력·PT 버튼은 없다(채점·개별과제는 자동).
+ * 여기서 [답안 입력 열기]를 눌러야 학생 포털에 입력 카드가 뜬다(staff_mock_gate). 점수 칸은 제출 점수로 자동. 자세한 건 #mock. */
+let MKC=null;
+function isMOCK(){return $('c_test').value.trim()==='모의테스트';}
+function mockScore(id){const x=MKC&&(MKC.학생||[]).find(s=>s['학생ID']===id);return x&&x.점수!=null?Number(x.점수):null;}
+async function mkcLoad(cls,day){
+  MKC=null;
+  try{const {data}=await sb.rpc('staff_mock_status',{p_days:3});MKC=(data||[]).find(m=>m.반===cls&&String(m.날짜)===day)||null;}catch(e){}
+}
+function mkcFmt(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function mkcDraw(){
+  const row=$('mk_row');if(!row)return;
+  if(!MKC){row.innerHTML='<span class="lbl">오늘 이 반에 올라온 모의테스트 시험지가 없다 — 시험지를 publish 하면 여기 뜬다</span>';return;}
+  const now=Date.now(),o=MKC.열림&&new Date(MKC.열림).getTime(),c=MKC.닫힘&&new Date(MKC.닫힘).getTime(),on=o&&o<=now&&(!c||c>now);
+  const st=(MKC.학생||[]).filter(x=>x.재원||x.제출시각),sub=st.filter(x=>x.제출시각);
+  row.innerHTML='<b>기말 모의테스트 '+MKC.회차+'회</b><span class="lbl">'+esc(MKC.시험지명)+'</span>'
+    +'<span class="badge" style="'+(on?'background:#1f6f43;color:#fff':'')+'">'+(on?'학생 입력 열림 · '+mkcFmt(MKC.닫힘)+'까지':o?'닫힘 · '+mkcFmt(MKC.닫힘):'학생 입력 닫힘')+'</span>'
+    +'<span class="lbl">제출 <b>'+sub.length+'</b> / '+st.length+'명</span><span class="cs-sp"></span>'
+    +(on?'<button class="ghost sm" data-mkcg="0">답안 입력 닫기</button>':'<button class="pill" data-mkcg="1">'+(o?'다시 열기':'답안 입력 열기')+'</button>')
+    +'<button class="ghost sm" data-mkcre="1">새로고침</button><a class="ghost sm" href="#mock" style="text-decoration:none">자세히 ↗</a>';
+  row.querySelectorAll('[data-mkcg]').forEach(b=>b.onclick=async()=>{
+    const open=b.dataset.mkcg==='1';
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=open?'학생 입력 열까요? 한 번 더':'닫을까요? 한 번 더';return;}   // alert 금지 — 두 번 누르기
+    b.disabled=true;
+    const {data,error}=await sb.rpc('staff_mock_gate',{p_ban:MKC.반,p_day:MKC.날짜,p_open:open});
+    if(error||!data||data.오류){toast((error&&error.message)||(data&&data.오류)||'실패');b.disabled=false;return;}
+    toast(open?'학생 입력을 열었다 — 포털 오늘 탭에 카드가 뜬다':'학생 입력을 닫았다');
+    await mkcLoad(MKC.반,String(MKC.날짜));mkcDraw();
+  });
+  const re=row.querySelector('[data-mkcre]');if(re)re.onclick=async()=>{await mkcLoad(MKC.반,String(MKC.날짜));mkcDraw();applyAuto();};
+}
+function isNA(log){const t=log['테스트상태']||'';return t==='미응시'||t==='미시행';}
+/* (1101 유강) 테스트 칸 '미시행' = 반 전체가 오늘 테스트를 안 봤다. 학생 행은 미응시처럼 비우되 상태는 '미시행'으로 남겨
+   리포트가 '미응시'(학생 탓)가 아니라 '이번 수업 미시행'으로 그린다. 다음 수업 기본값으로 넘어가지 않는다. */
+function isNOTHELD(){return $('c_test').value.trim()==='미시행';}
+let TESTPREV='';
+/* ── 지각응시 (0910) ─────────────────────────────────────────────────────
+   회차 수업일에 못 본 학생(결석·학교 시험 일정)이 나중에 같은 시험지를 본다.
+   class_log 의 시험지명·기출정답은 반×날짜에 하나뿐이라 채점은 회차 날짜로 넣을 수밖에 없다.
+   실제 본 날은 daily_log.응시일(schema_v21)에 남긴다 — 출결은 실제대로 둔다(결석은 결석).
+   통계에서는 gt_pool 이 지각자를 회차 평균·편차에서 뺀다. 정본: 지시서_지각응시_처리_0910.md */
+function lateDays(log){
+  const d=log&&log['응시일'];if(!d)return 0;
+  const n=(Date.parse(String(d).slice(0,10))-Date.parse(vDay()))/864e5;
+  return (isFinite(n)&&n>0)?Math.round(n):0;
+}
+function lateBadge(log){
+  const n=lateDays(log);if(!n)return '';
+  return `<span class="late" title="보충 응시 — ${esc(String(log['응시일']).slice(0,10))} (+${n}일). 눌러서 고치거나 지운다">늦 +${n}</span>`;
+}
+/* 점수 칸에 붙는 토글. 미응시는 '0점'이 아니다 — 점수·문항점수를 비우고 상태만 남긴다.
+   gen10 은 점수가 없으면 '미응시'로 그리고, 반평균 계산에서도 빠진다. */
+function naBtnHtml(log){
+  const on=isNA(log);
+  return `<button type="button" class="nabtn${on?' on':''}" data-f="미응시" data-on="${on?1:0}" title="지각·조퇴 등으로 시험을 안 본 경우">미응시</button>`;
+}
+/* ── (0908 대공사) 문항 채점 칸은 버튼이 아니라 **입력칸**이다. 2·1·0 을 치면 다음 칸으로 간다.
+   값은 value 와 dataset.s 에 같이 둔다 — 저장·코멘트·마감이 전부 dataset.s 를 읽는다(버튼 시절과 같은 계약). */
+function itemVals(log){
+  // "2,1,0" 또는 구형 "1:2;2:1;3:0" 둘 다 지원
+  const raw=isNA(log)?'':(log['문항점수']||'');
+  let v=[];
+  if(raw.includes(':')){raw.split(';').forEach(p=>{const[a,b]=p.split(':');if(a&&b!==undefined)v[parseInt(a)-1]=b.trim();});}
+  else v=raw.split(',').map(x=>x.trim());
+  return v;
+}
+function itemCellsHtml(log,nq){
+  const v=itemVals(log);
+  return Array.from({length:nq},(_,i)=>{
+    const s=v[i]!==undefined&&v[i]!==''?v[i]:'';
+    return `<td class="q"><input class="it${s!==''?' s'+s:''}" data-i="${i}" data-s="${s}" value="${s}" maxlength="1" inputmode="numeric" autocomplete="off" title="${i+1}번 · 2 정답 1 부분 0 오답"></td>`;
+  }).join('');
+}
+function itemSet(el,s){el.dataset.s=s;el.value=s;el.classList.remove('s0','s1','s2');if(s!=='')el.classList.add('s'+s);}
+function itemSum(d){
+  const vals=[...d.querySelectorAll('.it')].map(x=>x.dataset.s);
+  const any=vals.some(v=>v!=='');
+  const sum=vals.reduce((a,v)=>a+(v===''?0:parseFloat(v)),0);
+  const sumEl=d.querySelector('.sum');if(sumEl)sumEl.textContent=d.classList.contains('na')?'미응시':(any?sum:'—');
+  if(any){const sc=d.querySelector('[data-f="점수"]');if(sc)sc.value=sum;}
+}
+
+/* ══ 기출테스트 모드 (0823) ═══════════════════════════════════════════════
+ * 테스트유형='기출테스트' + 정답표가 있으면 학생 표의 정오 탭이 답 입력 칸으로 바뀐다.
+ * 정답표(정답·배점·시험지명)는 반×날짜 class_log 에 저장·복원된다.
+ * 판정·직렬화는 위 PARSE 구간의 순수함수 — 여기는 DOM 배선만.                        */
+let GTKEY=null, GTPREV={};
+function isGT(){return $('c_test').value.trim()==='기출테스트';}
+function gtStat(){
+  const st=$('gt_stat');if(!st)return;
+  if(!GTKEY){st.textContent='정답을 넣으면 학생 표가 답 입력 칸으로 바뀐다.';return;}
+  const sum=gtPtsSum(GTKEY.pts), man=GTKEY.ans.filter(gtIsManual).length;
+  const npts=GTKEY.pts.filter(p=>p!=null).length;
+  st.innerHTML=GTKEY.ans.length+'문항'+(man?' · 수동채점(M) '+man:'')
+    +' · 배점 '+(npts<GTKEY.ans.length
+      ?'<span style="color:#B26A00">'+npts+'/'+GTKEY.ans.length+'개만 입력됨 — 빈 문항은 0점 처리된다</span>'
+      :(Math.abs(sum-100)<0.05?'합 <b>100</b>':'<span style="color:#B26A00">합 '+sum+' — 100이 아니다(학교 배점 확인)</span>'));
+}
+function gtKeyUpdate(){
+  GTKEY=isGT()?gtParseKey($('gt_ans').value,$('gt_pts').value):null;
+  if(GTKEY)$('c_nq').value=GTKEY.ans.length;   // 문항 수 = 정답 개수 (기출 20~25문항)
+  gtStat();renderStudents();saveClassLog();
+}
+function testChanged(){
+  const was=TESTPREV==='미시행', now=isNOTHELD();
+  TESTPREV=$('c_test').value.trim();
+  $('gt_setup').classList.toggle('hidden',!isGT());
+  $('mk_setup').classList.toggle('hidden',!isMOCK());if(isMOCK()){mkcDraw();applyAuto();}
+  $('gt_done2row').classList.toggle('hidden',!isGT());   // (0831) 마감 위 같은 버튼
+  if(isGT())gtFillPick();
+  gtKeyUpdate();
+  /* (1101) 미시행 켜기 = 전원 미응시 토글 on(저장은 '미시행') · 끄기 = 미시행이던 행만 되돌린다 */
+  if(now||was)csAll('.stu').forEach(d=>{
+    const b=d.querySelector('[data-f="미응시"]');if(!b)return;
+    const on=b.dataset.on==='1';
+    if(now&&!on)b.click();
+    else if(now&&on)save(d.dataset.id,d);                       // 이미 미응시였던 학생도 '미시행'으로
+    else if(was&&on&&((LOGMAP[d.dataset.id]||{})['테스트상태']==='미시행'))b.click();
+  });
+}
+/* ── [채점 확정 → PT 만들기] (0831 개편 · 0902 자평 체인 · 0912 재제작)
+ * 흐름: 이 버튼 → job_queue(진단발송) 를 넣으면 **v14 트리거가 가로채** 자평(gt_eval) 낸 학생마다
+ *      기출과제 잡을 편다(잡 종류 이름 '진단발송'은 옛 이름 — 개념 진단 세트는 파라미터 진단:true 일 때만)
+ *      → pt.yml/pt_worker → circuit_hw --자평 → PDF → Storage → 포털.
+ * 늦게 자평 낸 학생은 제출 즉시 잡이 선다(gt_eval 트리거). 자평 안 낸 학생은 [마감] 백스톱(OMR 기준).
+ * 다시 누르면 = 재제작(채점을 고친 뒤). 같은 반·날짜 잡이 요청/진행 중이면 중복 적재 금지. */
+async function gtDone(){
+  if(!isGT()||!GTKEY){toast('기출테스트 모드에서 정답을 먼저 넣어라');return;}
+  const src=$('gt_src').value.trim();
+  if(!src){toast('시험지명을 넣어라 — 어느 기출인지 몰라 진단을 못 만든다');return;}
+  /* (0907) 채점칸이 빈 학생이 있으면 여기서 멈춘다 — 빈칸은 문항점수에 안 남아 PT·진단이
+     그 문항을 통째로 놓친다(0905 이정후 17·18번, 박시원 14~18번). */
+  {
+    const ms=gtMissing();
+    if(ms.length&&!confirm('채점칸이 빈 학생이 있다:\n\n'+ms.map(x=>'  '+x.name+' — '+x.labels.join(',')+'번').join('\n')
+      +'\n\n빈칸은 총점에서만 0점으로 깎이고 "오답"으로는 안 남는다.\n이대로 보내면 그 문항이 PT·진단에서 빠진다.\n\n그래도 진행할까?'))return;
+  }
+  const today=vDay();
+  /* (0912 유강) 재제작 — 이 버튼은 v14 트리거가 가로채 "자평 낸 학생별 PT 잡"을 펼치는데, 학생별 잡은
+     멱등(같은 반·날짜·학생이 있으면 어떤 상태든 안 만든다)이라 **서술형 채점을 나중에 넣고 다시 눌러도
+     PT가 다시 안 만들어졌다**(0912 고2A: #403 이 9명 펼친 뒤 #415~417 은 전부 '적재 0').
+     → 이미 만들어진 학생별 잡이 있으면 묻고, 그 잡들을 상태=요청 으로 되돌려 서버(pt.yml)가 다시 굽게 한다.
+       같은 폴더·파일명이라 Storage 키가 같고(x-upsert) 포털 링크도 그대로 새 PDF 를 가리킨다.
+       job_queue update 는 admin_all 정책(관리자)만 통과한다 — 조교 계정이면 0행이라 안내한다. */
+  const {data:stu}=await sb.from('job_queue').select('id,상태,파라미터').eq('종류','기출과제')
+    .contains('파라미터',{'반':CLS,'날짜':today}).not('파라미터->>학생','is',null);
+  const busy=(stu||[]).filter(j=>['요청','처리중','진행'].includes(j['상태']));
+  if(busy.length){toast('PT '+busy.length+'명분이 아직 만드는 중 — 끝난 뒤 다시 눌러라(작업 현황 ⚙)');return;}
+  let redo=0;
+  if((stu||[]).length){
+    const names=stu.map(j=>j['파라미터']['학생']).sort().join(', ');
+    if(!confirm('이 반·날짜 PT가 이미 '+stu.length+'명분 만들어져 있다:\n  '+names
+      +'\n\n채점(서술형 등)을 고쳤으면 **다시 만든다** — 기존 PDF 는 새 것으로 바뀌고 포털 링크는 그대로다.'
+      +'\n아직 자평을 안 낸 학생은 자평이 들어오는 대로 새로 선다.\n\n다시 만들까?'))return;
+    const {data:upd,error:ue}=await sb.from('job_queue').update({'상태':'요청','결과':null,'메시지':null,'시작시각':null,'완료시각':null,
+        '요청시각':new Date().toISOString(),'요청자':'콘솔재제작'}).in('id',stu.map(j=>j.id)).select('id');
+    if(ue){toast('재제작 요청 실패: '+ue.message);return;}
+    redo=(upd||[]).length;
+    if(!redo){toast('재제작은 관리자 계정만 된다(조교 계정은 잡을 되돌릴 권한이 없다)');return;}
+    const {error:we}=await sb.rpc('wake_actions',{'워크플로':'pt.yml'});   // update 는 insert 트리거를 안 깨운다 — 직접 깨운다(안 되면 3분 크론)
+    if(we)console.warn('wake_actions',we.message);
+  }
+  /* 자평은 냈는데 아직 잡이 없는 학생(늦게 낸 학생) — 진단발송 잡을 넣으면 v14 트리거가 그 학생 몫만 새로 펼친다. */
+  const {data:ins,error}=await sb.from('job_queue').insert({'종류':'진단발송','상태':'요청','요청자':'콘솔점수완료',
+    '파라미터':{'반':CLS,'날짜':today,'시험지명':src}}).select('결과').single();
+  const fresh=(ins&&ins['결과']&&ins['결과']['적재'])||0;
+  toast(error?'요청 실패: '+error.message
+             :(redo?'PT 재제작 '+redo+'명':'PT 만들기')+(fresh?' + 신규 '+fresh+'명':(redo?'':' — 자평 낸 학생이 아직 없다(자평 제출 즉시 선다)'))
+              +' 요청됨 — 학생당 2~3분, 작업 현황(⚙)에서 PDF');
+  jobsRefresh();
+}
+/* ── 시험지 자동 로드 (0824) — 문항DB(item_index) 자료종류='기출' 이 정본.
+   적재는 load_exam_bank.py (기출_DB md → 문항인덱스.csv → inbox → DB). staff 도 읽기 가능. */
+let GTBANK=null;
+async function gtBank(){
+  if(GTBANK)return GTBANK;
+  /* 0911: 기출 행이 1,326행이 되자 Supabase 기본 상한(1,000행)에 잘려 뒤쪽 학교(초당고 등)가
+     드롭다운에서 사라졌다 → app.js fetchAll 처럼 1,000행씩 range 로 끝까지 읽는다. */
+  const data=[];const page=1000;
+  for(let from=0;;from+=page){
+    const {data:d,error}=await sb.from('item_index')
+      .select('자료명,문항번호,배점,정답,정답값').eq('자료종류','기출')
+      .order('자료명').order('문항번호').range(from,from+page-1);
+    if(error){toast('기출 목록을 못 읽었다: '+error.message);return {};}
+    data.push(...(d||[]));
+    if(!d||d.length<page)break;
+  }
+  const by={};data.forEach(r=>{(by[r['자료명']]=by[r['자료명']]||[]).push(r);});
+  Object.values(by).forEach(a=>a.sort((x,y)=>parseFloat(x['문항번호'])-parseFloat(y['문항번호'])));
+  GTBANK=by;
+  return by;
+}
+/* 자료명 규칙(0824 유강): 시험메타 시험ID 뼈대 — 학교_고N_연도_학기_구분(_이본).
+   드롭다운은 학기 그룹(optgroup)으로 묶는다. 기출은 원래 지난 학기 것이므로
+   '지난학기' 대신 시즌 기준(0825 유강): 지금 대비 중인 학기·구분과 같은 그룹에만
+   '이번 시즌 대비'를 붙이고 최상단으로 올린다. 시즌 판정: 3~4월=1학기 중간,
+   5~7월=1학기 기말, 8~10월=2학기 중간, 11~2월=2학기 기말. */
+function gtSeasonNow(){
+  const m=new Date().getMonth()+1;
+  return (m>=3&&m<=4)?'1중간':(m>=5&&m<=7)?'1기말':(m>=8&&m<=10)?'2중간':'2기말';
+}
+function gtGroupOf(nm){
+  const m=/_(\d{4})_([12])_(기말|중간)/.exec(nm);
+  if(!m)return {k:0,label:'기타'};
+  const v=parseInt(m[1],10)*10+parseInt(m[2],10);
+  const hit=(m[2]+m[3])===gtSeasonNow();
+  return {k:v+(hit?100000:0),label:m[1]+' '+m[2]+'학기 '+m[3]+(hit?' · 이번 시즌 대비':'')};
+}
+function gtDispName(nm){
+  const m=/^(.+?)_(고[123])_\d{4}_[12]_(?:기말|중간)(?:_(.+))?$/.exec(nm);
+  return m?(m[1]+' '+m[2]+(m[3]?' · '+m[3]:'')):nm;
+}
+async function gtFillPick(){
+  const by=await gtBank();
+  const sel=$('gt_pick');if(!sel)return;
+  const cur=sel.value;
+  const groups={};
+  Object.keys(by).forEach(n=>{
+    const g=gtGroupOf(n);
+    (groups[g.label]=groups[g.label]||{k:g.k,names:[]}).names.push(n);
+  });
+  let html='<option value="">— 직접 입력</option>';
+  Object.keys(groups).sort((a,b)=>groups[b].k-groups[a].k).forEach(lb=>{
+    html+='<optgroup label="'+esc(lb)+'">'
+      +groups[lb].names.sort((a,b)=>a.localeCompare(b,'ko'))
+        .map(n=>'<option value="'+esc(n)+'">'+esc(gtDispName(n))+'</option>').join('')
+      +'</optgroup>';
+  });
+  sel.innerHTML=html;
+  // 시험지명이 은행 이름과 같으면 선택 상태도 맞춰 준다 (재진입 복원)
+  sel.value=cur||((($('gt_src').value.trim()) in by)?$('gt_src').value.trim():'');
+}
+function gtPick(){
+  const nm=$('gt_pick').value;
+  if(!nm||!GTBANK||!GTBANK[nm])return;
+  const rows=GTBANK[nm];
+  /* 콘솔용 정답 토큰: 정답값(적재기가 숫자·분수만 남기고 나머지는 M) 우선.
+     쉼표가 들어 있으면 형식이 깨지므로 M. 문항번호가 순번과 다르면 '번호=값' 라벨. */
+  const toks=rows.map((r,i)=>{
+    let v=String(r['정답값']||r['정답']||'').trim();
+    if(!v||v.includes(','))v='M';
+    const no=String(r['문항번호']||'').trim();
+    return (no&&no!==String(i+1))?no+'='+v:v;
+  });
+  $('gt_src').value=nm;
+  $('gt_ans').value=toks.join(',');
+  $('gt_pts').value=rows.map(r=>String(r['배점']||'').trim()).join(',');
+  autoGrow($('gt_ans'));autoGrow($('gt_pts'));
+  gtKeyUpdate();
+}
+/* 반 진입 시 class_log 에서 정답표 복원 — 저장은 saveClassLog 가 clr 규칙으로 한다 */
+function gtRestore(cl0){
+  GTPREV=cl0?{'기출정답':cl0['기출정답']||'','기출배점':cl0['기출배점']||'','시험지명':cl0['시험지명']||''}:{};
+  $('gt_ans').value=GTPREV['기출정답']||'';
+  $('gt_pts').value=GTPREV['기출배점']||'';
+  $('gt_src').value=GTPREV['시험지명']||'';
+  autoGrow($('gt_ans'));autoGrow($('gt_pts'));
+  $('gt_setup').classList.toggle('hidden',!isGT());
+  $('gt_done2row').classList.toggle('hidden',!isGT());   // (0831) 마감 위 같은 버튼
+  GTKEY=isGT()?gtParseKey($('gt_ans').value,$('gt_pts').value):null;
+  if(GTKEY)$('c_nq').value=GTKEY.ans.length;
+  if(isGT())gtFillPick();
+  gtStat();
+}
+/* 학생 한 명분 답 입력 칸 — 자동 문항은 input, M 문항은 탭(정답/부분/오답) */
+function gtItemsHtml(log){
+  /* (0908) 한 문항 = 한 칸(td). 자동 문항은 학생 실답, M(수동) 문항은 2/1/0 을 친다 — 같은 입력칸 계약 */
+  const na=isNA(log);
+  const ansMap=na?{}:gtDes(log['답안']||'');
+  const grMap=na?{}:gtDes(log['문항점수']||'');
+  return GTKEY.labels.map((l,i)=>{
+    const g=grMap[l]!==undefined?grMap[l]:'';
+    if(gtIsManual(GTKEY.ans[i]))
+      return `<td class="q"><input class="gta man it${g!==''?' s'+g:''}" data-gq="${i}" data-s="${g}" value="${g}" maxlength="1" placeholder="M" autocomplete="off" title="${esc(l)}번 수동채점 · 2 정답 1 부분 0 오답"></td>`;
+    const v=ansMap[l]!==undefined?ansMap[l]:'';
+    const cls=g==='2'?' ok':(g==='0'?' bad':'');
+    return `<td class="q"><input class="gta${cls}" data-gq="${i}" value="${esc(v)}" autocomplete="off" title="${esc(l)}번 · 정답 ${esc(GTKEY.ans[i])}"></td>`;
+  }).join('');
+}
+/* 카드의 답을 다시 채점해 점수·직렬화(dataset)·색을 맞춘다. 저장 직전에 항상 불린다.
+ * 답이 하나도 없으면 점수 칸을 건드리지 않는다 — 손으로 총점만 적는 경우를 지우면 안 된다. */
+function gtRecalc(card){
+  if(!GTKEY)return;
+  const grades=[],answers=[];
+  GTKEY.labels.forEach((l,i)=>{
+    const el=card.querySelector(`[data-gq="${i}"]`);
+    if(!el){grades.push('');answers.push('');return;}
+    if(el.classList.contains('man')){grades.push(el.dataset.s||'');answers.push('');return;}
+    const v=el.value.trim();
+    answers.push(v);
+    const g=gtGradeOne(v,GTKEY.ans[i])||'';
+    grades.push(g);
+    el.classList.toggle('ok',g==='2');el.classList.toggle('bad',g==='0');
+  });
+  const any=grades.some(g=>g!=='');
+  if(any){
+    const total=gtScore(grades,GTKEY.pts);
+    const sc=card.querySelector('[data-f="점수"]');if(sc)sc.value=total;
+    const gs=card.querySelector('.sum');if(gs)gs.textContent=total;
+  }
+  card.dataset.gtItems=gtSer(GTKEY.labels,grades);
+  card.dataset.gtAns=gtSer(GTKEY.labels,answers);
+  card.dataset.gtWrong=grades.filter(g=>g==='0').length;
+  card.dataset.gtPart=grades.filter(g=>g==='1').length;
+  /* (0907) 빈 칸은 저장되지 않는다 — gtSer 이 항목 자체를 안 만든다. 총점은 0점으로 깎이는데
+     문항점수에는 흔적이 없어서, PT를 뽑는 circuit_hw 가 그 문항을 오답으로 세지 못했다
+     (0905 이정후 17·18번, 박시원 14~18번 실사고). 몇 번이 비었는지 여기서 세어 화면에 띄운다. */
+  card.dataset.gtMiss=GTKEY.labels.filter((l,i)=>grades[i]==='').join(',');
+}
+/* 채점칸이 빈 학생들 — [{name,labels}]. 미응시(na)는 대상이 아니다(안 본 시험엔 빈칸이 당연). */
+function gtMissing(){
+  if(!(isGT()&&GTKEY))return [];
+  return [...csAll('.stu')].filter(c=>!c.classList.contains('na'))
+    .map(c=>({name:((STUDENTS.find(s=>s['학생ID']===c.dataset.id)||{})['이름']||c.dataset.id||''),
+              labels:(c.dataset.gtMiss||'').split(',').filter(Boolean)}))
+    // 전부 빈 학생은 '아직 채점 전'이지 사고가 아니다 — 일부만 빈 사람만 잡는다.
+    .filter(x=>x.labels.length&&x.labels.length<GTKEY.labels.length);
+}
+function gtMissText(ms){return ms.map(x=>x.name+' '+x.labels.join(',')+'번').join(' · ');}
+/* ── 행 저장 상태 (0908) — 이름 옆 점 하나. 자동저장은 그대로지만 "들어갔나"가 행마다 보인다.
+   dirty(●) → saving(…) → saved(✓) / failed(✗). failed 는 다음 성공까지 남는다. */
+function rowState(card,st){
+  if(!card)return;
+  card.classList.remove('dirty','saving','saved','failed');card.classList.add(st);
+  const el=card.querySelector('.st');if(el)el.textContent=st==='dirty'?'●':st==='saving'?'…':st==='saved'?'✓':'✗';
+}
+function wireRow(d,id){
+  const seg=d.querySelector('.seg');
+  seg.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{
+      seg.querySelectorAll('button').forEach(x=>x.className='');
+      b.classList.add('a'+([...seg.children].indexOf(b)+1));
+      save(id,d);
+    };
+  });
+  /* 문항 칸(리뷰 .it / 기출 M .man): 2·1·0 만 받는다. 치면 다음 문항으로 넘어간다. Backspace·Delete 는 비운다. */
+  d.querySelectorAll('.it').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{
+      if(d.classList.contains('na')){e.preventDefault();return;}
+      if(e.key==='2'||e.key==='1'||e.key==='0'){
+        e.preventDefault();itemSet(inp,e.key);
+        if(!inp.classList.contains('man'))itemSum(d);
+        save(id,d);
+        const list=[...d.querySelectorAll('.it,.gta')];const nx=list[list.indexOf(inp)+1];
+        if(nx){nx.focus();if(nx.select)nx.select();}
+      }else if(e.key==='Backspace'||e.key==='Delete'){
+        e.preventDefault();itemSet(inp,'');if(!inp.classList.contains('man'))itemSum(d);save(id,d);
+      }else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey){e.preventDefault();}   // 다른 글자는 안 받는다
+    });
+    inp.addEventListener('input',()=>{const v=inp.value.replace(/[^012]/g,'').slice(-1);itemSet(inp,v);if(!inp.classList.contains('man'))itemSum(d);});
+  });
+  /* 미응시 토글 — 켜면 점수·문항채점을 **화면에서도** 되돌린다. */
+  const na=d.querySelector('[data-f="미응시"]');
+  if(na)na.onclick=()=>{
+    const on=na.dataset.on!=='1';
+    na.dataset.on=on?'1':'0';
+    na.classList.toggle('on',on);
+    d.classList.toggle('na',on);
+    const sc=d.querySelector('[data-f="점수"]');
+    if(on){
+      if(sc)sc.value='';
+      d.querySelectorAll('.it').forEach(x=>itemSet(x,''));
+      d.querySelectorAll('input.gta:not(.man)').forEach(x=>{x.value='';x.classList.remove('ok','bad');});
+      delete d.dataset.gtItems;delete d.dataset.gtAns;d.dataset.gtWrong='0';d.dataset.gtPart='0';
+      const s=d.querySelector('.sum');if(s)s.textContent='미응시';
+    }else{const s=d.querySelector('.sum');if(s)s.textContent='—';}
+    save(id,d);
+  };
+  const rs=d.querySelector('[data-f="추가학습사유"]');
+  {const r0=rs.value.trim();
+   d.dataset.clinicSig=r0?[r0,d.querySelector('[data-f="추가학습날짜"]').value||'',d.querySelector('[data-f="추가학습시간"]').value||''].join('|'):'';}
+  rs.addEventListener('input',()=>{
+    const dd=d.querySelector('[data-f="추가학습날짜"]'), tm=d.querySelector('[data-f="추가학습시간"]');
+    if(rs.value.trim()&&NEXT){
+      if(!dd.value)dd.value=NEXT.date;
+      if(!tm.value&&NEXT.time)tm.value=NEXT.time;
+    }else if(!rs.value.trim()){
+      /* (1105 유강) 사유를 비우면 자동으로 들어갔던 날짜·시간도 같이 비운다 — 사유 없는 추가학습은 없다.
+         저장(change·blur)에서 daily_log 칸이 비고, clinic_roster 의 오늘 지정 행도 거둔다(save 의 기존 규칙). */
+      dd.value='';tm.value='';dd.classList.remove('autov');tm.classList.remove('autov');
+    }
+  });
+  d.querySelectorAll('input,textarea').forEach(el=>{
+    el.addEventListener('input',()=>{el.classList.remove('autov');el.dataset.manual='1';rowState(d,'dirty');});
+    el.addEventListener('change',()=>save(id,d));
+    el.addEventListener('blur',()=>{if(d.classList.contains('dirty'))save(id,d);});
+  });
+}
+function renderStudents(){
+  const box=$('students');box.innerHTML='';
+  // 상한 30 — 리뷰는 5문항이지만 기출은 20~25문항 (0823)
+  const nq=Math.max(0,Math.min(30,parseInt($('c_nq').value)||0));
+  renderGrid(box,nq);
+  // 기출 모드는 저장된 답을 정답표로 다시 채점해 색·오답 수(dataset)를 맞춘다 (저장은 손대야 나간다)
+  if(isGT()&&GTKEY)csRoot().querySelectorAll('#students .stu').forEach(c=>{
+    if(!c.classList.contains('na'))gtRecalc(c);
+  });
+  box.addEventListener('input',updateAvgs);   // 타이핑하는 동안 바로 따라온다
+  applyAuto();                                 // (1021) 써킷 이행률·리뷰 점수 자동 채움 (빈 칸만)
+  updateAvgs();
+}
+/* 반 평균 점수·이행률 — 채점 중에 화면에 떠 있어야 한다(0814 유강).
+   ⚠ 계산 규칙은 closeSession 의 자동지정과 **같아야 한다**. 미응시는 모수에서 빼고,
+   이행률은 미응시와 무관하니 전원 중 적힌 사람만 센다. */
+function updateAvgs(){
+  const bar=$('clsavg');if(!bar)return;
+  const cards=[...csAll('.stu')];
+  if(!cards.length){bar.style.display='none';return;}
+  const live=cards.filter(c=>!c.classList.contains('na'));
+  const num=(c,f)=>parseFloat(c.querySelector(`[data-f="${f}"]`).value);
+  const scored=live.map(c=>({c,v:num(c,'점수')})).filter(x=>!isNaN(x.v));
+  const ihs=cards.map(c=>num(c,'이행률')).filter(v=>!isNaN(v));
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const na=cards.length-live.length,
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
+  const out=['<span class="t">반 평균</span>'];
+  cards.forEach(c=>c.classList.remove('below'));
+  if(scored.length>=1){
+    const avg=mean(scored.map(x=>x.v));
+    let below=0;
+    if(scored.length>=2)scored.forEach(({c,v})=>{if(v<=avg&&(!full||v<full)){c.classList.add('below');below++;}});
+    out.push(`<span>점수 <b>${avg.toFixed(1)}</b>${full?'<span class="s"> / '+full+'점</span>':''}</span>`
+      +`<span class="s">${scored.length}명 채점${live.length-scored.length?' · 미입력 '+(live.length-scored.length)+'명':''}${na?' · 미응시 '+na+'명':''}</span>`
+      +(below?`<span class="s">반평균 이하 <b style="font-size:13px">${below}명</b></span>`:''));
+  }else out.push(`<span class="s">점수 입력 없음${na?' · 미응시 '+na+'명':''}</span>`);
+  {
+    const ms=gtMissing();
+    if(ms.length)out.push('<span class="s" style="color:var(--bad);font-weight:700">'
+      +`⚠ 채점칸 미입력 ${ms.length}명 — ${esc(gtMissText(ms))} (빈칸은 0점으로만 깎이고 오답으로 안 남는다 → PT에서 빠진다)</span>`);
+  }
+  if(ihs.length)out.push(`<span>이행률 <b>${Math.round(mean(ihs))}%</b></span>`
+    +`<span class="s">${ihs.length}명 입력${cards.length-ihs.length?' · 미입력 '+(cards.length-ihs.length)+'명':''}${ihs.filter(v=>v<100).length?' · 100% 미만 '+ihs.filter(v=>v<100).length+'명':''}</span>`);
+  else out.push('<span class="s">이행률 입력 없음</span>');
+  const fails=cards.filter(c=>c.classList.contains('failed')).length;
+  if(fails)out.push(`<span class="s" style="color:var(--bad);font-weight:700">✗ 저장 실패 ${fails}행</span>`);
+  bar.innerHTML=out.join('');
+  bar.style.display='';
+}
+/* ── 학생 그리드 (0908) — 한 표. 행=학생, 열=출결·문항(리뷰 n개 / 기출 정답표 라벨 전부)·점수·이행률·코멘트…
+   첫 열 고정, 가로 스크롤. 폰 레이아웃은 없다. */
+function renderGrid(box,nq){
+  const gtMode=!!(isGT()&&GTKEY);
+  const wrap=document.createElement('div');wrap.className='cs-wrap';
+  const t=document.createElement('table');t.className='cs-grid';
+  const qth=gtMode?GTKEY.labels.map((l,i)=>`<th class="q" title="정답 ${esc(GTKEY.ans[i])}${GTKEY.pts[i]!=null?' · '+GTKEY.pts[i]+'점':''}">${esc(l)}${gtIsManual(GTKEY.ans[i])?'<br><small>M</small>':''}</th>`).join('')
+                  :Array.from({length:nq},(_,i)=>`<th class="q">${i+1}</th>`).join('');
+  t.innerHTML=`<thead><tr><th class="fz">이름</th><th>출결</th><th>결석사유</th>${qth}${gtMode?'<th>합</th>':''}<th>점수</th><th title="써킷 + 개별과제 + 루프 문항 총합 (리포트와 같은 값)">과제 이행</th><th>코멘트 (리포트)</th><th>특이사항 (내부)</th><th title="조퇴 등 — 시간을 고르면 그 학생에게 클리닉 보강 예약 안내가 간다(마감 뒤 5분 안, 이미 마감했으면 지금부터 5분 안)">클리닉 보강</th><th style="display:none">추가학습 사유</th><th style="display:none">날짜</th><th style="display:none">시간</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  STUDENTS.forEach(s=>{
+    const id=s['학생ID'],log=LOGMAP[id]||{};
+    const cur=log['출결'];
+    const recent=recentOf(id).slice(0,3).join('·');
+    const notes=(NOTES[id]||[]).slice(0,2).join(' / ');
+    const tr=document.createElement('tr');
+    tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
+    const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
+    tr.innerHTML=`
+      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan8.github.io/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
+      <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
+      <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
+      ${cells}
+      ${gtMode?`<td class="sum">${isNA(log)?'미응시':(log['점수']||'—')}</td>`:''}
+      <td><div class="scorecell"><input data-f="점수" value="${isNA(log)?'':esc(log['점수']||'')}">${naBtnHtml(log)}</div></td>
+      <td><input data-f="이행률" style="width:56px" value="${esc(log['이행률']||'')}"></td>
+      <td><textarea data-f="코멘트" rows="1" oninput="autoGrow(this)">${esc(log['코멘트']||'')}</textarea></td>
+      <td><input data-f="특이사항" value="${esc(log['특이사항']||'')}" style="min-width:140px"></td>
+      <td><div class="cmbox" style="display:flex;gap:4px"><select data-cm="blk" style="width:72px"><option value="">—</option><option value="1">30분</option><option value="2">1시간</option><option value="4">2시간</option></select><input data-cm="why" placeholder="사유 (조퇴 등)" style="width:110px"></div></td>
+      <td style="display:none"><input data-f="추가학습사유" value="${esc(log['추가학습사유']||'')}" style="min-width:150px"></td>
+      <td style="display:none"><input data-f="추가학습날짜" type="date" value="${esc(log['추가학습날짜']||'')}"></td>
+      <td style="display:none"><input data-f="추가학습시간" style="width:60px" placeholder="18-20" value="${esc(log['추가학습시간']||'')}"></td>`;
+    /* (1107 유강 "콘솔에 추가학습 잡는 것이 필요없어졌고") 추가학습은 [마감] → 클리닉 보완·결석 예약(v61·054)으로 바뀌었다.
+       칸은 저장·리포트 코드가 아직 읽으니 지우지 않고 숨긴다(옛 기록이 보존된다). */
+    tb.appendChild(tr);wireRow(tr,id);
+  });
+  t.appendChild(tb);
+  cmMount(t);   // (1107) 클리닉 보강 칸
+  wrap.appendChild(t);
+  const hint=document.createElement('p');hint.className='kbdhint';
+  hint.textContent=gtMode
+    ?'답 칸: 숫자를 치고 Enter·→ 다음 문항(행 끝이면 다음 학생), ← 이전, ↑↓ 같은 문항 학생 이동. M 칸은 2/1/0. 나머지 칸: Enter·↑↓ 세로 이동, Tab 옆 칸.'
+    :'채점 칸: 2(정답) 1(부분) 0(오답) 을 치면 다음 문항으로 넘어간다. Backspace 로 비운다. Enter·↑↓ 는 같은 열 세로 이동, Tab 은 옆 칸.';
+  box.appendChild(hint);box.appendChild(wrap);
+  wireGridKeys(t);
+}
+/* 한 반 20명의 같은 항목(점수·이행률…)을 세로로 훑어 넣는 게 실제 입력 동선이다. */
+function wireGridKeys(t){
+  /* '늦' 배지 클릭 = 응시일 직접 수정. 비우면 정시 응시로 되돌린다('' = 가드의 명시 삭제). */
+  t.addEventListener('click',async e=>{
+    const b=e.target.closest&&e.target.closest('.late');if(!b)return;
+    const tr=b.closest('tr.stu');if(!tr)return;
+    const id=tr.dataset.id,log=LOGMAP[id]||{};
+    const cur=String(log['응시일']||'').slice(0,10);
+    const v=prompt('실제로 시험을 본 날 (YYYY-MM-DD). 비우면 정시 응시로 되돌린다.',cur);
+    if(v===null)return;
+    const nv=v.trim();
+    if(nv&&!/^\d{4}-\d{2}-\d{2}$/.test(nv)){toast('날짜 형식이 아니다: '+nv);return;}
+    const {error}=await sb.from('daily_log').update({'응시일':nv||''}).eq('학생ID',id).eq('날짜',vDay());
+    if(error){toast('응시일 저장 실패: '+error.message);return;}
+    LOGMAP[id]=Object.assign({},log,{'응시일':nv});
+    b.outerHTML=lateBadge(LOGMAP[id]);
+    toast(nv?('응시일 '+nv):'정시 응시로 되돌렸다');
+  });
+  t.addEventListener('focusin',e=>{
+    if(e.target.matches&&e.target.matches('input.gta,input.it')&&e.target.select)e.target.select();
+  });
+  t.addEventListener('keydown',e=>{
+    const el=e.target;
+    if(!el.matches||!el.matches('input[data-f],textarea[data-f],input.gta,input.it'))return;
+    const ta=el.tagName==='TEXTAREA';
+    const gta=el.classList.contains('gta')||el.classList.contains('it');
+    /* 답안지 입력 동선: 답 칸에서 Enter·→ = 다음 문항, ← = 이전 문항. 행 끝을 넘으면 다음 학생 1번. */
+    if(gta&&(e.key==='Enter'||e.key==='ArrowRight'||e.key==='ArrowLeft')){
+      const all=el.selectionStart===0&&el.selectionEnd===el.value.length;
+      let step=0;
+      if(e.key==='Enter')step=e.shiftKey?-1:1;
+      else if(e.key==='ArrowRight'&&(all||el.selectionStart>=el.value.length))step=1;
+      else if(e.key==='ArrowLeft'&&(all||el.selectionEnd<=0))step=-1;
+      if(step){
+        const list=[...t.querySelectorAll('input.gta,input.it')];
+        const next=list[list.indexOf(el)+step];
+        if(next){e.preventDefault();next.focus();if(next.scrollIntoView)next.scrollIntoView({block:'nearest',inline:'nearest'});}
+        return;
+      }
+    }
+    let dir=0;
+    if(e.key==='Enter'&&!ta&&!gta)dir=e.shiftKey?-1:1;
+    else if(e.key==='ArrowDown'&&(!ta||e.ctrlKey))dir=1;
+    else if(e.key==='ArrowUp'&&(!ta||e.ctrlKey))dir=-1;
+    if(!dir)return;
+    const sel=el.dataset.f?`[data-f="${el.dataset.f}"]`:(el.dataset.gq!==undefined?`input[data-gq="${el.dataset.gq}"]`:`input.it[data-i="${el.dataset.i}"]`);
+    const rows=[...t.querySelectorAll('tbody tr')];
+    let ri=rows.indexOf(el.closest('tr'));
+    while((ri+=dir)>=0&&ri<rows.length){
+      const next=rows[ri].querySelector(sel);
+      if(next){e.preventDefault();next.focus();
+        if(next.select)next.select();
+        if(next.scrollIntoView)next.scrollIntoView({block:'center'});
+        return;}
+    }
+  });
+}
+
+
+/* 저장 실패 배너 (0817) — 원천(daily·clslog·close)별로 실패를 기억하고,
+   전부 성공으로 돌아와야 내린다. 토스트는 1.8초, 이건 붙박이다. */
+const FAILSRC=new Set();
+function saveFail(src,msg){
+  FAILSRC.add(src);
+  const el=$('savefail'); if(!el)return;
+  el.classList.remove('hidden'); $('savefailmsg').textContent=msg;
+  try{el.scrollIntoView({block:'nearest'});}catch(e){}
+}
+function saveOk(src){
+  FAILSRC.delete(src);
+  if(FAILSRC.size)return;
+  const el=$('savefail'); if(el)el.classList.add('hidden');
+}
+const debounce={};
+async function save(id,card){
+  if(LOCKED)return;
+  // 기출 모드는 저장 전에 항상 재채점 — 색·점수·직렬화(dataset)가 이 한 곳에서 맞는다
+  if(isGT()&&GTKEY&&card&&!card.classList.contains('na'))gtRecalc(card);
+  updateAvgs();          // 문항 버튼·미응시 토글은 input 이벤트가 없다 — 저장 경로에서 같이 갱신
+  rowState(card,'dirty');
+  clearTimeout(debounce[id]);
+  debounce[id]=setTimeout(async()=>{
+    if(LOCKED)return;
+    rowState(card,'saving');
+    const s=STUDENTS.find(x=>x['학생ID']===id);
+    const get=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value.trim():'';};
+    /* 빈 칸을 무엇으로 보낼 것인가 — 0813 사고의 뿌리다.
+       이 함수는 카드 전체를 읽어 행을 통째로 upsert 한다. 그래서 '빈칸'의 뜻을 갈라야 한다.
+         null = 손댄 적 없다        → DB 가드(schema_v5)가 옛 값을 지킨다
+         ''   = 사람이 일부러 지웠다 → DB 가 비운다
+       화면이 빈 채로 그려진 사고 상황에서는 prev(=DB에서 읽어 온 값)도 비어 있으므로
+       자동으로 null 이 나간다 — 즉 빈 화면은 아무것도 못 지운다. */
+    const prev=LOGMAP[id]||{};
+    /* 머리칸 파생(진도·공통과제) — 내가 반을 연 뒤 머리를 안 고쳤다면 내 화면 값은 '읽어 온 값'일 뿐이다.
+       특히 남이 먼저 오늘 진도를 적은 뒤 내 화면엔 직전 수업 프리필이 그대로 남아 있을 수 있다.
+       이 학생 행을 이 화면이 처음 저장하는 거면 서버의 지금 값을 한 번 본다(clr 기준 prev 와는 따로). */
+    const hdrSame=sameVal($('c_progress').value,HDR0.진도)&&sameVal($('c_hw').value,HDR0.과제);
+    let dbNow=null, clNow=null;
+    if(hdrSame&&!LOGMAP[id]){
+      try{
+        const [a,b]=await Promise.all([
+          sb.from('daily_log').select('진도,이번과제').eq('학생ID',id).eq('날짜',vDay()).limit(1),
+          sb.from('class_log').select('진도원문,이번과제').eq('반',CLS).eq('날짜',vDay()).limit(1)]);
+        dbNow=(a&&a.data&&a.data[0])||null; clNow=(b&&b.data&&b.data[0])||null;
+      }catch(e){}
+    }
+    const clr=(v,dbk)=>v!==''?v:(((prev[dbk]||'')!=='')?'':null);
+    /* 이행률은 숫자만 저장한다. 칸이 자유 입력이라 '100%'가 그대로 들어가는데,
+       JS parseFloat 은 100 으로 읽어 화면이 멀쩡해 보이고 파이썬 float 은 죽는다.
+       → 리포트에서 이행률이 통째로 빠짐(0819·0826 실사고). 숫자·소수점만 남긴다. */
+    const rateNum=v=>{const s=String(v||'').replace(/[^0-9.]/g,'');return s===''?'':s;};
+    const att=card.querySelector('.seg button[class*=a]');
+    const naBtn=card.querySelector('[data-f="미응시"]');
+    const na=!!(naBtn&&naBtn.dataset.on==='1');
+    const score=na?'':get('점수');
+    /* 기출 모드(gt): 문항점수는 "라벨:정오;…" 키 형식, 답안은 학생 실답 "라벨:답;…".
+       리뷰 모드: 기존 "2,1,0" 자리 형식 그대로. */
+    const gt=!!(isGT()&&GTKEY);
+    const itemBtns=[...card.querySelectorAll('.it:not(.man)')];
+    const itemStr=na?null
+      :gt?((card.dataset.gtItems||'')||null)
+      :(itemBtns.length?itemBtns.map(b=>b.dataset.s).join(','):null);
+    const gtAnsStr=(!gt||na)?null:((card.dataset.gtAns||'')||null);
+    /* 지각응시(0910) — 보는 날짜가 오늘이 아닌데 **지금 처음** 기출 채점을 넣으면 실제로 본 날은 오늘이다.
+       ⚠ 이미 채점돼 있던 행은 건드리면 안 된다. 옛 날짜를 열어 코멘트만 고쳐도 전원에게 응시일이
+          찍혀 버린다 — 그래서 '이전에 채점이 없었는데 지금 있다'일 때만 찍는다.
+       ⚠ 첫 응시일이 정본이다(재채점·정답 정정에도 안 바뀐다). 미응시로 되돌리면 ''(명시 삭제).
+       손으로 고치는 건 이름 옆 '늦' 배지 클릭. */
+    const lateDay=gtLateStamp(prev,{gt,na,
+      graded:((card.dataset.gtItems||'')!=='')||score!=='',
+      viewDay:vDay(),today:todayStr()});
+    const row={
+      '학생ID':id,'이름':s['이름'],'반':CLS,'날짜':vDay(),'요일':DAYS[new Date(vDay()+'T00:00:00').getDay()],
+      '출결':att?att.dataset.v:null,'결석사유':clr(get('결석사유'),'결석사유'),
+      '진도':$('c_progress').value.trim()||null,
+      '이번과제':(get('개별과제')||$('c_hw').value.trim())||null,
+      '지난과제':(PREVHW_MAP[id]||PREVHW)||null,
+      '테스트유형':na?($('c_test').value.trim()||null):(score?($('c_test').value.trim()||null):clr('','테스트유형')),
+      // 미응시는 0점이 아니다 — 점수를 비우고 상태만 남긴다. gen10 이 점수 없음을 '미응시'로 그린다.
+      '테스트상태':na?(isNOTHELD()?'미시행':'미응시'):(score?'응시':clr('','테스트상태')),'점수':na?null:clr(score,'점수'),
+      // 기출: 키 형식("1:2;20-1:0"). 다 지운 상태는 ''(명시 삭제) — 리뷰: 자리 형식 그대로
+      '문항점수':gt?(na?null:(itemStr!==null?itemStr:clr('','문항점수')))
+                :(itemStr&&itemStr.replace(/,/g,'')!==''?itemStr:null),
+      // 미응시·비기출은 clr — 이전 답이 있으면 ''(명시 삭제), 없으면 null(아래서 키 생략)
+      '답안':(gt&&!na)?(gtAnsStr!==null?gtAnsStr:clr('','답안')):clr('','답안'),
+      '시험지출처':gt?($('gt_src').value.trim()||clr('','시험지출처')):clr('','시험지출처'),
+      '응시일':lateDay,
+      '이행률':clr(rateNum(get('이행률')),'이행률'),
+      '코멘트':clr(get('코멘트'),'코멘트'),'특이사항':clr(get('특이사항'),'특이사항'),
+      '추가학습사유':clr(get('추가학습사유'),'추가학습사유'),
+      '추가학습날짜':clr(get('추가학습날짜'),'추가학습날짜'),'추가학습시간':clr(get('추가학습시간'),'추가학습시간'),
+      '소스':'수업콘솔',
+    };
+    /* 신규 컬럼(답안 — schema_v11)은 null 이면 키를 아예 뺀다. 뜻이 같고(미변경 = 가드가 지킴),
+       v11 을 아직 안 돌린 DB 에서도 리뷰 저장이 "없는 컬럼" 으로 죽지 않는다. */
+    if(row['답안']===null)delete row['답안'];
+    if(row['응시일']===null)delete row['응시일'];   // schema_v21 미적용 DB 에서도 저장이 안 죽는다
+    /* 채점이 이번 저장에서 실제로 바뀌었나 — 오답 이벤트를 다시 쓸지 여기서 가른다.
+       안 가르면 옛 채점이 떠 있는 남의 화면이 코멘트만 고쳐도 내 재채점 오답 이벤트를 옛 것으로 되돌린다. */
+    const wasNA=isNA(prev);
+    const itemsChanged=(na!==wasNA)||(row['문항점수']!==null&&row['문항점수']!==undefined&&!sameVal(row['문항점수'],prev['문항점수']));
+    dropUnchanged(row,prev,['학생ID','이름','반','날짜','요일','소스']);   // 동시 입력(0930) — 위 CLPREV 주석
+    /* 머리칸 파생 칸: 머리를 안 고쳤으면 서버에 값이 있을 때 안 보낸다. 새 행이면 서버의 오늘 머리값을 쓴다. */
+    const hdrKeys=[['진도','진도원문']].concat(get('개별과제')?[]:[['이번과제','이번과제']]);
+    if(hdrSame)hdrKeys.forEach(([k,ck])=>{
+      if(!(k in row)||row[k]===null)return;
+      const have=LOGMAP[id]?prev[k]:(dbNow&&dbNow[k]);
+      if(have!=null&&String(have).trim()!==''){delete row[k];return;}
+      if(clNow&&clNow[ck])row[k]=clNow[ck];
+    });
+    const {error}=await sb.from('daily_log').upsert(row,{onConflict:'학생ID,날짜'});
+    if(error){rowState(card,'failed');updateAvgs();toast('저장 실패: '+error.message);saveFail('daily',(s?s['이름']+' — ':'')+error.message);return;}
+    saveOk('daily');rowState(card,'saved');
+    /* LOGMAP 을 방금 보낸 값으로 맞춘다. 안 맞추면 '이번 세션에 넣었다가 지운 값'이
+       prev 에 없어서 지우기가 먹지 않는다(null 로 나가 옛 값이 살아남는다). */
+    {
+      const merged=Object.assign({},dbNow||{},prev);
+      Object.keys(row).forEach(k=>{if(row[k]!==null)merged[k]=row[k];});
+      if(na){merged['점수']='';merged['문항점수']='';}
+      LOGMAP[id]=merged;
+    }
+    // 틀린 문항 → 오답 이벤트 적재 (0점=오답, 1점=부분)
+    // ⚠ 미응시로 되돌릴 때도 지워야 한다. 예전엔 itemStr 이 있을 때만 지워서 채점을 취소해도
+    //    오답 이벤트가 남았다 — 약점 집계에 유령 오답이 쌓인다(0812).
+    /* ⚠ 조건이 itemStr 이면 안 된다 — 문항 버튼이 빈 채로 렌더된 상태(",,,,")도 참이라
+       아무것도 안 눌렀는데 오답 이벤트를 통째로 지웠다(0813). 실제로 채점된 게 있을 때만 손댄다. */
+    const graded=gt?((card.dataset.gtItems||'')!==''):itemBtns.some(b=>b.dataset.s!=='');
+    if((graded||na)&&itemsChanged){
+      // 기출은 소스·참조를 '기출'로 갈라 쌓는다 (RLS 도 '기출:%' 를 연다 — schema_v11)
+      const ref=(gt?'기출:':'리뷰:')+CLS+':'+vDay();
+      await sb.from('events').delete().eq('학생ID',id).eq('참조',ref);
+      let ev;
+      if(na)ev=[];
+      else if(gt){
+        const grm=gtDes(card.dataset.gtItems||'');
+        ev=GTKEY.labels.filter(l=>grm[l]==='0'||grm[l]==='1').map(l=>({
+          '소스':'기출','학생ID':id,'반':CLS,'이벤트':'오답','문항':l+'번',
+          '유형':($('gt_src').value.trim()||$('c_test').value.trim())||null,
+          '결과':grm[l]==='0'?'오답':'부분','참조':ref}));
+      }else{
+        ev=itemBtns.filter(b=>b.dataset.s==='0'||b.dataset.s==='1').map(b=>({
+          '소스':'리뷰','학생ID':id,'반':CLS,'이벤트':'오답','문항':String(+b.dataset.i+1)+'번',
+          '유형':$('c_test').value.trim()||null,'결과':b.dataset.s==='0'?'오답':'부분','참조':ref}));
+      }
+      if(ev.length)await sb.from('events').insert(ev);
+    }
+    // 결석 → 보강 대기 자동 등록
+    if(false&&att&&att.dataset.v==='결석'&&!card.dataset.absentDone){   // (1107) 결석 보강은 [마감] → 클리닉 2시간 예약(054)이 맡는다 — 옛 보강대기 명단은 안 만든다
+      card.dataset.absentDone='1';
+      await sb.from('clinic_roster').insert({'학생ID':id,'이름':s['이름'],'반':CLS,'사유':'결석 보강 ('+vDay()+')','상태':'보강대기','지정일':todayStr(),'기록일':todayStr()});
+      toast(s['이름']+' 보강 대기 등록');
+    }
+    /* 추가학습 지정 — 명단(clinic_roster)은 화면 칸을 따라와야 한다.
+       예전엔 카드당 한 번만 insert 하고 끝냈다(clinicDone). 사유를 적어 행이 박힌 뒤
+       날짜·시간을 고치면 명단은 옛 날짜 그대로 남아, [추가학습] 탭에서 그날 아무도 안 보였다.
+       이제 오늘 찍은 '지정' 행을 찾아 갱신하고, 사유를 지우면 그 행을 거둔다.
+       ⚠ 손대는 범위는 '오늘 이 콘솔이 만든 지정'뿐이다 — 출석이 찍힌 행·결석 보강은 건드리지 않는다. */
+    const reason=get('추가학습사유');
+    const cd=get('추가학습날짜')||null, ct=get('추가학습시간')||null;
+    const sig=reason?[reason,cd||'',ct||''].join('|'):'';
+    if(sig!==(card.dataset.clinicSig||'')){
+      /* (0908) 조회를 상태 '지정'으로 좁히면 안 된다 — clinic_build 잡이 돌고 나면 상태가 '발행'이 되고,
+         그 뒤 사유·날짜를 고치거나 다시 마감하면 '내 행'을 못 찾아 새 행을 꽂았다(중복 34행의 원인).
+         오늘 이 콘솔이 만든 행 = (학생ID, 지정일=오늘, 상태≠보강대기). 갱신 때 상태는 건드리지 않는다(발행 링크 보존). */
+      const mine=()=>sb.from('clinic_roster').select('id,출석,상태').eq('학생ID',id).eq('지정일',todayStr()).neq('상태','보강대기').order('id');
+      if(reason){
+        const {data:ex}=await mine();
+        const row=(ex||[]).find(r=>!r['출석']);
+        const body={'학생ID':id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':cd,'시간':ct,'기록일':todayStr()};
+        if(row)await sb.from('clinic_roster').update(body).eq('id',row.id);
+        else{await sb.from('clinic_roster').insert({...body,'상태':'지정','지정일':todayStr()});toast(s['이름']+' 추가학습 지정');}
+        /* (0908 유강) 추가학습은 수업당 한 번 — 사유가 달라도 나중 마감이 덮어쓴다. 같은 지정일의 나머지 행(출석 없는 것)은 거둔다. */
+        const extra=(ex||[]).filter(r=>!r['출석']&&(!row||r.id!==row.id)).map(r=>r.id);
+        if(extra.length)await sb.from('clinic_roster').delete().in('id',extra);
+      }else if(card.dataset.clinicSig){
+        const {data:ex}=await mine();
+        const row=(ex||[]).find(r=>!r['출석']);
+        if(row){await sb.from('clinic_roster').delete().eq('id',row.id);toast(s['이름']+' 추가학습 지정 해제');}
+      }
+      card.dataset.clinicSig=sig;
+    }
+  },400);
+}
+/* 수업 정보 자동저장 — 마감을 누르지 않아도 class_log 에 남는다.
+   0812 유강: 진도·과제를 적어 놓고 다른 탭으로 갔다 오니 비어 있었다. 이 화면의 값은
+   [마감] 에서만 upsert 됐던 탓이다(학생 행은 daily_log 로 바로 저장돼 살아남았다).
+   ⚠ class_sessions 는 건드리지 않는다 — 상태는 '진행중'으로 남아야 렌더 크론이 안 돈다. */
+let CLOGT=null;
+function saveClassLog(){
+  if(!CLS||LOCKED)return;
+  clearTimeout(CLOGT);
+  CLOGT=setTimeout(async()=>{
+    const today=vDay();
+    /* 기출 정답표 3칸 — clr 규칙(null=미변경/''=삭제). 가드가 class_log 에도 걸려 있어
+       null 은 옛 값을 지킨다. GTPREV = 이 반·이 날짜에서 마지막으로 읽거나 저장한 값. */
+    const gtv=(id,k)=>{const v=$(id).value.trim();return v!==''?v:(((GTPREV[k]||'')!=='')?'':null);};
+    const gtRow={'시험지명':gtv('gt_src','시험지명'),'기출정답':gtv('gt_ans','기출정답'),'기출배점':gtv('gt_pts','기출배점')};
+    // 신규 컬럼(schema_v11): null 은 키를 뺀다 — v11 이전 DB 에서도 수업정보 저장이 안 죽는다
+    Object.keys(gtRow).forEach(k=>{if(gtRow[k]===null)delete gtRow[k];});
+    const crow={
+      '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
+      '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+      '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,
+      ...gtRow,
+    };
+    // 동시 입력(0930) — 내가 안 바꾼 칸(기준값과 같은 칸)은 안 보낸다. 정답표 3칸은 GTPREV 가 기준.
+    dropUnchanged(crow,Object.assign({},CLPREV,GTPREV),['반','날짜','요일','학기','지난과제']);
+    const {error}=await sb.from('class_log').upsert(crow,{onConflict:'반,날짜'});
+    if(!error){
+      Object.keys(gtRow).forEach(k=>{if(k in crow)GTPREV[k]=crow[k]===null?(GTPREV[k]||''):(crow[k]===''?'':crow[k]);});
+      ['진도원문','이번과제','테스트유형'].forEach(k=>{if(k in crow&&crow[k]!==null)CLPREV[k]=crow[k];});
+    }
+    const m=$('clogmark');
+    if(error){toast('수업 정보 저장 실패: '+error.message);saveFail('clslog','수업 정보 — '+error.message);return;}
+    saveOk('clslog');
+    /* 공통 과제를 고치면 **이미 저장된 학생 행도 같이 옮긴다.**
+       안 옮기면 그 행들이 옛 공통 텍스트를 들고 있어 '개별과제'로 보인다(0812 사고).
+       개별로 따로 적어 둔 행(값이 옛 공통과 다른 행)은 건드리지 않는다. */
+    const hw=$('c_hw').value.trim();
+    const old0=CHW;
+    if(hw!==CHW){
+      const old=CHW; CHW=hw;
+      const ids=Object.keys(LOGMAP).filter(k=>{
+        const v=(LOGMAP[k]['이번과제']||'').trim();
+        return v===''||v===old;
+      });
+      if(ids.length){
+        const {error:e2}=await sb.from('daily_log').update({'이번과제':hw||null})
+          .eq('반',CLS).eq('날짜',today).in('학생ID',ids);
+        if(!e2){
+          ids.forEach(k=>LOGMAP[k]['이번과제']=hw||null);
+          csAll('.stu').forEach(c=>{
+            if(!ids.includes(c.dataset.id))return;
+            const t=c.querySelector('[data-f="개별과제"]');
+            if(t&&t.value.trim()===old)t.value='';
+          });
+        }
+      }
+    }
+    /* (0930) 남의 화면이 만든 학생 행은 내 LOGMAP 에 없다 — 옛 공통과제 그대로인 행은 서버에서 한 번 더 옮긴다. */
+    if(old0&&hw!==old0){
+      await sb.from('daily_log').update({'이번과제':hw||null}).eq('반',CLS).eq('날짜',today).eq('이번과제',old0);
+    }
+    /* 진도도 과제처럼 — 머리 진도를 고치면 옛 진도를 들고 있는 학생 행을 같이 옮긴다(데일리 리포트는 행의 진도를 쓴다). */
+    const pg=$('c_progress').value.trim();
+    if(pg!==CPROG){
+      const oldp=CPROG; CPROG=pg;
+      if(oldp&&pg){
+        const {error:e3}=await sb.from('daily_log').update({'진도':pg}).eq('반',CLS).eq('날짜',today).eq('진도',oldp);
+        if(!e3)Object.keys(LOGMAP).forEach(k=>{if((LOGMAP[k]['진도']||'').trim()===oldp)LOGMAP[k]['진도']=pg;});
+      }
+    }
+    m.style.display='';m.textContent='저장됨 ✓';
+    clearTimeout(saveClassLog._h);
+    saveClassLog._h=setTimeout(()=>{m.style.display='none';},1500);
+  },600);
+}
+/* 입력 데이터 기반 코멘트 자동 생성 — 손으로 쓴 코멘트는 건드리지 않음.
+   (0828 유강) 원칙 두 가지.
+   ① 코멘트는 관찰과 결과만 넌지시 적는다. "…하겠습니다"류 액션 약속을 기계가 쓰면
+      지키지 못한 약속이 리포트에 박제된다 — 액션 문장은 전부 걷어냈다.
+      예외는 일정 사실(추가학습이 몇 시에 잡혀 있다)뿐이다.
+   ② 개입이 필요한 상태(결석·미응시·급락·이행률 반타작 미만)는 기계가 쓰지 않는다.
+      칸을 비워 주황 테두리 + 플레이스홀더로 표시만 하고 유강이 직접 쓴다.
+   반복 방지: 학생ID+날짜 해시로 표현을 돌린다 — 같은 날 다시 눌러도 같은 문장(멱등),
+   학생·날짜가 다르면 문장이 달라진다. */
+async function genComments(){
+  const today=vDay();
+  const {data:clin}=await sb.from('clinic_roster').select('*').eq('날짜',today);
+  const clinMap={};(clin||[]).forEach(r=>clinMap[r['학생ID']]=r);
+  const nq=Math.max(0,parseInt($('c_nq').value)||0),
+        full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
+  const tname=$('c_test').value||'테스트';
+  let n=0,man=0;
+  csAll('.stu').forEach(card=>{
+    const id=card.dataset.id;
+    const ta=card.querySelector('[data-f="코멘트"]');
+    // 입력칸이 없는 행이 섞여도 그 행만 건너뛴다 — 한 행 때문에 전원 생성이 죽으면 안 된다
+    if(!ta||ta.value.trim())return;
+    const h=[...(id+today)].reduce((a,c)=>a+c.charCodeAt(0),0);
+    const pick=(arr,k)=>arr[(h+(k||0))%arr.length];
+    const flag=why=>{
+      ta.placeholder='✍ 직접 작성 — '+why;
+      ta.style.outline='2px solid #e08a3c';
+      ta.addEventListener('input',()=>{ta.style.outline='';},{once:true});
+      man++;
+    };
+    const att=card.querySelector('.seg button[class*=a]');
+    const attV=att?att.dataset.v:null;
+    const val=f=>{const el=card.querySelector('[data-f="'+f+'"]');return el?el.value:'';};
+    const reason=val('결석사유').trim();
+    /* ── 개입 필요 판정 — 기계는 여기서 손을 뗀다 ── */
+    if(attV==='결석')return flag('결석'+(reason?'('+reason+')':''));
+    if(card.classList.contains('na')&&!isNOTHELD())return flag(tname+' 미응시');
+    const score=parseFloat(val('점수'));
+    const ih=parseFloat(val('이행률'));
+    const rec=recentOf(id).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+    const ravg=rec.length>=2?rec.slice(0,3).reduce((a,b)=>a+b,0)/Math.min(rec.length,3):null;
+    // 판정 폭도 만점을 따라간다 — 100점 만점에서 1.5점 차이는 노이즈다 (0831)
+    const K=isGT()?10:1;
+    if(!isNaN(ih)&&ih<50)return flag('과제 이행률 '+ih+'%');
+    if(!isNaN(score)&&ravg!==null&&score<ravg-1.5*K)return flag('최근 평균 대비 급락 ('+score+'점 / 최근 '+ravg.toFixed(1)+')');
+    const parts=[];
+    /* 추가학습은 '오늘 수업 전 / 오늘 수업 후 / 다음 수업일' 세 갈래다. 예전엔 오늘 날짜로
+       잡힌 지정을 전부 '수업 전 등원'으로 써서, 수업 끝나고 남는 학생에게 하지도 않은 일을
+       과거형으로 적었다(0814 유강). 화면 칸이 진실원이고, 없으면 명단(clinic_roster)을 본다. */
+    const lab=r=>{const t=(r||'').split('(')[0].split('·')[0].trim();return !t?'복습':(/(보완|복습|정리)$/.test(t)?t:t+' 보완');};
+    const fR=val('추가학습사유').trim();
+    const fD=val('추가학습날짜');
+    const fT=val('추가학습시간');
+    const cRow=clinMap[id];                                    // 오늘 날짜로 잡힌 명단 행
+    // 오늘 것과 앞으로 것은 별개다 — 수업 전에 와서 보완하고, 오늘 결과로 다음 수업일을 또 잡을 수 있다
+    const nowC=(fR&&fD===today)?{r:fR,t:fT}:(cRow?{r:cRow['사유']||'',t:cRow['시간']||''}:null);
+    const nowWhen=nowC?clinicWhen(today,nowC.t):null;
+    const nextC=(fR&&(!fD||fD>today)&&!(cRow&&!fD))?{r:fR,d:fD,t:fT}:null;
+    if(nowWhen==='before')parts.push(pick([
+      '수업 전 추가학습으로 등원하여 '+lab(nowC.r)+'을 진행했습니다.',
+      '수업 전에 미리 등원해 '+lab(nowC.r)+'을 진행했습니다.'],1));
+    if(attV==='지각')parts.push('오늘은 다소 늦게 등원했습니다'+(reason?'('+reason+')':'')+'.');
+    if(!isNaN(score)){
+      const gtC=isGT()&&GTKEY;   // 기출은 gtRecalc 가 dataset 에 세어 둔다 (렌더 때 일괄 실행)
+      const wrongCnt=gtC?parseInt(card.dataset.gtWrong||'0',10):[...card.querySelectorAll('.it:not(.man)')].filter(b=>b.dataset.s==='0').length;
+      const partCnt=gtC?parseInt(card.dataset.gtPart||'0',10):[...card.querySelectorAll('.it:not(.man)')].filter(b=>b.dataset.s==='1').length;
+      // 반평균 (오늘 입력된 점수 기준)
+      const allScores=[...csAll('.stu [data-f="점수"]')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+      const avg=allScores.length>=2?allScores.reduce((a,b)=>a+b,0)/allScores.length:null;
+      let t;
+      if(full&&score>=full){
+        t=pick([
+          '오늘 '+tname+'는 만점입니다. 현재 범위의 개념이 안정적으로 잡혀 있습니다.',
+          '오늘 '+tname+' 전 문항을 정확하게 해결했습니다.',
+          '오늘 '+tname+'는 감점 없이 마무리했습니다.'],2);
+      }else{
+        const miss=[];
+        if(wrongCnt)miss.push(wrongCnt+'문항 오답');
+        if(partCnt)miss.push(partCnt+'문항 부분감점');
+        t='오늘 '+tname+'는 '+(nq?nq+'문항 중 '+(miss.join('·')||'감점')
+          :score+'점');
+        if(avg!==null){
+          if(score>avg+0.5*K)t+=pick(['으로, 반평균보다 좋은 결과입니다.','으로, 반평균을 웃돌았습니다.'],3);
+          else if(score<avg-0.5*K)t+=pick(['으로, 반평균에 조금 못 미쳤습니다.','으로, 반평균보다 소폭 아래입니다.'],3);
+          else t+=pick(['으로, 반평균 수준입니다.','으로, 반평균과 비슷한 결과입니다.'],3);
+        }else t+='입니다.';
+      }
+      if(ravg!==null&&score>ravg+0.5*K)t+=pick([' 최근 흐름보다 좋아지고 있습니다.',' 최근 몇 회보다 오름세입니다.'],4);
+      parts.push(t);
+    }
+    if(!isNaN(ih)){
+      if(ih>=100)parts.push(pick(['과제는 모두 완료했습니다.','과제 이행률은 100%입니다.'],5));
+      else parts.push('과제 이행률은 '+ih+'%입니다.');
+    }
+    /* 앞으로 할 일은 코멘트 끝에 붙인다. 'before' 는 이미 맨 앞에서 과거형으로 썼다.
+       일정은 사실이므로 기계가 적는다 — 다만 '보완하겠다'류 다짐은 붙이지 않는다. */
+    if(nowWhen==='after')parts.push('오늘 수업 후 '+(nowC.t?nowC.t+'시에 ':'')+'남아 추가학습으로 '+lab(nowC.r)+'을 진행합니다.');
+    // 앞으로 잡아 둔 것은 사유를 다시 적지 않는다 — 점수·이행률 문장에 이미 이유가 나와 있다
+    if(nextC)parts.push((nextC.d?nextC.d.slice(5).replace('-','/')+' ':'')+(nextC.t?nextC.t+'시 ':'')+'추가학습이 지정되어 있습니다.');
+    if(!parts.length)return;
+    ta.value=parts.join(' ');
+    ta.dispatchEvent(new Event('change'));
+    n++;
+  });
+  toast((n||man)?('코멘트 '+n+'명 생성'+(man?' · '+man+'명 직접 작성 필요(주황 표시)':'')+' — 검토 후 수정하세요')
+               :'생성할 대상 없음(코멘트가 이미 있거나 데이터 없음)');
+}
+/* [추가학습 세팅] — 자동 지정 + 날짜·시간 채움. **화면 칸까지만** 한다 (0917 유강).
+   0828~0916 은 [마감]이 이걸 겸했다. 그래서 자동 지정이 이상하게 잡히면 칸을 고치고 [마감]을
+   다시 누를 수밖에 없었는데, 재마감은 그날 데이터를 리셋하고 다시 적재·리포트 재렌더까지 간다
+   — 몇 분씩 날아갔다. 이제 지정은 이 버튼이, 마감은 마감만 한다. 이상하면 칸 고치고 이 버튼만
+   다시 누르면 된다(사유가 이미 있는 칸은 건드리지 않으니, 다시 잡고 싶으면 칸을 비우고 누른다).
+   DB 는 여기서 안 건드린다 — 칸이 바뀌면 save() 디바운스가 clinic_roster 를 따라 쓴다(clinicSig).
+   규칙은 0812·0825 유강 확정 그대로 옮겨온 것이다. 새 전역 심볼 없음(MERGE-CUT 안전). */
+async function setupClinic(){
+  if(!CLS)return;
+  const picked=[];
+  /* 자동 추가학습 지정 — 두 가지 사유. 이미 사유가 적힌 학생은 손대지 않는다.
+     ① 테스트 반평균 이하 (만점자 제외)
+     ② 과제 이행률 100% 미달 (0812 유강). 시험을 잘 봐도 과제를 안 하면 부른다.
+     ⚠ 미응시는 대상이 아니다 — 안 본 시험을 근거로 부를 수는 없다(0812 유강).
+     ⚠ 이행률 빈 칸은 '판단 보류'다. 검사 안 한 반을 전원 호출하는 사고를 막는다. */
+  {
+    const cards=[...csAll('.stu')].filter(c=>!c.classList.contains('na'));
+    const put=(c,why)=>{
+      const rs=c.querySelector('[data-f="추가학습사유"]');
+      if(rs.value.trim())return 0;
+      rs.value=why;
+      rs.dispatchEvent(new Event('input'));
+      rs.dispatchEvent(new Event('change'));
+      const s=STUDENTS.find(x=>x['학생ID']===c.dataset.id);
+      picked.push((s&&s['이름'])||c.dataset.id);
+      return 1;
+    };
+    const tname=$('c_test').value||'테스트';
+    const full=(isGT()&&GTKEY)?gtPtsSum(GTKEY.pts):reviewFull();
+    const why={};   // 학생 카드별 사유 — 두 조건에 다 걸리면 한 줄로 합친다
+    const scored=cards.map(c=>({c,v:parseFloat(c.querySelector('[data-f="점수"]').value)})).filter(x=>!isNaN(x.v));
+    /* (0825 유강) 기출(모의)테스트는 반평균 이하 지정 제외 — 타교 시험이라 평균이 잣대가 아니다.
+       기출의 추가학습 사유는 소수오답(아래 ③)과 이행률만. */
+    if(!isGT()&&scored.length>=2){
+      const avg=scored.reduce((a,x)=>a+x.v,0)/scored.length;
+      for(const {c,v} of scored)
+        if(v<=avg&&(!full||v<full))
+          (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push(tname+' 반평균 이하 ('+v+'점/평균 '+avg.toFixed(1)+')');
+    }
+    for(const c of cards){
+      const raw=c.querySelector('[data-f="이행률"]').value.trim();
+      if(raw===''){continue;}                      // 미입력 = 보류
+      const ih=parseFloat(raw);
+      if(isNaN(ih)||ih>=100)continue;
+      (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push('과제 이행률 '+ih+'%');
+    }
+    /* ③ (0825 유강) 기출 모드 소수오답 — 문항 오답자가 2명 이하면 그 오답자는 추가학습 대상.
+       남들 다 맞은 문제를 틀림 = 개인 결핍. 유형과제(주 유형만)와 별개로 클리닉으로 부른다.
+       '0'(완전 오답)만 센다 — 부분(1)·미입력·수동채점(M)은 제외. */
+    if(isGT()&&GTKEY){
+      const wrongBy={};   // 문항 라벨 → 오답 학생 카드들
+      for(const c of cards){
+        const items=gtDes(c.dataset.gtItems||'');
+        for(const k in items)if(items[k]==='0')(wrongBy[k]=wrongBy[k]||[]).push(c);
+      }
+      const src=$('gt_src').value.trim()||'기출';
+      for(const k in wrongBy){
+        const ws=wrongBy[k];
+        if(ws.length<1||ws.length>2)continue;
+        for(const c of ws)
+          (why[c.dataset.id]=why[c.dataset.id]||{c,r:[]}).r.push(src+' '+k+'번 소수오답('+ws.length+'명)');
+      }
+    }
+    let m=0;
+    for(const k in why)m+=put(why[k].c,why[k].r.join(' · '));
+  }
+  /* 사유는 있는데 날짜가 빈 지정은 다음 수업일 + 반별 기본 시간으로 채운다 (0828 ①과 같은 규칙).
+     손으로 적어 둔 날짜·시간은 건드리지 않는다. */
+  const nx=await nextClinic(CLS);
+  let dn=0;
+  for(const card of [...csAll('.stu')]){
+    const q=f=>card.querySelector('[data-f="'+f+'"]');
+    const rs=q('추가학습사유');
+    if(!rs||!rs.value.trim())continue;
+    const dEl=q('추가학습날짜'), tEl=q('추가학습시간');
+    if(dEl&&!dEl.value&&nx){
+      dEl.value=nx.date;
+      if(tEl&&!tEl.value)tEl.value=nx.time||'';
+      dEl.dispatchEvent(new Event('input'));dEl.dispatchEvent(new Event('change'));
+      dn++;
+    }
+  }
+  /* 마감이 "세팅을 아예 안 눌렀다"를 알아보는 표시 — 새 전역 대신 DOM 에 둔다(MERGE-CUT 안전) */
+  $('students').dataset.clinicset=CLS+'|'+vDay();
+  const total=[...csAll('.stu [data-f="추가학습사유"]')].filter(e=>e.value.trim()).length;
+  toast(picked.length
+    ? '추가학습 자동 지정 '+picked.length+'명 — '+picked.slice(0,8).join(', ')+(picked.length>8?' 외':'')
+      +'\n(반평균 이하 · 과제 미흡 · 소수오답)'+(dn?' · 날짜 '+dn+'명 채움':'')
+      +'\n칸을 고친 뒤 이 버튼을 다시 눌러도 된다 — 마감은 따로.'
+    : (total?'새로 잡힌 학생 없음 — 이미 사유가 적힌 '+total+'명 그대로'+(dn?' (날짜 '+dn+'명 채움)':'')
+             :'추가학습 대상 없음 — 반평균 이하·과제 미흡·소수오답에 걸린 학생이 없다'));
+}
+/* (1107 유강 "장유진도 추가학습에 조퇴 잡아서 넣고 싶었는데 예약시스템이랑 콘솔쪽이랑 안붙어있을까봐")
+ * 학생 줄 '클리닉 보강' — 시간(30분/1시간/2시간) + 사유 → clinic_manual(회차 '반|날짜'). 포털 v63 이 [마감]된 회차와 같이
+ * 클리닉 예약 시스템으로 넘긴다 → 학생·학부모 예약 안내(다음 날 9시까지 직접, 안 하면 자동). 마감 뒤에 넣어도 5분 안에 간다.
+ * 미흡·결석으로 이미 잡힌 학생이면 한 예약으로 합쳐진다. 시간을 '—'로 되돌리면 지운다(이미 나간 안내·예약은 그대로). */
+async function cmMount(t){
+  const key=CLS+'|'+vDay();
+  try{
+    const {data}=await sb.from('clinic_manual').select('*').eq('회차',key);
+    (data||[]).forEach(m=>{ const tr=t.querySelector('tr.stu[data-id="'+m['학생ID']+'"]'); if(!tr)return;
+      tr.querySelector('[data-cm="blk"]').value=String(m['블록']); tr.querySelector('[data-cm="why"]').value=m['사유']||''; });
+  }catch(e){}
+  const save=async tr=>{
+    const id=tr.dataset.id, blk=tr.querySelector('[data-cm="blk"]').value, why=tr.querySelector('[data-cm="why"]').value.trim();
+    const nm=(STUDENTS.find(x=>x['학생ID']===id)||{})['이름']||'';
+    const closed=$('sessionstate').textContent==='마감됨';
+    const r=blk?await sb.from('clinic_manual').upsert({'회차':key,'학생ID':id,'사유':why||'보강','블록':+blk,'기록':new Date().toISOString()},{onConflict:'회차,학생ID'})
+               :await sb.from('clinic_manual').delete().eq('회차',key).eq('학생ID',id);
+    if(r.error){toast('클리닉 보강 저장 실패: '+r.error.message);return;}
+    toast(blk?nm+' 클리닉 보강 '+({1:'30분',2:'1시간',4:'2시간'}[blk])+' — '+(closed?'5분 안에 예약 안내가 간다':'[마감]하면 예약 안내가 간다'):nm+' 클리닉 보강 지움');
+  };
+  t.querySelectorAll('tr.stu').forEach(tr=>{
+    const s=tr.querySelector('[data-cm="blk"]'), w=tr.querySelector('[data-cm="why"]'); if(!s)return;
+    s.addEventListener('change',()=>save(tr));
+    w.addEventListener('change',()=>{ if(s.value) save(tr); });
+  });
+}
+async function closeSession(){
+  if(!CLS)return;
+  /* (0907) 마감의 백스톱이 반 전체 PT를 뽑는다 — 채점칸이 비어 있으면 그 문항이 빠진 채로 나간다. */
+  {
+    const ms=gtMissing();
+    if(ms.length&&!confirm('채점칸이 빈 학생이 있다:\n\n'+ms.map(x=>'  '+x.name+' — '+x.labels.join(',')+'번').join('\n')
+      +'\n\n빈칸은 총점에서만 0점으로 깎이고 "오답"으로는 안 남는다.\n이대로 마감하면 그 문항이 PT에서 빠진다.\n\n그래도 마감할까?'))return;
+  }
+  const today=vDay();
+  const reclose=$('sessionstate').textContent==='마감됨';   // 재마감 = 리셋 후 재적재·재렌더 (0818)
+  /* (0917 유강) 자동 추가학습 지정은 [② 추가학습 세팅] 버튼으로 뺐다. 마감은 지정을 만들지 않는다.
+     여기서는 "세팅을 아예 안 눌렀다"만 짚어 준다 — 손으로 사유를 적어 둔 반은 묻지 않는다. */
+  if(false   /* (1107) 추가학습 세팅 폐지 — 클리닉 보완 예약이 대신한다 */
+     && !confirm('[② 추가학습 세팅]을 아직 안 눌렀다.\n\n이대로 마감하면 오늘 추가학습은 아무도 지정되지 않는다.\n(손으로 다 적었거나 오늘은 부를 사람이 없으면 그냥 확인)\n\n그대로 마감할까?'))return;
+  const present=[...csAll('.stu .seg button[class*=a]')].filter(b=>b.dataset.v==='출석').length;
+  const crow={
+    '반':CLS,'날짜':today,'요일':DAYS[new Date().getDay()],'학기':'26S',
+    '진도원문':$('c_progress').value.trim()||null,'이번과제':$('c_hw').value.trim()||null,
+    '지난과제':PREVHW||null,'테스트유형':$('c_test').value.trim()||null,'인원':String(present),
+  };
+  dropUnchanged(crow,CLPREV,['반','날짜','요일','학기','지난과제','인원']);   // 동시 입력(0930)
+  const {error:e1}=await sb.from('class_log').upsert(crow,{onConflict:'반,날짜'});
+  const {error:e2}=await sb.from('class_sessions').upsert({'반':CLS,'날짜':today,'상태':'closed','마감시각':new Date().toISOString()},{onConflict:'반,날짜'});
+  if(e1||e2){toast('마감 실패: '+(e1||e2).message);saveFail('close','마감 — '+(e1||e2).message);return;}
+  saveOk('close');
+  /* 마감 = 추가학습 **명단 반영**까지. 지정을 만들지는 않는다(0917 — 그건 [② 추가학습 세팅] 몫).
+     ① 사유만 있고 날짜가 빈 지정은 다음 수업일 + 반별 기본 시간으로 채운다(세팅을 건너뛴 손입력 보호).
+     ② 명단(clinic_roster)을 여기서 직접 upsert 한다 — save() 디바운스(400ms)만 믿으면 마감 직후
+        떠나 버릴 때 명단이 안 박힐 수 있다. clinicSig 를 맞춰 두므로 디바운스가 나중에 돌아도
+        명단을 두 번 쓰지 않는다(다만 daily_log 의 사유·날짜는 디바운스가 적는다).
+     ③ (0917 유강) 추가학습 문제지 자동 제작(clinic_build 잡 적재)은 **껐다** — 지금 안 쓴다.
+        명단·출석만 쓴다. 되살릴 땐 이 자리에 날짜별 잡 적재(중복 날짜 가드)를 다시 넣으면 된다.
+     새 전역 심볼 없음(MERGE-CUT 안전). 실패해도 마감 자체는 이미 끝난 상태다. */
+  {
+    const nx=await nextClinic(CLS);
+    let cn=0;
+    for(const card of [...csAll('.stu')]){
+      const q=f=>card.querySelector('[data-f="'+f+'"]');
+      const reason=q('추가학습사유')&&q('추가학습사유').value.trim();
+      if(!reason)continue;
+      const dEl=q('추가학습날짜'), tEl=q('추가학습시간');
+      if(dEl&&!dEl.value&&nx){
+        dEl.value=nx.date;
+        if(tEl&&!tEl.value)tEl.value=nx.time||'';
+        dEl.dispatchEvent(new Event('input'));dEl.dispatchEvent(new Event('change'));
+      }
+      const cd=dEl?dEl.value:'', ct=tEl?(tEl.value.trim()||null):null;
+      if(!cd)continue;                            // 날짜를 끝내 못 정하면 잡을 걸 수 없다
+      const s=STUDENTS.find(x=>x['학생ID']===card.dataset.id);
+      if(!s)continue;
+      /* (0908) clinicSig 를 DB 작업 **전에** 맞춘다 — 위 dispatchEvent 가 save() 디바운스(400ms)를 깨우는데,
+         여기 insert 가 끝나기 전에 그 save 가 돌면 둘 다 '내 행 없음'으로 보고 각각 꽂았다(같은 날 같은 사유 2행). */
+      card.dataset.clinicSig=[reason,cd||'',ct||''].join('|');
+      const {data:ex}=await sb.from('clinic_roster').select('id,출석,상태')
+        .eq('학생ID',card.dataset.id).eq('지정일',todayStr()).neq('상태','보강대기').order('id');
+      const row=(ex||[]).find(r=>!r['출석']);     // 출석 찍힌 행·결석 보강은 건드리지 않는다 (save 와 동일 범위). 상태는 지정·발행 무관(0908)
+      const body={'학생ID':card.dataset.id,'이름':s['이름'],'반':CLS,'사유':reason,'날짜':cd,'시간':ct,'기록일':todayStr()};
+      const {error:ce}=row?await sb.from('clinic_roster').update(body).eq('id',row.id)
+                          :await sb.from('clinic_roster').insert({...body,'상태':'지정','지정일':todayStr()});
+      if(ce){toast('추가학습 명단 저장 실패('+s['이름']+'): '+ce.message);continue;}
+      const extra=(ex||[]).filter(r=>!r['출석']&&(!row||r.id!==row.id)).map(r=>r.id);   // 수업당 한 번(0908) — 여분 행 제거
+      if(extra.length)await sb.from('clinic_roster').delete().in('id',extra);
+      cn++;
+    }
+    if(cn)toast('추가학습 명단 '+cn+'명 반영 — [추가학습] 탭에서 출석 찍는다');
+  }
+  /* (0825) 기출 모드 마감 → 학생별 취약유형 과제 잡 적재.
+     학원 PC의 hw_watch 폴러가 주워 circuit_hw --auto 실행 → hwpx 생성 → 한글 워처 PDF → 인쇄.
+     새 전역 심볼 없음(MERGE-CUT 안전). 실패해도 마감 자체는 이미 끝난 상태다. */
+  if(isGT()&&GTKEY){
+    const src=$('gt_src').value.trim();
+    if(src){
+      // (0828) 조교가 이미 만들었으면 재적재 금지. (0831) 진단트리거의 **학생별** 잡은
+      // 반 전체 백스톱을 막지 않는다 — 대신 그 학생들은 '제외'로 넘겨 진단 반영본을 지킨다.
+      const {data:gp}=await sb.from('job_queue').select('id,상태,파라미터,결과').eq('종류','기출과제')
+        .in('상태',['요청','처리중','진행','완료']).contains('파라미터',{'반':CLS,'날짜':today});
+      // (0912) '대상 없음'으로 완료된 백스톱(결과.학생 비어 있음)은 막지 않는다 — 뒤늦게 본 학생이 생기면 다시 돌아야 한다.
+      const classJobs=(gp||[]).filter(j=>!(j['파라미터']||{})['학생']&&!(j['상태']==='완료'&&!((j['결과']||{})['학생']||[]).length));
+      const perStu=[...new Set((gp||[]).map(j=>(j['파라미터']||{})['학생']).filter(Boolean))];
+      if(classJobs.length){
+        toast('기출과제는 이미 '+(classJobs.some(x=>x['상태']==='완료')?'생성됨':'만드는 중')+' — 작업 현황(⚙)에서 PDF');
+      }else{
+        const prm={'반':CLS,'날짜':today,'시험지명':src};
+        if(perStu.length)prm['제외']=perStu;   // 진단 제출자 — 이미 학생별 PT가 있다
+        const {error:e3}=await sb.from('job_queue').insert({'종류':'기출과제','상태':'요청','요청자':'콘솔',
+          '파라미터':prm});
+        toast(e3?'기출과제 요청 실패: '+e3.message
+                :'기출과제 생성 요청됨'+(perStu.length?' (진단 제출 '+perStu.length+'명 제외)':'')+' — 작업 현황(⚙)에서 PDF');
+      }
+    }
+  }
+  $('sessionstate').textContent='마감됨';
+  $('closeguide').style.display='';                    // 마감 후 흐름 안내 (0813)
+  $('closeguide').scrollIntoView({behavior:'smooth',block:'nearest'});
+  toast(reclose?CLS+' 재마감 — 데이터 리셋 후 재적재·리포트 재렌더 기동':CLS+' 마감 완료 — 수업로그·일지 적재됨');
+}
+
+/* 오늘 이 반의 입력 전체 삭제 (오입력·테스트 정리용) */
+async function resetToday(){
+  if(!CLS)return;
+  const today=vDay();
+  if(!confirm(CLS+' 오늘('+today+') 입력을 전부 지웁니다.\n일지·추가학습 지정·오답 이벤트·마감 기록 포함. 계속?'))return;
+  if(!confirm('정말 삭제할까요? 되돌릴 수 없습니다.'))return;
+  const ids=STUDENTS.map(s=>s['학생ID']);
+  await sb.from('events').delete().eq('참조','리뷰:'+CLS+':'+today);
+  await sb.from('events').delete().eq('참조','기출:'+CLS+':'+today);
+  await sb.from('clinic_roster').delete().eq('지정일',today).in('학생ID',ids);
+  await sb.from('daily_log').delete().eq('반',CLS).eq('날짜',today);
+  await sb.from('class_log').delete().eq('반',CLS).eq('날짜',today);
+  await sb.from('class_sessions').delete().eq('반',CLS).eq('날짜',today);
+  toast(CLS+' 오늘 입력 리셋 완료');
+  selectClass(CLS);
+}
+
+
+/* 서버 작업 폴링 공용 — 기다림이 길면 그렇다고 말한다(추가학습 폴링이 쓴다). */
+function stallHint(n,st){
+  const sec=n*6;
+  if(sec<180)return '';
+  const m=Math.floor(sec/60);
+  return '\n<span class="warn">'+m+'분째 '+(st==='요청'?'안 집어간다':'끝나지 않는다')+
+    ' — 서버가 밀린 것이다. 급하면 세션에 알릴 것(저장소를 밀면 즉시 깨어난다).</span>';
+}
+
+/* 이 반에 맞는 풀을 위로 올린다.
+ * 이름만 보면 안 된다 — 풀 이름이 세 가지다.
+ *   '20260810_고1'  날짜 누적본 (학년이 이름 끝에)
+ *   '주간_고2A'      반 주간 통  (반 이름이 이름 안에)
+ *   '08정적분'       단원 통     (이름에 학년이 아예 없다 — 단원 설명의 '(고2)' 로 가린다)
+ * 0813에 단원 통을 올렸는데 이름 규칙이 달라 화면에서 아래로 밀렸다. */
+/* (1029 리뉴얼) 옛 '오늘 물을 것'·'복습 루프'(set_plan·build_sets·send, 마지막 실행 0829) 코드를 걷어냈다 — CORE 루프(core.html)가 대체. 원본 = console.js.bak_1029_renew */
+/* xlsx 파서는 900KB 다. 적재 화면을 처음 열 때만 받는다. */
+let XLSXP=null;
+function loadXlsx(){
+  if(XLSXP)return XLSXP;
+  XLSXP=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>res(window.XLSX); s.onerror=()=>rej(new Error('xlsx 로더를 못 받았다'));
+    document.head.appendChild(s);
+  });
+  return XLSXP;
+}
+async function readWb(input){
+  const f=input.files&&input.files[0];
+  if(!f)return null;
+  const XLSX=await loadXlsx();
+  return {wb:XLSX.read(await f.arrayBuffer(),{type:'array'}),name:f.name};
+}
+
+/*<<PARSE ─ 이 구간은 _검증/parse_test.mjs 가 그대로 떼어다 node 에서 돌린다.
+ * 파이썬 적재기(wkappend.py·내신적재.py)와 같은 답이 나오는지 대조하는 게 목적이라
+ * 여기에는 DOM·DB 를 부르는 코드를 두지 않는다. 순수 함수만.                        */
+const WK_SUBJ={'고1':'공통수학2','고2':'미적분1'};   // 26여름 학년별 과목 시트
+const WK_SRC='주간고사26여름';
+const SC_SLOTS=(()=>{const a=[];for(const g of[1,2,3])for(const s of[1,2])for(const e of['중간','기말'])a.push([g,s,e]);return a;})();
+const SC_FIRST=5;      // 성적표 점수 첫 칸(F열)
+
+function sheetRows(XLSX,wb,name){
+  const ws=wb.Sheets[name];
+  if(!ws)throw new Error('시트 없음: '+name+' (있는 시트: '+wb.SheetNames.join(', ')+')');
+  return XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,blankrows:true});
+}
+/* 파이썬 f'{x:g}' 와 같은 문자열을 만든다. 100.0→'100', 87.5→'87.5' */
+function gfmt(x){return String(Number(Number(x).toPrecision(6)));}
+
+/* 분석시트 → {문항번호: [유형, 중단원]}. 유형이 비면 소단원을 쓴다(wkappend 와 동일). */
+function parseAnalysis(rows){
+  const qt={};
+  (rows||[]).slice(1).forEach(r=>{
+    if(!r)return;
+    const no=r[0];
+    if(no===null||no===undefined||!/^\d+$/.test(String(no).trim()))return;
+    qt[parseInt(no,10)]=[String(r[7]||r[6]||'').trim(),String(r[5]||'').trim()];
+  });
+  return qt;
+}
+/* 성적 시트 → {점수행, 오답행}. 학생ID 조인은 여기서 안 한다(마스터는 DB 에 있다). */
+function parseWeekly(rows,qt,rd){
+  const hdr=(rows&&rows[0])||[];
+  const iSc=hdr.findIndex(h=>String(h===null||h===undefined?'':h).trim()==='최종점수');
+  if(iSc<0)throw new Error("'최종점수' 열이 없다 — '성적 현황' 시트가 맞는지 확인");
+  const qcols=[];
+  hdr.forEach((h,i)=>{const m=/^(\d+)번$/.exec(String(h===null||h===undefined?'':h).trim());if(m)qcols.push([parseInt(m[1],10),i]);});
+  const scores=[],wrongs=[],notTaken=[];
+  rows.slice(1).forEach(r=>{
+    if(!r)return;
+    const name=String(r[0]===null||r[0]===undefined?'':r[0]).trim();
+    if(!name)return;
+    const ban=String(r[1]===null||r[1]===undefined?'':r[1]).trim();
+    const typ=String(r[2]===null||r[2]===undefined?'':r[2]);
+    // '시험 유형'에 회차 숫자가 들어간 행만 응시 (1회 / 2주차 / 주간고사_3회_분석시트 …)
+    if(!typ.replace(/\D/g,'').includes(String(rd))){notTaken.push(name+(ban?'('+ban+')':''));return;}
+    const raw=String(r[iSc]===null||r[iSc]===undefined?'':r[iSc]).replace('점','').trim();
+    const sc=parseFloat(raw);
+    if(isNaN(sc)){notTaken.push(name+(ban?'('+ban+')':'')+' 점수없음');return;}
+    scores.push({이름:name,반:ban,점수:gfmt(sc)});
+    qcols.forEach(([qno,ci])=>{
+      const v=String(r[ci]===null||r[ci]===undefined?'':r[ci]).trim().toUpperCase();
+      if(v==='O')return;                       // 응시자의 빈칸 = X (wkappend 와 같은 규칙)
+      const t=qt[qno]||['',''];
+      if(!t[0])return;                         // 분석시트에 유형이 없는 문항은 오답으로 안 쌓는다
+      wrongs.push({이름:name,반:ban,문항:qno+'번',태그:t[0],단원:t[1]});
+    });
+  });
+  return {scores,wrongs,notTaken};
+}
+
+/* 내신 성적표 셀 → [점수|null, 상태|null]. '-'·빈칸은 아예 행을 만들지 않는다. */
+function scNum(v){
+  if(v===null||v===undefined)return [null,null];
+  const s=String(v).trim();
+  if(!s||s==='-'||s==='—'||s==='–')return [null,null];
+  if(s==='?'||s==='??')return [null,'미확보'];
+  const n=parseFloat(s);
+  if(isNaN(n)||!/^[-+]?[\d.]+$/.test(s))return [null,null];
+  return [Math.round(n*10)/10,'확보'];
+}
+function schoolKey(s){const t=String(s||'').trim();return t.replace(/(고등학교|고)$/,'')||t;}
+/* 성적표 시트 → [{반,이름,학교,학년,학기,시험구분,점수,상태}] */
+function parseSchool(rows){
+  let cls='';const out=[];
+  (rows||[]).forEach(r0=>{
+    const cells=(r0||[]).map(c=>c===null||c===undefined?'':String(c).trim());
+    if(cells.length<SC_FIRST+1)return;
+    if(cells[0]==='no'){cls=cells[1];return;}          // 컬럼 머리 — B열이 반 이름
+    const name=cells[3],school=cells[4];
+    if(!name||!/^\d/.test(cells[0]||''))return;        // 학년 머리·빈 줄
+    SC_SLOTS.forEach(([g,se,ex],i)=>{
+      const col=SC_FIRST+i;
+      if(col>=cells.length)return;
+      const [score,state]=scNum(cells[col]);
+      if(!state)return;
+      out.push({반:cls,이름:name,학교:school,학년:g,학기:se,시험구분:ex,점수:score,상태:state});
+    });
+  });
+  return out;
+}
+/* 파일 이름에서 회차·학년을 읽는다 — 폴더(2026_N회)를 브라우저는 못 본다 */
+function guessWeekly(fname){
+  const rd=/(\d+)\s*(?:회|주차)/.exec(fname||''), gr=/고\s*([123])/.exec(fname||'');
+  return {rd:rd?rd[1]:'',grade:gr?'고'+gr[1]:''};
+}
+
+/* ── 기출테스트 채점 (0823) — 대조는 _검증/gt_test.mjs ─────────────────────
+ * 원칙: 학생이 적은 답을 그대로 받아 정규화 후 문자열 비교. 더미코드 금지.
+ * 시트 실측에서 '2,041'과 '2041', '④'와 '4'가 같은 답으로 섞여 있었다 — 정규화가 흡수한다.
+ * '11-10' 같은 문자열 답은 정규화 후에도 문자열 그대로 비교된다. */
+function gtNorm(s){
+  let t=String(s==null?'':s).trim();
+  if(!t)return '';
+  t=t.replace(/[０-９．]/g,c=>c==='．'?'.':String.fromCharCode(c.charCodeAt(0)-0xFEE0));  // 전각→반각
+  t=t.replace(/[①②③④⑤]/g,c=>'12345'['①②③④⑤'.indexOf(c)]);                            // 선지 기호→숫자
+  t=t.replace(/[,\s]/g,'').toLowerCase();                                                  // 천단위 쉼표·공백
+  if(/^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)){const n=parseFloat(t);if(!isNaN(n))return String(n);} // 3.0→3
+  return t;
+}
+/* 정답·배점 문자열 → {labels, ans, pts}. 항목은 쉼표 구분, '라벨=값'이면 소문항 라벨.
+ * 정답이 하나도 없으면 null. 배점이 모자라면 그 자리는 null(화면이 경고한다). */
+function gtParseKey(ansStr,ptsStr){
+  const labels=[],ans=[];
+  String(ansStr||'').split(',').map(x=>x.trim()).filter(x=>x!=='').forEach(tok=>{
+    let label=String(labels.length+1),v=tok;
+    const eq=tok.indexOf('=');
+    if(eq>0){label=tok.slice(0,eq).trim();v=tok.slice(eq+1).trim();}
+    labels.push(label);ans.push(v);
+  });
+  if(!ans.length)return null;
+  const pts=ans.map(()=>null);
+  String(ptsStr||'').split(',').map(x=>x.trim()).forEach((p,i)=>{
+    if(i<ans.length&&p!==''){const n=parseFloat(p);pts[i]=isNaN(n)?null:n;}
+  });
+  return {labels,ans,pts};
+}
+function gtIsManual(a){return String(a).trim().toUpperCase()==='M';}
+function gtPtsSum(pts){return Math.round(pts.reduce((a,p)=>a+(p||0),0)*10)/10;}
+/* 한 문항 판정: '2'=정답 '0'=오답 ''=미입력, null=수동채점 문항(M) */
+function gtGradeOne(stuAns,keyAns){
+  if(gtIsManual(keyAns))return null;
+  const a=gtNorm(stuAns);
+  if(a==='')return '';
+  return a===gtNorm(keyAns)?'2':'0';
+}
+/* 총점 = 정답 배점 합 + 부분(1)은 배점 절반. 소수 배점이라 한 자리 반올림. */
+function gtScore(grades,pts){
+  let s=0;
+  grades.forEach((g,i)=>{const p=pts[i]||0;if(g==='2')s+=p;else if(g==='1')s+=p/2;});
+  return Math.round(s*10)/10;
+}
+/* 직렬화 "라벨:값;…" — 빈 값은 항목을 만들지 않는다. 값 속 ';' 는 제거(형식 보호). */
+function gtSer(labels,arr){
+  return labels.map((l,i)=>(arr[i]!==''&&arr[i]!=null)?l+':'+String(arr[i]).replace(/;/g,''):null)
+    .filter(Boolean).join(';');
+}
+function gtDes(str){
+  const m={};String(str||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i>0)m[p.slice(0,i)]=p.slice(i+1);});
+  return m;
+}
+/* 지각응시(0910) — 이 행의 '응시일'에 무엇을 쓸 것인가.
+     null  = 손대지 않는다(저장 때 키를 통째로 뺀다 → 가드가 옛 값을 지킨다)
+     ''    = 명시 삭제(가드가 null 로 바꾼다)
+     날짜   = 그 날 본 것으로 기록
+   ⚠ 이미 채점돼 있던 행은 절대 찍지 않는다. 옛 날짜를 열어 코멘트만 고쳐도 반 전원에게
+      응시일이 박힌다 — '이전엔 채점이 없었는데 지금 있다' 일 때만 찍는 이유. */
+function gtLateStamp(prev, o){
+  prev = prev || {};
+  const had = (prev['응시일']||'') !== '';
+  if(o.na) return had ? '' : null;                 // 미응시로 되돌리면 같이 비운다
+  if(!o.gt) return null;                           // 리뷰테스트는 상관없다
+  if(had) return prev['응시일'];                    // 첫 응시일이 정본(재채점·정답 정정에도 안 바뀐다)
+  const wasGraded = ((prev['문항점수']||'') !== '') || ((prev['점수']||'') !== '');
+  return (!wasGraded && o.graded && o.viewDay !== o.today) ? o.today : null;
+}
+/*PARSE>>*/
+
+/* ── 학생마스터 조인 ── 학생ID 는 조합하지 않는다. 마스터에 있는 것만 적재한다. */
+/*<<JOIN ─ 여기도 _검증/join_test.mjs 가 그대로 떼어다 쓴다. 순수 함수만.  */
+function buildMaster(data){
+  const byCls={},byName={},byGrade={},bans={};
+  (data||[]).forEach(r=>{
+    const rank=r['상태']==='재원'?0:r['상태']==='휴원'?1:2;
+    const k=r['이름']+'|'+(r['학년']||'')+(r['반']||'');
+    if(!byCls[k]||rank<byCls[k]._r)byCls[k]=Object.assign({_r:rank},r);
+    const n=r['이름']+'|'+schoolKey(r['학교']);
+    if(!byName[n]||rank<byName[n]._r)byName[n]=Object.assign({_r:rank},r);
+    const g=r['이름']+'|'+(r['학년']||'');
+    if(!byGrade[g])byGrade[g]=[];
+    byGrade[g].push(Object.assign({_r:rank},r));
+    (bans[r['학년']]=bans[r['학년']]||new Set()).add(r['반']);
+  });
+  return {byCls,byName,byGrade,bans,all:data||[]};
+}
+/* 반이 어긋난 학생을 마스터의 현재 반으로 끌어온다.
+   같은 학년에 같은 이름이 둘이면 손대지 않는다(누구인지 모르는 채로 적재하면 그게 사고다). */
+function joinByName(M,name,grade){
+  const c=(M.byGrade[name+'|'+grade]||[]).slice().sort((a,b)=>a._r-b._r);
+  if(!c.length)return null;
+  if(c.length>1&&c[0]._r===c[1]._r)return null;
+  return c[0];
+}
+function gradeNum(g){const m=/고\s*(\d)/.exec(String(g||''));return m?parseInt(m[1],10):null;}
+/* 성적 시트 한 장 → 적재 대상 + 제외 사유. 화면도 적재도 이 결과 하나만 본다. */
+function joinWeekly(M,scores,wrongs,grade){
+  const mine=M.bans[grade]||new Set();      // 담당 반 = 마스터에 그 학년으로 있는 반
+  const hit=[],miss=[],drift=[],other={};
+  scores.forEach(s=>{
+    let m=M.byCls[s.이름+'|'+grade+s.반];
+    if(!m){
+      const alt=joinByName(M,s.이름,grade);  // 반 표류(이지환 T↔A) — 마스터 반이 정본
+      if(alt){m=alt;drift.push(s.이름+' '+s.반+'→'+alt['반']);}
+    }
+    if(m){hit.push({s:Object.assign({},s,{반:m['반']||s.반}),m,원반:s.반});return;}
+    if(mine.has(s.반))miss.push(s.이름+'('+grade+s.반+')');
+    else other[s.반]=(other[s.반]||0)+1;     // 남의 반 — 원래 우리 DB 대상이 아니다
+  });
+  // 오답은 시트에 적힌 (이름·반) 그대로 붙인다 — 이름만으로 묶으면 동명이인이 섞인다
+  const nameId={};hit.forEach(h=>nameId[h.s.이름+'|'+h.원반]=h);
+  const wr=(wrongs||[]).filter(w=>nameId[w.이름+'|'+w.반])
+    .map(w=>Object.assign({},w,{반:nameId[w.이름+'|'+w.반].s.반,_k:w.이름+'|'+w.반}));
+  return {hit,wrongs:wr,miss,drift,other,nameId};
+}
+/*JOIN>>*/
+let MASTER=null;
+async function master(){
+  if(MASTER)return MASTER;
+  const {data,error}=await sb.from('students').select('학생ID,이름,학년,반,학교,상태');
+  if(error)throw new Error('학생마스터 조회 실패: '+error.message);
+  MASTER=buildMaster(data);
+  return MASTER;
+}
+function gradeNum(g){const m=/고\s*(\d)/.exec(String(g||''));return m?parseInt(m[1],10):null;}
+function chunkInsert(table,rows){
+  const jobs=[];
+  for(let i=0;i<rows.length;i+=400)jobs.push(rows.slice(i,i+400));
+  return jobs.reduce((p,part)=>p.then(async()=>{
+    const {error}=await sb.from(table).insert(part);
+    if(error)throw new Error(table+' 적재 실패: '+error.message);
+  }),Promise.resolve());
+}
+function out(id,html){$(id).innerHTML=html;}
+
+/* ── 주간고사 ── */
+let WK=null;
+$('wk_score')&&$('wk_score').addEventListener('change',async e=>{
+  const g=guessWeekly((e.target.files[0]||{}).name||'');
+  if(g.rd&&!$('wk_rd').value)$('wk_rd').value=g.rd;
+  if(g.grade)$('wk_grade').value=g.grade;
+});
+async function wkPreview(){
+  $('wk_go').disabled=true;WK=null;
+  try{
+    const rd=String(parseInt($('wk_rd').value,10)||'');
+    if(!rd)return out('wk_out','<span class="warn">회차를 넣어야 한다.</span>');
+    const grade=$('wk_grade').value;
+    out('wk_out','읽는 중…');
+    const XLSX=await loadXlsx();
+    const sc=await readWb($('wk_score'));
+    if(!sc)return out('wk_out','<span class="warn">성적 xlsx 를 고를 것.</span>');
+    const shName=sc.wb.SheetNames.includes('성적 현황')?'성적 현황':sc.wb.SheetNames[0];
+    let qt={},anaMsg='분석시트 없음 — <b>점수만</b> 적재하고 오답은 건너뛴다.';
+    const ana=await readWb($('wk_ana'));
+    if(ana){
+      const want=WK_SUBJ[grade];
+      const nm=ana.wb.SheetNames.includes(want)?want:ana.wb.SheetNames[0];
+      qt=parseAnalysis(sheetRows(XLSX,ana.wb,nm));
+      anaMsg='분석시트 <b>'+nm+'</b> · 유형 '+Object.keys(qt).length+'문항';
+    }
+    const p=parseWeekly(sheetRows(XLSX,sc.wb,shName),qt,rd);
+    const M=await master();
+    const {hit,wrongs,miss,drift,other,nameId}=joinWeekly(M,p.scores,p.wrongs,grade);
+    WK={rd,grade,hit,wrongs,nameId};
+    const others=Object.keys(other).sort().map(b=>b+' '+other[b]).join(' · ');
+    out('wk_out',
+      '<b>'+grade+' '+rd+'회</b> · 시트 '+shName+' · '+anaMsg+'\n'+
+      '응시 '+p.scores.length+'명 중 <b>마스터 조인 '+hit.length+'명</b> · 오답 '+wrongs.length+'행\n'+
+      '점수 '+(hit.length?Math.min(...hit.map(h=>+h.s.점수))+'~'+Math.max(...hit.map(h=>+h.s.점수)):'—')+
+      ' · 반 '+[...new Set(hit.map(h=>h.s.반))].sort().join('/')+'\n'+
+      (drift.length?'· 반 표류 정정(마스터 기준): '+drift.join(', ')+'\n':'')+
+      (others?'· 다른 강사 반 '+others+' — 제외\n':'')+
+      (miss.length?'<span class="warn">⚠ 담당반인데 마스터에 없다 ('+miss.length+'명) — 적재 제외: '+miss.join(', ')+
+        '\n   → 학생마스터에 먼저 넣고 다시 미리보기 (학생ID 는 조합하지 않는다)</span>\n':'')+
+      '적재하면 같은 회차·소스('+WK_SRC+')의 <b>그 학생 기존 행을 지우고</b> 새로 넣는다.');
+    $('wk_go').disabled=!hit.length;
+  }catch(e){out('wk_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+}
+async function wkCommit(){
+  if(!WK)return;
+  $('wk_go').disabled=true;
+  try{
+    const {rd,grade,hit,wrongs,nameId}=WK;
+    const 회차=rd+'회';
+    const rows=hit.map(({s,m})=>({'학생ID':m['학생ID'],'이름':s.이름,'학년':grade,'반':s.반,'회차':회차,'점수':s.점수,'소스':WK_SRC}));
+    const ids=rows.map(r=>r['학생ID']);
+    out('wk_out','적재 중… 점수 '+rows.length+'행');
+    // 같은 회차·소스의 그 학생 행을 지우고 다시 넣는다(멱등). 남의 회차는 안 건드린다.
+    const {error:d1}=await sb.from('weekly_exam').delete().eq('회차',회차).eq('소스',WK_SRC).in('학생ID',ids);
+    if(d1)throw new Error('기존 행 정리 실패: '+d1.message);
+    await chunkInsert('weekly_exam',rows);
+    let wmsg='';
+    if(wrongs.length){
+      const wr=wrongs.map(w=>{const m=nameId[w._k].m;return {
+        '학생ID':m['학생ID'],'이름':w.이름,'반':w.반,'시험종류':'주간테스트','단원':w.단원,
+        '시험명':회차,'날짜':'','문항':w.문항,'틀린유형(태그)':w.태그,'실점구분':'오답','소스':WK_SRC};});
+      // ⚠ 키 단위가 아니라 (학생×시험) 단위로 지운다 — O 로 고쳐진 문항의 옛 오답이 남으면 안 된다
+      const {error:d2}=await sb.from('wrong_answers').delete()
+        .eq('시험종류','주간테스트').eq('시험명',회차).eq('소스',WK_SRC).in('학생ID',ids);
+      if(d2)throw new Error('기존 오답 정리 실패: '+d2.message);
+      await chunkInsert('wrong_answers',wr);
+      wmsg=' · 오답 '+wr.length+'행';
+    }
+    out('wk_out','<b>적재 완료</b> — '+grade+' '+회차+' 점수 '+rows.length+'행'+wmsg+
+      '\n학습현황·주간고사 리포트에 바로 반영된다. 로컬 CSV 는 pull_export.py 로 받는다.');
+    toast(grade+' '+회차+' 적재 완료');
+    WK=null;
+  }catch(e){out('wk_out','<span class="warn">적재 실패: '+e.message+'</span>');$('wk_go').disabled=false;}
+}
+
+/* ── 내신 ── */
+let SC=null,SC_WB=null;
+$('sc_file')&&$('sc_file').addEventListener('change',async()=>{
+  $('sc_go').disabled=true;
+  try{
+    const f=await readWb($('sc_file'));
+    const sel=$('sc_sheet');sel.innerHTML='';
+    if(!f)return;
+    f.wb.SheetNames.forEach(n=>{const o=document.createElement('option');o.textContent=n;sel.appendChild(o);});
+    const pref=f.wb.SheetNames.find(n=>/유강/.test(n));
+    if(pref)sel.value=pref;
+    SC_WB=f.wb;
+  }catch(e){out('sc_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+});
+async function scPreview(){
+  $('sc_go').disabled=true;SC=null;
+  try{
+    if(!SC_WB)return out('sc_out','<span class="warn">성적표 xlsx 를 고를 것.</span>');
+    const XLSX=await loadXlsx();
+    const sheet=$('sc_sheet').value;
+    const base=parseInt($('sc_base').value,10)||2026;
+    const raw=parseSchool(sheetRows(XLSX,SC_WB,sheet));
+    const M=await master();
+    const hit=[],miss=new Set();
+    raw.forEach(r=>{
+      const m=M.byName[r.이름+'|'+schoolKey(r.학교)]||M.byCls[r.이름+'|'+(r.반?String(r.반):'')];
+      if(!m){miss.add(r.이름+'('+r.학교+'·'+r.반+')');return;}
+      const cur=gradeNum(m['학년']);
+      hit.push(Object.assign({},r,{m,시행년:cur===null?'':String(base-(cur-r.학년))}));
+    });
+    const 확보=hit.filter(r=>r.상태==='확보').length;
+    const by={};hit.forEach(r=>{const k=r.시행년+'-'+r.학기+'학기 '+r.시험구분;by[k]=(by[k]||0)+1;});
+    SC={hit,sheet};
+    out('sc_out',
+      '시트 <b>'+sheet+'</b> · 기준년 '+base+'\n'+
+      '파싱 '+raw.length+'행 → <b>조인 '+hit.length+'행</b> (확보 '+확보+' / 미확보 '+(hit.length-확보)+')\n'+
+      Object.keys(by).sort().map(k=>'  · '+k+' — '+by[k]+'명').join('\n')+'\n'+
+      (miss.size?'<span class="warn">⚠ 마스터 미등록 '+miss.size+'명 — 적재 제외: '+[...miss].join(', ')+'</span>\n':'')+
+      '등급·석차등급·과목평균·수강자수는 <b>기존 값을 유지</b>한다(성적표에 없는 칸).');
+    $('sc_go').disabled=!hit.length;
+  }catch(e){out('sc_out','<span class="warn">읽기 실패: '+e.message+'</span>');}
+}
+async function scCommit(){
+  if(!SC)return;
+  $('sc_go').disabled=true;
+  try{
+    const today=todayStr(),소스='성적표:'+SC.sheet;
+    out('sc_out','적재 중…');
+    const {data:ex,error:e0}=await sb.from('school_exam')
+      .select('id,학생ID,학년,학기,시험구분,등급,석차등급,과목평균,수강자수');
+    if(e0)throw new Error('기존 조회 실패: '+e0.message);
+    const key=r=>[r['학생ID'],String(r['학년']),String(r['학기']),r['시험구분']].join('|');
+    const old={};(ex||[]).forEach(r=>old[key(r)]=r);
+    const rows=SC.hit.map(r=>{
+      const o=old[[r.m['학생ID'],String(r.학년),String(r.학기),r.시험구분].join('|')]||{};
+      return {'학생ID':r.m['학생ID'],'이름':r.이름,'학교':schoolKey(r.학교),
+        '반':r.m['반']||r.반,'학년':String(r.학년),'시행년':r.시행년,'학기':String(r.학기),
+        '시험구분':r.시험구분,'점수':r.점수===null?'':String(r.점수),
+        '등급':o['등급']||'','석차등급':o['석차등급']||'','과목평균':o['과목평균']||'','수강자수':o['수강자수']||'',
+        '상태':r.상태,'소스':소스,'기록일':today};
+    });
+    const kill=rows.map(r=>key(r)).filter(k=>old[k]).map(k=>old[k].id);
+    if(kill.length){
+      for(let i=0;i<kill.length;i+=200){
+        const {error}=await sb.from('school_exam').delete().in('id',kill.slice(i,i+200));
+        if(error)throw new Error('기존 행 정리 실패: '+error.message);
+      }
+    }
+    await chunkInsert('school_exam',rows);
+    out('sc_out','<b>적재 완료</b> — '+rows.length+'행 (갱신 '+kill.length+' · 신규 '+(rows.length-kill.length)+')\n'+
+      '원점수만으로는 해석하지 않는다 — 시험메타(등급컷·난이도)와 조인해서 본다.');
+    toast('내신 '+rows.length+'행 적재 완료');
+    SC=null;
+  }catch(e){out('sc_out','<span class="warn">적재 실패: '+e.message+'</span>');$('sc_go').disabled=false;}
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * 추가학습 — 지정은 사람이, 출제는 서버가
+ *
+ * 루프 손잡이와 같은 구조다(job_queue 에 한 줄 → 크론이 실행 → 화면이 폴링).
+ * 다른 것은 **대상**이다. 루프는 반 전체라 반 화면에 있고, 추가학습은 지목한 학생이라
+ * 날짜 화면에 있다. 출석은 여기서 찍고, 인증도·클리닉 원장은 회수 크론이 맞춘다.
+ * ════════════════════════════════════════════════════════════════════ */
+let CLROWS=[], CLSTU=[], CLJOB=null, CLTIMER=null, CLIDX=null;
+const clDay=()=>$('cl_date').value||todayStr();
+function clSay(html){$('cl_out').innerHTML=html;}
+
+async function clinicInit(){
+  if(!$('cl_date').value)$('cl_date').value=todayStr();
+  if(!CLSTU.length){
+    const {data}=await sb.from('students').select('*').eq('상태','재원');
+    CLSTU=(data||[]).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+    const sel=$('cl_cls');sel.innerHTML='';
+    [...new Set(CLSTU.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{
+      const o=document.createElement('option');o.textContent=c;sel.appendChild(o);
+    });
+    clinicStudents();
+  }
+  clinicTypes();
+  clinicLoad();
+}
+function clinicStudents(){
+  const cls=$('cl_cls').value, sel=$('cl_stu');
+  sel.innerHTML='';
+  CLSTU.filter(r=>((r['학년']||'')+(r['반']||''))===cls).forEach(r=>{
+    const o=document.createElement('option');o.value=r['학생ID'];o.textContent=r['이름'];sel.appendChild(o);
+  });
+  clinicTypes();
+  nextClinic(cls).then(nx=>{ if(nx&&!$('cl_time').value)$('cl_time').value=nx.time||''; });
+}
+/* 낼 수 있는 유형만 보여 준다 — 풀에 없는 유형을 짚으면 그 자리는 그냥 빈다.
+   목록은 워커가 매 실행 끝에 job_queue(loop_index) 에 남긴다(콘솔은 저장소를 못 읽는다). */
+async function clinicTypes(){
+  if(CLIDX===null){
+    const {data}=await sb.from('job_queue').select('결과,완료시각').eq('종류','loop_index')
+      .order('완료시각',{ascending:false}).limit(1);
+    CLIDX=(data&&data[0]&&data[0]['결과'])||{};
+  }
+  const g=($('cl_cls').value||'').slice(0,2);
+  const list=((CLIDX||{})['클리닉유형']||{})[g]||[];
+  const dl=$('cl_types');dl.innerHTML='';
+  list.forEach(t=>{const o=document.createElement('option');o.value=t;dl.appendChild(o);});
+  if($('cl_fresh'))$('cl_fresh').textContent=list.length?(g+' 풀 '+list.length+'유형'):'풀 목록 없음';
+}
+
+async function clinicLoad(){
+  const day=clDay();
+  const {data,error}=await sb.from('clinic_roster').select('*').eq('날짜',day);
+  if(error){$('cl_list').innerHTML='<span class="warn">명단을 못 읽었다: '+esc(error.message)+'</span>';return;}
+  CLROWS=(data||[]).sort((a,b)=>((a['반']||'')+(a['이름']||'')).localeCompare((b['반']||'')+(b['이름']||''),'ko'));
+  $('cl_count').textContent=CLROWS.length+'명';
+  if(!CLROWS.length){$('cl_list').innerHTML='<div class="time">'+day+' 에 지정된 학생이 없습니다.</div>';return;}
+  const att=(r,v)=>`<button data-v="${v}" class="${r['출석']===v?('a'+({'출석':1,'지각':2,'결석':3}[v])):''}">${v}</button>`;
+  const t=document.createElement('table');t.className='ctab';
+  t.innerHTML='<thead><tr><th>이름</th><th>시간</th><th>사유 · 짚은 유형</th><th>상태</th><th style="width:1%;white-space:nowrap">출석</th><th>결과</th><th></th></tr></thead>';
+  const tb=document.createElement('tbody');
+  CLROWS.forEach(r=>{
+    const tr=document.createElement('tr');
+    const link=r['링크']?`<a href="${r['링크']}" target="_blank" rel="noopener">${r['문항수']||''}문항 열기</a>`:'<span class="time">—</span>';
+    tr.innerHTML=`<td class="namecell"><b>${esc(r['이름']||'')}</b> <span class="school">${esc(r['반']||'')}</span></td>
+      <td class="time">${esc(r['시간']||'')}</td>
+      <td>${esc(r['사유']||'')}${r['지정유형']?'<div class="time">'+esc(r['지정유형'])+'</div>':''}</td>
+      <td>${esc(r['상태']||'')} ${link}</td>
+      <td><div class="seg">${att(r,'출석')}${att(r,'지각')}${att(r,'결석')}</div></td>
+      <td>${esc(r['결과']||'')}</td>
+      <td><button class="ghost" style="padding:6px 8px;font-size:12px">취소</button></td>`;
+    tr.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>clinicAttend(r,b.dataset.v));
+    tr.querySelector('.ghost').onclick=()=>clinicDrop(r);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  $('cl_list').innerHTML='';$('cl_list').appendChild(t);
+}
+
+async function clinicAssign(){
+  const id=$('cl_stu').value, day=clDay();
+  const st=CLSTU.find(r=>r['학생ID']===id);
+  if(!st)return toast('학생을 고를 것');
+  const body={'날짜':day,'시간':$('cl_time').value.trim()||null,'학생ID':id,'이름':st['이름'],
+    '반':($('cl_cls').value),'사유':$('cl_why').value.trim()||null,
+    '지정유형':$('cl_type').value.trim()||null,'상태':'지정','기록일':todayStr()};
+  const old=CLROWS.find(r=>r['학생ID']===id);
+  const {error}=old
+    ? await sb.from('clinic_roster').update(body).eq('날짜',day).eq('학생ID',id)
+    : await sb.from('clinic_roster').insert({...body,'지정일':todayStr()});
+  if(error)return clSay('<span class="warn">지정 실패: '+esc(error.message)+'</span>');
+  toast(st['이름']+(old?' 갱신':' 지정'));
+  $('cl_why').value='';$('cl_type').value='';
+  clinicLoad();
+}
+async function clinicAttend(r,v){
+  const {error}=await sb.from('clinic_roster')
+    .update({'출석':r['출석']===v?null:v,'기록일':todayStr()})
+    .eq('날짜',r['날짜']).eq('학생ID',r['학생ID']);
+  if(error)return toast('실패: '+error.message);
+  clinicLoad();   // 원장(clinic_log)은 회수 크론이 출석을 보고 맞춘다 — 여기서 두 번 쓰지 않는다
+}
+async function clinicDrop(r){
+  if(!confirm(r['이름']+' 지정을 취소합니다. 계속?'))return;
+  const {error}=await sb.from('clinic_roster').delete().eq('날짜',r['날짜']).eq('학생ID',r['학생ID']);
+  if(error)return toast('실패: '+error.message);
+  clinicLoad();
+}
+
+/* ⚠ (0917 유강) 추가학습 문제지 자동 제작은 꺼 뒀다 — 지금 안 쓴다.
+   [문항 만들어 올리기] 버튼과 [문항수]·[풀 목록] 표시는 console_body.html 에서 뺐고,
+   마감의 clinic_build 잡 적재도 빠졌다. 되살리려면 버튼을 돌려놓으면 이 함수는 그대로 돈다. */
+async function clinicJob(){
+  const day=clDay();
+  if(!CLROWS.length)return clSay('<span class="warn">'+day+' 에 지정된 학생이 없다. 먼저 [지정] 할 것.</span>');
+  if($('cl_make'))$('cl_make').disabled=true;
+  const nq=parseInt(($('cl_nq')||{}).value)||5;
+  const {data,error}=await sb.from('job_queue')
+    .insert({'종류':'clinic_build','파라미터':{'날짜':day,'문항수':nq},'상태':'요청','요청자':'콘솔'})
+    .select().single();
+  if(error){if($('cl_make'))$('cl_make').disabled=false;return clSay('<span class="warn">요청 실패: '+esc(error.message)+'</span>');}
+  CLJOB=data;
+  clSay('요청했다 — <b>'+day+' '+CLROWS.length+'명</b>\n요청이 들어가는 순간 DB 가 서버를 깨운다(보통 1분 안). 이 화면이 진행을 계속 보여 준다.');
+  clinicPoll();
+}
+function clinicPoll(){
+  clearInterval(CLTIMER);
+  let n=0;
+  const tick=async()=>{
+    if(!CLJOB)return;
+    const {data}=await sb.from('job_queue').select('*').eq('id',CLJOB.id).single();
+    if(!data)return;
+    const st=data['상태'];
+    if(st==='요청'||st==='처리중'){
+      clSay((st==='요청'?'요청됨 — 서버가 집어 가기를 기다린다':'만드는 중')+'.'.repeat(1+(n++%3))+
+        '\n<span style="opacity:.7">'+esc(data['메시지']||'')+'</span>'+stallHint(n,st));
+      return;
+    }
+    clearInterval(CLTIMER);CLJOB=null;if($('cl_make'))$('cl_make').disabled=false;
+    if(st==='실패')return clSay('<span class="warn">실패 — '+esc(data['메시지']||'')+'</span>');
+    const r=data['결과']||{};
+    const links=(r['링크']||[]).map(x=>'· <a href="'+x.url+'" target="_blank" rel="noopener">'+esc(x['이름'])+'</a> ('+(x['문항수']||'')+'문항)'+(x['사유']?' <span class="time">'+esc(x['사유'])+'</span>':'')).join('\n');
+    const 빈=(r['빈유형']||[]);
+    clSay('<b>'+(r['인원']||0)+'명분 완성</b>\n'+links+
+      (빈.length?'\n<span class="warn">풀에 문항이 없어 못 낸 유형 — 제작 세션이 채워야 나간다:\n  '+빈.map(esc).join('\n  ')+'</span>':''));
+    clinicLoad();
+  };
+  tick();CLTIMER=setInterval(tick,6000);
+}
+
+
+/* ── 조교 관리 (0909, schema_v20) ── 관리자만. RPC 세 개 — staff_overview / staff_set / staff_remove.
+   서비스 키 없이 되는 이유: 함수가 security definer 라 auth.users 를 DB 안에서 본다.
+   등록한 이메일은 첫 로그인 때 트리거(staff_attach)가 profiles 를 만든다 → 초대 메일 불필요. */
+async function staffLoad(){
+  const box=$('st_list'); if(!box)return;
+  const {data,error}=await sb.rpc('staff_overview');
+  if(error){box.innerHTML='<span class="miss">명단을 못 읽었다: '+esc(error.message)+'</span>'+(/staff_overview/.test(error.message)?' — schema_v20_staff_admin.sql 을 SQL Editor 에서 먼저 돌려야 한다.':'');return;}
+  const rows=data||[]; $('st_count').textContent=rows.length+'명';
+  if(!rows.length){box.textContent='명단이 비어 있다.';return;}
+  const when=t=>{if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+  box.innerHTML='<div class="cs-wrap"><table class="cs-grid"><thead><tr><th>이메일</th><th>이름</th><th>역할</th><th>상태</th><th>마지막 로그인</th><th></th></tr></thead><tbody>'
+    +rows.map(r=>`<tr><td><b>${esc(r.email)}</b>${r['본인']?' <span class="badge">나</span>':''}</td><td>${esc(r['이름']||'')}</td>`
+      +`<td>${r.role==='admin'?'관리자':'조교'}</td>`
+      +`<td>${r['계정']?'<span class="jstat ok">사용 중</span>':'<span class="jstat wait">로그인 대기</span> <small style="color:var(--dim)">본인이 한 번 로그인하면 붙는다</small>'}</td>`
+      +`<td>${esc(when(r['마지막로그인']))}</td>`
+      +`<td>${r['본인']?'':`<button class="ghost" onclick="staffRemove('${esc(r.email)}')">빼기</button>`}</td></tr>`).join('')
+    +'</tbody></table></div>';
+}
+async function staffAdd(){
+  const email=($('st_email').value||'').trim().toLowerCase(), name=($('st_name').value||'').trim(), role=$('st_role').value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('st_out').textContent='이메일 형식이 아니다: '+email;return;}
+  $('st_go').disabled=true;
+  const {data,error}=await sb.rpc('staff_set',{p_email:email,p_name:name||null,p_role:role});
+  $('st_go').disabled=false;
+  if(error){$('st_out').textContent='실패: '+error.message;toast('실패');return;}
+  $('st_out').innerHTML=`<b>${esc(email)}</b> → ${role==='admin'?'관리자':'조교'} 등록. `+(data&&data.attached?'이미 계정이 있어 <b>지금부터</b> 쓸 수 있다.':'본인이 로그인 화면에서 이메일 → 코드로 들어오면 <b>그 즉시</b> 권한이 붙는다.');
+  $('st_email').value='';$('st_name').value='';toast('등록');staffLoad();
+}
+async function staffRemove(email){
+  if(!confirm(email+' 권한을 뺄까? 명단·역할이 지워지고 그 사람은 콘솔에 못 들어온다.'))return;
+  const {error}=await sb.rpc('staff_remove',{p_email:email});
+  if(error){toast('실패');$('st_out').textContent='실패: '+error.message;return;}
+  toast('뺐다');staffLoad();
+}
+
+/* ── 커스텀 트레이닝 (0924 P6 0단계) ─────────────────────────────────────
+ * 조교·유강 시험판. 유형(써킷 유형명)·문항수·난이도를 골라 job_queue(종류=커스텀트레이닝)에 넣는다.
+ * pt.yml(pt_worker.handle_ct → scripts/ct_build.py → build_pt2)이 문제·해설 PDF 를 굽는다. 결과 계약은 기출과제와 같다.
+ * 카탈로그 = dashboard 저장소 ct/types.json (ct_build.py --catalog, build_app --deploy 가 같이 올린다)
+ *   {과목:{공통수학2:[{코드,이름,유형:[{키:'03-T08',이름,n:[하,중,중상,상,최상]}]}]}, 분:{하:1,…}}
+ * 자동 추천 = 지난 90일 기출과제 결과의 유형 그레이드(G1~G4, 0922 판정 기록) + 그 유형이 PT 에 나온 횟수. 써킷 축이라 변환이 없다. */
+const CT_LV=['하','중','중상','상','최상'];   // (1005) 5단
+let CTCAT=null, CTIDX={}, CTSTU=[], CTSEL=[], CTMODE='auto', CTTIMER=null;
+const ctCourse=cls=>String(cls||'').startsWith('고2')?'미적분1':'공통수학2';
+const ctMin=lv=>((CTCAT&&CTCAT['분'])||{하:1,중:2,중상:3,상:5,최상:7})[lv]||2;
+function ctAvail(key,lv){
+  const t=CTIDX[key]; if(!t)return 0;
+  return lv==='섞음'?t.n.reduce((a,b)=>a+b,0):(t.n[CT_LV.indexOf(lv)]||0);
+}
+function ctItemMin(s){                       // 섞음은 쉬운 것부터 고르게 → 레벨 평균으로 친다
+  if(s['난이도']!=='섞음')return ctMin(s['난이도'])*s['문항수'];
+  const t=CTIDX[ctK(s['키'],s['과목'])]; if(!t)return 2*s['문항수'];
+  const lv=CT_LV.filter((_,i)=>t.n[i]>0); if(!lv.length)return 0;
+  return lv.reduce((a,l)=>a+ctMin(l),0)/lv.length*s['문항수'];
+}
+async function ctInit(){
+  if(!CTSTU.length){
+    const {data}=await sb.from('students').select('학생ID,이름,학년,반').eq('상태','재원');
+    CTSTU=(data||[]).sort((a,b)=>(a['이름']||'').localeCompare(b['이름']||'','ko'));
+    const sel=$('ct_cls');sel.innerHTML='';
+    [...new Set(CTSTU.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{
+      const o=document.createElement('option');o.textContent=c;sel.appendChild(o);
+    });
+    if(CLS&&[...sel.options].some(o=>o.value===CLS))sel.value=CLS;   // 수업 콘솔에서 연 반이 있으면 그 반
+    ctStudents();
+  }
+  // (1119 P16 2단계) #cs-ct/<학생ID> — 학생 개인페이지 [커스텀 만들기]에서 오면 그 학생을 골라 둔다
+  const want=(decodeURIComponent(location.hash||'').match(/^#cs-ct\/(.+)$/)||[])[1];
+  if(want){const r=CTSTU.find(x=>x['학생ID']===want);
+    if(r){const c=(r['학년']||'')+(r['반']||''),sel=$('ct_cls');if([...sel.options].some(o=>o.value===c)){sel.value=c;ctStudents();}$('ct_stu').value=want;ctStuChanged();}}
+  if(!CTCAT){
+    try{
+      const r=await fetch('/dashboard/ct/types.json',{cache:'no-store'});   // (1119 P16) 절대 주소 — 옛 앱이 /dashboard/legacy/ 로 옮겨 가도 같은 파일
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      CTCAT=await r.json();
+      CTIDX={};
+      for(const [c,units] of Object.entries(CTCAT['과목']||{}))
+        for(const u of units)for(const t of u['유형'])
+          CTIDX[t['키']+'@'+c]=CTIDX[t['키']+'@'+c]||{...t,단원:u['이름'],과목:c};
+    }catch(e){
+      $('ct_units').innerHTML='<span class="warn">유형 목록(ct/types.json)을 못 읽었다: '+esc(e.message)+'</span> — 세션에서 build_app.py --deploy 로 올려야 한다.';
+    }
+  }
+  ctRenderPick();ctRenderSel();ctJobs();
+}
+/* 과목마다 단원코드·유형번호가 겹친다 — 내부 키는 '03-T08@미적분1' */
+const ctK=(key,c)=>key+'@'+(c||ctCourse($('ct_cls').value));
+function ctStudents(){
+  const cls=$('ct_cls').value, sel=$('ct_stu'), keep=sel.value;
+  sel.innerHTML='';
+  CTSTU.filter(r=>((r['학년']||'')+(r['반']||''))===cls).forEach(r=>{
+    const o=document.createElement('option');o.value=r['학생ID'];o.textContent=r['이름'];sel.appendChild(o);
+  });
+  if([...sel.options].some(o=>o.value===keep))sel.value=keep;
+  const c=ctCourse(cls);
+  $('ct_course').textContent=c;
+  const other=CTSEL.filter(s=>s['과목']!==c);
+  if(other.length){
+    CTSEL=CTSEL.filter(s=>s['과목']===c);
+    toast('과목이 달라 고른 유형 '+other.length+'개를 비웠다');
+  }
+  ctRenderPick();ctRenderSel();ctStuChanged();
+}
+function ctStuChanged(){
+  const b=$('ct_go'),o=$('ct_stu').selectedOptions[0];
+  if(b)b.textContent=o?(o.textContent+' 것 만들기'):'이 학생 것 만들기';
+}
+function ctMode(m){
+  CTMODE=m;
+  $('ct_m_auto').classList.toggle('on',m==='auto');$('ct_m_pick').classList.toggle('on',m==='pick');
+  $('ct_auto').classList.toggle('hidden',m!=='auto');$('ct_pick').classList.toggle('hidden',m!=='pick');
+  if(m==='pick')ctRenderPick();
+}
+function ctBestLevel(k,want,need){
+  /* 원하는 난이도에 need 개가 없으면 가까운 난이도 중 가장 많은 곳으로 */
+  if(ctAvail(k,want)>=need)return want;
+  let i=CT_LV.indexOf(want); if(i<0)i=1;
+  const order=CT_LV.map((l,j)=>[l,Math.abs(j-i),j]).sort((a,b)=>a[1]-b[1]||b[2]-a[2]);
+  for(const [l] of order)if(ctAvail(k,l)>=need)return l;
+  return order.map(([l])=>l).sort((a,b)=>ctAvail(k,b)-ctAvail(k,a))[0];
+}
+function ctAdd(k,why){
+  const t=CTIDX[k]; if(!t||CTSEL.some(s=>ctK(s['키'],s['과목'])===k))return;
+  const lv=ctBestLevel(k,'중',5);
+  CTSEL.push({키:t['키'],유형명:t['이름'],단원:t['단원'],과목:t['과목'],문항수:Math.max(1,Math.min(5,ctAvail(k,lv))),난이도:lv,why:why||''});
+}
+function ctRenderPick(){
+  const box=$('ct_units'); if(!box||!CTCAT)return;
+  const c=ctCourse($('ct_cls').value), q=($('ct_q').value||'').trim(), only=$('ct_only').checked;
+  const units=(CTCAT['과목']||{})[c]||[];
+  const on=new Set(CTSEL.map(s=>ctK(s['키'],s['과목'])));
+  let shown=0;
+  box.innerHTML=units.map(u=>{
+    const rows=u['유형'].filter(t=>(!q||t['이름'].includes(q))&&(!only||t.n.reduce((a,b)=>a+b,0)>=10));
+    if(!rows.length)return '';
+    shown+=rows.length;
+    const nOn=rows.filter(t=>on.has(t['키']+'@'+c)).length;
+    return '<details class="ct-unit"'+(q||nOn?' open':'')+'><summary>'+esc(u['코드'])+' '+esc(u['이름'])
+      +' <span class="dim">유형 '+rows.length+(nOn?' · 고름 '+nOn:'')+'</span></summary>'
+      +rows.map(t=>{const k=t['키']+'@'+c;return '<div class="ct-row'+(on.has(k)?' on':'')+'" data-k="'+esc(k)+'">'
+        +'<input type="checkbox"'+(on.has(k)?' checked':'')+' tabindex="-1">'
+        +'<div>'+esc(t['이름'])+'<span class="k">'+esc(t['키'])+'</span></div>'
+        +'<div class="ct-av">'+t.n.map((v,i)=>'<span class="'+(v?'':'z')+'" title="'+CT_LV[i]+'">'+v+'</span>').join('')+'</div></div>';}).join('')
+      +'</details>';
+  }).join('')||'<div class="empty" style="padding:12px">맞는 유형이 없다.</div>';
+  $('ct_p_cnt').textContent=c+' · 유형 '+shown;
+  box.querySelectorAll('.ct-row').forEach(r=>r.onclick=()=>{
+    const k=r.dataset.k;
+    if(CTSEL.some(s=>ctK(s['키'],s['과목'])===k))CTSEL=CTSEL.filter(s=>ctK(s['키'],s['과목'])!==k);
+    else ctAdd(k,'직접');
+    const inp=r.querySelector('input');const now=CTSEL.some(s=>ctK(s['키'],s['과목'])===k);
+    inp.checked=now;r.classList.toggle('on',now);
+    ctRenderSel();
+  });
+}
+function ctRenderSel(){
+  const box=$('ct_sel'); if(!box)return;
+  if(!CTSEL.length){
+    box.innerHTML='<div class="empty">아직 고른 유형이 없다 — 위에서 <b>추천 채우기</b>를 누르거나 <b>직접 고르기</b>에서 체크한다.</div>';
+    $('ct_sum').textContent='';return;
+  }
+  let N=0,M=0;
+  box.innerHTML='<table><thead><tr><th>유형</th><th>난이도 (꺼낼 수 있는 수)</th><th>문항 수</th><th>예상</th><th></th></tr></thead><tbody>'
+    +CTSEL.map((s,i)=>{
+      const k=ctK(s['키'],s['과목']), av=ctAvail(k,s['난이도']), n=+s['문항수']||0, m=ctItemMin(s);
+      N+=Math.min(n,av);M+=m*(av<n&&n?av/n:1);
+      const g=/^G[1-4]/.exec(s.why||'');
+      return '<tr><td class="nm">'+esc(s['유형명'])+'<small>'+esc(s['단원']||'')+' · '+esc(s['키'])
+        +(s.why?' · <span class="why">'+(g?'<span class="ct-g '+g[0]+'">'+g[0]+'</span>'+esc(s.why.slice(2)):esc(s.why))+'</span>':'')+'</small></td>'
+        +'<td><select data-i="'+i+'" class="ct-lv">'+CT_LV.concat(['섞음']).map(l=>'<option value="'+l+'"'+(l===s['난이도']?' selected':'')+'>'+l+' ('+ctAvail(k,l)+')</option>').join('')+'</select></td>'
+        +'<td><input type="number" min="1" max="20" value="'+n+'" data-i="'+i+'" class="ct-n">'
+        +(av<n?' <span class="short">→ '+av+'개만 나온다</span>':'')+'</td>'
+        +'<td>약 '+Math.round(m*(av<n&&n?av/n:1))+'분</td>'
+        +'<td><button type="button" class="ghost sm" data-i="'+i+'">빼기</button></td></tr>';
+    }).join('')+'</tbody></table>';
+  const warn=[];
+  if(CTSEL.length>8)warn.push('유형 8개 초과 — 목차가 넘친다');
+  if(M>90)warn.push('90분 초과');
+  else if(M<40)warn.push('40분 미만(짧다)');
+  $('ct_sum').textContent='유형 '+CTSEL.length+' · 문항 '+N+' · 약 '+Math.round(M)+'분'+(warn.length?' · ⚠ '+warn.join(' · '):'');
+  box.querySelectorAll('.ct-lv').forEach(e=>e.onchange=()=>{CTSEL[+e.dataset.i]['난이도']=e.value;ctRenderSel();});
+  box.querySelectorAll('.ct-n').forEach(e=>e.onchange=()=>{CTSEL[+e.dataset.i]['문항수']=Math.max(1,Math.min(20,parseInt(e.value)||1));ctRenderSel();});
+  box.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{CTSEL.splice(+b.dataset.i,1);ctRenderSel();ctRenderPick();});
+}
+function ctClear(){CTSEL=[];ctRenderSel();ctRenderPick();}
+const CT_GW={G1:4,G2:3,G3:2,G4:0.5}, CT_GLV={G1:'하',G2:'중',G3:'중상',G4:'상'}, CT_GNM={G1:'개념붕괴',G2:'불안정',G3:'적용부족',G4:'숙달'};
+async function ctAuto(){
+  const out=$('ct_a_out'), sid=$('ct_stu').value, o=$('ct_stu').selectedOptions[0];
+  if(!sid||!o){out.textContent='학생을 먼저 고른다.';return;}
+  if(!CTCAT){out.textContent='유형 목록을 아직 못 읽었다.';return;}
+  const name=o.textContent, cls=$('ct_cls').value, c=ctCourse(cls);
+  out.textContent=name+' 지난 PT 읽는 중…';
+  const since=new Date(Date.now()-90*86400000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('id,결과,완료시각').in('종류',['기출과제','커스텀트레이닝'])
+    .eq('상태','완료').gte('요청시각',since).contains('파라미터',{'반':cls}).order('id',{ascending:false}).limit(300);
+  if(error){out.textContent='못 읽었다: '+error.message;return;}
+  const grade={}, freq={};
+  const byName={};                                           // 단원코드+유형명 → 카탈로그 키 (문항 기록엔 이름만 있다)
+  for(const u of (CTCAT['과목'][c]||[]))for(const t of u['유형']){const kk=u['코드']+'|'+t['이름'];if(!byName[kk])byName[kk]=t['키'];}
+  let seen=0;
+  for(const j of (data||[])){
+    const ent=(((j['결과']||{})['업로드'])||[]).find(e=>e['이름']===name);
+    if(!ent)continue; seen++;
+    const d=j['완료시각']?(new Date(j['완료시각']).getMonth()+1)+'/'+new Date(j['완료시각']).getDate():'';
+    for(const [key,v] of Object.entries(ent['그레이드']||{}))
+      if(!grade[key]&&v&&v['등급'])grade[key]={g:v['등급'],d};
+    for(const it of (ent['문항']||[])){
+      const u=String(it.id||'').split('-')[0].replace(/v$/,'').split('x')[0];
+      const nm=String(it.t||'').split(' + ')[0].trim();
+      const key=byName[u+'|'+nm]; if(key)freq[key]=(freq[key]||0)+1;
+    }
+  }
+  const keys=[...new Set([...Object.keys(grade),...Object.keys(freq)])].filter(k=>CTIDX[k+'@'+c]);
+  if(!keys.length){
+    out.innerHTML=esc(name)+': 지난 90일 PT 기록'+(seen?'은 '+seen+'부 있지만 유형을 못 맞췄다':'이 없다')+' — <b>직접 고르기</b>로 고른다.';
+    return;
+  }
+  const score=k=>(grade[k]?CT_GW[grade[k].g]||1.5:1.5)+0.25*Math.min(freq[k]||0,8);
+  keys.sort((a,b)=>score(b)-score(a)||(freq[b]||0)-(freq[a]||0));
+  const n=+$('ct_a_n').value, mode=$('ct_a_lv').value, total=+$('ct_a_min').value;
+  const pick=keys.slice(0,n);
+  CTSEL=pick.map(key=>{
+    const k=key+'@'+c, t=CTIDX[k], g=grade[key]&&grade[key].g;
+    const want=mode==='grade'?(CT_GLV[g]||'중'):({기본:'하',표준:'중',심화:'상'})[mode];
+    const lv=ctBestLevel(k,want,2);
+    const cnt=Math.max(1,Math.min(20,ctAvail(k,lv),Math.round(total/pick.length/ctMin(lv))));
+    const why=g?(g+' '+(CT_GNM[g]||'')+(grade[key].d?' · '+grade[key].d+' PT':'')):('PT '+(freq[key]||0)+'회 출제');
+    return {키:key,유형명:t['이름'],단원:t['단원'],과목:c,문항수:cnt,난이도:lv,why:why+(lv!==want?' · '+want+' 부족→'+lv:'')};
+  });
+  out.innerHTML=esc(name)+': 지난 PT '+seen+'부에서 유형 '+keys.length+'개를 읽고 약한 순으로 '+CTSEL.length+'개를 채웠다. 아래에서 고쳐도 된다.';
+  ctRenderSel();ctRenderPick();
+}
+async function ctSubmit(){
+  const sid=$('ct_stu').value, o=$('ct_stu').selectedOptions[0], cls=$('ct_cls').value, out=$('ct_out');
+  if(!sid||!o){out.textContent='학생을 고른다.';return;}
+  if(!CTSEL.length){out.textContent='유형을 하나 이상 고른다.';return;}
+  const name=o.textContent, c=ctCourse(cls);
+  const 유형=CTSEL.map(s=>({키:s['키'],유형명:s['유형명'],문항수:+s['문항수'],난이도:s['난이도']}));
+  const {data:pend}=await sb.from('job_queue').select('id,파라미터').eq('종류','커스텀트레이닝')
+    .in('상태',['요청','처리중']).contains('파라미터',{'학생ID':sid});
+  if((pend||[]).some(j=>JSON.stringify((j['파라미터']||{})['유형'])===JSON.stringify(유형))
+     &&!confirm(name+' 에게 같은 구성이 이미 만들어지는 중이다. 한 부 더 만들까?'))return;
+  $('ct_go').disabled=true;
+  const {error}=await sb.from('job_queue').insert({'종류':'커스텀트레이닝','상태':'요청','요청자':'콘솔커스텀',
+    '파라미터':{'학생':name,'학생ID':sid,'반':cls,'과목':c,'날짜':todayStr(),'라벨':($('ct_label').value||'커스텀 트레이닝').trim(),'유형':유형}});
+  $('ct_go').disabled=false;
+  if(error){out.innerHTML='<span class="warn">요청 실패: '+esc(error.message)+'</span>';toast('실패');return;}
+  out.innerHTML='<b>'+esc(name)+'</b> 요청 넣음 — 서버가 집으면 3~5분. 입력은 남겨 뒀다: 학생만 바꿔 다시 누르면 같은 구성으로 나간다.';
+  toast(name+' 요청');ctJobs();jobsRefresh();
+}
+async function ctJobs(){
+  const box=$('ct_jobs'); if(!box)return;
+  if(CTTIMER){clearTimeout(CTTIMER);CTTIMER=null;}
+  const since=new Date(Date.now()-14*86400000).toISOString();
+  const {data,error}=await sb.from('job_queue').select('id,상태,파라미터,결과,메시지,요청시각,시작시각,완료시각')
+    .eq('종류','커스텀트레이닝').gte('요청시각',since).order('id',{ascending:false}).limit(40);
+  if(error){box.innerHTML='<span class="warn">못 읽었다: '+esc(error.message)+'</span>';return;}
+  if(!(data||[]).length){box.textContent='아직 없다.';return;}
+  let active=0;
+  box.innerHTML=data.map(j=>{
+    const p=j['파라미터']||{}, st=j['상태'], r=j['결과']||{};
+    const run=st==='요청'||st==='처리중';active+=run;
+    const badge=st==='완료'?'<span class="jstat ok">완료</span>':st==='실패'?'<span class="jstat bad">실패</span>'
+      :st==='처리중'?'<span class="jstat run">만드는 중</span>':'<span class="jstat wait">대기</span>';
+    const 구성=(p['유형']||[]).map(t=>t['유형명']+' '+t['문항수']+(t['난이도']?'·'+t['난이도']:'')).join(' / ');
+    const 부족=(r['부족']||[]).length?'<div class="lbl short">모자람: '+r['부족'].map(b=>esc(b['유형명']||'')+' '+b['나옴']+'/'+b['요청']).join(' · ')+'</div>':'';
+    const up=st==='완료'&&(r['업로드']||[]).length;
+    return '<div class="ct-job"><b>'+esc(p['학생']||'?')+'</b> <span class="lbl" style="display:inline">'+esc(p['반']||'')+' · '+jobWhen(j['요청시각'])+'</span> '+badge
+      +' <button type="button" class="ghost sm ct-reuse" data-j="'+j.id+'">이 구성 불러오기</button>'
+      +'<div class="lbl">'+esc(구성)+'</div>'
+      +(run?'<div class="lbl">'+jobAge(j['시작시각']||j['요청시각'])+'분 경과 — PT 와 같은 줄에 선다(한 명 약 3분)</div>':'<div class="lbl">'+esc(j['메시지']||'')+'</div>')
+      +부족
+      +(up?'<div class="lbl gtpdf" data-j="'+j.id+'">'+(GTPDF[j.id]?GTPDF[j.id].html:'<button type="button" class="pill ct-pdf" data-j="'+j.id+'">문제·해설 PDF</button>')+'</div>':'')
+      +'</div>';
+  }).join('');
+  box.querySelectorAll('.ct-pdf').forEach(b=>b.onclick=()=>{const j=data.find(x=>String(x.id)===b.dataset.j);if(j)gtJobLinks(j,b.parentElement);});
+  box.querySelectorAll('.gtzip').forEach(b=>b.onclick=()=>gtZip(b.closest('.gtpdf').dataset.j,b));
+  box.querySelectorAll('.ct-reuse').forEach(b=>b.onclick=()=>{
+    const j=data.find(x=>String(x.id)===b.dataset.j); if(!j)return;
+    const p=j['파라미터']||{}, c=p['과목']||ctCourse(p['반']);
+    if(c!==ctCourse($('ct_cls').value)){toast('과목이 다르다 — 먼저 '+c+' 반을 고른다');return;}
+    CTSEL=(p['유형']||[]).filter(t=>CTIDX[t['키']+'@'+c]).map(t=>({키:t['키'],유형명:t['유형명'],단원:CTIDX[t['키']+'@'+c]['단원'],과목:c,
+      문항수:t['문항수'],난이도:t['난이도'],why:'#'+j.id+' 구성'}));
+    ctRenderSel();ctRenderPick();toast('구성 불러옴 — 학생을 고르고 만들기');
+  });
+  if(active&&!$('view-ct').classList.contains('hidden'))CTTIMER=setTimeout(()=>{if(document.visibilityState==='visible')ctJobs();else CTTIMER=setTimeout(ctJobs,10000);},10000);
+}
+
+/* ── 써킷 과제 점검 (1019 유강) ───────────────────────────────────────────────
+ * 고정 책자(써킷 N라)를 과제로 낸다 → 학생은 포털에서 문항마다 ①~⑥ 탭 → 여기서 이행률·질문 처리.
+ * 상태: 1 한 번에 · 2 고쳐서(해설 없이) · 3 해설 보고 · 4 질문해서 · 5 해설 봐도 모름(질문 대기) · 6 안 풀었음 · 7 문항 오류(1029, 오류신고 자동 접수 · 이행률 분모에서 뺌)
+ * 진도 줄이기 = hw_trim(id, THEME 컷, 이월날짜) — 범위 밖 THEME 는 다음 수업 과제로(체크도 따라간다).
+ * DB = schema_v41_hw_check.sql. 표는 직원 RLS 로 직접 읽고, 줄이기·해결은 함수로. */
+const HWS={stu:[],map:null,cls:'',sets:[],sitems:[]};
+const HW_NAME=['','① 한 번에','② 고쳐서','③ 해설','④ 질문','⑤ 모름','⑥ 안 풂'];
+function hwToday(){ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); }
+async function hwInit(){
+  if(!HWS.stu.length){
+    const {data}=await sb.from('students').select('학생ID,이름,학년,반').eq('상태','재원');
+    HWS.stu=data||[];
+    const sel=$('hw_cls'); sel.innerHTML='';
+    [...new Set(HWS.stu.map(r=>(r['학년']||'')+(r['반']||'')))].sort().forEach(c=>{ const o=document.createElement('option'); o.textContent=c; sel.appendChild(o); });
+    if(CLS&&[...sel.options].some(o=>o.value===CLS)) sel.value=CLS;
+    $('hw_date').value=hwToday();
+  }
+  if(!HWS.sets.length){
+    const [{data:ss},{data:si}]=await Promise.all([sb.from('hw_set').select('*').order('세트키'),
+      sb.from('hw_set_item').select('세트키,번호,"THEME"').limit(10000)]);
+    HWS.sets=ss||[]; HWS.sitems=si||[];
+  }
+  if(!HWS.map){
+    const {data,error}=await sb.from('circuit_map').select('과목,단원코드,단원명,라운드,"THEME"').limit(5000);
+    if(error){ $('hw_out').innerHTML='<span class="warn">circuit_map 을 못 읽었다 — schema_v41·v41b SQL 을 먼저 Run 해야 한다. ('+esc(error.message)+')</span>'; return; }
+    HWS.map=data||[];
+  }
+  hwClsChanged();
+}
+function hwClsChanged(){
+  HWS.cls=$('hw_cls').value;
+  $('hw_course').value=HWS.cls.startsWith('고1')?'공통수학2':'미적분1';
+  hwUnits(); hwSets(); hwList(); hwQueue(); hwDueFill();
+}
+/* (1108 유강 v67) 마감 칸 미리 채우기 — 수업일 다음 첫 수업 30분 전(고1T 는 일요일을 건너뛰어 다음 토요일).
+   사람이 고친 값은 덮지 않는다(dataset.auto 가 있을 때만 바꾼다). 함수가 없으면(SQL 전) 조용히 둔다. */
+/* (1109) 진도계획 → 콘솔 진도·과제 기본값. 계획 = hw_assign 의 공통 세트(학생ID 없음) × hw_set(단원명·DAY).
+   형식은 그동안 적어 온 그대로:
+     진도 "CORE TRAINING_공통수학2 09 유리함수 DAY3"
+     과제 "[포털] 코어 루프 X\n[프린트] 써킷 트레이닝 X\n[프린트] 커스텀 트레이닝"
+   고1T(1108 규칙): 토요일은 루프만, 일요일에 토·일 두 DAY 를 묶어 써킷을 낸다. */
+let PLANFILL=null;
+/* (1119 P16 0단계) 모의 날이면 진도 = 실제로 연 모의(mock_exam)의 회차·시험지. 진도계획(hw_assign)에는 모의가 없어서
+   직전 수업 값이 넘어오거나 옛 계획(상현고)이 남았다 — 11/18 고1A '1회 초당고'·고1S '2회 상현고'(실제 둘 다 신갈고 2회).
+   시험지명 '신갈고_고1_2025_2_기말' → '모의테스트 2회 [25년 신갈고]'. 과제는 직전 값(모의 날 과제는 모의 개별과제). */
+async function mockFill(cls,today){
+  try{
+    const {data,error}=await sb.rpc('staff_mock_status',{p_days:2});
+    if(error||!Array.isArray(data))return null;
+    const m=data.find(x=>x.반===cls&&String(x.날짜).slice(0,10)===today); if(!m||!m.시험지명)return null;
+    const [sch,,yr]=String(m.시험지명).split('_');
+    const 진도='모의테스트 '+(m.회차||'?')+'회 ['+(yr?String(yr).slice(2)+'년 ':'')+sch+']';
+    return {진도,과제:'',mock:true};
+  }catch(e){return null;}
+}
+async function planFill(cls,today){
+  try{
+    const isT=cls==='고1T', dow=new Date(today+'T00:00:00Z').getUTCDay();
+    let from=today;
+    if(isT&&dow===0)from=new Date(Date.parse(today+'T00:00:00Z')-864e5).toISOString().slice(0,10);
+    const a=await sb.from('hw_assign').select('날짜,세트키,단원코드').eq('반',cls).is('학생ID',null).gte('날짜',from).lte('날짜',today).order('날짜');
+    if(a.error||!a.data||!a.data.length)return null;
+    const keys=[...new Set(a.data.map(r=>r.세트키))];
+    const s=await sb.from('hw_set').select('세트키,단원명,DAY,단원코드').in('세트키',keys);
+    if(s.error||!s.data)return null;
+    const S={};s.data.forEach(r=>S[r.세트키]=r);
+    const items=a.data.map(r=>S[r.세트키]).filter(x=>x&&x.DAY&&x.단원명&&x.단원명!=='개별과제');
+    if(!items.length)return null;
+    const last=items[items.length-1];
+    const subj=cls.startsWith('고2')?'미적분1':'공통수학2';
+    const code=String(last.단원코드||'').padStart(2,'0');
+    const 진도='CORE TRAINING_'+subj+' '+code+' '+last.단원명+' '+last.DAY;
+    const nm=x=>String(x.단원명).replace(/\s+\(/g,'(')+' '+x.DAY;
+    if(isT&&dow===6)return {진도,과제:'[포털] 코어 루프 '+nm(last)};
+    const t=items.map(nm).join(' & ');
+    return {진도,과제:'[포털] 코어 루프 '+t+'\n[프린트] 써킷 트레이닝 '+t+'\n[프린트] 커스텀 트레이닝'};
+  }catch(e){return null;}
+}
+async function hwDueFill(){
+  for(const [dEl,uEl] of [['hw_sdate','hw_sdue'],['hw_date','hw_due']]){
+    const d=$(dEl), u=$(uEl); if(!d||!u||!HWS.cls||!d.value) continue;
+    if(u.value&&!u.dataset.auto) continue;
+    try{
+      const {data,error}=await sb.rpc('hw_default_due',{p_ban:HWS.cls,p_date:d.value});
+      if(error||!data) continue;
+      const t=new Date(new Date(data).getTime()+9*3600e3).toISOString().slice(0,16);
+      u.value=t; u.dataset.auto='1';
+    }catch(e){}
+    if(!d.dataset.dueWired){ d.dataset.dueWired='1'; d.addEventListener('change',()=>{ if(u.dataset.auto) u.value=''; hwDueFill(); }); u.addEventListener('input',()=>{ delete u.dataset.auto; }); }
+  }
+}
+function hwSets(){
+  const sel=$('hw_set'); sel.innerHTML='';
+  const my=HWS.sets.filter(x=>x['반']===HWS.cls);
+  if(!my.length){ sel.innerHTML='<option value="">(이 반 v2 책자 없음)</option>'; return; }
+  my.forEach(x=>{ const n=HWS.sitems.filter(i=>i['세트키']===x['세트키']).length;
+    const o=document.createElement('option'); o.value=x['세트키']; o.textContent=`${x['단원명']} ${x['DAY']} · THEME ${x['시작THEME']}~${x['끝THEME']} · ${n}문항`; sel.appendChild(o); });
+  if(!$('hw_sdate').value) $('hw_sdate').value=hwToday();
+}
+async function hwCreateSet(){
+  const k=$('hw_set').value; if(!k) return toast('책자를 고르세요');
+  const st=HWS.sets.find(x=>x['세트키']===k), due=$('hw_sdue').value;
+  const {error}=await sb.from('hw_assign').insert([{반:HWS.cls,날짜:$('hw_sdate').value,세트키:k,과목:st['과목'],단원코드:st['단원코드'],라운드:0,마감:due?new Date(due).toISOString():null}]);
+  if(error){ $('hw_out').innerHTML='<span class="warn">못 냈다: '+esc(error.message)+'</span>'; return; }
+  toast(`${HWS.cls} ${st['단원명']} ${st['DAY']} 냈다`); hwList();
+}
+function hwName(a){
+  if(a&&a['세트키']){ const st=HWS.sets.find(x=>x['세트키']===a['세트키']); return st?`${st['단원명']} ${st['DAY']}`:a['세트키']; }
+  const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return (m?m['단원명']:(a&&a['단원코드'])||'')+' R'+(a?a['라운드']:'');
+}
+function hwThOf(a,no){
+  if(a&&a['세트키']){ const i=HWS.sitems.find(x=>x['세트키']===a['세트키']&&x['번호']===no); return i?i['THEME']:null; }
+  const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['번호']===no); return m?m['THEME']:null;
+}
+function hwUnits(){
+  const c=$('hw_course').value, sel=$('hw_unit'), seen={};
+  sel.innerHTML='';
+  (HWS.map||[]).filter(r=>r['과목']===c).forEach(r=>{ if(seen[r['단원코드']]) return; seen[r['단원코드']]=1;
+    const o=document.createElement('option'); o.value=r['단원코드']; o.textContent=r['단원코드']+' '+(r['단원명']||''); sel.appendChild(o); });
+}
+function hwThemes(a){
+  if(a['세트키']){ const t=HWS.sitems.filter(i=>i['세트키']===a['세트키']&&i['THEME']!=null).map(i=>i['THEME']); return t.length?[Math.min(...t),Math.max(...t)]:null; }
+  const t=(HWS.map||[]).filter(r=>r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['THEME']!=null).map(r=>r['THEME']);
+  return t.length?[Math.min(...t),Math.max(...t)]:null;
+}
+async function hwCreate(){
+  const rs=[...$('hw_rounds').querySelectorAll('button.on')].map(b=>+b.dataset.r);
+  if(!rs.length) return toast('라운드를 하나 이상 고르세요');
+  const due=$('hw_due').value;
+  const rows=rs.map(r=>({반:HWS.cls,날짜:$('hw_date').value,과목:$('hw_course').value,단원코드:$('hw_unit').value,라운드:r,마감:due?new Date(due).toISOString():null}));
+  const {error}=await sb.from('hw_assign').insert(rows);
+  if(error){ $('hw_out').innerHTML='<span class="warn">못 냈다: '+esc(error.message)+'</span>'; return; }
+  toast(`${HWS.cls} ${rows.length}개 과제를 냈다`); hwList();
+}
+async function hwList(){
+  const box=$('hw_list'); if(!HWS.cls){ box.textContent='반을 고르세요.'; return; }
+  const since=new Date(Date.now()-28*864e5).toISOString().slice(0,10);
+  const [{data:as,error},{data:pg}]=await Promise.all([
+    sb.from('hw_assign').select('*').eq('반',HWS.cls).is('학생ID',null).gte('날짜',since).order('날짜',{ascending:false}).order('id'),   // (1027 v48) 개별과제 판은 학생별 칸에서
+    sb.from('hw_progress').select('*').eq('반',HWS.cls).gte('날짜',since)]);
+  const {data:dn}=await sb.from('hw_done').select('assign_id');
+  const dcnt={}; (dn||[]).forEach(r=>{ dcnt[r.assign_id]=(dcnt[r.assign_id]||0)+1; });
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  if(!as||!as.length){ box.innerHTML='<div class="loadout">최근 28일에 낸 써킷 과제가 없다.</div>'; return; }
+  const by={}; (pg||[]).forEach(r=>{ (by[r.assign_id]=by[r.assign_id]||[]).push(r); });
+  const uname=a=>{ const m=(HWS.map||[]).find(r=>r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:a['단원코드']; };
+  const avg=(xs,k)=>{ const v=xs.map(x=>+x[k]).filter(x=>!isNaN(x)); return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):'—'; };
+  box.innerHTML=`<table><thead><tr><th>수업일</th><th>과제</th><th>범위</th><th>문항</th><th>체크한 학생</th><th>제출</th><th>이행률</th><th>해결률</th><th>자력</th><th>질문</th><th>상태</th><th data-nosort></th></tr></thead><tbody>`
+    +as.map(a=>{ const ps=by[a.id]||[], n=ps[0]?ps[0]['전체']:'—', started=ps.filter(p=>+p['체크']>0).length;
+      const th=hwThemes(a), lo=a['시작THEME']??(th?th[0]:''), hi=a['끝THEME']??(th?th[1]:'');
+      const q=ps.reduce((s,p)=>s+(+p.n5||0),0);
+      return `<tr><td>${esc(a['날짜'])}</td><td>${esc(hwName(a))}${a['이월원']?' <span class="badge">이월</span>':''}</td><td>${th?`THEME ${lo}~${hi}`:'전체'}</td><td>${n}</td>`
+        +`<td>${started}/${ps.length}</td><td>${dcnt[a.id]||0}</td><td>${avg(ps,'이행률')}%</td><td>${avg(ps,'해결률')}%</td><td>${avg(ps,'자력해결률')}%</td><td>${q||''}</td><td>${esc(a['상태'])}</td>`
+        +`<td style="white-space:nowrap"><button class="ghost" onclick="hwTrimOpen(${a.id},${th?th[0]:0},${hi||0})">진도 줄이기</button> <button class="ghost" onclick="hwStu(${a.id})">학생별</button> <button class="ghost" onclick="hwClose(${a.id},'${a['상태']==='열림'?'닫힘':'열림'}')">${a['상태']==='열림'?'닫기':'다시 열기'}</button></td></tr>`
+        +`<tr class="hidden" id="hw_x${a.id}"><td colspan="12"></td></tr>`; }).join('')+`</tbody></table>`;
+  HWS.prog=by; hwItems();
+}
+function hwTrimOpen(id,lo,hi){
+  const tr=$('hw_x'+id); tr.classList.remove('hidden');
+  const opts=[]; for(let t=lo;t<=hi;t++) opts.push(`<option ${t===hi-1?'selected':''}>${t}</option>`);
+  tr.firstElementChild.innerHTML=`<div class="cs-info-row" style="align-items:flex-end">`
+    +(hi?`<div class="f" style="flex:0 0 150px"><label class="lbl">어디까지 나갔나 — THEME</label><select id="hw_cut${id}">${opts.join('')}</select></div>`
+        :`<div class="f" style="flex:0 0 150px"><label class="lbl">어디까지 나갔나 — 번호</label><input type="number" id="hw_cutn${id}" min="1"></div>`)
+    +`<div class="f" style="flex:0 0 160px"><label class="lbl">나머지 이월할 수업일</label><input type="date" id="hw_carry${id}"></div>`
+    +`<div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><button class="key" onclick="hwTrim(${id})">줄이기</button></div>`
+    +`<div class="f" style="flex:0 0 auto"><label class="lbl">&nbsp;</label><span class="lbl">이월 날짜를 비우면 나머지는 과제에서 그냥 빠진다</span></div></div>`;
+}
+async function hwTrim(id){
+  const cut=$('hw_cut'+id)?+$('hw_cut'+id).value:null, cutn=$('hw_cutn'+id)?+$('hw_cutn'+id).value||null:null;
+  const carry=$('hw_carry'+id).value||null;
+  const {data,error}=await sb.rpc('hw_trim',{aid:id,cut,'이월날짜':carry,cut_no:cutn});
+  if(error||!data||data['오류']) return toast('못 줄였다: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(`남은 ${data['남은문항']}문항`+(data['이월과제']?` · 나머지 ${carry} 로 이월`:'')); hwList();
+}
+async function hwClose(id,st){ const {error}=await sb.from('hw_assign').update({상태:st}).eq('id',id); if(error) return toast(error.message); hwList(); }
+async function hwStu(id){
+  const tr=$('hw_x'+id); tr.classList.toggle('hidden'); if(tr.classList.contains('hidden')) return;
+  const ps=(HWS.prog[id]||[]).slice().sort((a,b)=>(+a['이행률'])-(+b['이행률']));
+  // (1020) 개별과제 잡 — 이 과제가 들어간 묶음의 학생별 상태(요청·처리중·완료·실패)와 처방 요약
+  const {data:jobs}=await sb.from('job_queue').select('id,상태,메시지,파라미터,결과').eq('종류','개별과제').order('id',{ascending:false}).limit(300);
+  const J={}; (jobs||[]).forEach(j=>{ const p=j['파라미터']||{}; if((p['과제']||[]).map(Number).includes(id) && !J[p['학생ID']]) J[p['학생ID']]=j; });
+  // (1027 v48) 그 잡이 낸 판(PDF No.)의 학생 체크 — hw_progress.판 = 잡 id. 다시 만들어 판이 여럿이면 열린 판
+  const jids=Object.values(J).filter(j=>j['상태']==='완료').map(j=>j.id), P={};
+  if(jids.length){ const {data:pp}=await sb.from('hw_progress').select('판,"학생ID",전체,체크,n5,n7,이행률,자력해결률,과제상태').in('판',jids);
+    (pp||[]).forEach(r=>{ if(!P[r['학생ID']]||r['과제상태']==='열림') P[r['학생ID']]=r; }); }
+  // (1021) 학생별 연장 — hw_extend(schema_v41g). 연장된 학생은 그 마감까지 ⑥으로 안 잡히고, 같은 마감의 다음 과제와 한 부로 묶인다
+  const {data:exts}=await sb.from('hw_extend').select('"학생ID",마감,사유').eq('assign_id',id);
+  const X={}; (exts||[]).forEach(e=>X[e['학생ID']]=e);
+  const xcell=sid=>{ const e=X[sid];
+    return e?`<span class="badge" title="${esc(e['사유']||'')}">~${esc(fmtDue(e['마감']))}</span> <button class="ghost" onclick="hwExtClear(${id},'${esc(sid)}')">취소</button>`
+            :`<button class="ghost" onclick="hwExtSet(${id},'${esc(sid)}')">연장</button>`; };
+  const jcell=sid=>{ const j=J[sid]; if(!j) return '<span class="lbl">—</span>';
+    const r=(j['결과']||{})['개별']||{}; const st=j['상태'];
+    const pv=P[sid];
+    return `<span class="${st==='실패'?'warn':''}">${esc(st)}</span>${st==='완료'?` <span class="lbl">No.${j.id}</span>`:''}${r['모드']?` <span class="lbl">${esc(r['모드'])} ${r['문항수']||''}문항</span>`:''}`
+      +(pv?` <span class="badge" title="개별과제 체크 ${pv['체크']}/${pv['전체']} · ⑤ ${pv.n5}${pv.n7?` · ⑦ 오류 ${pv.n7}`:''} · 자력 ${pv['자력해결률']}%">체크 ${pv['이행률']}%</span>`:'')+`${st==='완료'?' <a href="/dashboard/files/" target="_blank" rel="noopener">파일 ↗</a>':''}${st==='실패'?` <span class="lbl" title="${esc(j['메시지']||'')}">사유</span>`:''}`; };
+  tr.firstElementChild.innerHTML=`<table><thead><tr><th>학생</th><th>체크</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th title="문항 오류 — 이행률에서 뺌">⑦</th><th>이행률</th><th>해결률</th><th>자력</th><th>개별과제</th><th data-nosort>연장</th></tr></thead><tbody>`
+    +ps.map(p=>`<tr><td>${esc(p['이름'])}</td><td>${p['체크']}/${p['전체']}</td><td>${p.n1}</td><td>${p.n2}</td><td>${p.n3}</td><td>${p.n4}</td><td>${p.n5}</td><td>${p.n6}</td><td>${p.n7||0}</td><td>${p['이행률']}%</td><td>${p['해결률']}%</td><td>${p['자력해결률']}%</td><td>${jcell(p['학생ID'])}</td><td style="white-space:nowrap">${xcell(p['학생ID'])}</td></tr>`).join('')+`</tbody></table>`
+    +`<div class="loadout">연장 = 그 학생만 마감을 미룬다. 날짜를 비우면 이 반의 다음 과제 마감으로 — 다음 과제와 개별과제 한 부로 묶인다. 이미 만들어진 개별과제가 있으면 연장할 수 없다.</div>`
+    +`<div class="loadout">개별과제는 학생이 묶음(같은 마감의 과제)을 전부 [제출]하면 바로, 아니면 마감 때 자동으로 만들어진다. 다 만든 PDF 는 📂 과제 파일 페이지(커스텀트레이닝 묶음)에 뜬다.</div>`;
+}
+/* (1021) 학생별 과제 연장 — hw_extend_set/clear(schema_v42, 직원 함수). 빈 날짜 = 다음 과제 마감. */
+async function hwExtSet(aid,sid){
+  const name=((HWS.stu||[]).find(x=>x['학생ID']===sid)||{})['이름']||sid;
+  const d=prompt(name+' — 언제까지 미룰까?\n비우면 이 반 다음 과제 마감(다음 과제와 한 부로 묶임)\n직접 넣으려면 예: 2026-10-23 19:00','');
+  if(d===null)return;
+  let due=null;
+  if(d.trim()){ const m=d.trim().match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/);
+    if(!m) return toast('형식: 2026-10-23 19:00');
+    due=new Date(`${m[1]}T${String(m[2]||'19').padStart(2,'0')}:${m[3]||'00'}:00+09:00`).toISOString(); }
+  const why=prompt('사유 (선택)','');
+  if(why===null)return;
+  const {data,error}=await sb.rpc('hw_extend_set',{aid,sid,p_due:due,p_why:why||null});
+  if(error||!data||data['오류']) return toast('연장 못 함: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(name+' 연장 ~'+fmtDue(data['마감'])); hwRefreshStu(aid);
+}
+async function hwExtClear(aid,sid){
+  const name=((HWS.stu||[]).find(x=>x['학생ID']===sid)||{})['이름']||sid;
+  if(!confirm(name+' 연장을 취소할까? 원래 마감으로 돌아간다(이미 지났으면 바로 미이행으로 잡힌다).'))return;
+  const {data,error}=await sb.rpc('hw_extend_clear',{aid,sid});
+  if(error||!data||data['오류']) return toast('취소 못 함: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast(name+' 연장 취소'); hwRefreshStu(aid);
+}
+async function hwRefreshStu(aid){ await hwList(); hwStu(aid); }
+async function hwQueue(){
+  const box=$('hw_queue'), all=$('hw_qall').checked;
+  let q=sb.from('hw_question').select('id,assign_id,"학생ID",반,번호,문항ID,메모,시각,상태,대면,재질문,조교메모,hw_assign(세트키,과목,단원코드,라운드,날짜)').in('상태',['대기','답변']).order('시각');
+  if(!all&&HWS.cls) q=q.eq('반',HWS.cls);
+  const {data,error}=await q;
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  const wait=(data||[]).filter(r=>r['상태']==='대기');
+  $('hw_qcnt').textContent=wait.length+'건 대기'+((data||[]).length>wait.length?` · ${(data||[]).length-wait.length}건 학생 확인 중`:'');
+  if(!data||!data.length){ box.innerHTML='<div class="loadout">대기 중인 질문이 없다.</div>'; return; }
+  const uname=a=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']); return m?m['단원명']:''; };
+  const th=(a,no)=>{ const m=(HWS.map||[]).find(r=>a&&r['과목']===a['과목']&&r['단원코드']===a['단원코드']&&r['라운드']===a['라운드']&&r['번호']===no); return m&&m['THEME']!=null?' · THEME '+m['THEME']:''; };
+  box.innerHTML=`<table><thead><tr><th>들어온 때</th><th>반</th><th>학생</th><th>문항</th><th>학생 메모</th><th>상태</th><th data-nosort>답(학생에게 보임)</th><th data-nosort></th></tr></thead><tbody>`
+    +data.map(r=>{ const a=r.hw_assign; return `<tr><td>${esc(String(r['시각']).slice(5,16).replace('T',' '))}</td><td>${esc(r['반'])}</td><td>${esc(String(r['학생ID']).split('_')[0])}</td>`
+      +`<td>${esc(hwName(a))} <b>${r['번호']}번</b>${hwThOf(a,r['번호'])!=null?' · THEME '+hwThOf(a,r['번호']):''}</td><td>${esc(r['메모']||'')}</td>`
+      +`<td>${r['상태']==='답변'?'<span class="lbl">답 보냄 · 학생 확인 대기</span>':(r['재질문']?`<b class="warn">다시 모름 ×${r['재질문']}</b>`:'대기')}${r['대면']?' <span class="badge">수업 때</span>':''}</td>`
+      +`<td><input id="hw_m${r.id}" placeholder="한 줄 답 (선택)" value="${esc(r['조교메모']||'')}" style="width:100%"><label class="ct-chk" style="font-size:12px"><input type="checkbox" id="hw_f${r.id}" ${r['대면']?'checked':''}> 수업 때 직접 설명</label></td>`
+      +`<td><button class="key" onclick="hwAnswer(${r.id})">${r['상태']==='답변'?'답 고치기':'답 보내기'}</button></td></tr>`; }).join('')+`</tbody></table>`
+    +`<div class="loadout">해결은 학생이 누른다 — 답을 보내면 학생 포털에 뜨고, 학생이 [이해했어요]를 누르면 ④ 질문해서 해결, [아직 모르겠어요]면 다시 대기로 돌아오고 '수업 때'로 표시된다.</div>`;
+}
+async function hwAnswer(id){
+  const {data,error}=await sb.rpc('hw_answer',{qid:id,p_memo:$('hw_m'+id).value||null,p_face:$('hw_f'+id).checked});
+  if(error||!data||data['오류']) return toast('못 보냈다: '+((error&&error.message)||(data&&data['오류'])||''));
+  toast('답을 보냈다 — 학생이 확인하면 ④'); hwQueue();
+}
+async function hwItems(){
+  const box=$('hw_items');
+  const {data,error}=await sb.from('hw_item_stat').select('*').eq('반',HWS.cls);
+  if(error){ box.innerHTML='<span class="warn">'+esc(error.message)+'</span>'; return; }
+  const rows=(data||[]).filter(r=>(+r['해설'])+(+r['모름'])>0).sort((a,b)=>((+b['해설'])+2*(+b['모름']))-((+a['해설'])+2*(+a['모름']))).slice(0,20);
+  if(!rows.length){ box.innerHTML='<div class="loadout">아직 ③·⑤가 몰린 문항이 없다.</div>'; return; }
+  const uname=r=>{ const m=(HWS.map||[]).find(x=>x['과목']===r['과목']&&x['단원코드']===r['단원코드']); return m?m['단원명']:r['단원코드']; };
+  box.innerHTML=`<table><thead><tr><th>문항</th><th>응답</th><th>자력(①②)</th><th>③ 해설</th><th>④ 질문</th><th>⑤ 모름</th></tr></thead><tbody>`
+    +rows.map(r=>`<tr><td>${esc(hwName(r))} ${r['번호']}번 <span class="lbl">${esc(r['문항ID'])}</span></td><td>${r['응답']}</td><td>${r['자력']}</td><td>${r['해설']}</td><td>${r['질문']}</td><td>${r['모름']}</td></tr>`).join('')+`</tbody></table>`;
+}
+
+/* ── 뷰 전환 ── */
+const VIEWS={console:'수업',clinic:'추가학습 지정',load:'성적 적재',staff:'조교 관리',ct:'커스텀 트레이닝',hw:'써킷 과제'};
+function showView(v){
+  Object.keys(VIEWS).forEach(k=>{
+    $('view-'+k).classList.toggle('hidden',k!==v);
+    const b=$('nav-'+k); if(b) b.classList.toggle('on',k===v);   // 통합 셸엔 콘솔 nav 가 없다
+  });
+  const vt=$('viewtitle'); if(vt) vt.textContent=VIEWS[v]||v;
+  if(v==='clinic')clinicInit();
+  if(v==='load')loadXlsx().catch(()=>{});
+  if(v==='staff')staffLoad();
+  if(v==='ct')ctInit();
+  if(v==='hw')hwInit();
+}
+/* 통합 셸(/dashboard/)에서는 주소(#cs-console)가 진실원이다 — 콘솔 안에서 부른 showView 도
+   해시를 거쳐 돌아오게 해서 뒤로가기·새로고침이 같은 화면을 연다. 단독 콘솔에선 그대로 동작. */
+if(window.CS_ROUTED){
+  const _csShow=showView;
+  window.csShow=_csShow;
+  showView=v=>{ const h='#cs-'+v; if(location.hash!==h) location.hash=h; else _csShow(v); };
+}
+return { selectClass, csBoot, jobsRefresh, changeViewDay, saveClassLog, testChanged, allPresent, gtPick, gtKeyUpdate, gtDone, genComments, closeSession, resetToday, autoGrow, todayStr, toggleJobs };
+})();
+window.changeViewDay = CSE.changeViewDay;window.saveClassLog = CSE.saveClassLog;window.testChanged = CSE.testChanged;window.allPresent = CSE.allPresent;window.gtPick = CSE.gtPick;window.gtKeyUpdate = CSE.gtKeyUpdate;window.gtDone = CSE.gtDone;window.genComments = CSE.genComments;window.closeSession = CSE.closeSession;window.resetToday = CSE.resetToday;window.autoGrow = CSE.autoGrow;window.todayStr = CSE.todayStr;window.toggleJobs = CSE.toggleJobs;
 /* ═══ src/99_boot.js ═══ */
 /* ── 시작 ── */
 async function boot() {
