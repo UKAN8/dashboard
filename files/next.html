@@ -503,12 +503,15 @@ async function show(k) {
     if (j['상태'] === '완료' && Array.isArray(r['업로드']) && r['업로드'].length) {
       const cnt = {}; for (const s of (r['학생'] || [])) if (Array.isArray(s)) cnt[s[0]] = s[1];
       for (const f of r['업로드']) rows[f['이름']] = { ...f, 문항: cnt[f['이름']], 잡: j.id, 시각: j['완료시각'] };
+    } else if (j['상태'] === '완료' && r['모의대기']) {
+      continue;   /* (1120 유강) 모의 날·기말 모의 기간에 멈춘 진도 잡 — 빠진 게 아니라 모의 제출 잡이 이어받는다. 안 띄운다 */
     } else if (j['상태'] === '실패' || (j['상태'] === '완료' && p['학생'] && !(r['업로드'] || []).length)) {
       fails.push({ 이름: p['학생'] || '(반 전체)', 메시지: j['메시지'] || '', 잡: j.id });
     } else if (j['상태'] === '요청' || j['상태'] === '진행' || j['상태'] === '처리중') {
       pending.push({ 이름: p['학생'] || '(반 전체)', 상태: j['상태'], 잡: j.id });
     }
   }
+  for (let i = fails.length - 1; i >= 0; i--) if (rows[fails[i].이름]) fails.splice(i, 1);   /* 뒤 잡으로 PDF 가 생긴 학생은 '없음'에서 뺀다 */
   const names = Object.keys(rows).sort((a, b) => a.localeCompare(b, 'ko'));
   /* 서명 URL 은 한 번에 — 학생당 전체·문제·해설 세 개 */
   const paths = [];
