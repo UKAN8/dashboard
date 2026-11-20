@@ -400,7 +400,6 @@ function stuBadges(sid) {
 }
 function drawRos() {
   const bans = [...new Set(R.stu.map(s => s.반))].sort();
-  const list = R.stu.filter(s => (FBAN === '*' || s.반 === FBAN) && (!FQ || s.이름.includes(FQ)));
   // (1119 P16 2단계) 반 요약 — 옛 '반별' 탭 대신. 인원 · 최근 회차 과제 이행 평균 · 최근 모의 평균(100점). 누르면 명단이 그 반으로
   const banSum = b => {
     const ids = new Set(R.stu.filter(s => s.반 === b).map(s => s.학생ID));
@@ -413,13 +412,19 @@ function drawRos() {
   };
   $('ros').innerHTML = `<div class="bans">${bans.map(banSum).join('')}</div><div class="ros-f"><select id="fban" aria-label="반"><option value="*">전체 반 (${R.stu.length})</option>${bans.map(b => `<option value="${E(b)}"${b === FBAN ? ' selected' : ''}>${E(b)} (${R.stu.filter(s => s.반 === b).length})</option>`).join('')}</select>`
     + `<input id="fq" type="search" placeholder="이름" value="${E(FQ)}" aria-label="이름 검색"></div>`
-    + `<div class="u-card" style="padding:4px 8px"><div class="u-list ros">${list.map(s => `<div class="row${s.학생ID === SID ? ' on' : ''}" data-sid="${E(s.학생ID)}"><div><b>${E(s.이름)}</b><div class="t">${E(s.반)} · ${E(s.학교 || '')}</div></div><div class="tg">${stuBadges(s.학생ID)}</div></div>`).join('') || '<div class="u-empty">없음</div>'}</div></div>`
+    + `<div class="u-card" style="padding:4px 8px"><div class="u-list ros" id="roslist">${rosList()}</div></div>`
     + '<div class="mini" style="margin:8px 2px">꼬리표: 최근 회차 과제 이행 · 닫히지 않은 보완 · 아직 답 안 한 질문</div>';
   $('fban').onchange = e => { FBAN = e.target.value; drawRos(); };
   document.querySelectorAll('.bans [data-ban]').forEach(b => b.onclick = () => { FBAN = FBAN === b.dataset.ban ? '*' : b.dataset.ban; drawRos(); });
-  $('fq').oninput = e => { FQ = e.target.value.trim(); const p = e.target.selectionStart; drawRos(); const n = $('fq'); n.focus(); n.setSelectionRange(p, p); };
-  document.querySelectorAll('.ros [data-sid]').forEach(el => el.onclick = () => openStu(el.dataset.sid));
+  // (1120) 이름 검색은 명단만 다시 그린다 — 입력칸까지 다시 만들면 한글 조합이 끊겨 '고'가 'ㄱㅗ'로 들어갔다
+  $('fq').oninput = e => { FQ = e.target.value.trim(); $('roslist').innerHTML = rosList(); wireRos(); };
+  wireRos();
 }
+function rosList() {
+  const list = R.stu.filter(s => (FBAN === '*' || s.반 === FBAN) && (!FQ || s.이름.includes(FQ)));
+  return `${list.map(s => `<div class="row${s.학생ID === SID ? ' on' : ''}" data-sid="${E(s.학생ID)}"><div><b>${E(s.이름)}</b><div class="t">${E(s.반)} · ${E(s.학교 || '')}</div></div><div class="tg">${stuBadges(s.학생ID)}</div></div>`).join('') || '<div class="u-empty">없음</div>'}`;
+}
+function wireRos() { document.querySelectorAll('.ros [data-sid]').forEach(el => el.onclick = () => openStu(el.dataset.sid)); }
 function drawSea() {
   const cur = SEA ? SEA.k : '*';
   $('sea').innerHTML = SEASONS.slice(-2).map(s => `<button class="u-btn sm ${s.k === cur ? 'pri' : 'ghost'}" data-sea="${E(s.k)}" title="${E(s.from)} ~ ${E(s.to || '지금')}">${E(s.name)}</button>`).join('')
@@ -428,7 +433,7 @@ function drawSea() {
 }
 function drawTabs() {
   $('tabs').innerHTML = TABS.map(([k, t]) => `<button data-tab="${k}" class="${k === TAB ? 'on' : ''}">${t}</button>`).join('');
-  $('tabs').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; syncUrl(); draw(); });
+  $('tabs').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; syncUrl(); drawTabs(); draw(); });   // (1120) 강조도 같이 옮긴다
 }
 function syncUrl() { const u = new URL(location.href); u.searchParams.set('sid', SID); u.searchParams.set('tab', TAB); history.replaceState(null, '', u); }
 
