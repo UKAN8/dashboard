@@ -562,6 +562,24 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 .sw-row .st.good{background:rgba(126,224,163,.14);color:var(--good);font-weight:600}
 .sw-row .st.bad{background:rgba(255,92,138,.16);color:#ffb3c8;font-weight:600}
 .sw-row .st.mid{color:var(--mid)}
+/* (1120) 모의테스트 시험지 사진 올리기 — P15 1단계 */
+.card.mp{border-color:rgba(255,200,120,.5);background:rgba(255,200,120,.06)}
+.mp-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mp-h span{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:9px;white-space:nowrap}
+.mp-h .new{background:rgba(255,200,120,.16);color:#ffe1b0;font-weight:600}
+.mp-h .ok{background:rgba(126,224,163,.14);color:var(--good);font-weight:600}
+.mp-hint{color:var(--tx2);font-size:13px;line-height:1.55;margin-bottom:10px}
+.mp-file{display:inline-flex;align-items:center;gap:6px;border:1px dashed rgba(255,200,120,.6);border-radius:10px;padding:10px 14px;color:#ffe1b0;font-size:14px;cursor:pointer}
+.mp-file input{display:none}
+.mp-file small{color:var(--dim)}
+.mp-prev{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.mp-prev img{width:60px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--bd)}
+.mp-err{color:#ffb3c8;font-size:13px;margin-top:6px}
+.mp-err:empty{display:none}
+.mp-done{margin-top:10px;font-size:14px;color:var(--good)}
+.mp-go{display:block;width:100%;margin-top:12px;border-radius:11px;padding:12px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;background:#ffc878;color:#2a1a00;border:1px solid #ffc878}
+.mp-go:disabled{opacity:.45;cursor:default}
+.mp-re{display:block;margin:10px auto 0;background:none;border:none;color:var(--dim);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
 #swsheet{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:999;display:flex;align-items:flex-end;justify-content:center}
 #swsheet .sh{background:#15151c;color:var(--tx);width:100%;max-width:560px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain;border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:18px 18px 0 0;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
 #swsheet .grab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 12px}
@@ -1712,7 +1730,7 @@ function render(d){
   const S={오늘:[],과제:[],기록:[],자료:[]};
   S.오늘.push(P.qk, P.diag);
   // ⓪-0 프린트 해부 루프 (1010 유강 "중요자료라 위에서 바로") — lib.json(학습) 을 읽은 뒤 mountLib 이 채운다(내 학교 것이 없으면 숨김).
-  S.오늘.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div>`);
+  S.오늘.push(`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div><div id="mp-host"></div>`);
   S.오늘.push(P.mock||'', P.eval||P.evalNone, P.core?CORE_TODAY:'', `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   // ① 기출테스트 — 흐름·추정등급·회차·할 일 (0908). 화면 규칙은 portal_render.js 한 곳(대시보드 학생 탭과 공용).
@@ -1723,7 +1741,7 @@ function render(d){
   wireTabs(); mountTrend(tok,P._rp,finalCfg(String(d.학생.반||'').trim()));
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
-  mountTasks(tok); mountSW(tok);
+  mountTasks(tok); mountSW(tok); mountMP(tok);
   if(P.core) mountCore(tok,P.core,null);
   // d.기출 이 아예 없으면 DB 가 아직 v18 이전 — 빈 흐름 카드 대신 조용히 준비 중 한 줄
   try{ if(d.기출===undefined) $('pr-host').innerHTML='<div class="none">기출테스트 기록 화면을 준비하고 있습니다.</div>'; else PR.mount($('pr-host'), d, {staff:false}); }
@@ -1976,7 +1994,7 @@ function renderFinal(d,parts){
   const todo=[parts.mock,parts.diag,parts.eval,parts.core?CORE_TODAY:''].filter(Boolean);   // (1112) 모의테스트 답 입력 카드 — 기말 모드 오늘 할 일 맨 위(빠져 있어서 열어도 안 떴다)
   S.오늘.push(heroCard(d,c,today), parts.qk,
     `<h2>오늘 할 일</h2>`+(todo.length?todo.join(''):`<div class="none">지금 열려 있는 할 일이 없어요. 모의테스트 날 여기에 답 입력 버튼이 떠요.</div>`)
-    +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div>`,
+    +`<div class="card" id="hb-card" style="display:none;border-color:rgba(120,180,255,.45);background:rgba(120,180,255,.06)"></div><div id="sw-host"></div><div id="mp-host"></div>`,
     `<div id="today-hw"></div>`);
   S.과제.push(TASK_TAB);
   const G=finalGichul(d.기출,c.시작);
@@ -1999,7 +2017,7 @@ function renderFinal(d,parts){
   });
   if(G.회차.length){ try{ PR.mount($('fx-pr'),{...d,기출:G},{staff:false}); }catch(e){} }
   if(parts.core) mountCore(tok,parts.core,c);
-  mountTasks(tok); mountSW(tok);
+  mountTasks(tok); mountSW(tok); mountMP(tok);
   return {from:c.시작};
 }
 
@@ -2398,6 +2416,77 @@ const SW_ST={작성:['올리다 멈춤','mid'],제출:['채점 대기','na'],채
 const SW_CODE={형식:'요구한 형식',검토:'조건 확인',생략:'과정 생략',방향:'풀이 방향',계산:'계산',미완:'답 미완성'};
 const swN=v=>{ const n=Number(v); return Number.isFinite(n)?String(Math.round(n*10)/10):'-'; };
 const swLast=it=>{ const a=it.제출||[]; return a.length?a[a.length-1]:null; };
+/* ── (1120 유강) 모의테스트 시험지 사진 올리기 — P15 1단계 · schema_v89 ─────────────
+ * "고1A 학생들 모의 시험지 다 찍어 놨어, 업로드 링크 보내서 수집해 보자"
+ * 오늘 탭 카드: 대상 반(mock_photo_cfg 'bans')·최근 n일 안에 내가 답을 낸 회차마다 하나. 시험 직후 교실에서 찍은 사진을 골라 올린다.
+ * 사진은 긴 변 1600px JPEG 로 줄여(손글씨가 읽히게 서술형 1280px 보다 크게) 한 장씩 mock_photo_put. 파일 수정 시각을 같이 보낸다.
+ * 함수가 없으면(v89 전) 조용히 안 그린다. */
+const MP={tok:'',list:[],files:{},busy:false};
+async function mountMP(tok){
+  const host=$('mp-host'); if(!host||!tok) return;
+  MP.tok=tok;
+  try{ const r=await sb.rpc('mock_photo_status',{tok}); MP.list=(r&&!r.error&&Array.isArray(r.data))?r.data:[]; }catch(e){ MP.list=[]; }
+  drawMP();
+}
+function mpShrink(f){
+  return new Promise((ok,no)=>{
+    const img=new Image(); const u=URL.createObjectURL(f);
+    img.onload=()=>{ let side=1600, q=0.8, out='';
+      for(let t=0;t<6;t++){ const k=Math.min(1,side/Math.max(img.width,img.height)), c=document.createElement('canvas');
+        c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        out=c.toDataURL('image/jpeg',q); if(out.length*0.75<860000) break; q=Math.max(0.55,q-0.08); if(q<=0.6) side=Math.round(side*0.85); }
+      URL.revokeObjectURL(u); ok(out); };
+    img.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('img')); };
+    img.src=u;
+  });
+}
+function drawMP(msg){
+  const host=$('mp-host'); if(!host) return;
+  if(!MP.list.length){ host.innerHTML=''; return; }
+  host.innerHTML=MP.list.map((m,i)=>{
+    const n=+m.장수||0, d=String(m.날짜).slice(0,10), room=Math.max(0,14-n);
+    return `<div class="card mp"><div class="mp-h"><b>${E(m.제목)} 시험지 사진</b><span class="${n?'ok':'new'}">${n?`올렸어요 · ${n}장`:'아직 안 올림'}</span></div>`
+      +`<div class="mp-hint">${E(sd(d))}${m.시험지?' · '+E(m.시험지):''} — 시험 끝나고 교실에서 찍은 사진을 골라 주세요. 문제가 있는 쪽을 1쪽부터 순서대로, 풀이가 잘 보이게요. 정답 듣고 고쳐 쓴 뒤 찍은 사진은 빼 주세요.</div>`
+      +(room?`<label class="mp-file">${IC.cam} 사진 고르기 <small>(${n?'더 올릴 수 있는 사진 ':'최대 '}${room}장)</small><input type="file" accept="image/*" multiple data-mpf="${i}"></label>`
+            +`<div class="mp-prev" id="mp-prev-${i}"></div><div class="mp-err" id="mp-err-${i}"></div>`
+            +`<button type="button" class="mp-go" data-mpgo="${i}" disabled>올리기</button>`
+            :`<div class="mp-hint">한 회차에 14장까지 올릴 수 있어요.</div>`)
+      +(msg&&msg.i===i?`<div class="mp-done">${E(msg.t)}</div>`:'')
+      +(n?`<button type="button" class="mp-re" data-mpre="${i}">잘못 올렸어요 · 이 회차 사진 지우고 다시 올리기</button>`:'')
+      +`</div>`;
+  }).join('');
+  const err=(i,t)=>{ const e=$('mp-err-'+i); if(e) e.textContent=t||''; };
+  host.querySelectorAll('[data-mpf]').forEach(inp=>inp.onchange=ev=>{
+    const i=+inp.dataset.mpf, m=MP.list[i], room=Math.max(0,14-(+m.장수||0)), all=[...ev.target.files];
+    MP.files[i]=all.slice(0,room);
+    $('mp-prev-'+i).innerHTML=MP.files[i].map(f=>`<img src="${URL.createObjectURL(f)}" alt="">`).join('');
+    const b=host.querySelector(`[data-mpgo="${i}"]`); b.disabled=!MP.files[i].length; b.textContent=MP.files[i].length?`${MP.files[i].length}장 올리기`:'올리기';
+    err(i,all.length>room?`${room}장까지만 골랐어요.`:'');
+  });
+  host.querySelectorAll('[data-mpgo]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.mpgo, m=MP.list[i], F=MP.files[i]||[];
+    if(!F.length||MP.busy) return;
+    MP.busy=true; b.disabled=true; err(i,'');
+    let ok=0, bad=0;
+    for(let k=0;k<F.length;k++){
+      b.textContent=`올리는 중… ${k+1}/${F.length}`;
+      try{ const b64=await mpShrink(F[k]);
+        const r=await sb.rpc('mock_photo_put',{tok:MP.tok,p_ban:m.반,p_date:String(m.날짜).slice(0,10),b64,p_mime:'image/jpeg',p_taken:F[k].lastModified?new Date(F[k].lastModified).toISOString():null});
+        if(r.error||!r.data||r.data.오류){ bad++; if(r.data&&r.data.오류) err(i,r.data.오류); } else ok++;
+      }catch(e){ bad++; }
+    }
+    MP.busy=false; MP.files[i]=[];
+    try{ const r=await sb.rpc('mock_photo_status',{tok:MP.tok}); if(r&&!r.error&&Array.isArray(r.data)) MP.list=r.data; }catch(e){}
+    drawMP({i,t:bad?`${F.length}장 중 ${ok}장 올렸어요. 못 올린 ${bad}장은 다시 골라 주세요.`:`${ok}장 다 올렸어요. 고마워요!`});
+  });
+  host.querySelectorAll('[data-mpre]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.mpre, m=MP.list[i];
+    if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='정말 지울까요? 한 번 더 누르면 이 회차 사진이 모두 지워져요'; return; }
+    try{ await sb.rpc('mock_photo_reset',{tok:MP.tok,p_ban:m.반,p_date:String(m.날짜).slice(0,10)}); }catch(e){}
+    try{ const r=await sb.rpc('mock_photo_status',{tok:MP.tok}); if(r&&!r.error&&Array.isArray(r.data)) MP.list=r.data; }catch(e){}
+    drawMP({i,t:'지웠어요. 다시 골라 올려 주세요.'});
+  });
+}
 async function mountSW(tok){
   const host=$('sw-host'); if(!host||!tok) return;
   SW.tok=tok;
