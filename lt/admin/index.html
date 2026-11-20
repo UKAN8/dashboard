@@ -101,6 +101,13 @@ td.n{color:var(--dim);font-size:12px}
 .kv b{color:var(--dim);font-weight:500}
 .verdict{font-size:13.5px;line-height:1.75;background:var(--acc-soft);border-radius:10px;padding:11px 14px;color:#1d2b55}
 .act{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.cmp div{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 12px}
+.cmp span{display:block;font-size:11.5px;color:var(--dim)} .cmp b{font-size:14px}
+@media (max-width:640px){.cmp{grid-template-columns:1fr}}
+.ho-note{margin-top:10px;background:var(--bg);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.7;color:var(--tx2)}
+.ho-note b{display:block;color:var(--tx);font-size:12.5px;margin-bottom:2px}
+.ho-note.warn{background:var(--warn-soft)} .ho-note.dim{color:var(--dim)}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16191f;color:#fff;border-radius:10px;padding:10px 18px;z-index:20;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
@@ -159,6 +166,55 @@ const pct=(a,b)=>b?Math.round(a/b*100):null;
 const fmtT=t=>{ if(!t) return ''; const d=new Date(new Date(t).getTime()+9*3600e3); const z=n=>String(n).padStart(2,'0'); return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+z(d.getUTCHours())+':'+z(d.getUTCMinutes()); };
 const mathCls=s=>{ const p=String(s||'').split(',').map(x=>x.trim()).filter(Boolean); return p.find(x=>!/영어|교재비/.test(x))||p[0]||''; };
 let D=null, EX={}, ROWS=[], TAB='slot', FX='', SORT={}, sureGate=false;
+
+/* ── 중등부 인계 (1120) ── */
+const hoTeam=r=>{ const h=r.인계||{}; return h.담당?(h.담당.replace('쌤','')+' · '+(h.중등반||'')):mathCls(r.소속); };
+const hoAdv=h=>{ const t=((h||{}).선행||'')+' '+((h||{}).선행상세||''); return /공수2|공통수학2/.test(t)?2:/공수1|공통수학1/.test(t)&&!/^X$/.test((h||{}).선행||'')?1:0; };
+function hoGap(o){ // 선행 기록 대비 시험 결과가 크게 다르면 한 줄 설명
+  const h=o.r.인계; if(!h) return ''; const adv=hoAdv(h), cut=(o.e.판정||{}).심화||{};
+  if(o.e.형==='B형'&&adv>=1&&(o.점수<cut.총점||o.상위<cut.상위)) return '공수'+adv+(adv===2?'':'1')+' 선행 기록이 있는데 B형 '+o.점수+'점 · Ⅲ·Ⅳ '+o.상위+'점';
+  if(o.e.형==='B형'&&adv===0&&o.점수>=cut.총점) return '공수1 선행 기록이 없는데 B형 '+o.점수+'점';
+  if(o.e.형==='A형'&&adv>=1&&!(o.r.응시||[]).some(a=>(EX[a.시험]||{}).형==='B형')) return '공수1 선행 기록이 있는데 A형만 봄';
+  return ''; }
+function hoView(r){
+  const h=r.인계; if(!h) return '<div class="dim" style="font-size:13px">인계 기록이 없어요. <button data-ho="'+r.id+'">인계 기록 넣기</button></div>';
+  const g=h.성적||{}, gs=['3-1 중간','3-1 기말','3-2 중간','3-2 기말'].filter(k=>g[k]!=null).map(k=>'<span class="tag t-dim">'+k+' '+E(g[k])+'</span>').join(' ');
+  const lv=['성실도','이해도','질문'].filter(k=>h[k]).map(k=>'<span class="tag '+(h[k]==='상'?'t-deep':h[k]==='하'?'t-warn':'t-dim')+'">'+k+' '+E(h[k])+'</span>').join(' ');
+  const row=(k,v)=>v?'<b>'+k+'</b><span>'+E(v).replace(/\n/g,'<br>')+'</span>':'';
+  return '<div class="kv">'+row('담당',(h.담당||'')+(h.중등반?' · '+h.중등반:''))+row('선행',h.선행)+(h.선행상세?'<b></b><span class="dim">'+E(h.선행상세).replace(/\n/g,'<br>')+'</span>':'')
+    +(gs||h.월말?'<b>성적</b><span>'+(h.월말?'<span class="tag t-dim">월말 '+E(h.월말)+'</span> ':'')+gs+'</span>':'')+(lv?'<b>평가</b><span>'+lv+'</span>':'')
+    +row('교재',h.교재)+row('입학일',h.입학일)+row('지금 수업',h.시간표)+row('다른 학원',h.타학원)+'</div>'
+    +(h.특이사항?'<div class="ho-note"><b>수업 태도·특이사항</b>'+E(h.특이사항).replace(/\n/g,'<br>')+'</div>':'')
+    +(h.학부모특이?'<div class="ho-note warn"><b>학부모 특이사항</b>'+E(h.학부모특이).replace(/\n/g,'<br>')+'</div>':'')
+    +(h.반메모?'<div class="ho-note dim"><b>'+E(h.중등반||'반')+' 소개 ('+E(h.담당||'')+')</b>'+E(h.반메모)+'</div>':'')
+    +'<div style="text-align:right;margin-top:8px"><button data-ho="'+r.id+'">인계 기록 수정</button></div>'; }
+function openHandoff(rid){
+  const r=(D.명단||[]).find(x=>x.id===rid); if(!r) return; const h=JSON.parse(JSON.stringify(r.인계||{})), g=h.성적||{};
+  const ta=(id,v,rows)=>'<textarea id="'+id+'" rows="'+(rows||3)+'" style="width:100%;font:inherit;border:1px solid var(--bd2);border-radius:8px;padding:8px 10px">'+E(v||'')+'</textarea>';
+  const sel=(id,v)=>'<select id="'+id+'"><option value="">—</option>'+['상','중','하'].map(x=>'<option'+(v===x?' selected':'')+'>'+x+'</option>').join('')+'</select>';
+  const tx=(id,v,ph)=>'<input type="text" id="'+id+'" value="'+E(v||'')+'" placeholder="'+E(ph||'')+'">';
+  sheet.innerHTML='<h2 style="font-size:19px;margin-bottom:4px">중등부 인계 · '+E(r.이름)+'</h2><div class="dim" style="font-size:12.5px;margin-bottom:14px">'+E(r.학교||'')+(r.수정&&r.수정.무엇==='인계'?' · 마지막 수정 '+E(r.수정.누가||'')+' '+fmtT(r.수정.언제):'')+'</div>'
+    +'<div class="fgrid">'+fld('담당 선생님',tx('h담당',h.담당,'예: 재범쌤'))+fld('중등 반',tx('h중등반',h.중등반,'예: 고등선행반'))
+    +fld('선행 (짧게)',tx('h선행',h.선행,'예: 공수1 / 공수2(함수 전까지) / 인수분해'))+fld('월말평가',tx('h월말',h.월말,'예: 10월 80점'))
+    +fld('선행 자세히',ta('h선행상세',h.선행상세,2),1)
+    +fld('3-1 중간',tx('g31m',g['3-1 중간']))+fld('3-1 기말',tx('g31f',g['3-1 기말']))+fld('3-2 중간',tx('g32m',g['3-2 중간']))+fld('3-2 기말',tx('g32f',g['3-2 기말']))
+    +fld('성실도',sel('h성실도',h.성실도))+fld('이해도',sel('h이해도',h.이해도))+fld('질문 적극성',sel('h질문',h.질문))+fld('교재',tx('h교재',h.교재))
+    +fld('입학일',tx('h입학일',h.입학일))+fld('지금 수업 시간',tx('h시간표',h.시간표))
+    +fld('다른 학원 일정',ta('h타학원',h.타학원,2),1)+fld('수업 태도·특이사항',ta('h특이사항',h.특이사항,5),1)+fld('학부모 특이사항',ta('h학부모특이',h.학부모특이,2),1)+'</div>'
+    +'<div class="hint">링크 받은 선생님·데스크가 모두 봐요.</div><div class="err" id="ferr"></div><div class="act"><button id="fcancel">취소</button><button class="pri" id="fok">저장</button></div>';
+  sheet.style.maxWidth='680px'; dlg.classList.add('on');
+  const $=id=>document.getElementById(id);
+  $('fcancel').onclick=()=>{ dlg.classList.remove('on'); sheet.style.maxWidth=''; };
+  $('fok').onclick=async()=>{
+    const num=v=>{ v=(v||'').trim(); return /^\d+(\.\d+)?$/.test(v)?+v:v; };
+    const gg={'3-1 중간':num($('g31m').value),'3-1 기말':num($('g31f').value),'3-2 중간':num($('g32m').value),'3-2 기말':num($('g32f').value)};
+    Object.keys(gg).forEach(k=>{ if(gg[k]==='') delete gg[k]; });
+    const d=Object.assign({},h,{성적:gg});
+    ['담당','중등반','선행','월말','선행상세','성실도','이해도','질문','교재','입학일','시간표','타학원','특이사항','학부모특이'].forEach(k=>{ d[k]=$('h'+k).value.trim(); });
+    const {data,error}=await sb.rpc('staff_lt_handoff_save',{p_rid:rid,p_data:d});
+    if(error||!data||data.오류){ $('ferr').textContent=(data&&data.오류)||(error&&error.message)||'실패'; return; }
+    toast('인계 기록을 저장했어요'); dlg.classList.remove('on'); sheet.style.maxWidth=''; load(); };
+}
 
 /* ── 계산: 응시 한 건 → 지표 ── */
 function calc(r,a){
@@ -235,7 +291,7 @@ const tagJ=o=>'<span class="tag '+(o.심화?'t-deep':'t-base')+'">'+o.판정+'</
 function stuCols(){
   return COLS.stu=[
     {h:'이름',l:1,v:o=>o.이름,f:o=>'<b>'+E(o.이름)+'</b>'+(o.현장?' <span class="tag t-warn">현장</span>':'')},
-    {h:'학교',v:o=>o.학교},{h:'중등 반',l:1,v:o=>o.소속,f:o=>'<span class="dim">'+E(mathCls(o.소속))+'</span>'},
+    {h:'학교',v:o=>o.학교},{h:'담당·반',l:1,v:o=>hoTeam(o.r),f:o=>'<span class="dim">'+E(hoTeam(o.r))+'</span>'},{h:'선행(쌤 기록)',l:1,tip:'중등부 인계 기록',v:o=>(o.r.인계||{}).선행||'',f:o=>hoGap(o)?'<span class="tag t-warn" title="'+E(hoGap(o))+'">'+E((o.r.인계||{}).선행||'')+'</span>':E((o.r.인계||{}).선행||'—')},{h:'3-2 기말',num:1,tip:'학교 성적(인계)',v:o=>{const g=((o.r.인계||{}).성적||{})['3-2 기말'];return typeof g==='number'?g:null;}},{h:'성실도',tip:'은수쌤 기록(상·중·하)',v:o=>(o.r.인계||{}).성실도||''},
     {h:'형',v:o=>o.형},
     {h:'점수',num:1,v:o=>o.점수,f:o=>'<b>'+o.점수+'</b>'},
     {h:'Ⅰ',num:1,tip:'개념 1~6번 /12',v:o=>o.lv[1]||0},{h:'Ⅱ',num:1,tip:'기본 7~13번 /28',v:o=>o.lv[2]||0},
@@ -319,11 +375,11 @@ function vHeat(){
 /* ── 탭: 명단 ── */
 function vRoster(){
   const rs=(D.명단||[]);
-  COLS.ro=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b>'},{h:'학교',v:r=>r.학교},{h:'중등 반',l:1,v:r=>mathCls(r.소속)},
+  COLS.ro=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b>'},{h:'학교',v:r=>r.학교},{h:'담당·반',l:1,v:r=>hoTeam(r)},{h:'선행(쌤 기록)',l:1,v:r=>(r.인계||{}).선행||''},
     {h:'응시',v:r=>(r.응시||[]).map(a=>(EX[a.시험]||{}).형).join(' '),f:r=>(r.응시||[]).length?(r.응시||[]).map(a=>'<span class="tag t-deep">'+E((EX[a.시험]||{}).형)+' '+a.점수+'</span>').join(' '):'<span class="tag t-dim">미응시</span>'},
     {h:'회차',ns:1,v:r=>0,f:r=>'<select data-asg2="'+r.id+'" style="padding:3px 5px">'+slotOpts(r.회차,true)+'</select>'},{h:'알림',v:r=>(r.알림||{}).결과||'',f:alimTag},{h:'학생 번호',v:r=>r.학생폰||''},{h:'학부모 번호',l:1,v:r=>r.부모폰||''},
     {h:'명단',v:r=>r.현장등록?'확인 필요':'',f:r=>r.현장등록?'<span class="tag t-warn">확인 필요</span> <button data-ok="'+r.id+'">확인함</button>':''},
-    {h:'메모',l:1,v:r=>r.메모||'',f:r=>'<span class="dim">'+E(r.메모||'')+'</span>'},{h:'마지막 수정',v:r=>(r.수정||{}).언제||'',f:r=>r.수정?'<span class="dim">'+E(r.수정.누가||'')+' · '+fmtT(r.수정.언제)+'</span>':''},{h:'',ns:1,v:r=>0,f:r=>'<button data-edit="'+r.id+'">수정</button>'}];
+    {h:'메모',l:1,v:r=>r.메모||'',f:r=>'<span class="dim">'+E(r.메모||'')+'</span>'},{h:'마지막 수정',v:r=>(r.수정||{}).언제||'',f:r=>r.수정?'<span class="dim">'+E(r.수정.누가||'')+' · '+fmtT(r.수정.언제)+'</span>':''},{h:'',ns:1,v:r=>0,f:r=>'<span class="rowact"><button data-edit="'+r.id+'">수정</button><button data-ho="'+r.id+'">'+(r.인계?'인계':'인계 넣기')+'</button></span>'}];
   const nn=rs.filter(r=>!(r.응시||[]).length).length;
   return '<div class="kpi"><div><b>'+rs.length+'</b><span>명단</span></div><div><b>'+(rs.length-nn)+'</b><span>응시</span></div><div><b class="dim">'+nn+'</b><span>미응시</span></div>'
     +'<div><b class="warn">'+rs.filter(r=>r.현장등록).length+'</b><span>현장 등록·번호 입력(확인 필요)</span></div></div><div class="acts"><button class="pri" id="roadd">＋ 학생 추가</button></div>'+table('ro',COLS.ro,rs);
@@ -361,7 +417,7 @@ function vSlot(){
     const day=dayLabel(sl.시작); if(day!==lastDay){ h+='<div class="dayh">'+day+'</div>'; lastDay=day; }
     const [k,txt]=slotState(sl), rs=ros.filter(r=>r.회차===sl.id), sub=rs.filter(r=>(r.응시||[]).length).length;
     const ok=rs.filter(r=>r.알림&&/^(성공|건너뜀)/.test(r.알림.결과||'')).length, job=(sl.잡||[])[0];
-    COLS['sl'+sl.id]=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b> <span class="dim">'+E(r.학교||'')+'</span>'+(r.현장등록?' <span class="tag t-warn">확인</span>':'')},
+    COLS['sl'+sl.id]=[{h:'이름',l:1,v:r=>r.이름,f:r=>'<b>'+E(r.이름)+'</b> <span class="dim">'+E(r.학교||'')+(r.인계?' · '+E(hoTeam(r)):'')+'</span>'+(r.현장등록?' <span class="tag t-warn">확인</span>':'')},
       {h:'제출',v:r=>(r.응시||[]).map(a=>(EX[a.시험]||{}).형+' '+a.점수).join(' '),f:r=>(r.응시||[]).length?(r.응시||[]).map(a=>'<span class="tag t-deep">'+E((EX[a.시험]||{}).형)+' '+a.점수+'</span>').join(' '):'<span class="dim">—</span>'},
       {h:'알림',v:r=>(r.알림||{}).결과||'',f:alimTag},
       {h:'',ns:1,v:r=>0,f:r=>'<span class="rowact"><button data-edit="'+r.id+'">수정</button><button data-link="'+r.id+'">링크</button>'+(sl.열림시각?'<button data-rn="'+r.id+'">알림 다시</button>':'')+'</span>'}];
@@ -467,21 +523,25 @@ function openCard(id){
   if(o.실수점) why.push('실수라고 한 문항('+o.실수점+'점)만 없었으면 '+o.실수보정+'점');
   if(o.결손) why.push('Ⅰ 개념 문항 '+o.개념틀림.length+'개 틀림('+o.개념틀림.map(q=>q.번호+'번 '+q.단원).join(', ')+') → 반과 관계없이 해당 단원 보강');
   if(o.안풂) why.push('안 푼 문항 '+o.안풂+'개 (시간 부족 '+o.시간+' · 손 못 댐 '+o.못댐+')'+(s.시간==='모자랐어요'?' — 본인도 시간이 모자랐다고 답함':''));
+  const gap=hoGap(o); if(gap) why.push('⚠ '+gap);
   if(o.확실정답<o.e.문항.length-o.오답) why.push('맞힌 '+(o.e.문항.length-o.오답)+'문항 중 확실했던 건 '+o.확실정답+'문항');
   sheet.innerHTML='<div class="brand">수학은유강 · 필탑 고등수학과</div><h2>'+E(o.이름)+' <span class="dim" style="font-size:15px">'+E(o.학교)+(o.소속?' · '+E(mathCls(o.소속)):'')+'</span></h2>'
     +'<div class="dim">'+E(e.제목)+' · 제출 '+fmtT(o.a.제출시각)+'</div>'
     +'<div class="kpi" style="margin-top:12px"><div><b>'+o.점수+'</b><span>점수 / '+o.만점+'</span></div><div><b>'+o.상위+'</b><span>Ⅲ·Ⅳ / 60</span></div>'
     +'<div><b>'+o.확실정답+'</b><span>확실 정답</span></div><div><b>'+o.찍음보정+'</b><span>찍음 뺀 점수</span></div><div><b>'+o.실수보정+'</b><span>실수 없으면</span></div></div>'
     +'<div class="verdict">'+why.map(x=>'· '+x).join('<br>')+'</div>'
+    +'<div class="cmp"><div><span>선행 · 쌤 기록</span><b>'+E((o.r.인계||{}).선행||'—')+'</b></div><div><span>선행 · 학생 응답</span><b>'+E(s.선행||'—')+(s.단원?' · '+E(s.단원):'')+'</b></div><div><span>이번 시험</span><b>'+(o.r.응시||[]).map(a=>E((EX[a.시험]||{}).형)+' '+a.점수+'점').join(' · ')+'</b></div></div>'
     +'<h3>문항별</h3><div class="strip">'+strip+'</div><div class="legend">'+Object.values(KN).map(k=>'<span><i class="'+k[0]+'"></i>'+k[1]+'</span>').join('')+'</div>'
     +'<div class="grid2"><div><h3>레벨별</h3>'+lvb+'</div><div><h3>단원별</h3>'+unb+'</div></div>'
     +'<h3>틀린 문항 · 고른 선지로 본 오개념</h3>'+wrongs
     +'<h3>학습 이력 (본인 응답)</h3><div class="kv"><b>공수1 선행</b><span>'+E(s.선행||'—')+(s.단원?' · 마지막 단원 '+E(s.단원):'')+'</span>'
     +'<b>공부 방식</b><span>'+E((s.방식||[]).join(', ')||'—')+'</span><b>시험 시간</b><span>'+E(s.시간||'—')+'</span><b>체감 난이도</b><span>'+E(s.체감||'—')+'</span>'
     +'<b>하고 싶은 말</b><span>'+E(s.말||'—')+'</span></div>'
+    +'<h3>중등부 인계</h3>'+hoView(o.r)
     +'<div class="act"><button id="reset" title="답을 잘못 옮겼을 때 — 지우면 학생이 다시 입력할 수 있어요(기록은 따로 보관)">제출 지우고 다시 받기</button><button onclick="window.print()">인쇄</button><button class="pri" id="cls">닫기</button></div>';
   dlg.classList.add('on');
   document.getElementById('cls').onclick=()=>dlg.classList.remove('on');
+  sheet.querySelectorAll('[data-ho]').forEach(b=>b.onclick=()=>openHandoff(+b.dataset.ho));
   const rb=document.getElementById('reset'); let sure=false;
   rb.onclick=async()=>{ if(!sure){ sure=true; rb.className='sure'; rb.textContent='정말 지울까요? 한 번 더'; return; }
     const {data,error}=await sb.rpc('staff_lt_reset',{p_rid:o.r.id,p_exam:o.e.id});
@@ -549,6 +609,7 @@ function draw(){
   app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation();
     const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
   if(TAB==='slot') wireSlot();
+  app.querySelectorAll('[data-ho]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); openHandoff(+b.dataset.ho); });
   if(TAB==='ro'){ app.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openForm('edit',+b.dataset.edit)); const ad=document.getElementById('roadd'); if(ad) ad.onclick=()=>openForm('add'); }
   if(TAB==='key') wireKey();
   const go=document.getElementById('gopen'); if(go) go.onclick=()=>gate(true);
