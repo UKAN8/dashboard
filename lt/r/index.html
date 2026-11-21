@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- 레벨테스트 학부모 리포트 (1121 유강) — /dashboard/lt/r/?k=<리포트키> · 공개 RPC lt_report 만 부른다.
      v2(1121 유강 피드백): '성적 분석지'보다 '반 배치와 다음 학습 안내'가 먼저 — ① 학생·추천 반 ② 잘한 것/보완할 것
-     ③ 풀이 습관(학생 자평 — 차별점) ④ 선생님 한마디(있을 때만)·앞으로 ⑤ 문항별 분석은 접기(인쇄 땐 부록).
+     ③ 풀이 습관(학생 셀프평가 — 차별점) ④ 선생님 한마디(있을 때만)·앞으로 ⑤ 문항별 분석은 접기(인쇄 땐 부록).
      색: 필탑 네이비 하나 + 성취 상태(초록·주황·빨강)만. 맞는 답·선지·학생 답은 받지 않는다(같은 시험을 볼 학생이 남아 있다). -->
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -73,7 +73,7 @@ h1 small{font-size:18px;font-weight:600;color:var(--tx2);margin-left:6px}
 .st.hi{background:var(--ok-t);color:var(--ok)} .st.md{background:var(--mid-t);color:var(--mid)} .st.lo{background:var(--bad-t);color:var(--bad)}
 .i-hi{background:var(--ok)} .i-md{background:var(--mid)} .i-lo{background:var(--bad)}
 .crit{font-size:13px;color:var(--dim);margin-top:6px}
-/* 풀이 습관 · 학생 자평 */
+/* 풀이 습관 · 학생 셀프평가 */
 .self{background:linear-gradient(180deg,var(--bt) 0,#fff 220px)}
 .badge{display:inline-block;font-size:12.5px;font-weight:800;color:#fff;background:var(--b);border-radius:999px;padding:3px 11px;margin-bottom:8px;letter-spacing:.2px}
 .strip{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;margin-top:4px}
@@ -291,7 +291,7 @@ function habit(X,title){
   if(slipQ.length) T.push(['','실수로 놓친 점수가 <b>'+pts(slipQ)+'점</b>이에요'+(topSlip&&HOW[topSlip[0]]?' — 주로 ‘'+E(topSlip[0])+'’ → '+HOW[topSlip[0]]+'이 필요해요.':'.')]);
   if(skipQ.filter(q=>q.k==='시간').length||(X.a.설문||{}).시간==='모자랐어요') T.push(['','시험 시간이 모자랐다고 답했어요 — 시간 배분 연습도 함께 해요.']);
   if(unrev.length&&(slipQ.some(q=>q.k)||noQ.some(q=>q.k))) T.push(['',unrev.length+'문항은 학생이 틀린 이유를 고르지 않았어요(응답 없음).']);
-  return '<div class="sec self"><span class="badge">필탑 레벨테스트 학생 자평 분석</span><h2>풀이 습관'+(title||'')+'</h2>'
+  return '<div class="sec self"><span class="badge">필탑 레벨테스트 학생 셀프평가 분석</span><h2>풀이 습관'+(title||'')+'</h2>'
     +'<p class="sub">답만 채점하지 않았어요. 학생이 문항마다 <b>얼마나 확신했는지</b>, 틀린 문항은 <b>왜 틀렸다고 생각하는지</b> 시험 직후 스스로 돌아본 결과예요.</p>'
     +'<div class="strip">'+strip+'</div><div class="legend">'+legend+'</div>'
     +'<div class="hb"><div><h3>확신과 실제 결과</h3>'+calib+'</div>'

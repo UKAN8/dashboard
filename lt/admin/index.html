@@ -563,13 +563,13 @@ function talkPoints(o){
   if(o.안풂) P.push('<b>못 푼 문항</b> — '+o.안풂+'개'+((o.설문||{}).시간==='모자랐어요'?' · 본인도 시간이 모자랐다고 답함':''));
   const s=o.설문||{}, h=o.r.인계||{};
   if(s.선행||h.선행) P.push('<b>선행</b> — 학생 응답 '+E(s.선행||'—')+(s.단원?' (마지막 '+E(s.단원)+')':'')+(h.선행?' · 중등부 기록 '+E(h.선행):''));
-  /* 학생 자평 — 리포트의 차별점(1121): 확실했는데 틀림 · 고른 틀린 이유 · 학생이 쓴 말 */
+  /* 학생 셀프평가 — 리포트의 차별점(1121): 확실했는데 틀림 · 고른 틀린 이유 · 학생이 쓴 말 */
   const cw=o.items.filter(it=>!it.ok&&it.an.c==='확실'), rv=o.items.filter(it=>!it.ok&&it.rv);
   const top=k=>{ const m={}; rv.filter(it=>it.rv.k===k&&it.rv.r).forEach(it=>m[it.rv.r]=(m[it.rv.r]||0)+1); const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; return e?'‘'+E(e[0])+'’ '+e[1]:''; };
   const sp=[]; if(cw.length) sp.push('<span class="bad">확실했는데 틀림 '+cw.length+'문항('+cw.map(it=>it.q.번호).join('·')+'번)</span>');
   if(top('모름')) sp.push('몰랐던 이유 '+top('모름')); if(top('실수')) sp.push('실수 '+top('실수'));
-  if(sp.length) P.push('<b>학생 자평</b> — '+sp.join(' · '));
-  else if(o.미확인) P.push('<b>학생 자평</b> — <span class="dim">틀린 이유 돌아보기를 안 마쳤어요</span>');
+  if(sp.length) P.push('<b>학생 셀프평가</b> — '+sp.join(' · '));
+  else if(o.미확인) P.push('<b>학생 셀프평가</b> — <span class="dim">틀린 이유 돌아보기를 안 마쳤어요</span>');
   const ms=rv.filter(it=>it.rv.m).slice(0,2); if(ms.length) P.push('<b>학생이 쓴 말</b> — '+ms.map(it=>it.q.번호+'번 “'+E(it.rv.m)+'”').join(' · '));
   return P;
 }
