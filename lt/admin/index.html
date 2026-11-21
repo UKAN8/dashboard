@@ -48,7 +48,9 @@ button.sure{background:var(--bad);border-color:var(--bad);color:var(--on-acc);fo
 td button{height:28px;padding:0 9px;font-size:12.5px}
 .place{height:30px;font-size:13px;padding:0 6px;min-width:118px;border-color:var(--bd)}
 .place.p-deep{background:var(--good-soft);color:var(--good);border-color:transparent;font-weight:700}
-.place.p-base{background:var(--acc-soft);color:var(--acc);border-color:transparent;font-weight:700}
+.place.p-mwf{background:var(--acc-soft);color:var(--acc);border-color:transparent;font-weight:700}
+.place.p-tts{background:rgba(157,184,255,.16);color:#9db8ff;border-color:transparent;font-weight:700}
+.place.p-tbd{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:700}
 .placebox{display:flex;align-items:center;gap:10px;margin-top:12px}
 @media print{.place{border:0;background:none!important;-webkit-appearance:none;appearance:none}}
 .sortbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);margin:0 0 8px}
@@ -305,7 +307,8 @@ const COLS={};
 const tagJ=o=>'<span class="tag '+(o.심화?'t-deep':'t-base')+'">'+o.판정+'</span>'+(o.경계?' <span class="tag t-warn" title="'+(o.경계==='찍음'?'찍어서 맞힌 점수를 빼면 심화 기준 아래':'실수만 없었으면 심화 기준 위')+'">'+o.경계+' 경계</span>':'');
 /* ── 반배정 (1121 유강) — 심화 · 기본(월수금) · 기본(화목토) · 기본(요일미정) · 미정 ── */
 const PLACES=['심화','기본(월수금)','기본(화목토)','기본(요일미정)'];
-const placeSel=(r,extra)=>'<select class="place'+(r.반배정?(r.반배정==='심화'?' p-deep':' p-base'):'')+'" data-place="'+r.id+'"'+(extra||'')+'><option value="">미정</option>'
+const PCLS={'심화':'p-deep','기본(월수금)':'p-mwf','기본(화목토)':'p-tts','기본(요일미정)':'p-tbd'};
+const placeSel=(r,extra)=>'<select class="place '+(PCLS[r.반배정]||'')+'" data-place="'+r.id+'"'+(extra||'')+'><option value="">미정</option>'
   +PLACES.map(p=>'<option'+(r.반배정===p?' selected':'')+'>'+p+'</option>').join('')+'</select>';
 function stuCols(){
   return COLS.stu=[
@@ -524,7 +527,7 @@ function wirePlace(root){
     el.onchange=async()=>{ const rid=+el.dataset.place, v=el.value||null;
       const d=await call('staff_lt_place',{p_rid:rid,p_class:v}, v?'반배정: '+v:'반배정을 비웠어요'); if(!d){ draw(); return; }
       (D.명단||[]).forEach(r=>{ if(r.id===rid) r.반배정=v; }); ROWS.forEach(o=>{ if(o.r.id===rid) o.r.반배정=v; });
-      if(el.dataset.incard){ el.className='place'+(v?(v==='심화'?' p-deep':' p-base'):''); } else draw(); }; });
+      if(el.dataset.incard){ el.className='place '+(PCLS[v]||''); } else draw(); }; });
 }
 
 /* ── 상담 카드 ── */
