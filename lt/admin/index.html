@@ -53,6 +53,21 @@ td button{height:28px;padding:0 9px;font-size:12.5px}
 .place.p-tbd{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:700}
 .placebox{display:flex;align-items:center;gap:10px;margin-top:12px}
 @media print{.place{border:0;background:none!important;-webkit-appearance:none;appearance:none}}
+.rpt{border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-top:12px;background:var(--s2)}
+.rpt-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.rpt .tel{font-size:14px;font-weight:700;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 12px}
+.rpt .tel.s{color:var(--tx2);border-color:var(--bd2);font-weight:500}
+.talk{font-size:13.5px;line-height:1.8;background:var(--card);border-radius:10px;padding:10px 14px}
+.calls{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px}
+.calls button{height:30px;border-radius:999px}
+.calls button.on{outline:2px solid currentColor;font-weight:700}
+.calls button.t-deep{color:var(--good)} .calls button.t-warn{color:var(--warn)} .calls button.t-base{color:var(--acc)} .calls button.t-dim{color:var(--dim)}
+.callrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .callrow input{flex:1;min-width:220px}
+.rpt textarea{width:100%;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;resize:vertical}
+.hist{margin-top:8px;font-size:13px;line-height:1.9}
+.bulk{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:-4px 0 10px}
+button:disabled{opacity:.45;cursor:not-allowed}
+@media print{.rpt .calls,.rpt .callrow,.rpt textarea,.bulk{display:none!important}}
 .sortbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);margin:0 0 8px}
 .sortbar .sk{display:inline-flex;align-items:center;gap:2px;background:var(--acc-soft);color:var(--acc);border-radius:999px;padding:1px 4px 1px 10px;font-weight:600}
 .sortbar .sk button{height:20px;width:20px;padding:0;border:0;background:none;color:inherit;font-size:14px;line-height:1;border-radius:50%}
@@ -313,7 +328,7 @@ const placeSel=(r,extra)=>'<select class="place '+(PCLS[r.반배정]||'')+'" dat
 function stuCols(){
   return COLS.stu=[
     {h:'이름',l:1,v:o=>o.이름,f:o=>'<b>'+E(o.이름)+'</b>'+(o.현장?' <span class="tag t-warn">현장</span>':'')},
-    {h:'학교',v:o=>o.학교},{h:'반배정',l:1,tip:'정한 반(학부모 리포트에 들어가요)',v:o=>o.r.반배정||'',f:o=>placeSel(o.r)},{h:'담당·반',l:1,v:o=>hoTeam(o.r),f:o=>'<span class="dim">'+E(hoTeam(o.r))+'</span>'},{h:'선행(쌤 기록)',l:1,tip:'중등부 인계 기록',v:o=>(o.r.인계||{}).선행||'',f:o=>hoGap(o)?'<span class="tag t-warn" title="'+E(hoGap(o))+'">'+E((o.r.인계||{}).선행||'')+'</span>':E((o.r.인계||{}).선행||'—')},{h:'3-2 기말',num:1,tip:'학교 성적(인계)',v:o=>{const g=((o.r.인계||{}).성적||{})['3-2 기말'];return typeof g==='number'?g:null;}},{h:'성실도',tip:'은수쌤 기록(상·중·하)',v:o=>(o.r.인계||{}).성실도||''},
+    {h:'학교',v:o=>o.학교},{h:'반배정',l:1,tip:'정한 반(학부모 리포트에 들어가요)',v:o=>o.r.반배정||'',f:o=>placeSel(o.r)},{h:'리포트',tip:'학부모 리포트 문자',v:o=>rptState(o.r)[1],f:o=>{const x=rptState(o.r);return x[0]?'<span class="tag '+x[0]+'" title="'+E((o.r.리포트발송||{}).결과||'')+'">'+E(x[1])+'</span>':'<span class="dim">—</span>';}},{h:'상담',tip:'데스크 상담 전화',v:o=>(o.r.상담||{}).상태||'',f:o=>{const c=o.r.상담||{};return c.상태?'<span class="tag '+(CALLC[c.상태]||'t-dim')+'" title="'+E((c.누가||'')+' '+fmtT(c.언제)+(c.메모?' · '+c.메모:''))+'">'+E(c.상태)+'</span>':'<span class="dim">—</span>';}},{h:'담당·반',l:1,v:o=>hoTeam(o.r),f:o=>'<span class="dim">'+E(hoTeam(o.r))+'</span>'},{h:'선행(쌤 기록)',l:1,tip:'중등부 인계 기록',v:o=>(o.r.인계||{}).선행||'',f:o=>hoGap(o)?'<span class="tag t-warn" title="'+E(hoGap(o))+'">'+E((o.r.인계||{}).선행||'')+'</span>':E((o.r.인계||{}).선행||'—')},{h:'3-2 기말',num:1,tip:'학교 성적(인계)',v:o=>{const g=((o.r.인계||{}).성적||{})['3-2 기말'];return typeof g==='number'?g:null;}},{h:'성실도',tip:'은수쌤 기록(상·중·하)',v:o=>(o.r.인계||{}).성실도||''},
     {h:'형',v:o=>o.형},
     {h:'점수',num:1,v:o=>o.점수,f:o=>'<b>'+o.점수+'</b>'},
     {h:'Ⅰ',num:1,tip:'개념 1~6번 /12',v:o=>o.lv[1]||0},{h:'Ⅱ',num:1,tip:'기본 7~13번 /28',v:o=>o.lv[2]||0},
@@ -343,7 +358,9 @@ function vStu(){
     +'<div><b class="bad">'+rows.filter(o=>o.결손).length+'</b><span>개념 결손</span></div>'
     +'<div><b>'+rows.filter(o=>o.미확인).length+'</b><span>틀린 문항 확인 미완</span></div>'
     +'<div><b>'+new Set(rows.filter(o=>o.r.반배정).map(o=>o.r.id)).size+'<small style="font-size:14px;color:var(--dim)"> / '+new Set(rows.map(o=>o.r.id)).size+'</small></b><span>반배정 · 심화 '+new Set(rows.filter(o=>o.r.반배정==='심화').map(o=>o.r.id)).size+' · 기본 '+new Set(rows.filter(o=>(o.r.반배정||'').startsWith('기본')).map(o=>o.r.id)).size+'</span></div></div>';
-  return kp+(n?table('stu',stuCols(),rows,o=>'class="click" data-open="'+E(o.id)+'"'):'<div class="card dim">아직 제출한 학생이 없어요.</div>')
+  const sendable=new Set(rows.filter(o=>o.r.반배정&&!String((o.r.리포트발송||{}).결과||'').match(/^(성공|보내는)/)).map(o=>o.r.id)).size;
+  const bulk='<div class="bulk"><span class="dim">학부모 리포트 — 반배정이 있고 아직 안 보낸 학생 <b style="color:var(--tx)">'+sendable+'</b>명</span><button id="sendall"'+(sendable?'':' disabled')+'>한꺼번에 문자 보내기</button></div>';
+  return kp+bulk+(n?table('stu',stuCols(),rows,o=>'class="click" data-open="'+E(o.id)+'"'):'<div class="card dim">아직 제출한 학생이 없어요.</div>')
     +'<div style="margin-top:8px" class="dim">행을 누르면 학생 상담 카드가 열려요. 머리글을 누른 순서대로 정렬 우선순위가 붙어요.</div>';
 }
 
@@ -522,6 +539,69 @@ function wireSlot(){
     if(await call('staff_lt_slot_del',{p_id:+b.dataset.delSlot},'회차를 지웠어요')) load(); });
 }
 
+/* ── 학부모 리포트 · 상담 전화 (1121 유강 "학부모님들께 전달드리고 데스크에서 상담전화") ── */
+const CALLS=['통화 완료','부재중','다시 연락','고민 중','등록 확정','등록 안 함'];
+const CALLC={'통화 완료':'t-deep','등록 확정':'t-deep','부재중':'t-warn','다시 연락':'t-warn','고민 중':'t-base','등록 안 함':'t-dim'};
+const PLACEDESC={'심화':'심화반 · 화·목·토','기본(월수금)':'기본반 · 월·수·금','기본(화목토)':'기본반 · 화·목·토','기본(요일미정)':'기본반 · 요일은 상담 때'};
+function rptState(r){ const s=r.리포트발송||{}, t=String(s.결과||'');
+  if(!t) return r.리포트?['t-dim','링크만']:['',''];
+  if(t.startsWith('성공')) return ['t-deep','보냄 '+fmtT(s.시각).split(' ')[0]];
+  if(t.startsWith('보내는')) return ['t-base','보내는 중'];
+  if(t.includes('번호 없음')) return ['t-warn','번호 없음'];
+  return ['t-bad','실패']; }
+const telOf=s=>{ const m=String(s||'').match(/01\d[-\s]?\d{3,4}[-\s]?\d{4}/); return m?m[0].replace(/\D/g,''):''; };
+function talkPoints(o){
+  const P=[], same=ROWS.filter(x=>x.e.id===o.e.id), avg=same.length?Math.round(same.reduce((s,x)=>s+x.점수,0)/same.length*10)/10:null;
+  P.push('<b>반 배치</b> — '+(o.r.반배정?E(PLACEDESC[o.r.반배정]):'<span class="warn">아직 미정</span>')+' · 12/1 개강');
+  P.push('<b>점수</b> — '+E(o.형)+' '+o.점수+'점'+(avg!=null&&same.length>=3?' (응시자 평균 '+avg+'점)':'')+' · 응용·심화(Ⅲ·Ⅳ) '+o.상위+'/60');
+  const us=Object.keys(o.unF), good=us.filter(u=>o.unF[u]>=2&&(o.un[u]||0)/o.unF[u]>=.8), bad=us.filter(u=>(o.un[u]||0)/o.unF[u]<.5);
+  if(good.length) P.push('<b>잘한 단원</b> — '+good.map(E).join(', '));
+  if(bad.length) P.push('<b>보완할 단원</b> — '+bad.map(E).join(', '));
+  if(o.결손) P.push('<b>기본 개념</b> — Ⅰ 개념 문항 '+o.개념틀림.length+'개 틀림 ('+[...new Set(o.개념틀림.map(q=>q.단원))].map(E).join(', ')+')');
+  if(o.찍음점>=5) P.push('<b>찍어서 맞힘</b> — '+o.찍음정답+'문항 '+o.찍음점+'점 → 실력은 점수보다 조금 아래로 보는 게 안전');
+  if(o.실수점) P.push('<b>실수</b> — '+o.실수+'문항 '+o.실수점+'점 (실수만 없었으면 '+o.실수보정+'점)');
+  if(o.안풂) P.push('<b>못 푼 문항</b> — '+o.안풂+'개'+((o.설문||{}).시간==='모자랐어요'?' · 본인도 시간이 모자랐다고 답함':''));
+  const s=o.설문||{}, h=o.r.인계||{};
+  if(s.선행||h.선행) P.push('<b>선행</b> — 학생 응답 '+E(s.선행||'—')+(s.단원?' (마지막 '+E(s.단원)+')':'')+(h.선행?' · 중등부 기록 '+E(h.선행):''));
+  if(o.r.리포트코멘트) P.push('<b>선생님 한마디</b> — '+E(o.r.리포트코멘트));
+  return P;
+}
+function rptBox(o){
+  const r=o.r, c=r.상담||{}, ph=telOf(r.부모폰), sph=telOf(r.학생폰), st=rptState(r), hist=(c.기록||[]).slice().reverse();
+  return '<div class="rpt">'
+    +'<div class="rpt-h"><h3 style="margin:0">상담 전화</h3>'
+    +(ph?'<a class="tel" href="tel:'+ph+'">학부모 '+E(r.부모폰)+'</a>':'<span class="warn">학부모 번호 없음</span>')+(sph?'<a class="tel s" href="tel:'+sph+'">학생 '+E(r.학생폰)+'</a>':'')+'</div>'
+    +'<div class="talk"><div class="dim" style="margin-bottom:4px">통화할 때 이 순서로 말하면 돼요</div>'+talkPoints(o).map(x=>'<div>· '+x+'</div>').join('')+'</div>'
+    +'<div class="calls">'+CALLS.map(k=>'<button data-cs="'+E(k)+'" class="'+(c.상태===k?'on ':'')+(CALLC[k]||'')+'">'+E(k)+'</button>').join('')+'</div>'
+    +'<div class="callrow"><input type="text" id="cmemo" placeholder="통화 메모 (예: 화목토 원함, 12/1 전에 등록 예정)" value=""><button class="pri" id="csave">상담 기록 저장</button></div>'
+    +(hist.length?'<div class="hist">'+hist.map(h=>'<div><span class="tag '+(CALLC[h.상태]||'t-dim')+'">'+E(h.상태)+'</span> <span class="dim">'+E(h.누가||'')+' · '+fmtT(h.언제)+'</span>'+(h.메모?' — '+E(h.메모):'')+'</div>').join('')+'</div>':'')
+    +'<div class="rpt-h" style="margin-top:16px"><h3 style="margin:0">학부모 리포트</h3>'+(st[0]?'<span class="tag '+st[0]+'" title="'+E((r.리포트발송||{}).결과||'')+'">'+E(st[1])+'</span>':'')+'</div>'
+    +'<textarea id="rnote" rows="2" placeholder="선생님 한마디 — 리포트에 그대로 들어가요 (비워 두면 안 나와요)">'+E(r.리포트코멘트||'')+'</textarea>'
+    +'<div class="callrow"><button id="rnsave">한마디 저장</button><button id="rview">리포트 보기</button><button id="rcopy">링크 복사</button>'
+    +'<button class="pri" id="rsend"'+(r.반배정?'':' disabled title="반배정을 먼저 정해 주세요"')+'>학부모에게 문자 보내기</button></div>'
+    +((r.리포트발송||{}).결과&&!String(r.리포트발송.결과).startsWith('성공')&&!String(r.리포트발송.결과).startsWith('보내는')?'<div class="dim" style="margin-top:4px">마지막 결과: '+E(r.리포트발송.결과)+'</div>':'')
+    +'</div>';
+}
+function wireRpt(o){
+  const r=o.r, $=id=>document.getElementById(id); let pick=(r.상담||{}).상태||'';
+  sheet.querySelectorAll('[data-cs]').forEach(b=>b.onclick=()=>{ pick=b.dataset.cs; sheet.querySelectorAll('[data-cs]').forEach(x=>x.classList.toggle('on',x===b)); });
+  $('csave').onclick=async()=>{ if(!pick){ toast('상담 결과를 먼저 골라 주세요'); return; }
+    if(await call('staff_lt_call',{p_rid:r.id,p_state:pick,p_memo:$('cmemo').value},'상담 기록을 저장했어요')){ await load(); openCard(o.id); } };
+  $('rnsave').onclick=async()=>{ if(await call('staff_lt_report_note',{p_rid:r.id,p_note:$('rnote').value},'한마디를 저장했어요')){ r.리포트코멘트=$('rnote').value.trim()||null; } };
+  const link=async()=>{ const d=await call('staff_lt_report_link',{p_rid:r.id}); if(d) r.리포트=true; return d&&d.주소; };
+  $('rview').onclick=async()=>{ const w=window.open('about:blank','_blank'); const u=await link(); if(u&&w) w.location=u; else if(w) w.close(); };
+  $('rcopy').onclick=async()=>{ const u=await link(); if(!u) return; try{ await navigator.clipboard.writeText(u); toast('리포트 링크를 복사했어요'); }catch(e){ prompt('리포트 링크',u); } };
+  $('rsend').onclick=async()=>{ const b=$('rsend'); if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.className='sure'; b.textContent=(r.리포트발송&&String(r.리포트발송.결과||'').startsWith('성공')?'이미 보냈어요 · 다시 보낼까요?':'정말 보낼까요? 한 번 더'); return; }
+    if((r.리포트코멘트||'')!==$('rnote').value.trim()) await call('staff_lt_report_note',{p_rid:r.id,p_note:$('rnote').value});
+    const d=await call('staff_lt_report_send',{p_rids:[r.id]},'문자를 보내요 (1~2분)'); if(d){ await load(); openCard(o.id); } };
+}
+async function sendAll(btn){
+  const ids=[...new Set(ROWS.filter(o=>(!FX||o.e.id===FX)&&o.r.반배정&&!String((o.r.리포트발송||{}).결과||'').match(/^(성공|보내는)/)).map(o=>o.r.id))];
+  if(!ids.length){ toast('보낼 학생이 없어요 (반배정이 있고 아직 안 보낸 학생만)'); return; }
+  if(btn.dataset.sure!=='1'){ btn.dataset.sure='1'; btn.className='sure'; btn.textContent=ids.length+'명에게 보낼까요?'; return; }
+  const d=await call('staff_lt_report_send',{p_rids:ids},ids.length+'명에게 문자를 보내요 (1~2분)'); if(d) load();
+}
+
 function wirePlace(root){
   root.querySelectorAll('[data-place]').forEach(el=>{ el.onclick=ev=>ev.stopPropagation();
     el.onchange=async()=>{ const rid=+el.dataset.place, v=el.value||null;
@@ -559,6 +639,7 @@ function openCard(id){
   sheet.innerHTML='<div class="brand">수학은유강 · 필탑 고등수학과</div><h2>'+E(o.이름)+' <span class="dim" style="font-size:15px">'+E(o.학교)+(o.소속?' · '+E(mathCls(o.소속)):'')+'</span></h2>'
     +'<div class="dim">'+E(e.제목)+' · 제출 '+fmtT(o.a.제출시각)+'</div>'
     +'<div class="placebox"><b>반배정</b>'+placeSel(o.r,' data-incard="1"')+'<span class="dim">정하면 바로 저장돼요</span></div>'
+    +rptBox(o)
     +'<div class="kpi" style="margin-top:12px"><div><b>'+o.점수+'</b><span>점수 / '+o.만점+'</span></div><div><b>'+o.상위+'</b><span>Ⅲ·Ⅳ / 60</span></div>'
     +'<div><b>'+o.확실정답+'</b><span>확실 정답</span></div><div><b>'+o.찍음보정+'</b><span>찍음 뺀 점수</span></div><div><b>'+o.실수보정+'</b><span>실수 없으면</span></div></div>'
     +'<div class="verdict">'+why.map(x=>'· '+x).join('<br>')+'</div>'
@@ -571,7 +652,8 @@ function openCard(id){
     +'<b>하고 싶은 말</b><span>'+E(s.말||'—')+'</span></div>'
     +'<h3>중등부 인계</h3>'+hoView(o.r)
     +'<div class="act"><button id="reset" title="답을 잘못 옮겼을 때 — 지우면 학생이 다시 입력할 수 있어요(기록은 따로 보관)">제출 지우고 다시 받기</button><button onclick="window.print()">인쇄</button><button class="pri" id="cls">닫기</button></div>';
-  wirePlace(sheet);
+  wirePlace(sheet); wireRpt(o);
+  sheet.querySelectorAll('[data-place]').forEach(el=>el.addEventListener('change',()=>{ const b=document.getElementById('rsend'); if(b){ b.disabled=!el.value; } }));
   dlg.classList.add('on');
   document.getElementById('cls').onclick=()=>dlg.classList.remove('on');
   sheet.querySelectorAll('[data-ho]').forEach(b=>b.onclick=()=>openHandoff(+b.dataset.ho));
@@ -638,7 +720,7 @@ function draw(){
   document.getElementById('rl').onclick=load; const cv=document.getElementById('csv'); if(cv) cv.onclick=csv;
   const f=document.getElementById('fx'); if(f) f.onchange=ev=>{FX=ev.target.value;draw();};
   app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=ev=>{ if(ev.target.closest('select,button,a,input')) return; openCard(tr.dataset.open); });
-  wirePlace(app);
+  wirePlace(app); const sa=document.getElementById('sendall'); if(sa) sa.onclick=()=>sendAll(sa);
   app.querySelectorAll('[data-asg2]').forEach(el=>el.onchange=async()=>{ const v=el.value; const d=await call('staff_lt_assign',{p_rid:+el.dataset.asg2,p_slot:v?+v:null},v?'배정했어요':'회차를 비웠어요'); if(d){ if(d.알림) toast('이미 열린 회차라 그 학생에게 알림을 보냈어요'); load(); } });
   app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation();
     const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
