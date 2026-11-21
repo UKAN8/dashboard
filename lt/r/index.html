@@ -1,123 +1,182 @@
 <!DOCTYPE html>
-<!-- 레벨테스트 학부모 리포트 (1121 유강 "레벨테스트 결과(반배치와 시험결과분석지) 리포트 — 학부모님들께 전달드리고 데스크에서 상담전화")
-     /dashboard/lt/r/?k=<리포트키> · 공개 RPC lt_report 만 부른다 · 정답·선지·학생 답은 받지 않는다(같은 시험을 볼 학생이 남아 있다).
-     build_lt.py 가 배포 · 인쇄(A4) 겸용 · 밝은 화면 -->
+<!-- 레벨테스트 학부모 리포트 (1121 유강) — /dashboard/lt/r/?k=<리포트키> · 공개 RPC lt_report 만 부른다.
+     v2(1121 유강 피드백): '성적 분석지'보다 '반 배치와 다음 학습 안내'가 먼저 — ① 학생·추천 반 ② 잘한 것/보완할 것
+     ③ 풀이 습관(학생 자평 — 차별점) ④ 선생님 한마디(있을 때만)·앞으로 ⑤ 문항별 분석은 접기(인쇄 땐 부록).
+     색: 필탑 네이비 하나 + 성취 상태(초록·주황·빨강)만. 맞는 답·선지·학생 답은 받지 않는다(같은 시험을 볼 학생이 남아 있다). -->
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>레벨테스트 결과 분석지 · 필탑학원</title>
+<title>레벨테스트 반 배치 안내 · 필탑학원</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allura&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
 <style>
-:root{--bg:#f4f5f8;--card:#fff;--bd:#e3e6eb;--tx:#16191f;--tx2:#4b5260;--dim:#7a818e;--acc:#1f3a8a;--acc2:#3056d3;--acc-soft:#eef2ff;
- --ok:#16a06a;--luck:#e3a008;--slip:#f08a24;--no:#e05252;--nr:#c98989;--skip:#b6bcc6;--good:#0f8a5f;--good-soft:#e3f5ee;--warn:#b45309;--warn-soft:#fdf1e1}
+:root{
+ --b:#1c2b5a; --b2:#2d4489; --bt:#eef1f8; --bt2:#f6f7fb;           /* 필탑 네이비 */
+ --tx:#171a21; --tx2:#454c5a; --dim:#717887; --line:#e4e7ee; --bg:#f3f4f8; --card:#fff;
+ --ok:#1f9d6a; --ok-t:#e4f5ed; --mid:#c77d07; --mid-t:#fdf3e1; --bad:#d64545; --bad-t:#fbe9e9; --gray:#b4bac5;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.65 'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased}
-.page{max-width:820px;margin:0 auto;padding:22px 16px 60px}
-.paper{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:30px 30px 26px;box-shadow:0 6px 30px rgba(20,30,60,.06)}
-.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:2px solid var(--tx);padding-bottom:12px}
-.logo{font-family:'Allura',cursive;font-size:42px;line-height:1;letter-spacing:.5px}
-.logo span{letter-spacing:.07em}
-.org{font-size:12.5px;color:var(--tx2);text-align:right;line-height:1.5}
-.org b{display:block;font-size:13.5px;color:var(--tx)}
-h1{font-size:23px;margin:20px 0 2px;letter-spacing:-.3px}
-.sub{color:var(--dim);font-size:13.5px}
-.who{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 4px;font-size:14.5px}
-.who b{font-size:19px;margin-right:4px}
-h2{font-size:16.5px;margin:30px 0 10px;display:flex;align-items:center;gap:8px}
-h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--tx);color:#fff;font-size:12.5px}
-.place{display:grid;grid-template-columns:auto 1fr;gap:4px 22px;align-items:center;border-radius:14px;padding:18px 22px;background:var(--acc-soft);border:1px solid #d7e0ff}
-.place .cls{font-size:30px;font-weight:800;color:var(--acc);grid-row:span 2;letter-spacing:-.5px}
-.place .cls.deep{color:var(--good)}
-.place .d{font-size:15px;font-weight:700}
-.place .m{font-size:13.5px;color:var(--tx2)}
-.place.none{background:#f6f7f9;border-color:var(--bd)} .place.none .cls{color:var(--dim);font-size:20px}
-.score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.score div{border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
-.score b{display:block;font-size:28px;font-weight:800;line-height:1.15}
-.score b small{font-size:14px;color:var(--dim);font-weight:500}
-.score span{font-size:12.5px;color:var(--dim)}
-.cmpbar{margin:12px 0 0;position:relative;height:30px}
-.cmpbar .track{position:absolute;left:0;right:0;top:12px;height:8px;border-radius:4px;background:#eceef3}
-.cmpbar .me{position:absolute;top:12px;height:8px;border-radius:4px;background:var(--acc2);left:0}
-.cmpbar .avg{position:absolute;top:4px;width:2px;height:24px;background:var(--tx)}
-.cmpbar .avg i{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11.5px;color:var(--tx2);white-space:nowrap}
-.bars .row{display:grid;grid-template-columns:150px 1fr 76px 64px;align-items:center;gap:10px;margin:7px 0;font-size:13.5px}
-.bars .nm{color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bars .bg{flex:1;height:11px;border-radius:6px;background:#eceef3;overflow:hidden}
-.bars .bg i{display:block;height:100%;border-radius:6px;background:var(--acc2)}
-.bars .bg i.hi{background:var(--ok)} .bars .bg i.lo{background:var(--no)}
-.bars .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2)}
-.bars .t{font-size:12px;font-weight:700;text-align:center;border-radius:999px;padding:1px 0}
-.t.hi{background:var(--good-soft);color:var(--good)} .t.lo{background:#fde8e8;color:#c62828} .t.mid{background:#f1f2f5;color:var(--dim)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-.grid{display:grid;grid-template-columns:repeat(13,1fr);gap:5px}
-.grid div{border-radius:8px;padding:6px 0 4px;text-align:center;color:#fff;font-weight:800;font-size:13px;line-height:1.2}
-.grid div small{display:block;font-weight:500;font-size:10.5px;opacity:.9}
-.k-ok{background:var(--ok)} .k-luck{background:var(--luck)} .k-slip{background:var(--slip)} .k-no{background:var(--no)} .k-nr{background:var(--nr)} .k-skip{background:var(--skip)}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:9px;font-size:12px;color:var(--tx2)}
-.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.habit{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.habit div{border-radius:12px;padding:10px 8px;text-align:center;background:#f7f8fa}
-.habit b{display:block;font-size:22px;font-weight:800}
-.habit span{font-size:12px;color:var(--tx2)}
-.habit small{display:block;font-size:11.5px;color:var(--dim)}
-.sum{background:#f7f8fa;border-radius:14px;padding:14px 18px;margin:0}
-.sum li{margin:5px 0 5px 2px}
-.sum{list-style:none} .sum li::before{content:'•';color:var(--acc2);font-weight:800;margin-right:8px}
-.note{border-left:4px solid var(--acc2);background:var(--acc-soft);border-radius:0 12px 12px 0;padding:13px 18px;white-space:pre-wrap}
-.note .by{display:block;font-size:12.5px;color:var(--dim);margin-top:6px}
-table{border-collapse:collapse;width:100%;font-size:13.5px}
-th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;vertical-align:top}
-th{font-size:12px;color:var(--dim);font-weight:600;background:#fafbfc}
-td.c{text-align:center;white-space:nowrap}
-.why{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:0 8px;white-space:nowrap}
-.why.slip{background:#fff0e0;color:#b45309} .why.no{background:#fde8e8;color:#c62828} .why.skip{background:#f1f2f5;color:var(--tx2)} .why.nr{background:#f7eded;color:#8a4b4b}
-.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:14px} .kv b{color:var(--dim);font-weight:500}
-.self{position:relative;border:2px solid var(--acc2);border-radius:16px;padding:22px 20px 16px;background:linear-gradient(180deg,#f5f8ff 0,#fff 140px)}
-.self .ribbon{position:absolute;top:-12px;left:18px;background:var(--acc2);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:3px 12px;letter-spacing:.3px}
-.self .lead{margin:0 0 6px;font-size:14px;color:var(--tx2)}
-.self h3{font-size:13.5px;margin:16px 0 8px;color:var(--acc)}
-.cal{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;margin:6px 0;font-size:13.5px}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.7 'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased;word-break:keep-all}
+.page{max-width:780px;margin:0 auto;padding:18px 14px 64px}
+.tools{display:flex;justify-content:flex-end;margin-bottom:10px}
+.tools button{font:inherit;font-size:14px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 14px;cursor:pointer;color:var(--tx2)}
+.paper{background:var(--card);border-radius:20px;overflow:hidden;box-shadow:0 8px 34px rgba(28,43,90,.08)}
+.in{padding:0 30px}
+/* 머리 */
+.top{display:flex;align-items:center;justify-content:space-between;padding:20px 30px 0}
+.logo{font-family:'Allura',cursive;font-size:40px;line-height:1;color:var(--b)} .logo span{letter-spacing:.07em}
+.org{font-size:13.5px;color:var(--tx2);text-align:right;line-height:1.45} .org b{display:block;color:var(--b);font-size:14.5px}
+/* 첫 화면 */
+.hero{padding:22px 30px 26px}
+.kicker{font-size:14px;color:var(--b2);font-weight:700;letter-spacing:.2px}
+h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.6px;line-height:1.3}
+h1 small{font-size:18px;font-weight:600;color:var(--tx2);margin-left:6px}
+.meta{font-size:14.5px;color:var(--dim)}
+.place{margin-top:18px;border-radius:18px;background:var(--b);color:#fff;padding:22px 24px 20px;position:relative;overflow:hidden}
+.place::after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.06)}
+.place .lb{font-size:13.5px;font-weight:600;opacity:.75;letter-spacing:.3px}
+.place .nm{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1.2;margin:2px 0 4px}
+.place .dy{font-size:18px;font-weight:700}
+.place .ds{font-size:14.5px;opacity:.85;margin-top:8px;line-height:1.6}
+.place.none{background:var(--bt);color:var(--b)} .place.none .nm{font-size:28px}
+.score{display:flex;align-items:center;gap:16px;margin-top:14px;padding:14px 18px;border:1px solid var(--line);border-radius:14px}
+.score .big{font-size:30px;font-weight:800;color:var(--b);line-height:1;white-space:nowrap} .score .big small{font-size:15px;color:var(--dim);font-weight:500}
+.score .sb{flex:1;min-width:0}
+.score .cap{font-size:13.5px;color:var(--dim)}
+.track{position:relative;height:8px;border-radius:4px;background:#eceef4;margin-top:8px}
+.track .me{position:absolute;left:0;top:0;height:8px;border-radius:4px;background:var(--b2)}
+.track .av{position:absolute;top:-4px;width:2px;height:16px;background:var(--tx)}
+.facts{margin-top:16px}
+.facts h3{font-size:15px;margin:0 0 6px;color:var(--tx)}
+.facts li{margin:3px 0;color:var(--tx2);font-size:15px}
+/* 구획 */
+.sec{padding:26px 30px;border-top:1px solid var(--line)}
+.sec>h2{font-size:20px;margin:0 0 4px;letter-spacing:-.3px}
+.sec>.sub{font-size:14.5px;color:var(--dim);margin:0 0 16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.box{border-radius:14px;padding:14px 16px;background:var(--bt2)}
+.box h3{font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.box h3 i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.box ul{list-style:none;margin:0;padding:0}
+.box li{padding:8px 0;border-top:1px solid var(--line)} .box li:first-child{border-top:0;padding-top:2px}
+.box .u{font-weight:700;font-size:15.5px} .box .n{font-size:13.5px;color:var(--dim);margin-left:6px}
+.box .how{display:block;font-size:14px;color:var(--tx2);margin-top:2px}
+.box .how::before{content:'→ ';color:var(--b2);font-weight:700}
+.box .empty{font-size:14.5px;color:var(--dim)}
+.lvs{margin-top:16px}
+.lv{display:grid;grid-template-columns:86px 1fr 74px 56px;gap:10px;align-items:center;margin:7px 0;font-size:14.5px}
+.lv .bg{height:10px;border-radius:5px;background:#eceef4;overflow:hidden} .lv .bg i{display:block;height:100%;border-radius:5px}
+.lv .v{text-align:right;color:var(--tx2);font-variant-numeric:tabular-nums}
+.st{font-size:12.5px;font-weight:700;text-align:center;border-radius:999px;padding:1px 0}
+.st.hi{background:var(--ok-t);color:var(--ok)} .st.md{background:var(--mid-t);color:var(--mid)} .st.lo{background:var(--bad-t);color:var(--bad)}
+.i-hi{background:var(--ok)} .i-md{background:var(--mid)} .i-lo{background:var(--bad)}
+.crit{font-size:13px;color:var(--dim);margin-top:6px}
+/* 풀이 습관 · 학생 자평 */
+.self{background:linear-gradient(180deg,var(--bt) 0,#fff 220px)}
+.badge{display:inline-block;font-size:12.5px;font-weight:800;color:#fff;background:var(--b);border-radius:999px;padding:3px 11px;margin-bottom:8px;letter-spacing:.2px}
+.strip{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;margin-top:4px}
+.strip div{border-radius:7px;text-align:center;font-weight:800;font-size:13.5px;padding:7px 0 6px;line-height:1}
+.k-ok{background:var(--ok);color:#fff} .k-luck{background:var(--ok-t);color:var(--ok);box-shadow:inset 0 0 0 1.5px var(--ok)}
+.k-slip{background:var(--bad-t);color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)} .k-no{background:var(--bad);color:#fff} .k-skip{background:#eceef3;color:var(--dim)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:14px;color:var(--tx2)}
+.legend span{display:inline-flex;align-items:center;gap:6px} .legend i{width:13px;height:13px;border-radius:4px;display:inline-block} .legend b{color:var(--tx)}
+.self h3{font-size:15.5px;margin:22px 0 8px}
+.cal{display:grid;grid-template-columns:150px 1fr 128px;gap:12px;align-items:center;margin:8px 0;font-size:14.5px}
 .cal .cl{color:var(--tx2)} .cal .cl b{color:var(--tx)}
-.cal .cb{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#eceef3}
-.cal .cb i{display:block;height:100%} .cal .cb .y{background:var(--ok)} .cal .cb .x{background:var(--no)} .cal .cb .s{background:var(--skip)}
-.cal .cv{font-size:13px;color:var(--tx2);text-align:right}
-.hot{color:#c62828}
-.why3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.why3>div{border-radius:12px;padding:10px 12px;background:#f7f8fa}
-.why3 .wh{font-size:13px;font-weight:700;margin-bottom:6px} .why3 .wh b{font-size:17px;margin-left:2px}
-.w-slip .wh{color:#b45309} .w-no .wh{color:#c62828} .w-skip .wh{color:var(--tx2)}
-.chip{display:inline-block;font-size:12.5px;background:#fff;border:1px solid var(--bd);border-radius:999px;padding:1px 9px;margin:2px 4px 2px 0}
-.chip b{margin-left:2px}
-.none{font-size:12.5px;color:var(--dim)}
-.say{background:#fff;border:1px solid var(--bd);border-left:4px solid var(--acc2);border-radius:0 10px 10px 0;padding:8px 12px;margin:6px 0;font-size:14px}
-.say .sn{display:block;font-size:11.5px;color:var(--dim);margin-bottom:2px}
-.read{margin:0;padding-left:18px} .read li{margin:5px 0}
-.why.hot{background:#fde8e8;color:#c62828}
-td .rr{font-size:12.5px;color:var(--tx2);margin-top:3px} td .rm{font-size:12.5px;color:var(--acc);margin-top:2px}
-@media(max-width:640px){.why3{grid-template-columns:1fr}.cal{grid-template-columns:1fr 92px}.cal .cb{grid-column:1/-1;order:3}}
-.foot{margin-top:28px;padding-top:12px;border-top:1px solid var(--bd);font-size:12px;color:var(--dim);line-height:1.7}
-.btns{display:flex;justify-content:flex-end;gap:8px;margin:0 0 10px}
-.btns button{font:inherit;font-size:13.5px;border:1px solid var(--bd);background:#fff;border-radius:9px;padding:6px 14px;cursor:pointer}
+.cal .cb{display:flex;height:12px;border-radius:6px;overflow:hidden;background:#eceef4} .cal .cb i{display:block;height:100%}
+.cal .cv{text-align:right;color:var(--tx2);font-size:14px} .cal .cv b{color:var(--tx)} .cal .cv b.hot{color:var(--bad)}
+.why3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.why3>div{border-radius:14px;padding:12px 14px;background:#fff;border:1px solid var(--line)}
+.why3 .wh{font-size:14.5px;font-weight:700;margin-bottom:6px;color:var(--tx)} .why3 .wh b{font-size:20px;color:var(--b);margin-left:4px}
+.chip{display:inline-block;font-size:13.5px;background:var(--bt2);border-radius:999px;padding:2px 10px;margin:3px 4px 0 0;color:var(--tx2)} .chip b{color:var(--tx);margin-left:3px}
+.none{font-size:14px;color:var(--dim)}
+.say{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:8px 0;font-size:15px}
+.say .sn{display:block;font-size:12.5px;color:var(--dim);margin-bottom:2px}
+.read{list-style:none;margin:0;padding:0}
+.read li{position:relative;padding:10px 12px 10px 34px;margin:6px 0;background:#fff;border-radius:12px;border:1px solid var(--line);font-size:15px}
+.read li::before{content:'';position:absolute;left:14px;top:19px;width:8px;height:8px;border-radius:50%;background:var(--b2)}
+.read li.key{border-color:var(--bad);background:var(--bad-t)} .read li.key::before{background:var(--bad)}
+.hot{color:var(--bad)}
+/* 한마디 · 앞으로 */
+.note{border-radius:14px;background:var(--bt2);padding:16px 18px;white-space:pre-wrap;font-size:15.5px}
+.weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.weeks div{border:1px solid var(--line);border-radius:12px;padding:9px 10px;font-size:14px;line-height:1.4}
+.weeks div small{display:block;font-size:12px;color:var(--dim);margin-bottom:2px}
+.weeks div.fx{border-color:var(--mid);background:var(--mid-t)} .weeks div.fx small{color:var(--mid);font-weight:700}
+.next{margin:14px 0 0;padding-left:20px} .next li{margin:5px 0;font-size:15px;color:var(--tx2)}
+.call{margin-top:16px;border-radius:14px;background:var(--b);color:#fff;padding:14px 18px;font-size:15px}
+/* 문항별 분석(부록) */
+.appx>h2 small{font-size:14px;font-weight:500;color:var(--dim);margin-left:6px}
+.qc{border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin:10px 0;break-inside:avoid}
+.qc.key{border-color:var(--bad)}
+.qc .h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.qc .no{font-size:18px;font-weight:800;color:var(--b)} .qc .tp{font-size:14.5px;font-weight:600} .qc .ut{font-size:13.5px;color:var(--dim)}
+.qc .row{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;margin-top:8px;font-size:14.5px} .qc .row b{color:var(--dim);font-weight:500}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:1px 9px;margin-right:4px}
+.t-bad{background:var(--bad-t);color:var(--bad)} .t-mid{background:var(--mid-t);color:var(--mid)} .t-gray{background:#eceef3;color:var(--tx2)}
+.est{font-size:12.5px;color:var(--dim)}
+.more{display:block;width:100%;margin:12px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--b);background:var(--bt);border:0;border-radius:12px;padding:12px;cursor:pointer}
+.hide{display:none}
+.allw{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.all{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.all.hide{display:none}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.all th,.all td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left}
+.all th{font-size:12.5px;color:var(--dim);font-weight:600}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:15px} .kv b{color:var(--dim);font-weight:500}
+.foot{padding:18px 30px 24px;font-size:13px;color:var(--dim);line-height:1.75;border-top:1px solid var(--line);background:var(--bt2)}
 .msg{text-align:center;color:var(--dim);padding:80px 10px}
 .katex{font-size:1em}
 @media(max-width:640px){
- .paper{padding:20px 16px;border-radius:14px} .two{grid-template-columns:1fr} .grid{grid-template-columns:repeat(7,1fr)}
- .habit{grid-template-columns:repeat(3,1fr)} .bars .row{grid-template-columns:104px 1fr 66px} .bars .t{display:none} .score b{font-size:23px}
- .place{grid-template-columns:1fr} .place .cls{grid-row:auto} .logo{font-size:34px} table .hide-m{display:none}
+ .in,.top,.hero,.sec,.foot{padding-left:18px;padding-right:18px}
+ h1{font-size:26px} .place .nm{font-size:34px} .logo{font-size:34px}
+ .two,.why3{grid-template-columns:1fr} .weeks{grid-template-columns:repeat(2,1fr)}
+ .strip{grid-template-columns:repeat(9,1fr)}
+ .cal{grid-template-columns:1fr auto} .cal .cb{grid-column:1/-1;order:3}
+ .lv{grid-template-columns:70px 1fr 66px} .lv .st{display:none}
+ .all .m-hide{display:none} .allw{grid-template-columns:1fr}
 }
-@page{size:A4;margin:11mm}
+@page{size:A4;margin:11mm 11mm}
 @media print{
- body{background:#fff;font-size:13px} .page{padding:0;max-width:none} .paper{border:0;box-shadow:none;padding:0}
- .btns{display:none} h2{margin-top:18px;break-after:avoid} .keep{break-inside:avoid}
+ body{background:#fff;font-size:12.5px;line-height:1.55} .page{padding:0;max-width:none} .paper{box-shadow:none;border-radius:0}
+ .tools,.more,.sayblk,.sec>.sub{display:none!important} .self>.sub{display:block!important;font-size:11.5px;margin-bottom:6px} .hide{display:block!important} table.all.hide{display:table!important}
+ .top{padding:0 0 4px} .hero{padding:10px 0 12px} .sec{padding:12px 0} .foot{padding:10px 0;background:none}
+ h1{font-size:23px} .place{padding:13px 18px} .place .nm{font-size:28px} .place .dy{font-size:15px} .place .ds{font-size:12.5px;margin-top:4px}
+ .score{margin-top:8px;padding:8px 14px} .score .big{font-size:22px} .facts{margin-top:8px} .facts li{font-size:12.5px;margin:1px 0}
+ .sec>h2{font-size:16px} .sec>.sub{margin-bottom:8px;font-size:12px}
+ .box{padding:9px 12px} .box li{padding:4px 0} .box .u{font-size:13px} .box .how{font-size:12px}
+ .lvs{margin-top:8px} .lv{margin:3px 0;font-size:12px}
+ .self{background:none} .self h3{margin:10px 0 5px;font-size:13px}
+ .strip div{padding:4px 0;font-size:11px} .legend{font-size:11.5px;margin-top:5px}
+ .cal{margin:3px 0;font-size:12px} .why3>div{padding:7px 10px} .why3 .wh{font-size:12.5px;margin-bottom:2px} .chip{font-size:11.5px;padding:0 8px}
+ .say{display:none} .read li{padding:5px 10px 5px 28px;margin:3px 0;font-size:12.5px} .read li::before{top:12px;left:12px}
+ .weeks div{padding:5px 8px;font-size:12px} .next li{font-size:12.5px;margin:2px 0} .call{padding:8px 14px;font-size:12.5px;margin-top:8px}
+ .hero{display:grid;grid-template-columns:1.1fr 1fr;column-gap:14px;align-items:start}
+ .kicker,.hero h1,.meta{grid-column:1/-1} .place{grid-column:1;grid-row:4/6;margin-top:10px} .score{grid-column:2;grid-row:4;margin-top:10px} .facts{grid-column:2;grid-row:5}
+ .dg{display:grid;grid-template-columns:1.7fr 1fr;gap:12px;align-items:start} .dg .two{gap:8px} .dg .lvs{margin-top:0}
+ .lv{grid-template-columns:52px 1fr 54px 36px;gap:6px} .lv .st{font-size:10.5px} .crit{font-size:10.5px}
+ .strip{grid-template-columns:repeat(25,1fr);gap:2px}
+ .hb{display:grid;grid-template-columns:1fr 1fr;gap:14px} .hb .why3{grid-template-columns:1fr} .why3>div{display:flex;flex-wrap:wrap;align-items:center;gap:4px} .why3 .wh{margin:0 6px 0 0}
+ .cal{grid-template-columns:110px 1fr 90px;gap:6px} .read li.px{display:none}
+ .weeks{grid-template-columns:repeat(8,1fr);gap:4px} .weeks div{font-size:10.5px;padding:4px 5px} .place .ds{font-size:11.5px} .hero h1{margin:0} .facts h3{font-size:12.5px;margin-bottom:2px} .read li{font-size:11.5px}
+ .box li{padding:2px 0} .box .u{font-size:12px} .box .n{font-size:10.5px} .box .how{font-size:10.5px;line-height:1.35} .box h3{font-size:12px;margin-bottom:3px}
+ .crit{display:none} .facts li{font-size:11.5px} .cal .cv{white-space:nowrap;font-size:11px} .cal{grid-template-columns:96px 1fr 84px;font-size:11px}
+ .why3{gap:4px} .why3>div{padding:4px 9px;border-radius:9px} .read li{padding:3px 9px 3px 24px;font-size:11px} .read li::before{top:9px;left:10px;width:6px;height:6px}
+ .strip div{padding:3px 0;font-size:10px} .self h3{margin:8px 0 4px} .sec{padding:9px 0} .hero{padding:6px 0 8px}
+ .qc{padding:6px 10px;margin:5px 0} .qc .row{grid-template-columns:70px 1fr;gap:1px 8px;font-size:11.5px} .qc .no{font-size:14px} .qc .tp{font-size:12px} .qc .ut{font-size:11px}
+ .call{display:none} .qcs{display:grid;grid-template-columns:1fr 1fr;gap:6px} .qcs .qc{margin:0} .qcs .qc.hide{display:block!important}
+ .all th,.all td{padding:1px 4px;font-size:10px} .appx h3{margin-top:10px!important}
+ .kv{font-size:11px;gap:1px 10px;grid-template-columns:110px 1fr} .foot{font-size:10px;padding:6px 0;line-height:1.5}
+ .appx{break-before:page} .appx .say{display:block}
+ .all{font-size:11px} .all th,.all td{padding:2px 5px} .qc .row{grid-template-columns:80px 1fr}
+ .qc{padding:8px 12px;margin:6px 0} .qc .row{margin-top:4px;font-size:12.5px}
  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style></head><body>
 <div class="page">
-  <div class="btns"><button onclick="window.print()">인쇄 · PDF 저장</button></div>
+  <div class="tools"><button onclick="window.print()">인쇄 · PDF 저장</button></div>
   <div class="paper" id="app"><div class="msg">결과를 불러오는 중이에요…</div></div>
 </div>
 <script>
@@ -125,108 +184,165 @@ const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
 const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function tex(s){ return E(s).replace(/\\\(([\s\S]+?)\\\)/g,(m,x)=>{ try{ return katex.renderToString(x.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'),{throwOnError:false}); }catch(e){ return m; } }); }
-const LV=['','Ⅰ','Ⅱ','Ⅲ','Ⅳ'], LVN=['','Ⅰ 개념','Ⅱ 기본','Ⅲ 응용','Ⅳ 심화'];
+const LVN=['','Ⅰ 개념','Ⅱ 기본','Ⅲ 응용','Ⅳ 심화'];
 const pct=(a,b)=>b?Math.round(a/b*100):0;
-const ymd=t=>{ if(!t) return ''; const d=new Date(new Date(t).getTime()+9*3600e3); return d.getUTCFullYear()+'. '+(d.getUTCMonth()+1)+'. '+d.getUTCDate()+'.'; };
-/* 반 안내 — 2026 겨울 예비고1 정규반 (12/1 개강, 12~2월 공통수학1 한 주 한 단원) */
+const ymd=t=>{ if(!t) return ''; const d=new Date(new Date(t).getTime()+9*3600e3); return (d.getUTCMonth()+1)+'월 '+d.getUTCDate()+'일'; };
+
+/* 반 안내 — 2026 겨울 예비고1 정규반: 12/1 개강, 12~2월 공통수학1을 한 주에 한 단원씩 */
 const CLS={
-  '심화':{t:'심화반',d:'화 · 목 · 토',deep:1},
+  '심화':{t:'심화반',d:'화 · 목 · 토'},
   '기본(월수금)':{t:'기본반',d:'월 · 수 · 금'},
   '기본(화목토)':{t:'기본반',d:'화 · 목 · 토'},
   '기본(요일미정)':{t:'기본반',d:'요일은 상담 때 함께 정해요'}
 };
-const COMMON='12월 1일 개강 · 12월~2월 공통수학1을 한 주에 한 단원씩 깊게 공부해요';
-let d0=null;
-const KIND={ok:['k-ok','확실히 맞힘'],luck:['k-luck','애매·찍어서 맞힘'],slip:['k-slip','실수로 틀림'],no:['k-no','틀림'],nr:['k-no','틀림'],skip:['k-skip','풀지 못함']};
+const COURSE='12월 1일 개강 · 12월부터 2월까지 공통수학1을 한 주에 한 단원씩 깊게 공부해요.';
+const UNITS1=['다항식의 연산','나머지정리','인수분해','복소수','이차방정식','이차방정식과 이차함수','여러 가지 방정식','여러 가지 부등식'];
+/* 중3 단원 → 이어지는 공통수학1 단원 (A형 응시생 안내용) */
+const BRIDGE={'다항식의 곱셈':'다항식의 연산','인수분해':'인수분해','이차방정식':'이차방정식','이차함수':'이차방정식과 이차함수','제곱근과 실수':'복소수','근호를 포함한 식의 계산':'복소수'};
+/* 학생이 고른 이유 → 공부 방법 */
+const HOW={'개념·공식이 기억 안 남':'개념과 공식을 다시 정리하는 것부터','풀이 방법이 안 떠오름':'대표 유형으로 풀이 방법을 익히는 연습','풀다가 막힘':'중간 과정을 정리하며 끝까지 푸는 연습','배운 적 없음':'수업에서 처음부터 차근차근',
+  '계산 실수':'계산을 한 줄씩 정리하고 검산하는 습관','문제·조건을 잘못 읽음':'조건에 표시하며 읽는 습관','답 옮기기 실수':'답을 옮긴 뒤 다시 확인하는 습관','기타':'틀린 과정을 다시 짚어 보는 연습'};
 
 function kindOf(q){
   if(q.ok) return q.c==='확실'?'ok':'luck';
   if(q.c==='안풂'||q.k==='시간'||q.k==='못댐') return 'skip';
-  if(q.k==='실수') return 'slip'; if(q.k==='모름') return 'no'; return 'nr';
+  return q.k==='실수'?'slip':'no';
+}
+const KIND={ok:['k-ok','확실히 맞힘'],luck:['k-luck','애매·찍어서 맞힘'],slip:['k-slip','실수로 틀림'],no:['k-no','몰라서 틀림'],skip:['k-skip','풀지 못함']};
+
+function analyze(a){
+  const qs=(a.문항||[]).map(q=>{ const x={...q}; if(x.ok){ x.k=null; x.r=null; x.m=null; } x.kind=kindOf(x); return x; });
+  const lv={},lvF={},unN={},unOk={};
+  qs.forEach(q=>{ lvF[q.레벨]=(lvF[q.레벨]||0)+q.배점; if(q.ok) lv[q.레벨]=(lv[q.레벨]||0)+q.배점; unN[q.단원]=(unN[q.단원]||0)+1; if(q.ok) unOk[q.단원]=(unOk[q.단원]||0)+1; });
+  const units=(a.단원&&a.단원.length?a.단원:Object.keys(unN)).filter(u=>unN[u]);
+  const rate=u=>(unOk[u]||0)/unN[u];
+  const pts=arr=>arr.reduce((s,q)=>s+q.배점,0);
+  const low=(lv[1]||0)+(lv[2]||0), lowF=(lvF[1]||0)+(lvF[2]||0), up=(lv[3]||0)+(lv[4]||0), upF=(lvF[3]||0)+(lvF[4]||0);
+  const strong=units.filter(u=>rate(u)>=.75).sort((x,y)=>rate(y)-rate(x)||unN[y]-unN[x]).slice(0,3);
+  const weak=units.filter(u=>rate(u)<.75).sort((x,y)=>rate(x)-rate(y)||unN[y]-unN[x]).slice(0,3);
+  const wrong=qs.filter(q=>!q.ok);
+  const howFor=u=>{ const w=wrong.filter(q=>q.단원===u), m={};
+    w.forEach(q=>{ const key=q.r||(q.kind==='skip'?'__시간':''); if(key) m[key]=(m[key]||0)+1; });
+    const top=Object.entries(m).sort((x,y)=>y[1]-x[1])[0];
+    if(top&&top[0]==='__시간') return '시간 안에 끝까지 푸는 연습';
+    if(top&&HOW[top[0]]) return HOW[top[0]];
+    return w.some(q=>q.레벨<=2)?'기본 개념과 대표 문제부터 다시':'응용 문항을 단계별로 풀어 보는 연습'; };
+  return {a,qs,lv,lvF,unN,unOk,units,rate,pts,low,lowF,up,upF,strong,weak,wrong,howFor};
 }
 
-function exam(a,idx){
-  const qs=a.문항||[]; qs.forEach(q=>q.kind=kindOf(q));
-  const lv={},lvF={},un={},unF={},unN={},unOk={};
-  qs.forEach(q=>{ lvF[q.레벨]=(lvF[q.레벨]||0)+q.배점; if(q.ok) lv[q.레벨]=(lv[q.레벨]||0)+q.배점;
-    unN[q.단원]=(unN[q.단원]||0)+1; if(q.ok) unOk[q.단원]=(unOk[q.단원]||0)+1; });
-  const units=(a.단원&&a.단원.length?a.단원:Object.keys(unN)).filter(u=>unN[u]);
-  const cnt=k=>qs.filter(q=>q.kind===k), pts=arr=>arr.reduce((s,q)=>s+q.배점,0);
-  const ok=cnt('ok'), luck=cnt('luck'), slip=cnt('slip'), no=cnt('no').concat(cnt('nr')), skip=cnt('skip');
-  const low=(lv[1]||0)+(lv[2]||0), lowF=(lvF[1]||0)+(lvF[2]||0), up=(lv[3]||0)+(lv[4]||0), upF=(lvF[3]||0)+(lvF[4]||0);
-  const rate=u=>(unOk[u]||0)/unN[u];
-  const strong=units.filter(u=>unN[u]>=2&&rate(u)>=.8), weak=units.filter(u=>rate(u)<.5);
-  const lv1miss=qs.filter(q=>q.레벨===1&&!q.ok);
-  const luckPts=pts(qs.filter(q=>q.ok&&q.c==='찍음'));
+function hero(d,X){
+  const c=CLS[d.반배정], a=X.a;
+  const sure=X.qs.filter(q=>q.c==='확실'), sureOk=sure.filter(q=>q.ok).length;
+  const lv1=X.qs.filter(q=>q.레벨===1), lv1ok=lv1.filter(q=>q.ok).length;
+  const F=[];
+  F.push('응용·심화(Ⅲ·Ⅳ) 문항 <b>'+X.up+' / '+X.upF+'점</b>, 개념·기본(Ⅰ·Ⅱ) 문항 '+X.low+' / '+X.lowF+'점');
+  if(sure.length) F.push('확실하다고 답한 '+sure.length+'문항 중 <b>'+sureOk+'문항</b>을 맞혔어요 ('+pct(sureOk,sure.length)+'%)');
+  if(X.strong.length) F.push('<b>'+X.strong.slice(0,2).map(E).join(', ')+'</b> 단원을 안정적으로 풀었어요');
+  else if(lv1.length) F.push('기본 개념 문항(Ⅰ) '+lv1ok+' / '+lv1.length+'문항을 맞혔어요');
+  const avgOk=a.평균!=null&&a.인원>=3;
+  return '<div class="hero"><div class="kicker">2027 예비고1 레벨테스트 · 반 배치 안내</div>'
+    +'<h1>'+E(d.이름)+'<small>학생</small></h1>'
+    +'<div class="meta">'+[E(d.학교||''),ymd(a.제출)+' 응시',E(a.형)+' · '+E(a.범위||'')].filter(Boolean).join(' · ')+'</div>'
+    +(c?'<div class="place"><div class="lb">추천 반</div><div class="nm">'+c.t+'</div><div class="dy">'+E(c.d)+'</div><div class="ds">'+COURSE+'</div></div>'
+       :'<div class="place none"><div class="lb">추천 반</div><div class="nm">반 배치 상담 중</div><div class="ds">데스크에서 연락드려 함께 정해요. '+COURSE+'</div></div>')
+    +'<div class="score"><div class="big">'+a.점수+'<small> / '+a.만점+'점</small></div><div class="sb"><div class="cap">총점'+(avgOk?' · '+E(a.형)+' 응시자 평균 <b>'+a.평균+'점</b> ('+a.인원+'명)':'')+'</div>'
+    +(avgOk?'<div class="track"><div class="me" style="width:'+pct(a.점수,a.만점)+'%"></div><div class="av" style="left:'+pct(a.평균,a.만점)+'%" title="응시자 평균"></div></div>':'')+'</div></div>'
+    +'<div class="facts"><h3>이번 시험에서 보인 모습</h3><ul style="margin:0;padding-left:20px">'+F.map(x=>'<li>'+x+'</li>').join('')+'</ul></div></div>';
+}
 
-  /* 분석 요약 — 학부모용 문장 */
-  const S=[];
-  S.push('총점은 <b>'+a.점수+'점</b>'+(a.평균!=null&&a.인원>=3?' (같은 시험 응시자 평균 '+a.평균+'점)':'')+'이에요. 개념·기본(Ⅰ·Ⅱ) 문항에서 '+low+'/'+lowF+'점, 응용·심화(Ⅲ·Ⅳ) 문항에서 '+up+'/'+upF+'점을 받았어요.');
-  if(strong.length) S.push('<b>'+strong.map(E).join(', ')+'</b> 단원은 안정적으로 풀어냈어요.');
-  if(weak.length) S.push('<b>'+weak.map(E).join(', ')+'</b> 단원은 보완이 필요해요.');
-  if(lv1miss.length>=2) S.push('기본 개념 문항(Ⅰ)에서 '+lv1miss.length+'문항을 놓쳤어요 — '+[...new Set(lv1miss.map(q=>q.단원))].map(E).join(', ')+' 개념부터 다시 다지면 좋겠어요.');
-  if(skip.length) S.push('풀지 못한 문항이 '+skip.length+'개 있어요'+((a.설문||{}).시간==='모자랐어요'?' — 본인도 시간이 모자랐다고 답했어요. 시간 배분 연습이 필요해요.':'.'));
-  if(ok.length>=qs.length-2) S.push('거의 모든 문항을 확신을 갖고 풀었어요. 개념과 계산이 모두 탄탄한 편이에요.');
+function diag(X,title){
+  const st=p=>p>=80?['hi','잘함']:p>=50?['md','보통']:['lo','보완'];
+  const lvs=[1,2,3,4].filter(l=>X.lvF[l]).map(l=>{ const p=pct(X.lv[l]||0,X.lvF[l]), s=st(p);
+    return '<div class="lv"><span>'+LVN[l]+'</span><span class="bg"><i class="i-'+s[0]+'" style="width:'+Math.max(p,2)+'%"></i></span><span class="v">'+(X.lv[l]||0)+' / '+X.lvF[l]+'점</span><span class="st '+s[0]+'">'+s[1]+'</span></div>'; }).join('');
+  return '<div class="sec"><h2>잘한 것과 다음에 보완할 것'+(title||'')+'</h2><p class="sub">단원별로 맞힌 문항을 보고, 보완할 단원은 학생이 고른 틀린 이유에 맞춰 공부 방법을 붙였어요.</p>'
+    +'<div class="dg"><div class="two"><div class="box"><h3><i class="i-hi"></i>잘한 단원</h3>'
+    +(X.strong.length?'<ul>'+X.strong.map(u=>'<li><span class="u">'+E(u)+'</span><span class="n">'+(X.unOk[u]||0)+' / '+X.unN[u]+'문항 맞힘</span></li>').join('')+'</ul>':'<div class="empty">아직 안정적인 단원은 없어요 — 개념부터 차근차근 쌓아요.</div>')+'</div>'
+    +'<div class="box"><h3><i class="i-lo"></i>먼저 보완할 단원</h3>'
+    +(X.weak.length?'<ul>'+X.weak.map(u=>'<li><span class="u">'+E(u)+'</span><span class="n">'+(X.unOk[u]||0)+' / '+X.unN[u]+'문항 맞힘</span><span class="how">'+X.howFor(u)+'</span></li>').join('')+'</ul>':'<div class="empty">크게 비는 단원 없이 고르게 풀었어요.</div>')+'</div></div>'
+    +'<div class="lvs">'+lvs+'<div class="crit">잘함 = 그 수준 점수의 80% 이상 · 보통 = 50~79% · 보완 = 50% 미만</div></div></div></div>';
+}
 
-  const bar=(label,v,f,tag)=>{ const p=pct(v,f), cl=p>=80?'hi':p<50?'lo':''; return '<div class="row"><span class="nm" title="'+E(label)+'">'+E(label)+'</span><span class="bg"><i class="'+cl+'" style="width:'+p+'%"></i></span><span class="v">'+tag+'</span>'
-    +'<span class="t '+(cl||'mid')+'">'+(cl==='hi'?'잘함':cl==='lo'?'보완 필요':'보통')+'</span></div>'; };
-  const lvBars=[1,2,3,4].filter(l=>lvF[l]).map(l=>bar(LVN[l],lv[l]||0,lvF[l],(lv[l]||0)+' / '+lvF[l]+'점')).join('');
-  const unBars=units.map(u=>bar(u,unOk[u]||0,unN[u],(unOk[u]||0)+' / '+unN[u]+'문항')).join('');
-  const grid=qs.map(q=>'<div class="'+KIND[q.kind][0]+'" title="'+E(q.단원)+'">'+q.번호+'<small>'+LV[q.레벨]+'</small></div>').join('');
-  const wrong=qs.filter(q=>!q.ok);
-  const WHY={slip:['slip','실수'],no:['no','몰라서'],skip:['skip','못 풂'],nr:['nr','—']};
-  const wrongT=wrong.length?'<table><thead><tr><th>번호</th><th>수준</th><th>단원</th><th class="hide-m">유형</th><th>학생 자평</th><th>자주 하는 착각</th></tr></thead><tbody>'
-    +wrong.map(q=>'<tr><td class="c"><b>'+q.번호+'</b></td><td class="c">'+LVN[q.레벨]+'</td><td>'+E(q.단원)+'</td><td class="hide-m">'+tex(q.유형)+'</td><td>'+(q.c==='확실'?'<span class="why hot">확실했음</span> ':q.c==='찍음'?'<span class="why skip">찍었음</span> ':q.c==='애매'?'<span class="why skip">애매했음</span> ':'')+(q.kind==='nr'?'':'<span class="why '+WHY[q.kind][0]+'">'+WHY[q.kind][1]+'</span>')+(q.r?'<div class="rr">'+E(q.r)+'</div>':'')+(q.m?'<div class="rm">“'+E(q.m)+'”</div>':'')+'</td><td>'+(q.오개념?tex(q.오개념):'<span style="color:var(--dim)">—</span>')+'</td></tr>').join('')
-    +'</tbody></table>':'<div class="sum">틀린 문항이 없어요.</div>';
-  /* ── 학생이 직접 돌아본 시험 (1121 유강 "학생이 자평한 틀린 이유 — 다른 리포트에서 보기 어려운 차별점") ── */
+function habit(X,title){
+  const qs=X.qs, pts=X.pts;
+  const cnt=k=>qs.filter(q=>q.kind===k).length;
+  const strip=qs.map(q=>'<div class="'+KIND[q.kind][0]+'" title="'+E(q.단원)+' · '+KIND[q.kind][1]+'">'+q.번호+'</div>').join('');
+  const legend=['ok','luck','slip','no','skip'].map(k=>'<span><i class="'+KIND[k][0]+'"></i>'+KIND[k][1]+' <b>'+cnt(k)+'</b></span>').join('');
   const CF=[['확실','확실하다고 한 문항'],['애매','애매했던 문항'],['찍음','찍은 문항']];
   const calib=CF.map(([c,t])=>{ const g=qs.filter(q=>q.c===c), y=g.filter(q=>q.ok).length, x=g.length-y; if(!g.length) return '';
-    return '<div class="cal"><span class="cl">'+t+' <b>'+g.length+'</b></span><span class="cb"><i class="y" style="width:'+pct(y,g.length)+'%"></i><i class="x" style="width:'+pct(x,g.length)+'%"></i></span>'
-      +'<span class="cv">맞힘 <b>'+y+'</b> · 틀림 <b class="'+(c==='확실'&&x?'hot':'')+'">'+x+'</b></span></div>'; }).join('')
-    +(qs.filter(q=>q.c==='안풂').length?'<div class="cal"><span class="cl">풀지 못한 문항 <b>'+qs.filter(q=>q.c==='안풂').length+'</b></span><span class="cb"><i class="s" style="width:100%"></i></span><span class="cv"></span></div>':'');
-  const tally=arr=>{ const m={}; arr.forEach(q=>{ const r=q.r||'이유 안 고름'; m[r]=(m[r]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]); };
-  const slipQ=qs.filter(q=>!q.ok&&q.k==='실수'), noQ=qs.filter(q=>!q.ok&&q.k==='모름'), timeQ=qs.filter(q=>!q.ok&&(q.k==='시간'||q.k==='못댐'||q.c==='안풂'));
+    return '<div class="cal"><span class="cl">'+t+' <b>'+g.length+'</b></span><span class="cb"><i style="width:'+pct(y,g.length)+'%;background:var(--ok)"></i><i style="width:'+pct(x,g.length)+'%;background:var(--bad)"></i></span>'
+      +'<span class="cv">맞힘 <b>'+y+'</b> · 틀림 <b class="'+(c==='확실'&&x?'hot':'')+'">'+x+'</b></span></div>'; }).join('');
+  const slipQ=qs.filter(q=>q.kind==='slip'), noQ=qs.filter(q=>q.kind==='no'), skipQ=qs.filter(q=>q.kind==='skip');
   const unrev=qs.filter(q=>!q.ok&&q.c!=='안풂'&&!q.k);
-  const chips=arr=>arr.length?tally(arr).map(([r,n])=>'<span class="chip">'+E(r)+' <b>'+n+'</b></span>').join(''):'<span class="none">없음</span>';
-  const why3='<div class="why3"><div class="w-slip"><div class="wh">실수였어요 <b>'+slipQ.length+'</b></div>'+chips(slipQ)+'</div>'
-    +'<div class="w-no"><div class="wh">몰랐어요 <b>'+noQ.length+'</b></div>'+chips(noQ)+'</div>'
-    +'<div class="w-skip"><div class="wh">못 풀었어요 <b>'+timeQ.length+'</b></div>'+(timeQ.length?[['시간 부족',timeQ.filter(q=>q.k==='시간').length],['손을 못 댐',timeQ.filter(q=>q.k==='못댐').length]].filter(x=>x[1]).map(([r,n])=>'<span class="chip">'+r+' <b>'+n+'</b></span>').join('')||'<span class="none">이유 안 고름</span>':'<span class="none">없음</span>')+'</div></div>';
-  const words=qs.filter(q=>q.m).map(q=>'<div class="say"><span class="sn">'+q.번호+'번 · '+E(q.단원)+(q.k==='실수'?' · 실수':q.k==='모름'?' · 몰랐음':'')+'</span>“'+E(q.m)+'”</div>').join('');
-  const RA={'개념·공식이 기억 안 남':'개념과 공식을 다시 정리하는 것부터 시작하면 좋아요','풀이 방법이 안 떠오름':'개념은 알고 있지만 문제에 적용하는 연습(유형별 풀이)이 더 필요해요','풀다가 막힘':'중간 과정을 정리하며 풀이를 끝까지 밀고 가는 연습이 필요해요','배운 적 없음':'아직 배우지 않은 내용이라 수업에서 처음부터 다뤄요',
-    '계산 실수':'계산을 한 줄씩 정리하고 검산하는 습관이 필요해요','문제·조건을 잘못 읽음':'조건에 표시하며 문제를 읽는 습관이 필요해요','답 옮기기 실수':'답을 옮긴 뒤 한 번 더 확인하는 습관이 필요해요'};
+  const tally=arr=>{ const m={}; arr.forEach(q=>{ const r=q.r||'응답 없음'; m[r]=(m[r]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]); };
+  const chips=arr=>arr.length?tally(arr).map(([r,n])=>'<span class="chip">'+E(r)+'<b>'+n+'</b></span>').join(''):'<span class="none">없음</span>';
+  const skipChips=skipQ.length?[['시간이 부족했어요',skipQ.filter(q=>q.k==='시간').length],['손을 못 댔어요',skipQ.filter(q=>q.k==='못댐').length],['응답 없음',skipQ.filter(q=>q.k!=='시간'&&q.k!=='못댐').length]].filter(x=>x[1]).map(([r,n])=>'<span class="chip">'+r+'<b>'+n+'</b></span>').join(''):'<span class="none">없음</span>';
+  const why3=(!slipQ.some(q=>q.k)&&!noQ.some(q=>q.k)&&unrev.length)
+    ?'<div class="none">학생이 시험 뒤 ‘틀린 이유 돌아보기’를 마치지 않아 이 부분은 비어 있어요.</div>'
+    :'<div class="why3"><div><div class="wh">실수였어요<b>'+slipQ.length+'</b></div>'+chips(slipQ)+'</div><div><div class="wh">몰랐어요<b>'+noQ.filter(q=>q.k).length+'</b></div>'+chips(noQ.filter(q=>q.k))+'</div><div><div class="wh">못 풀었어요<b>'+skipQ.length+'</b></div>'+skipChips+'</div></div>';
+  const words=qs.filter(q=>!q.ok&&q.m);
+  const sayHTML=words.slice(0,3).map(q=>'<div class="say"><span class="sn">'+q.번호+'번 · '+E(q.단원)+'</span>“'+E(q.m)+'”</div>').join('');
   const confWrong=qs.filter(q=>q.c==='확실'&&!q.ok), luckQ=qs.filter(q=>q.ok&&q.c==='찍음');
   const T=[];
-  if(confWrong.length) T.push('<b class="hot">확실하다고 했는데 틀린 문항이 '+confWrong.length+'개</b>예요 ('+confWrong.map(q=>q.번호+'번').join(', ')+'). 스스로 맞다고 믿고 있는 착각이라, 그냥 모르는 문항보다 <b>먼저 바로잡아야 할 부분</b>이에요.');
-  else if(wrong.length) T.push('틀린 문항은 모두 학생도 확신이 없던 문항이에요 — <b>자기가 어디를 모르는지 정확히 알고 있어요.</b>');
-  if(luckQ.length) T.push('찍어서 맞힌 문항이 '+luckQ.length+'개('+pts(luckQ)+'점)예요. 점수에는 들어갔지만 실력으로 보긴 어려워요.');
+  if(confWrong.length) T.push(['key','<b class="hot">확실하다고 했는데 틀린 문항이 '+confWrong.length+'개</b>예요('+confWrong.map(q=>q.번호+'번').join(', ')+'). 스스로 맞다고 믿고 있는 착각이라, 모르는 문항보다 <b>먼저 바로잡아야 할 부분</b>이에요.']);
+  else if(X.wrong.length) T.push(['','틀린 문항은 모두 학생도 확신이 없던 문항이에요 — <b>자기가 어디를 모르는지 정확히 알고 있어요.</b>']);
+  if(luckQ.length) T.push(['','찍어서 맞힌 문항이 '+luckQ.length+'개('+pts(luckQ)+'점)예요. 점수에는 들어갔지만 실력으로 보긴 어려워요.']);
   const topNo=tally(noQ.filter(q=>q.r))[0], topSlip=tally(slipQ.filter(q=>q.r))[0];
-  if(topNo&&RA[topNo[0]]) T.push('몰랐던 문항의 이유로 <b>‘'+E(topNo[0])+'’</b>을(를) 가장 많이 골랐어요('+topNo[1]+'문항) — '+RA[topNo[0]]+'.');
-  if(topSlip&&RA[topSlip[0]]) T.push('실수 중에는 <b>‘'+E(topSlip[0])+'’</b>이(가) 가장 많았어요('+topSlip[1]+'문항) — '+RA[topSlip[0]]+'. 실수만 없었어도 <b>+'+pts(slipQ)+'점</b>이에요.');
-  if(timeQ.filter(q=>q.k==='시간').length) T.push('시간이 부족해 못 푼 문항이 '+timeQ.filter(q=>q.k==='시간').length+'개예요 — 시간 배분 연습이 필요해요.');
-  if(unrev.length) T.push('<span style="color:var(--dim)">'+unrev.length+'문항은 학생이 틀린 이유를 고르지 않았어요.</span>');
-  const selfBox='<div class="self keep"><span class="ribbon">학생 자평 분석</span>'
-    +'<p class="lead">필탑 레벨테스트는 답만 채점하지 않아요. 학생이 <b>문항마다 얼마나 확신했는지</b>, 그리고 <b>틀린 문항은 왜 틀렸다고 생각하는지</b> 시험 직후 스스로 돌아봤어요.</p>'
-    +'<h3>확신과 실제 결과</h3>'+calib
-    +'<h3>학생이 고른 틀린 이유</h3>'+(!slipQ.length&&!noQ.length&&unrev.length?'<div class="none" style="font-size:13.5px">학생이 시험 뒤 ‘틀린 이유 돌아보기’를 마치지 않아 이 칸은 비어 있어요.</div>':why3)
-    +(words?'<h3>학생이 직접 쓴 말</h3>'+words:'')
-    +(T.length?'<h3>이렇게 읽을 수 있어요</h3><ul class="read">'+T.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'')
+  if(topNo&&HOW[topNo[0]]) T.push(['','몰랐던 문항의 이유로 <b>‘'+E(topNo[0])+'’</b>을 가장 많이 골랐어요('+topNo[1]+'문항) → '+HOW[topNo[0]]+'이 필요해요.']);
+  if(slipQ.length) T.push(['','실수로 놓친 점수가 <b>'+pts(slipQ)+'점</b>이에요'+(topSlip&&HOW[topSlip[0]]?' — 주로 ‘'+E(topSlip[0])+'’ → '+HOW[topSlip[0]]+'이 필요해요.':'.')]);
+  if(skipQ.filter(q=>q.k==='시간').length||(X.a.설문||{}).시간==='모자랐어요') T.push(['','시험 시간이 모자랐다고 답했어요 — 시간 배분 연습도 함께 해요.']);
+  if(unrev.length&&(slipQ.some(q=>q.k)||noQ.some(q=>q.k))) T.push(['',unrev.length+'문항은 학생이 틀린 이유를 고르지 않았어요(응답 없음).']);
+  return '<div class="sec self"><span class="badge">필탑 레벨테스트 학생 자평 분석</span><h2>풀이 습관'+(title||'')+'</h2>'
+    +'<p class="sub">답만 채점하지 않았어요. 학생이 문항마다 <b>얼마나 확신했는지</b>, 틀린 문항은 <b>왜 틀렸다고 생각하는지</b> 시험 직후 스스로 돌아본 결과예요.</p>'
+    +'<div class="strip">'+strip+'</div><div class="legend">'+legend+'</div>'
+    +'<div class="hb"><div><h3>확신과 실제 결과</h3>'+calib+'</div>'
+    +'<div><h3>학생이 고른 틀린 이유</h3>'+why3+'</div></div>'
+    +(sayHTML?'<div class="sayblk"><h3>학생이 직접 쓴 말</h3>'+sayHTML+(words.length>3?'<div class="none">나머지 '+(words.length-3)+'개는 아래 문항별 분석에 있어요.</div>':'')+'</div>':'')
+    +(T.length?'<h3>이렇게 읽을 수 있어요</h3><ul class="read">'+T.map(([c,x],i)=>'<li class="'+c+(i>=3?' px':'')+'">'+x+'</li>').join('')+'</ul>':'')
     +'</div>';
-  const s=a.설문||{};
-  const me=pct(a.점수,a.만점), av=a.평균!=null?pct(a.평균,a.만점):null;
-  const n0=idx*6;
-  return '<h2><span class="n">'+(n0+2)+'</span>학생이 직접 돌아본 시험'+(idx||(d0||{}).응시n>1?' · '+E(a.형):'')+'</h2>'+selfBox
-    +'<h2><span class="n">'+(n0+3)+'</span>시험 결과 · '+E(a.형)+' ('+E(a.범위||'')+')</h2>'
-    +'<div class="keep"><div class="score"><div><b>'+a.점수+'<small> / '+a.만점+'</small></b><span>총점</span></div>'
-    +'<div><b>'+low+'<small> / '+lowF+'</small></b><span>개념·기본 (Ⅰ·Ⅱ)</span></div>'
-    +'<div><b>'+up+'<small> / '+upF+'</small></b><span>응용·심화 (Ⅲ·Ⅳ)</span></div></div>'
-    +(av!=null&&a.인원>=3?'<div class="cmpbar"><div class="track"></div><div class="me" style="width:'+me+'%"></div><div class="avg" style="left:'+av+'%"><i>응시자 평균 '+a.평균+'</i></div></div>':'')+'</div>'
-    +'<div class="keep" style="margin-top:16px"><h2 style="margin-top:8px;font-size:14.5px">수준별</h2><div class="bars">'+lvBars+'</div></div>'
-    +'<div class="keep"><h2 style="margin-top:16px;font-size:14.5px">단원별</h2><div class="bars">'+unBars+'</div></div>'
-    +'<h2><span class="n">'+(n0+4)+'</span>문항별 결과</h2><div class="keep"><div class="grid">'+grid+'</div>'
-    +'<div class="legend">'+['ok','luck','slip','no','skip'].map(k=>'<span><i class="'+KIND[k][0]+'"></i>'+KIND[k][1]+'</span>').join('')+'</div></div>'
-    +'<h2><span class="n">'+(n0+5)+'</span>분석 요약</h2><ul class="sum keep">'+S.map(x=>'<li>'+x+'</li>').join('')+'</ul>'
-    +'<h2><span class="n">'+(n0+6)+'</span>틀린 문항 살펴보기</h2>'+wrongT
-    +(s.선행||s.시간||s.체감?'<h2><span class="n">'+(n0+7)+'</span>학생이 답한 학습 이력</h2><div class="kv keep"><b>공통수학1 선행</b><span>'+E(s.선행||'—')+(s.단원?' · 마지막으로 배운 단원 '+E(s.단원):'')+'</span><b>시험 시간</b><span>'+E(s.시간||'—')+'</span><b>체감 난이도</b><span>'+E(s.체감||'—')+'</span></div>':'');
+}
+
+function nextStep(d,XS){
+  const weakU=new Set(), isA=XS.some(X=>X.a.형&&X.a.형.startsWith('A'));
+  XS.forEach(X=>X.weak.forEach(u=>{ if(UNITS1.includes(u)) weakU.add(u); else if(BRIDGE[u]) weakU.add(BRIDGE[u]); }));
+  const weeks=UNITS1.map((u,i)=>'<div class="'+(weakU.has(u)?'fx':'')+'"><small>'+(weakU.has(u)?'특히 집중':(i+1)+'단원')+'</small>'+E(u)+'</div>').join('');
+  return '<div class="sec"><h2>앞으로 이렇게 공부해요</h2><p class="sub">12월~2월 정규 수업에서 공통수학1을 이 순서로 다뤄요. '+(weakU.size?(isA?'중3 때 보완이 필요했던 내용과 이어지는 단원':'이번 시험에서 보완이 필요했던 단원')+'은 <b style="color:var(--mid)">특히 집중</b>으로 표시했어요.':'')+'</p>'
+    +'<div class="weeks">'+weeks+'</div>'
+    +'<div class="call">곧 데스크에서 상담 전화를 드려요. 반 시간표 · 교재 · 궁금한 점을 편하게 물어봐 주세요.</div></div>';
+}
+
+function appendix(XS){
+  return XS.map((X,xi)=>{
+    const wr=X.wrong.slice().sort((a,b)=>(b.c==='확실')-(a.c==='확실')||b.레벨-a.레벨);
+    const card=(q,i)=>'<div class="qc'+(q.c==='확실'?' key':'')+(i>=3?' hide':'')+'"><div class="h"><span class="no">'+q.번호+'번</span><span class="tp">'+tex(q.유형)+'</span><span class="ut">'+LVN[q.레벨]+' · '+E(q.단원)+' · '+q.배점+'점</span></div>'
+      +'<div class="row"><b>풀 때 확신</b><span>'+({확실:'<span class="tag t-bad">확실했음</span>',애매:'<span class="tag t-mid">애매했음</span>',찍음:'<span class="tag t-gray">찍었음</span>',안풂:'<span class="tag t-gray">풀지 못함</span>'}[q.c]||'응답 없음')+'</span>'
+      +'<b>틀린 이유</b><span>'+(q.k==='실수'?'실수 · ':q.k==='모름'?'몰랐음 · ':q.k==='시간'?'시간 부족':q.k==='못댐'?'손을 못 댐':'')+(q.r?E(q.r):(q.k==='시간'||q.k==='못댐'?'':'응답 없음'))+'</span>'
+      +(q.m?'<b>학생이 쓴 말</b><span>“'+E(q.m)+'”</span>':'')
+      +(q.오개념?'<b>자주 하는 착각</b><span>'+tex(q.오개념)+' <span class="est">· 선택한 선지를 바탕으로 한 추정</span></span>':'')+'</div></div>';
+    const s=X.a.설문||{};
+    return '<div class="sec appx"><h2>문항별 분석'+(XS.length>1?' · '+E(X.a.형):'')+'<small>틀린 문항 '+wr.length+'개 · 확실했는데 틀린 문항부터</small></h2>'
+      +(wr.length?'<div class="qcs">'+wr.map(card).join('')+'</div>':'<div class="none">틀린 문항이 없어요.</div>')
+      +'<div class="hide"><h3 style="font-size:15.5px;margin:20px 0 4px">전체 문항</h3></div>'
+      +'<div class="allw">'+[X.qs.slice(0,Math.ceil(X.qs.length/2)),X.qs.slice(Math.ceil(X.qs.length/2))].map(part=>'<table class="all hide"><thead><tr><th>번호</th><th>수준</th><th>단원</th><th>결과</th><th class="m-hide">확신</th></tr></thead><tbody>'
+        +part.map(q=>'<tr><td>'+q.번호+'</td><td>'+LVN[q.레벨]+'</td><td>'+E(q.단원)+'</td><td><span class="dot '+KIND[q.kind][0]+'"></span>'+KIND[q.kind][1]+'</td><td class="m-hide">'+E({확실:'확실',애매:'애매',찍음:'찍음',안풂:'못 풂'}[q.c]||'')+'</td></tr>').join('')+'</tbody></table>').join('')+'</div>'
+      +((s.선행||s.시간||s.체감)?'<div class="hide"><h3 style="font-size:15.5px;margin:20px 0 6px">학생이 답한 학습 이력</h3><div class="kv"><b>공통수학1 선행</b><span>'+E(s.선행||'—')+(s.단원?' · 마지막으로 배운 단원 '+E(s.단원):'')+'</span><b>시험 시간</b><span>'+E(s.시간||'—')+'</span><b>체감 난이도</b><span>'+E(s.체감||'—')+'</span></div></div>':'')
+      +'<button class="more" data-x="'+xi+'">'+(wr.length>3?'나머지 '+(wr.length-3)+'문항과 전체 문항 펼쳐보기':'전체 문항 · 학습 이력 펼쳐보기')+'</button></div>';
+  }).join('');
+}
+
+function render(d){
+  const app=document.getElementById('app'), XS=(d.응시||[]).map(analyze);
+  if(!XS.length){ app.innerHTML='<div class="msg">아직 결과가 없어요.</div>'; return; }
+  document.title=d.이름+' · 레벨테스트 반 배치 안내 · 필탑학원';
+  const multi=XS.length>1;
+  app.innerHTML='<div class="top"><div class="logo">PI<span>L</span>TOP</div><div class="org"><b>필탑학원 고등수학과</b>2027 예비고1 레벨테스트</div></div>'
+    +hero(d,XS[0])
+    +XS.map(X=>diag(X,multi?' · '+E(X.a.형):'')+habit(X,multi?' · '+E(X.a.형):'')).join('')
+    +(d.코멘트?'<div class="sec"><h2>선생님 한마디</h2><div class="note">'+E(d.코멘트)+'</div></div>':'')
+    +nextStep(d,XS)
+    +appendix(XS)
+    +'<div class="foot">이 안내지는 학생이 시험지에 쓴 답과, 문항마다 스스로 고른 풀이 상태(확실 · 애매 · 찍음 · 못 풂)와 틀린 이유를 바탕으로 만들었어요. '
+    +'반 배치는 상담을 거쳐 조정될 수 있어요.<br><b style="color:var(--b)">필탑학원 고등수학과</b></div>';
+  app.querySelectorAll('.more').forEach(b=>b.onclick=()=>{ b.closest('.appx').querySelectorAll('.hide').forEach(e=>e.classList.remove('hide')); b.remove(); });
 }
 
 async function main(){
@@ -236,20 +352,8 @@ async function main(){
     const r=await fetch(SB_URL+'/rest/v1/rpc/lt_report',{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json'},body:JSON.stringify({p_key:k})});
     d=await r.json();
   }catch(e){ app.innerHTML='<div class="msg">결과를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
-  if(!d||d.오류||d.message){ app.innerHTML='<div class="msg">'+E((d&&(d.오류||'리포트를 찾을 수 없어요.'))||'리포트를 찾을 수 없어요.')+'</div>'; return; }
-  const as=d.응시||[]; d0={응시n:as.length};
-  document.title=d.이름+' · 레벨테스트 결과 분석지 · 필탑학원';
-  const c=CLS[d.반배정];
-  const place=c?'<div class="place keep"><div class="cls'+(c.deep?' deep':'')+'">'+c.t+'</div><div class="d">'+E(c.d)+'</div><div class="m">'+COMMON+'</div></div>'
-    :'<div class="place none keep"><div class="cls">반 배치 상담 중</div><div class="d">데스크에서 연락드려 함께 정해요</div><div class="m">'+COMMON+'</div></div>';
-  app.innerHTML='<div class="head"><div class="logo">PI<span>L</span>TOP</div><div class="org"><b>필탑학원 고등수학과</b>2027 예비고1 레벨테스트</div></div>'
-    +'<h1>레벨테스트 결과 분석지</h1><div class="sub">반 배치 안내와 시험 결과 분석</div>'
-    +'<div class="who"><span><b>'+E(d.이름)+'</b>학생</span><span>'+E(d.학교||'')+'</span><span>'+as.map(a=>E(a.형)+' · '+E(a.범위||'')).join(', ')+'</span><span>응시 '+E(ymd((as[0]||{}).제출))+'</span></div>'
-    +'<h2><span class="n">1</span>반 배치</h2>'+place
-    +(d.코멘트?'<div class="note keep" style="margin-top:12px">'+E(d.코멘트)+'<span class="by">— 필탑 고등수학과</span></div>':'')
-    +as.map(exam).join('')
-    +'<div class="foot">이 분석지는 학생이 시험지에 쓴 답과, 문항마다 스스로 고른 풀이 상태(확실 · 애매 · 찍음 · 못 풂)와 틀린 이유(실수 · 몰라서)를 바탕으로 만들었어요. '
-    +'‘자주 하는 착각’은 학생이 고른 선지에서 짐작한 것이라 실제 이유와 다를 수 있어요. 반 배치는 상담을 거쳐 조정될 수 있어요.<br>필탑학원 고등수학과</div>';
+  if(!d||d.오류||d.message){ app.innerHTML='<div class="msg">'+E((d&&d.오류)||'리포트를 찾을 수 없어요. 학원에 문의해 주세요.')+'</div>'; return; }
+  render(d);
 }
 main();
 </script>
