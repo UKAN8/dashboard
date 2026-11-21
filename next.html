@@ -239,6 +239,9 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .qmnx{flex:1 1 180px;display:flex;flex-direction:column;gap:3px;margin-left:10px}
 .qmfd{padding:7px 2px;border-bottom:1px solid var(--u-line);cursor:pointer;font-size:13.5px}.qmfd:last-child{border:0}
 .nowrap{white-space:nowrap}
+.qn{display:inline-block;min-width:24px;padding:1px 6px;margin:1px 3px 1px 0;border-radius:6px;font-size:12.5px;font-weight:700;text-align:center;line-height:1.5}
+.qn.ng{background:var(--u-bad-soft);color:var(--u-bad)} .qn.gs{background:var(--u-slip-soft);color:var(--u-slip)} .qn.vg{background:var(--u-warn-soft);color:var(--u-warn)}
+.qn sup{font-size:9.5px;font-weight:600;margin-left:2px;opacity:.85;vertical-align:2px}
 .ctul{max-height:60vh;overflow:auto;border:1px solid var(--u-line);border-radius:8px;padding:6px 10px}
 .ctu{padding:6px 0;border-bottom:1px solid var(--u-line)}.ctu:last-child{border:0}
 .ctr{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 2px;font-size:13.5px;cursor:pointer;border-radius:6px}
@@ -1309,16 +1312,22 @@ async function viewMock(id, keep) {
     const job = x => { if (!x.제출시각) return dash; if (!x.잡 && pend(x)) return tag('', '확인 중', '틀린 문항 확인을 끝내면 만들어져요'); if (!x.잡) return tag('bad', '없음');
       if (x.잡.상태 === '완료' && x.잡.문항수) return tag('ok', `No.${x.잡.id} · ${x.잡.문항수}문항`, x.잡.메시지 || ''); if (x.잡.상태 === '완료') return tag('warn', '건너뜀', x.잡.메시지 || '');
       if (x.잡.상태 === '실패') return tag('bad', '실패', x.잡.메시지 || ''); return tag('', x.잡.상태 === '처리중' ? '만드는 중' : '대기'); };
+    // (1121 유강) 맞힌 것 중 찍음·애매도 번호로 — 틀림(빨강) · 찍어서 맞힘(주황) · 애매하게 맞힘(노랑) 세 칸, 칸마다 개수로 정렬
+    const cOf = (x, k) => (((x.답 || {})[k] || {}).c) || '';
+    const qs = (x, ok, c) => Object.entries(x.정오 || {}).filter(([k, v]) => v === ok && (!c || cOf(x, k) === c)).map(([k]) => k).sort((a, b) => a - b);
+    const chips = (x, ks, cls) => ks.length ? ks.map(k => { const c = cls === 'ng' ? cOf(x, k) : '';
+      return `<span class="qn ${cls}">${+k}${c === '찍음' ? '<sup>찍</sup>' : c === '애매' ? '<sup>애</sup>' : ''}</span>`; }).join('') : (x.제출시각 ? '<span class="u-faint">—</span>' : '');
+    h += `<div class="mini" style="margin:-4px 0 8px"><span class="qn ng">틀림</span><span class="qn gs">찍어서 맞힘</span><span class="qn vg">애매하게 맞힘</span> · 틀림 번호 옆 작은 글자 = 찍었거나(찍) 애매했는데(애) 틀린 것 · 칸 머리글을 누르면 개수로 정렬</div>`;
     h += table('mks', [
       { h: '학생', l: 1, v: x => x.이름, f: x => stuLink(x.학생ID, x.이름) + (x.재원 ? '' : ' ' + tag('', '다른 반')) },
       { h: '제출', v: x => x.제출시각, f: x => x.제출시각 ? `<span class="mini">${E(U.fmt(x.제출시각))}</span>` : tag('bad', '미제출') },
       { h: '점수', num: 1, v: x => num(x.점수), f: x => x.점수 == null ? dash : `<b>${E(String(x.점수))}</b>` },
-      { h: '틀린 번호', l: 1, v: x => Object.values(x.정오 || {}).filter(v => v === false).length, f: x => `<span class="mini">${Object.entries(x.정오 || {}).filter(([, v]) => v === false).map(([k]) => +k).sort((a, b) => a - b).join(', ')}</span>` },
+      { h: '틀림', l: 1, v: x => qs(x, false).length, f: x => chips(x, qs(x, false), 'ng'), tip: '틀린 번호 · 작은 글자 = 그 문항을 찍었거나(찍) 애매했는데(애) 틀림' },
       { h: '틀린 문항 확인', l: 1, v: x => x.복기시각 ? 1 : 0, f: x => { if (!x.제출시각) return ''; if (pend(x)) return tag('', '확인 중'); if (!x.복기시각) return '<span class="u-faint">안 함</span>';
         const n = {}; Object.values(x.복기 || {}).forEach(v => { n[v.k] = (n[v.k] || 0) + 1; });
         return `<span class="mini" title="${E(Object.entries(x.복기 || {}).map(([no, v]) => `${no}번 ${L[v.k] || v.k}${v.r ? ' · ' + v.r : ''}${v.m ? ' — ' + v.m : ''}`).join('\n'))}">${Object.entries(n).map(([k, c2]) => (L[k] || k) + ' ' + c2).join(' · ')}</span>`; } },
-      { h: '찍음', num: 1, v: x => Object.values(x.답 || {}).filter(v => v && v.c === '찍음').length },
-      { h: '애매', num: 1, v: x => Object.values(x.답 || {}).filter(v => v && v.c === '애매').length },
+      { h: '찍어서 맞힘', l: 1, v: x => qs(x, true, '찍음').length, f: x => chips(x, qs(x, true, '찍음'), 'gs'), tip: '맞혔지만 찍었다고 한 번호 — 실력으로는 아직 모르는 문항' },
+      { h: '애매하게 맞힘', l: 1, v: x => qs(x, true, '애매').length, f: x => chips(x, qs(x, true, '애매'), 'vg'), tip: '맞혔지만 애매했다고 한 번호' },
       { h: '개별과제', l: 1, v: x => x.잡 ? x.잡.상태 : '', f: x => job(x) + (x.메모 ? ` <span class="mini u-bad" title="${E(x.메모)}">⚠</span>` : '') },
       { h: '', ns: 1, v: () => 0, f: x => x.제출시각 && (!x.잡 || ['실패', '완료'].includes(x.잡.상태)) ? `<button class="u-btn sm" data-mkr="${E(x.학생ID)}">${x.잡 && x.잡.상태 === '완료' && x.잡.문항수 ? '새로 만들기' : '다시 만들기'}</button>` : '' },
     ], st, { redraw: () => viewMock(RENDER_ID, 1) });
