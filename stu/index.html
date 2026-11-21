@@ -198,6 +198,8 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 .u-score small{font-size:20px;color:var(--u-muted)}
 
 @media print{ .u-bar,.u-acts,.u-modal .act,.u-bottombar{display:none!important} body.u{background:#fff} }
+
+.u-sortbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--u-muted);margin:0 0 6px}
 </style>
 <style>
 .stu-wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
@@ -262,7 +264,7 @@ html.embed .stu-wrap>aside{top:56px}
 
   /* 표 — U.table(key, cols, rows, {rowAttr, foot}) → HTML 문자열
      cols: [{h:'머리글', v:row=>정렬값, f:row=>칸 HTML(없으면 v), l:true 왼쪽 정렬, num:true 숫자(첫 클릭 내림차순), ns:true 정렬 안 함, tip:'설명'}]
-     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향만 바뀐다. 다시 그리려면 opts.redraw 를 넘긴다. */
+     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향이 바뀌고 한 번 더 누르면 그 칸 정렬이 풀린다. 다시 그리려면 opts.redraw 를 넘긴다. */
   U.SORT = {}; U.COLS = {}; U.REDRAW = {};
   function sorted(key, rows, cols) {
     const ks = U.SORT[key] || []; if (!ks.length) return rows;
@@ -282,14 +284,18 @@ html.embed .stu-wrap>aside{top:56px}
         + (k >= 0 ? '<span class="k">' + (k + 1) + (ks[k].d > 0 ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead>';
     const body = sorted(key, rows, cols).map((r, i) => '<tr ' + (opts.rowAttr ? opts.rowAttr(r) : '') + '><td class="n">' + (i + 1) + '</td>'
       + cols.map(c => '<td class="' + (c.l ? 'l' : '') + '">' + (c.f ? c.f(r) : E(c.v(r) == null ? '—' : c.v(r))) + '</td>').join('') + '</tr>').join('');
-    return '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
-      + (ks.length ? '<div class="u-table-foot"><button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 초기화</button></div>' : '')
+    // 정렬 중이면 표 위에 무엇으로 정렬했는지 + [정렬 풀기] — 표가 길면 아래 버튼이 안 보였다(1121)
+    const sbar = ks.length ? '<div class="u-sortbar">정렬: ' + ks.map((x, n) => E((cols[x.c] || {}).h || '') + (x.d > 0 ? ' ▲' : ' ▼')).join(' → ')
+      + ' <button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 풀기</button></div>' : '';
+    return sbar + '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
       + (opts.foot || '');
   };
   document.addEventListener('click', ev => {
     const th = ev.target.closest('th[data-u-sk]');
     if (th && !th.classList.contains('ns')) { const k = th.dataset.uSk, c = +th.dataset.uCi, ks = U.SORT[k] = U.SORT[k] || [], i = ks.findIndex(x => x.c === c);
-      if (i < 0) ks.push({ c, d: (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1 }); else ks[i].d *= -1;
+      // (1121 유강 "필터 안 풀려") 같은 머리글을 누를 때마다 처음 방향 → 반대 방향 → 정렬 풀기. 숫자 칸은 큰 것부터 시작
+      const d0 = (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1;
+      if (i < 0) ks.push({ c, d: d0, d0 }); else if (ks[i].d === (ks[i].d0 || d0)) ks[i].d *= -1; else ks.splice(i, 1);
       (U.REDRAW[k] || U.redraw || (() => {}))(); return; }
     const rs = ev.target.closest('[data-u-sreset]'); if (rs) { U.SORT[rs.dataset.uSreset] = []; (U.REDRAW[rs.dataset.uSreset] || U.redraw || (() => {}))(); }
   });
