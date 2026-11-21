@@ -990,9 +990,10 @@ function drawHome() {
 /* ═══ src/15_roster.js ═══ */
 /* ── 학생 › 명단 ── (1121 유강 "이름 반 학교 그리고 핵심 정보들만 나열된 표로. 정렬·필터, 이름 누르면 포털")
    재원생 한 표: 반 · 학교 · 출석 · 과제 이행(최근/평균) · 리뷰 · 모의 · 질문 대기 · 보완 미완 · 포털 열람. 칸 머리글 = 정렬(누른 순서 우선).
-   필터 = 반 버튼 · 학교 버튼 · 이름 검색(표만 다시 그려 한글 입력이 안 끊긴다). 기간 = 위 시즌 선택.
+   필터 = 학년 · 반 · 학교 버튼 · 이름 검색(표만 다시 그려 한글 입력이 안 끊긴다). 기간 = 위 시즌 선택.
    이름 → 학생 포털(새 탭, 유강 계정만 토큰이 읽힘 — 없으면 학생 페이지) · [상세] → 학생 › 개인. */
-const RO = { ban: '*', sch: '*', q: '', d: null };
+const RO = { gr: (() => { try { return localStorage.getItem('ro_gr') || ''; } catch (e) { return ''; } })(), ban: '*', sch: '*', q: '', d: null };
+const roGr = r => String(r.s.ban || '').slice(0, 2);   // 학년 = 반 이름 앞 두 글자(고1A → 고1)
 async function viewRoster(id) {
   if (ROLE === 'admin') try { localStorage.setItem('mt_skip', '1'); localStorage.setItem('skipgc', 't'); } catch (e) {}   // 여기서 연 포털이 학생 방문으로 잡히지 않게(포털 화면과 같은 방식)
   if (!RO.d) {
@@ -1019,23 +1020,30 @@ async function viewRoster(id) {
         tok: tks[0] || null };
     });
   }
-  const bans = [...new Set(RO.d.map(r => r.s.ban))].sort();
-  const schs = [...new Set(RO.d.filter(r => RO.ban === '*' || r.s.ban === RO.ban).map(r => r.s.학교).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+  // 학년 → 반 → 학교 순으로 좁아진다: 위에서 고른 것에 맞는 버튼만 남고, 버튼 옆 숫자도 그 안에서 센다
+  const grs = [...new Set(RO.d.map(roGr))].sort();
+  if (!grs.includes(RO.gr)) RO.gr = grs[0] || '';   // (1121 유강 "보통 다른 학년을 같은 페이지에서 보지 않아") 학년은 '전체' 없이 하나만 — 고른 학년은 기억
+  const inGr = r => roGr(r) === RO.gr, inBan = r => RO.ban === '*' || r.s.ban === RO.ban;
+  const bans = [...new Set(RO.d.filter(inGr).map(r => r.s.ban))].sort();
+  if (RO.ban !== '*' && !bans.includes(RO.ban)) RO.ban = '*';
+  const schs = [...new Set(RO.d.filter(r => inGr(r) && inBan(r)).map(r => r.s.학교).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
   if (RO.sch !== '*' && !schs.includes(RO.sch)) RO.sch = '*';
-  const cnt = (k, v) => RO.d.filter(r => (k === 'ban' ? r.s.ban === v : r.s.학교 === v) && (k === 'ban' || RO.ban === '*' || r.s.ban === RO.ban)).length;
-  let h = head('학생 명단', `재원 ${RO.d.length}명 · ${E(seasonKey() === '*' ? '전체 기간' : '이번 시즌')} 기록 · 이름 = 학생 포털(새 탭) · 칸 머리글 = 정렬`);
-  h += `<div class="pick"><div class="row"><span class="u-muted">반</span>${['*', ...bans].map(b => `<button class="u-btn sm${b === RO.ban ? ' pri' : ' ghost'}" data-rob="${E(b)}">${b === '*' ? '전체' : E(b) + ` <span class="mini">${cnt('ban', b)}</span>`}</button>`).join('')}</div>`
+  const cnt = (k, v) => RO.d.filter(r => k === 'gr' ? roGr(r) === v : k === 'ban' ? inGr(r) && r.s.ban === v : inGr(r) && inBan(r) && r.s.학교 === v).length;
+  let h = head('학생 명단', `${E(RO.gr)} ${RO.d.filter(r => roGr(r) === RO.gr).length}명 · ${E(seasonKey() === '*' ? '전체 기간' : '이번 시즌')} 기록 · 이름 = 학생 포털(새 탭) · 칸 머리글 = 정렬`);
+  h += `<div class="pick"><div class="row"><span class="u-muted">학년</span>${grs.map(g => `<button class="u-btn sm${g === RO.gr ? ' pri' : ' ghost'}" data-rog="${E(g)}">${E(g)} <span class="mini">${cnt('gr', g)}</span></button>`).join('')}</div>`
+    + `<div class="row"><span class="u-muted">반</span>${['*', ...bans].map(b => `<button class="u-btn sm${b === RO.ban ? ' pri' : ' ghost'}" data-rob="${E(b)}">${b === '*' ? '전체' : E(b) + ` <span class="mini">${cnt('ban', b)}</span>`}</button>`).join('')}</div>`
     + `<div class="row"><span class="u-muted">학교</span>${['*', ...schs].map(c => `<button class="u-btn sm${c === RO.sch ? ' pri' : ' ghost'}" data-ros="${E(c)}">${c === '*' ? '전체' : E(c) + ` <span class="mini">${cnt('sch', c)}</span>`}</button>`).join('')}</div>`
     + `<div class="row"><span class="u-muted">이름</span><input type="search" id="roq" placeholder="이름 검색" value="${E(RO.q)}" style="max-width:220px"></div></div>`;
   h += '<div id="rotbl"></div>';
   $('view').innerHTML = h;
   roTable();
+  $('view').querySelectorAll('[data-rog]').forEach(b => b.onclick = () => { RO.gr = b.dataset.rog; RO.ban = '*'; RO.sch = '*'; try { localStorage.setItem('ro_gr', RO.gr); } catch (e) {} viewRoster(RENDER_ID); });
   $('view').querySelectorAll('[data-rob]').forEach(b => b.onclick = () => { RO.ban = b.dataset.rob; viewRoster(RENDER_ID); });
   $('view').querySelectorAll('[data-ros]').forEach(b => b.onclick = () => { RO.sch = b.dataset.ros; viewRoster(RENDER_ID); });
   $('roq').oninput = e => { RO.q = e.target.value.trim(); roTable(); };   // 표만 — 입력칸을 다시 만들면 한글 조합이 끊긴다
 }
 function roTable() {
-  const rows = RO.d.filter(r => (RO.ban === '*' || r.s.ban === RO.ban) && (RO.sch === '*' || r.s.학교 === RO.sch) && (!RO.q || r.s.이름.includes(RO.q)));
+  const rows = RO.d.filter(r => roGr(r) === RO.gr && (RO.ban === '*' || r.s.ban === RO.ban) && (RO.sch === '*' || r.s.학교 === RO.sch) && (!RO.q || r.s.이름.includes(RO.q)));
   const portal = r => r.tok ? 'https://ukan8.github.io/dashboard/me/?t=' + encodeURIComponent(r.tok.토큰) : '';
   const pc = v => v == null ? dash : `<b class="u-${rateCls(v)}">${v}%</b>`;
   $('rotbl').innerHTML = (rows.length ? '' : '<div class="u-card u-muted">맞는 학생이 없어요</div>') + (rows.length ? table('roster', [
