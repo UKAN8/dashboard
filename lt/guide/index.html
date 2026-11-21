@@ -195,6 +195,8 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 
 @media print{ .u-bar,.u-acts,.u-modal .act,.u-bottombar{display:none!important} body.u{background:#fff} }
 
+.u-sortbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--u-muted);margin:0 0 6px}
+
 .g{max-width:860px;margin:0 auto;padding:22px 20px 80px}
 .g h1{font-family:var(--u-font-display);font-weight:600;font-size:28px;margin:6px 0 4px}
 .g h2{font-size:19px;font-weight:800;margin:34px 0 10px;display:flex;align-items:center;gap:10px}
@@ -237,7 +239,7 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 <div class="top" style="display:flex;justify-content:space-between;align-items:center"><span class="u-tag accent">데스크 · 중등부 선생님용</span><a href="../admin/">관리 페이지 열기 →</a></div>
 <h1>예비고1 레벨테스트 관리 사용법</h1>
 <p>시험은 종이로 보고, <b>답은 학생이 폰으로 입력</b>해요. 선생님·데스크는 <b>예약받은 학생을 회차에 배정</b>만 해 두면 돼요. 시험이 끝나는 시각에 학생 입력이 저절로 열리고, 학생에게 입력 링크가 알림톡으로 가요. 채점·분석은 자동이에요.</p>
-<div class="toc"><a href="#s1">1 들어가기</a><a href="#s2">2 예약 배정</a><a href="#s3">3 시험 당일</a><a href="#s4">4 알림 정리</a><a href="#s5">5 일정 밖 응시</a><a href="#s6">6 결과 보기</a><a href="#s7">7 이럴 땐</a></div>
+<div class="toc"><a href="#s1">1 들어가기</a><a href="#s2">2 예약 배정</a><a href="#s3">3 시험 당일</a><a href="#s4">4 알림 정리</a><a href="#s5">5 일정 밖 응시</a><a href="#s6">6 결과 보기</a><a href="#s8">7 반배정·리포트·상담</a><a href="#s7">8 이럴 땐</a></div>
 
 <h2 id="s1"><span class="n">1</span>들어가기</h2>
 <div class="steps">
@@ -295,6 +297,7 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 <tr><td><b>이미 열린 회차에 나중에 배정·추가했을 때</b></td><td>그 학생만</td><td>같은 알림이 바로 가요</td></tr>
 <tr><td><b><span class="ui">지금 열기</span>를 눌렀을 때</b></td><td>그 회차 학생 전원</td><td>같은 알림이 바로 가요</td></tr>
 <tr><td><b><span class="ui">알림 다시</span>를 눌렀을 때</b></td><td>그 학생만</td><td>같은 알림 다시 (1~2분 걸려요)</td></tr>
+<tr><td><b><span class="ui pri">학부모에게 문자 보내기</span> · <span class="ui">한꺼번에 문자 보내기</span>를 눌렀을 때</b></td><td><b>학부모 번호</b>(반배정이 있는 학생만)</td><td>문자 「레벨테스트 결과와 반 배치 안내」 — <b>결과 분석지 링크</b> + 곧 데스크에서 상담 전화 드린다는 안내 (1~2분)</td></tr>
 </tbody></table></div>
 <h3>받는 번호</h3>
 <ul><li><b>학생 번호</b>로 가요. 학생 번호가 없으면 <b>학부모 번호</b>(여러 개면 첫 번호)로 가요.</li>
@@ -323,10 +326,18 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
   <li><b>학생 결과</b> 탭: 학생이 제출하면 바로 채점돼서 올라와요. 머리글을 누르면 정렬(누른 순서대로 우선순위).</li>
   <li>학생 줄을 누르면 <b>상담 카드</b> — 문항별 색 띠 · 레벨별/단원별 막대 · <b>틀린 문항에서 고른 선지로 본 오개념</b> · 학생이 고른 틀린 이유 · 선행 정도 설문. <span class="ui">인쇄</span>로 상담 때 쓰세요.</li>
   <li>읽는 법: <b>확실 정답</b> = 확실하다고 하고 맞힌 문항(실력) · <b>찍음 뺀 점수</b> = 찍어서 맞힌 점수를 뺀 점수 · <b>실수 없으면</b> = 학생이 실수라고 한 문항만 맞았다면.</li>
-  <li><b>반 배정은 이 화면에서 정하지 않아요</b> — 결과를 보고 유강쌤이 정해요.</li>
 </ul>
 
-<h2 id="s7"><span class="n">7</span>이럴 땐</h2>
+<h2 id="s8"><span class="n">7</span>반배정 · 학부모 리포트 · 상담 전화</h2>
+<div class="steps">
+  <div class="step"><span class="k">1</span><div><b>반배정 — 학생 결과 표의 '반배정' 칸에서 골라요</b><p><span class="u-tag ok">심화</span> · 기본(월수금) · 기본(화목토) · 기본(요일미정) · 미정. 고르면 바로 저장되고 누가 정했는지 남아요. 상담 카드 맨 위에서도 고를 수 있어요.</p></div></div>
+  <div class="step"><span class="k">2</span><div><b>학부모 리포트 보내기 — 반배정이 있어야 보낼 수 있어요</b><p>한 명씩: 상담 카드 → <b>학부모 리포트</b> → (선생님 한마디를 쓰고) <span class="ui pri">학부모에게 문자 보내기</span> 두 번 누르기.<br>한꺼번에: 학생 결과 표 위 <span class="ui">한꺼번에 문자 보내기</span> — 반배정이 있고 아직 안 보낸 학생 전부.</p></div></div>
+  <div class="step"><span class="k">3</span><div><b>상담 전화 — 상담 카드의 '통화할 때 이 순서로' 보고 전화해요</b><p>학부모 번호를 누르면 바로 걸려요. 통화가 끝나면 결과(통화 완료 · 부재중 · 다시 연락 · 고민 중 · 등록 확정 · 등록 안 함)를 고르고 메모 → <span class="ui pri">상담 기록 저장</span>. 표의 '상담' 칸에 보여요.</p></div></div>
+</div>
+<div class="okbox"><b>리포트에 들어가는 것</b> — 반 배치(요일·12/1 개강) · 선생님 한마디 · 총점과 응시자 평균 · 수준별/단원별 성취 · 문항별 색 띠 · 풀이 습관(확실·찍음·실수·틀림·못 풂) · 분석 요약 · 틀린 문항과 자주 하는 착각 · 선행 이력. <b>정답과 선지는 안 들어가요</b>(같은 시험을 볼 학생이 남아 있어서).</div>
+<div class="warnbox"><b>문자가 안 갔어요</b> — 표의 '리포트' 칸이 <b>번호 없음</b>이면 학부모 번호가 없는 거예요. 명단에서 번호를 넣고 다시 보내거나, 상담 카드 <span class="ui">링크 복사</span>로 카톡에 붙여 보내 주세요. <b>실패</b>면 칸에 마우스를 올려 이유를 보고 유강쌤께 말해 주세요.</div>
+
+<h2 id="s7"><span class="n">8</span>이럴 땐</h2>
 <div class="q"><b>학생이 링크를 못 받았대요</b>회차·예약 탭에서 그 학생 알림 칸 확인 → <span class="ui">알림 다시</span> 또는 <span class="ui">링크</span>(복사해서 카톡으로). 급하면 학생이 <b>ukan8.github.io/dashboard/lt</b> 에 들어가 이름 + 휴대폰 뒷 4자리(본인 또는 부모님 번호)로 들어가도 돼요.</div>
 <div class="q"><b>"명단에서 이름을 못 찾았어요"가 떠요</b>학생 화면의 <b>처음 왔거나 명단에 없어요</b>로 학생이 직접 등록할 수 있어요. 그러면 명단에 <span class="u-tag warn">확인</span> 표시가 붙어요 — <span class="ui">수정</span>에서 정보 확인 후 저장하면 표시가 없어져요.</div>
 <div class="q"><b>학생이 답을 잘못 옮겨서 냈어요</b>학생 결과 → 그 학생 상담 카드 → <span class="ui">제출 지우고 다시 받기</span>(두 번 누르기). 학생이 같은 링크로 다시 입력하면 돼요. 지운 기록은 따로 보관돼요.</div>
