@@ -46,6 +46,11 @@ button.pri{background:var(--acc);border-color:var(--acc);color:var(--on-acc);fon
 button.pri:hover{filter:brightness(1.06)}
 button.sure{background:var(--bad);border-color:var(--bad);color:var(--on-acc);font-weight:700}
 td button{height:28px;padding:0 9px;font-size:12.5px}
+.place{height:30px;font-size:13px;padding:0 6px;min-width:118px;border-color:var(--bd)}
+.place.p-deep{background:var(--good-soft);color:var(--good);border-color:transparent;font-weight:700}
+.place.p-base{background:var(--acc-soft);color:var(--acc);border-color:transparent;font-weight:700}
+.placebox{display:flex;align-items:center;gap:10px;margin-top:12px}
+@media print{.place{border:0;background:none!important;-webkit-appearance:none;appearance:none}}
 .sortbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);margin:0 0 8px}
 .sortbar .sk{display:inline-flex;align-items:center;gap:2px;background:var(--acc-soft);color:var(--acc);border-radius:999px;padding:1px 4px 1px 10px;font-weight:600}
 .sortbar .sk button{height:20px;width:20px;padding:0;border:0;background:none;color:inherit;font-size:14px;line-height:1;border-radius:50%}
@@ -298,10 +303,14 @@ const COLS={};
 
 /* ── 탭: 학생 ── */
 const tagJ=o=>'<span class="tag '+(o.심화?'t-deep':'t-base')+'">'+o.판정+'</span>'+(o.경계?' <span class="tag t-warn" title="'+(o.경계==='찍음'?'찍어서 맞힌 점수를 빼면 심화 기준 아래':'실수만 없었으면 심화 기준 위')+'">'+o.경계+' 경계</span>':'');
+/* ── 반배정 (1121 유강) — 심화 · 기본(월수금) · 기본(화목토) · 기본(요일미정) · 미정 ── */
+const PLACES=['심화','기본(월수금)','기본(화목토)','기본(요일미정)'];
+const placeSel=(r,extra)=>'<select class="place'+(r.반배정?(r.반배정==='심화'?' p-deep':' p-base'):'')+'" data-place="'+r.id+'"'+(extra||'')+'><option value="">미정</option>'
+  +PLACES.map(p=>'<option'+(r.반배정===p?' selected':'')+'>'+p+'</option>').join('')+'</select>';
 function stuCols(){
   return COLS.stu=[
     {h:'이름',l:1,v:o=>o.이름,f:o=>'<b>'+E(o.이름)+'</b>'+(o.현장?' <span class="tag t-warn">현장</span>':'')},
-    {h:'학교',v:o=>o.학교},{h:'담당·반',l:1,v:o=>hoTeam(o.r),f:o=>'<span class="dim">'+E(hoTeam(o.r))+'</span>'},{h:'선행(쌤 기록)',l:1,tip:'중등부 인계 기록',v:o=>(o.r.인계||{}).선행||'',f:o=>hoGap(o)?'<span class="tag t-warn" title="'+E(hoGap(o))+'">'+E((o.r.인계||{}).선행||'')+'</span>':E((o.r.인계||{}).선행||'—')},{h:'3-2 기말',num:1,tip:'학교 성적(인계)',v:o=>{const g=((o.r.인계||{}).성적||{})['3-2 기말'];return typeof g==='number'?g:null;}},{h:'성실도',tip:'은수쌤 기록(상·중·하)',v:o=>(o.r.인계||{}).성실도||''},
+    {h:'학교',v:o=>o.학교},{h:'반배정',l:1,tip:'정한 반(학부모 리포트에 들어가요)',v:o=>o.r.반배정||'',f:o=>placeSel(o.r)},{h:'담당·반',l:1,v:o=>hoTeam(o.r),f:o=>'<span class="dim">'+E(hoTeam(o.r))+'</span>'},{h:'선행(쌤 기록)',l:1,tip:'중등부 인계 기록',v:o=>(o.r.인계||{}).선행||'',f:o=>hoGap(o)?'<span class="tag t-warn" title="'+E(hoGap(o))+'">'+E((o.r.인계||{}).선행||'')+'</span>':E((o.r.인계||{}).선행||'—')},{h:'3-2 기말',num:1,tip:'학교 성적(인계)',v:o=>{const g=((o.r.인계||{}).성적||{})['3-2 기말'];return typeof g==='number'?g:null;}},{h:'성실도',tip:'은수쌤 기록(상·중·하)',v:o=>(o.r.인계||{}).성실도||''},
     {h:'형',v:o=>o.형},
     {h:'점수',num:1,v:o=>o.점수,f:o=>'<b>'+o.점수+'</b>'},
     {h:'Ⅰ',num:1,tip:'개념 1~6번 /12',v:o=>o.lv[1]||0},{h:'Ⅱ',num:1,tip:'기본 7~13번 /28',v:o=>o.lv[2]||0},
@@ -329,7 +338,8 @@ function vStu(){
     +'<div><b>'+avgUp+'</b><span>평균 Ⅲ·Ⅳ / 60</span></div>'
     +'<div><b class="warn">'+rows.filter(o=>o.찍음정답>=3).length+'</b><span>찍어 맞음 3개↑</span></div>'
     +'<div><b class="bad">'+rows.filter(o=>o.결손).length+'</b><span>개념 결손</span></div>'
-    +'<div><b>'+rows.filter(o=>o.미확인).length+'</b><span>틀린 문항 확인 미완</span></div></div>';
+    +'<div><b>'+rows.filter(o=>o.미확인).length+'</b><span>틀린 문항 확인 미완</span></div>'
+    +'<div><b>'+new Set(rows.filter(o=>o.r.반배정).map(o=>o.r.id)).size+'<small style="font-size:14px;color:var(--dim)"> / '+new Set(rows.map(o=>o.r.id)).size+'</small></b><span>반배정 · 심화 '+new Set(rows.filter(o=>o.r.반배정==='심화').map(o=>o.r.id)).size+' · 기본 '+new Set(rows.filter(o=>(o.r.반배정||'').startsWith('기본')).map(o=>o.r.id)).size+'</span></div></div>';
   return kp+(n?table('stu',stuCols(),rows,o=>'class="click" data-open="'+E(o.id)+'"'):'<div class="card dim">아직 제출한 학생이 없어요.</div>')
     +'<div style="margin-top:8px" class="dim">행을 누르면 학생 상담 카드가 열려요. 머리글을 누른 순서대로 정렬 우선순위가 붙어요.</div>';
 }
@@ -509,6 +519,14 @@ function wireSlot(){
     if(await call('staff_lt_slot_del',{p_id:+b.dataset.delSlot},'회차를 지웠어요')) load(); });
 }
 
+function wirePlace(root){
+  root.querySelectorAll('[data-place]').forEach(el=>{ el.onclick=ev=>ev.stopPropagation();
+    el.onchange=async()=>{ const rid=+el.dataset.place, v=el.value||null;
+      const d=await call('staff_lt_place',{p_rid:rid,p_class:v}, v?'반배정: '+v:'반배정을 비웠어요'); if(!d){ draw(); return; }
+      (D.명단||[]).forEach(r=>{ if(r.id===rid) r.반배정=v; }); ROWS.forEach(o=>{ if(o.r.id===rid) o.r.반배정=v; });
+      if(el.dataset.incard){ el.className='place'+(v?(v==='심화'?' p-deep':' p-base'):''); } else draw(); }; });
+}
+
 /* ── 상담 카드 ── */
 function openCard(id){
   sheet.style.maxWidth='';
@@ -537,6 +555,7 @@ function openCard(id){
   if(o.확실정답<o.e.문항.length-o.오답) why.push('맞힌 '+(o.e.문항.length-o.오답)+'문항 중 확실했던 건 '+o.확실정답+'문항');
   sheet.innerHTML='<div class="brand">수학은유강 · 필탑 고등수학과</div><h2>'+E(o.이름)+' <span class="dim" style="font-size:15px">'+E(o.학교)+(o.소속?' · '+E(mathCls(o.소속)):'')+'</span></h2>'
     +'<div class="dim">'+E(e.제목)+' · 제출 '+fmtT(o.a.제출시각)+'</div>'
+    +'<div class="placebox"><b>반배정</b>'+placeSel(o.r,' data-incard="1"')+'<span class="dim">정하면 바로 저장돼요</span></div>'
     +'<div class="kpi" style="margin-top:12px"><div><b>'+o.점수+'</b><span>점수 / '+o.만점+'</span></div><div><b>'+o.상위+'</b><span>Ⅲ·Ⅳ / 60</span></div>'
     +'<div><b>'+o.확실정답+'</b><span>확실 정답</span></div><div><b>'+o.찍음보정+'</b><span>찍음 뺀 점수</span></div><div><b>'+o.실수보정+'</b><span>실수 없으면</span></div></div>'
     +'<div class="verdict">'+why.map(x=>'· '+x).join('<br>')+'</div>'
@@ -549,6 +568,7 @@ function openCard(id){
     +'<b>하고 싶은 말</b><span>'+E(s.말||'—')+'</span></div>'
     +'<h3>중등부 인계</h3>'+hoView(o.r)
     +'<div class="act"><button id="reset" title="답을 잘못 옮겼을 때 — 지우면 학생이 다시 입력할 수 있어요(기록은 따로 보관)">제출 지우고 다시 받기</button><button onclick="window.print()">인쇄</button><button class="pri" id="cls">닫기</button></div>';
+  wirePlace(sheet);
   dlg.classList.add('on');
   document.getElementById('cls').onclick=()=>dlg.classList.remove('on');
   sheet.querySelectorAll('[data-ho]').forEach(b=>b.onclick=()=>openHandoff(+b.dataset.ho));
@@ -614,7 +634,8 @@ function draw(){
     +'';
   document.getElementById('rl').onclick=load; const cv=document.getElementById('csv'); if(cv) cv.onclick=csv;
   const f=document.getElementById('fx'); if(f) f.onchange=ev=>{FX=ev.target.value;draw();};
-  app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=()=>openCard(tr.dataset.open));
+  app.querySelectorAll('[data-open]').forEach(tr=>tr.onclick=ev=>{ if(ev.target.closest('select,button,a,input')) return; openCard(tr.dataset.open); });
+  wirePlace(app);
   app.querySelectorAll('[data-asg2]').forEach(el=>el.onchange=async()=>{ const v=el.value; const d=await call('staff_lt_assign',{p_rid:+el.dataset.asg2,p_slot:v?+v:null},v?'배정했어요':'회차를 비웠어요'); if(d){ if(d.알림) toast('이미 열린 회차라 그 학생에게 알림을 보냈어요'); load(); } });
   app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async ev=>{ ev.stopPropagation();
     const {data}=await sb.rpc('staff_lt_roster',{p_rid:+b.dataset.ok,p_name:null,p_school:null,p_group:null,p_memo:null,p_ok:true}); if(data&&data.ok) load(); });
