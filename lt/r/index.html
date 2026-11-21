@@ -206,9 +206,9 @@ const HOW={'개념·공식이 기억 안 남':'개념과 공식을 다시 정리
 function kindOf(q){
   if(q.ok) return q.c==='확실'?'ok':'luck';
   if(q.c==='안풂'||q.k==='시간'||q.k==='못댐') return 'skip';
-  return q.k==='실수'?'slip':'no';
+  return q.k==='실수'?'slip':q.k==='모름'?'no':'nr';
 }
-const KIND={ok:['k-ok','확실히 맞힘'],luck:['k-luck','애매·찍어서 맞힘'],slip:['k-slip','실수로 틀림'],no:['k-no','몰라서 틀림'],skip:['k-skip','풀지 못함']};
+const KIND={ok:['k-ok','확실히 맞힘'],luck:['k-luck','애매·찍어서 맞힘'],slip:['k-slip','실수로 틀림'],no:['k-no','몰라서 틀림'],nr:['k-no','틀림(이유 응답 없음)'],skip:['k-skip','풀지 못함']};
 
 function analyze(a){
   const qs=(a.문항||[]).map(q=>{ const x={...q}; if(x.ok){ x.k=null; x.r=null; x.m=null; } x.kind=kindOf(x); return x; });
@@ -266,7 +266,7 @@ function habit(X,title){
   const qs=X.qs, pts=X.pts;
   const cnt=k=>qs.filter(q=>q.kind===k).length;
   const strip=qs.map(q=>'<div class="'+KIND[q.kind][0]+'" title="'+E(q.단원)+' · '+KIND[q.kind][1]+'">'+q.번호+'</div>').join('');
-  const legend=['ok','luck','slip','no','skip'].map(k=>'<span><i class="'+KIND[k][0]+'"></i>'+KIND[k][1]+' <b>'+cnt(k)+'</b></span>').join('');
+  const legend=['ok','luck','slip','no','nr','skip'].filter(k=>k!=='nr'||cnt('nr')).map(k=>'<span><i class="'+KIND[k][0]+'"></i>'+KIND[k][1]+' <b>'+cnt(k)+'</b></span>').join('');
   const CF=[['확실','확실하다고 한 문항'],['애매','애매했던 문항'],['찍음','찍은 문항']];
   const calib=CF.map(([c,t])=>{ const g=qs.filter(q=>q.c===c), y=g.filter(q=>q.ok).length, x=g.length-y; if(!g.length) return '';
     return '<div class="cal"><span class="cl">'+t+' <b>'+g.length+'</b></span><span class="cb"><i style="width:'+pct(y,g.length)+'%;background:var(--ok)"></i><i style="width:'+pct(x,g.length)+'%;background:var(--bad)"></i></span>'
@@ -278,7 +278,7 @@ function habit(X,title){
   const skipChips=skipQ.length?[['시간이 부족했어요',skipQ.filter(q=>q.k==='시간').length],['손을 못 댔어요',skipQ.filter(q=>q.k==='못댐').length],['응답 없음',skipQ.filter(q=>q.k!=='시간'&&q.k!=='못댐').length]].filter(x=>x[1]).map(([r,n])=>'<span class="chip">'+r+'<b>'+n+'</b></span>').join(''):'<span class="none">없음</span>';
   const why3=(!slipQ.some(q=>q.k)&&!noQ.some(q=>q.k)&&unrev.length)
     ?'<div class="none">학생이 시험 뒤 ‘틀린 이유 돌아보기’를 마치지 않아 이 부분은 비어 있어요.</div>'
-    :'<div class="why3"><div><div class="wh">실수였어요<b>'+slipQ.length+'</b></div>'+chips(slipQ)+'</div><div><div class="wh">몰랐어요<b>'+noQ.filter(q=>q.k).length+'</b></div>'+chips(noQ.filter(q=>q.k))+'</div><div><div class="wh">못 풀었어요<b>'+skipQ.length+'</b></div>'+skipChips+'</div></div>';
+    :'<div class="why3"><div><div class="wh">실수였어요<b>'+slipQ.length+'</b></div>'+chips(slipQ)+'</div><div><div class="wh">몰랐어요<b>'+noQ.length+'</b></div>'+chips(noQ)+'</div><div><div class="wh">못 풀었어요<b>'+skipQ.length+'</b></div>'+skipChips+'</div></div>';
   const words=qs.filter(q=>!q.ok&&q.m);
   const sayHTML=words.slice(0,3).map(q=>'<div class="say"><span class="sn">'+q.번호+'번 · '+E(q.단원)+'</span>“'+E(q.m)+'”</div>').join('');
   const confWrong=qs.filter(q=>q.c==='확실'&&!q.ok), luckQ=qs.filter(q=>q.ok&&q.c==='찍음');
