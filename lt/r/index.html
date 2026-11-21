@@ -76,6 +76,29 @@ td.c{text-align:center;white-space:nowrap}
 .why{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:0 8px;white-space:nowrap}
 .why.slip{background:#fff0e0;color:#b45309} .why.no{background:#fde8e8;color:#c62828} .why.skip{background:#f1f2f5;color:var(--tx2)} .why.nr{background:#f7eded;color:#8a4b4b}
 .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:14px} .kv b{color:var(--dim);font-weight:500}
+.self{position:relative;border:2px solid var(--acc2);border-radius:16px;padding:22px 20px 16px;background:linear-gradient(180deg,#f5f8ff 0,#fff 140px)}
+.self .ribbon{position:absolute;top:-12px;left:18px;background:var(--acc2);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:3px 12px;letter-spacing:.3px}
+.self .lead{margin:0 0 6px;font-size:14px;color:var(--tx2)}
+.self h3{font-size:13.5px;margin:16px 0 8px;color:var(--acc)}
+.cal{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;margin:6px 0;font-size:13.5px}
+.cal .cl{color:var(--tx2)} .cal .cl b{color:var(--tx)}
+.cal .cb{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#eceef3}
+.cal .cb i{display:block;height:100%} .cal .cb .y{background:var(--ok)} .cal .cb .x{background:var(--no)} .cal .cb .s{background:var(--skip)}
+.cal .cv{font-size:13px;color:var(--tx2);text-align:right}
+.hot{color:#c62828}
+.why3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.why3>div{border-radius:12px;padding:10px 12px;background:#f7f8fa}
+.why3 .wh{font-size:13px;font-weight:700;margin-bottom:6px} .why3 .wh b{font-size:17px;margin-left:2px}
+.w-slip .wh{color:#b45309} .w-no .wh{color:#c62828} .w-skip .wh{color:var(--tx2)}
+.chip{display:inline-block;font-size:12.5px;background:#fff;border:1px solid var(--bd);border-radius:999px;padding:1px 9px;margin:2px 4px 2px 0}
+.chip b{margin-left:2px}
+.none{font-size:12.5px;color:var(--dim)}
+.say{background:#fff;border:1px solid var(--bd);border-left:4px solid var(--acc2);border-radius:0 10px 10px 0;padding:8px 12px;margin:6px 0;font-size:14px}
+.say .sn{display:block;font-size:11.5px;color:var(--dim);margin-bottom:2px}
+.read{margin:0;padding-left:18px} .read li{margin:5px 0}
+.why.hot{background:#fde8e8;color:#c62828}
+td .rr{font-size:12.5px;color:var(--tx2);margin-top:3px} td .rm{font-size:12.5px;color:var(--acc);margin-top:2px}
+@media(max-width:640px){.why3{grid-template-columns:1fr}.cal{grid-template-columns:1fr 92px}.cal .cb{grid-column:1/-1;order:3}}
 .foot{margin-top:28px;padding-top:12px;border-top:1px solid var(--bd);font-size:12px;color:var(--dim);line-height:1.7}
 .btns{display:flex;justify-content:flex-end;gap:8px;margin:0 0 10px}
 .btns button{font:inherit;font-size:13.5px;border:1px solid var(--bd);background:#fff;border-radius:9px;padding:6px 14px;cursor:pointer}
@@ -113,6 +136,7 @@ const CLS={
   '기본(요일미정)':{t:'기본반',d:'요일은 상담 때 함께 정해요'}
 };
 const COMMON='12월 1일 개강 · 12월~2월 공통수학1을 한 주에 한 단원씩 깊게 공부해요';
+let d0=null;
 const KIND={ok:['k-ok','확실히 맞힘'],luck:['k-luck','애매·찍어서 맞힘'],slip:['k-slip','실수로 틀림'],no:['k-no','틀림'],nr:['k-no','틀림'],skip:['k-skip','풀지 못함']};
 
 function kindOf(q){
@@ -141,8 +165,6 @@ function exam(a,idx){
   if(strong.length) S.push('<b>'+strong.map(E).join(', ')+'</b> 단원은 안정적으로 풀어냈어요.');
   if(weak.length) S.push('<b>'+weak.map(E).join(', ')+'</b> 단원은 보완이 필요해요.');
   if(lv1miss.length>=2) S.push('기본 개념 문항(Ⅰ)에서 '+lv1miss.length+'문항을 놓쳤어요 — '+[...new Set(lv1miss.map(q=>q.단원))].map(E).join(', ')+' 개념부터 다시 다지면 좋겠어요.');
-  if(luckPts>=5) S.push('맞힌 문항 중 '+qs.filter(q=>q.ok&&q.c==='찍음').length+'문항('+luckPts+'점)은 찍어서 맞혔다고 답했어요. 실제 실력은 점수보다 조금 낮게 보는 게 안전해요.');
-  if(slip.length) S.push('스스로 실수라고 답한 문항이 '+slip.length+'개('+pts(slip)+'점)예요. 실수만 줄여도 점수가 오를 여지가 있어요.');
   if(skip.length) S.push('풀지 못한 문항이 '+skip.length+'개 있어요'+((a.설문||{}).시간==='모자랐어요'?' — 본인도 시간이 모자랐다고 답했어요. 시간 배분 연습이 필요해요.':'.'));
   if(ok.length>=qs.length-2) S.push('거의 모든 문항을 확신을 갖고 풀었어요. 개념과 계산이 모두 탄탄한 편이에요.');
 
@@ -153,27 +175,55 @@ function exam(a,idx){
   const grid=qs.map(q=>'<div class="'+KIND[q.kind][0]+'" title="'+E(q.단원)+'">'+q.번호+'<small>'+LV[q.레벨]+'</small></div>').join('');
   const wrong=qs.filter(q=>!q.ok);
   const WHY={slip:['slip','실수'],no:['no','몰라서'],skip:['skip','못 풂'],nr:['nr','—']};
-  const wrongT=wrong.length?'<table><thead><tr><th>번호</th><th>수준</th><th>단원</th><th class="hide-m">유형</th><th>원인</th><th>자주 하는 착각</th></tr></thead><tbody>'
-    +wrong.map(q=>'<tr><td class="c"><b>'+q.번호+'</b></td><td class="c">'+LVN[q.레벨]+'</td><td>'+E(q.단원)+'</td><td class="hide-m">'+tex(q.유형)+'</td><td class="c">'+(q.kind==='nr'?'<span style="color:var(--dim)">—</span>':'<span class="why '+WHY[q.kind][0]+'">'+WHY[q.kind][1]+'</span>')+'</td><td>'+(q.오개념?tex(q.오개념):'<span style="color:var(--dim)">—</span>')+'</td></tr>').join('')
+  const wrongT=wrong.length?'<table><thead><tr><th>번호</th><th>수준</th><th>단원</th><th class="hide-m">유형</th><th>학생 자평</th><th>자주 하는 착각</th></tr></thead><tbody>'
+    +wrong.map(q=>'<tr><td class="c"><b>'+q.번호+'</b></td><td class="c">'+LVN[q.레벨]+'</td><td>'+E(q.단원)+'</td><td class="hide-m">'+tex(q.유형)+'</td><td>'+(q.c==='확실'?'<span class="why hot">확실했음</span> ':q.c==='찍음'?'<span class="why skip">찍었음</span> ':q.c==='애매'?'<span class="why skip">애매했음</span> ':'')+(q.kind==='nr'?'':'<span class="why '+WHY[q.kind][0]+'">'+WHY[q.kind][1]+'</span>')+(q.r?'<div class="rr">'+E(q.r)+'</div>':'')+(q.m?'<div class="rm">“'+E(q.m)+'”</div>':'')+'</td><td>'+(q.오개념?tex(q.오개념):'<span style="color:var(--dim)">—</span>')+'</td></tr>').join('')
     +'</tbody></table>':'<div class="sum">틀린 문항이 없어요.</div>';
+  /* ── 학생이 직접 돌아본 시험 (1121 유강 "학생이 자평한 틀린 이유 — 다른 리포트에서 보기 어려운 차별점") ── */
+  const CF=[['확실','확실하다고 한 문항'],['애매','애매했던 문항'],['찍음','찍은 문항']];
+  const calib=CF.map(([c,t])=>{ const g=qs.filter(q=>q.c===c), y=g.filter(q=>q.ok).length, x=g.length-y; if(!g.length) return '';
+    return '<div class="cal"><span class="cl">'+t+' <b>'+g.length+'</b></span><span class="cb"><i class="y" style="width:'+pct(y,g.length)+'%"></i><i class="x" style="width:'+pct(x,g.length)+'%"></i></span>'
+      +'<span class="cv">맞힘 <b>'+y+'</b> · 틀림 <b class="'+(c==='확실'&&x?'hot':'')+'">'+x+'</b></span></div>'; }).join('')
+    +(qs.filter(q=>q.c==='안풂').length?'<div class="cal"><span class="cl">풀지 못한 문항 <b>'+qs.filter(q=>q.c==='안풂').length+'</b></span><span class="cb"><i class="s" style="width:100%"></i></span><span class="cv"></span></div>':'');
+  const tally=arr=>{ const m={}; arr.forEach(q=>{ const r=q.r||'이유 안 고름'; m[r]=(m[r]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]); };
+  const slipQ=qs.filter(q=>!q.ok&&q.k==='실수'), noQ=qs.filter(q=>!q.ok&&q.k==='모름'), timeQ=qs.filter(q=>!q.ok&&(q.k==='시간'||q.k==='못댐'||q.c==='안풂'));
+  const unrev=qs.filter(q=>!q.ok&&q.c!=='안풂'&&!q.k);
+  const chips=arr=>arr.length?tally(arr).map(([r,n])=>'<span class="chip">'+E(r)+' <b>'+n+'</b></span>').join(''):'<span class="none">없음</span>';
+  const why3='<div class="why3"><div class="w-slip"><div class="wh">실수였어요 <b>'+slipQ.length+'</b></div>'+chips(slipQ)+'</div>'
+    +'<div class="w-no"><div class="wh">몰랐어요 <b>'+noQ.length+'</b></div>'+chips(noQ)+'</div>'
+    +'<div class="w-skip"><div class="wh">못 풀었어요 <b>'+timeQ.length+'</b></div>'+(timeQ.length?[['시간 부족',timeQ.filter(q=>q.k==='시간').length],['손을 못 댐',timeQ.filter(q=>q.k==='못댐').length]].filter(x=>x[1]).map(([r,n])=>'<span class="chip">'+r+' <b>'+n+'</b></span>').join('')||'<span class="none">이유 안 고름</span>':'<span class="none">없음</span>')+'</div></div>';
+  const words=qs.filter(q=>q.m).map(q=>'<div class="say"><span class="sn">'+q.번호+'번 · '+E(q.단원)+(q.k==='실수'?' · 실수':q.k==='모름'?' · 몰랐음':'')+'</span>“'+E(q.m)+'”</div>').join('');
+  const RA={'개념·공식이 기억 안 남':'개념과 공식을 다시 정리하는 것부터 시작하면 좋아요','풀이 방법이 안 떠오름':'개념은 알고 있지만 문제에 적용하는 연습(유형별 풀이)이 더 필요해요','풀다가 막힘':'중간 과정을 정리하며 풀이를 끝까지 밀고 가는 연습이 필요해요','배운 적 없음':'아직 배우지 않은 내용이라 수업에서 처음부터 다뤄요',
+    '계산 실수':'계산을 한 줄씩 정리하고 검산하는 습관이 필요해요','문제·조건을 잘못 읽음':'조건에 표시하며 문제를 읽는 습관이 필요해요','답 옮기기 실수':'답을 옮긴 뒤 한 번 더 확인하는 습관이 필요해요'};
+  const confWrong=qs.filter(q=>q.c==='확실'&&!q.ok), luckQ=qs.filter(q=>q.ok&&q.c==='찍음');
+  const T=[];
+  if(confWrong.length) T.push('<b class="hot">확실하다고 했는데 틀린 문항이 '+confWrong.length+'개</b>예요 ('+confWrong.map(q=>q.번호+'번').join(', ')+'). 스스로 맞다고 믿고 있는 착각이라, 그냥 모르는 문항보다 <b>먼저 바로잡아야 할 부분</b>이에요.');
+  else if(wrong.length) T.push('틀린 문항은 모두 학생도 확신이 없던 문항이에요 — <b>자기가 어디를 모르는지 정확히 알고 있어요.</b>');
+  if(luckQ.length) T.push('찍어서 맞힌 문항이 '+luckQ.length+'개('+pts(luckQ)+'점)예요. 점수에는 들어갔지만 실력으로 보긴 어려워요.');
+  const topNo=tally(noQ.filter(q=>q.r))[0], topSlip=tally(slipQ.filter(q=>q.r))[0];
+  if(topNo&&RA[topNo[0]]) T.push('몰랐던 문항의 이유로 <b>‘'+E(topNo[0])+'’</b>을(를) 가장 많이 골랐어요('+topNo[1]+'문항) — '+RA[topNo[0]]+'.');
+  if(topSlip&&RA[topSlip[0]]) T.push('실수 중에는 <b>‘'+E(topSlip[0])+'’</b>이(가) 가장 많았어요('+topSlip[1]+'문항) — '+RA[topSlip[0]]+'. 실수만 없었어도 <b>+'+pts(slipQ)+'점</b>이에요.');
+  if(timeQ.filter(q=>q.k==='시간').length) T.push('시간이 부족해 못 푼 문항이 '+timeQ.filter(q=>q.k==='시간').length+'개예요 — 시간 배분 연습이 필요해요.');
+  if(unrev.length) T.push('<span style="color:var(--dim)">'+unrev.length+'문항은 학생이 틀린 이유를 고르지 않았어요.</span>');
+  const selfBox='<div class="self keep"><span class="ribbon">학생 자평 분석</span>'
+    +'<p class="lead">필탑 레벨테스트는 답만 채점하지 않아요. 학생이 <b>문항마다 얼마나 확신했는지</b>, 그리고 <b>틀린 문항은 왜 틀렸다고 생각하는지</b> 시험 직후 스스로 돌아봤어요.</p>'
+    +'<h3>확신과 실제 결과</h3>'+calib
+    +'<h3>학생이 고른 틀린 이유</h3>'+(!slipQ.length&&!noQ.length&&unrev.length?'<div class="none" style="font-size:13.5px">학생이 시험 뒤 ‘틀린 이유 돌아보기’를 마치지 않아 이 칸은 비어 있어요.</div>':why3)
+    +(words?'<h3>학생이 직접 쓴 말</h3>'+words:'')
+    +(T.length?'<h3>이렇게 읽을 수 있어요</h3><ul class="read">'+T.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'')
+    +'</div>';
   const s=a.설문||{};
   const me=pct(a.점수,a.만점), av=a.평균!=null?pct(a.평균,a.만점):null;
   const n0=idx*6;
-  return '<h2><span class="n">'+(n0+2)+'</span>시험 결과 · '+E(a.형)+' ('+E(a.범위||'')+')</h2>'
+  return '<h2><span class="n">'+(n0+2)+'</span>학생이 직접 돌아본 시험'+(idx||(d0||{}).응시n>1?' · '+E(a.형):'')+'</h2>'+selfBox
+    +'<h2><span class="n">'+(n0+3)+'</span>시험 결과 · '+E(a.형)+' ('+E(a.범위||'')+')</h2>'
     +'<div class="keep"><div class="score"><div><b>'+a.점수+'<small> / '+a.만점+'</small></b><span>총점</span></div>'
     +'<div><b>'+low+'<small> / '+lowF+'</small></b><span>개념·기본 (Ⅰ·Ⅱ)</span></div>'
     +'<div><b>'+up+'<small> / '+upF+'</small></b><span>응용·심화 (Ⅲ·Ⅳ)</span></div></div>'
     +(av!=null&&a.인원>=3?'<div class="cmpbar"><div class="track"></div><div class="me" style="width:'+me+'%"></div><div class="avg" style="left:'+av+'%"><i>응시자 평균 '+a.평균+'</i></div></div>':'')+'</div>'
     +'<div class="keep" style="margin-top:16px"><h2 style="margin-top:8px;font-size:14.5px">수준별</h2><div class="bars">'+lvBars+'</div></div>'
     +'<div class="keep"><h2 style="margin-top:16px;font-size:14.5px">단원별</h2><div class="bars">'+unBars+'</div></div>'
-    +'<h2><span class="n">'+(n0+3)+'</span>문항별 결과</h2><div class="keep"><div class="grid">'+grid+'</div>'
+    +'<h2><span class="n">'+(n0+4)+'</span>문항별 결과</h2><div class="keep"><div class="grid">'+grid+'</div>'
     +'<div class="legend">'+['ok','luck','slip','no','skip'].map(k=>'<span><i class="'+KIND[k][0]+'"></i>'+KIND[k][1]+'</span>').join('')+'</div></div>'
-    +'<h2><span class="n">'+(n0+4)+'</span>풀이 습관</h2><div class="habit keep">'
-    +'<div><b style="color:var(--ok)">'+ok.length+'</b><span>확실히 맞힘</span><small>'+pts(ok)+'점</small></div>'
-    +'<div><b style="color:var(--luck)">'+luck.length+'</b><span>애매·찍어서 맞힘</span><small>'+pts(luck)+'점</small></div>'
-    +'<div><b style="color:var(--slip)">'+slip.length+'</b><span>실수로 틀림</span><small>놓친 '+pts(slip)+'점</small></div>'
-    +'<div><b style="color:var(--no)">'+no.length+'</b><span>틀림 (실수 제외)</span><small>놓친 '+pts(no)+'점</small></div>'
-    +'<div><b style="color:var(--dim)">'+skip.length+'</b><span>풀지 못함</span><small>놓친 '+pts(skip)+'점</small></div></div>'
     +'<h2><span class="n">'+(n0+5)+'</span>분석 요약</h2><ul class="sum keep">'+S.map(x=>'<li>'+x+'</li>').join('')+'</ul>'
     +'<h2><span class="n">'+(n0+6)+'</span>틀린 문항 살펴보기</h2>'+wrongT
     +(s.선행||s.시간||s.체감?'<h2><span class="n">'+(n0+7)+'</span>학생이 답한 학습 이력</h2><div class="kv keep"><b>공통수학1 선행</b><span>'+E(s.선행||'—')+(s.단원?' · 마지막으로 배운 단원 '+E(s.단원):'')+'</span><b>시험 시간</b><span>'+E(s.시간||'—')+'</span><b>체감 난이도</b><span>'+E(s.체감||'—')+'</span></div>':'');
@@ -187,7 +237,7 @@ async function main(){
     d=await r.json();
   }catch(e){ app.innerHTML='<div class="msg">결과를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>'; return; }
   if(!d||d.오류||d.message){ app.innerHTML='<div class="msg">'+E((d&&(d.오류||'리포트를 찾을 수 없어요.'))||'리포트를 찾을 수 없어요.')+'</div>'; return; }
-  const as=d.응시||[];
+  const as=d.응시||[]; d0={응시n:as.length};
   document.title=d.이름+' · 레벨테스트 결과 분석지 · 필탑학원';
   const c=CLS[d.반배정];
   const place=c?'<div class="place keep"><div class="cls'+(c.deep?' deep':'')+'">'+c.t+'</div><div class="d">'+E(c.d)+'</div><div class="m">'+COMMON+'</div></div>'

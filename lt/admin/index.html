@@ -563,7 +563,14 @@ function talkPoints(o){
   if(o.안풂) P.push('<b>못 푼 문항</b> — '+o.안풂+'개'+((o.설문||{}).시간==='모자랐어요'?' · 본인도 시간이 모자랐다고 답함':''));
   const s=o.설문||{}, h=o.r.인계||{};
   if(s.선행||h.선행) P.push('<b>선행</b> — 학생 응답 '+E(s.선행||'—')+(s.단원?' (마지막 '+E(s.단원)+')':'')+(h.선행?' · 중등부 기록 '+E(h.선행):''));
-  if(o.r.리포트코멘트) P.push('<b>선생님 한마디</b> — '+E(o.r.리포트코멘트));
+  /* 학생 자평 — 리포트의 차별점(1121): 확실했는데 틀림 · 고른 틀린 이유 · 학생이 쓴 말 */
+  const cw=o.items.filter(it=>!it.ok&&it.an.c==='확실'), rv=o.items.filter(it=>!it.ok&&it.rv);
+  const top=k=>{ const m={}; rv.filter(it=>it.rv.k===k&&it.rv.r).forEach(it=>m[it.rv.r]=(m[it.rv.r]||0)+1); const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; return e?'‘'+E(e[0])+'’ '+e[1]:''; };
+  const sp=[]; if(cw.length) sp.push('<span class="bad">확실했는데 틀림 '+cw.length+'문항('+cw.map(it=>it.q.번호).join('·')+'번)</span>');
+  if(top('모름')) sp.push('몰랐던 이유 '+top('모름')); if(top('실수')) sp.push('실수 '+top('실수'));
+  if(sp.length) P.push('<b>학생 자평</b> — '+sp.join(' · '));
+  else if(o.미확인) P.push('<b>학생 자평</b> — <span class="dim">틀린 이유 돌아보기를 안 마쳤어요</span>');
+  const ms=rv.filter(it=>it.rv.m).slice(0,2); if(ms.length) P.push('<b>학생이 쓴 말</b> — '+ms.map(it=>it.q.번호+'번 “'+E(it.rv.m)+'”').join(' · '));
   return P;
 }
 function rptBox(o){
@@ -576,8 +583,7 @@ function rptBox(o){
     +'<div class="callrow"><input type="text" id="cmemo" placeholder="통화 메모 (예: 화목토 원함, 12/1 전에 등록 예정)" value=""><button class="pri" id="csave">상담 기록 저장</button></div>'
     +(hist.length?'<div class="hist">'+hist.map(h=>'<div><span class="tag '+(CALLC[h.상태]||'t-dim')+'">'+E(h.상태)+'</span> <span class="dim">'+E(h.누가||'')+' · '+fmtT(h.언제)+'</span>'+(h.메모?' — '+E(h.메모):'')+'</div>').join('')+'</div>':'')
     +'<div class="rpt-h" style="margin-top:16px"><h3 style="margin:0">학부모 리포트</h3>'+(st[0]?'<span class="tag '+st[0]+'" title="'+E((r.리포트발송||{}).결과||'')+'">'+E(st[1])+'</span>':'')+'</div>'
-    +'<textarea id="rnote" rows="2" placeholder="선생님 한마디 — 리포트에 그대로 들어가요 (비워 두면 안 나와요)">'+E(r.리포트코멘트||'')+'</textarea>'
-    +'<div class="callrow"><button id="rnsave">한마디 저장</button><button id="rview">리포트 보기</button><button id="rcopy">링크 복사</button>'
+    +'<div class="callrow"><button id="rview">리포트 보기</button><button id="rcopy">링크 복사</button>'
     +'<button class="pri" id="rsend"'+(r.반배정?'':' disabled title="반배정을 먼저 정해 주세요"')+'>학부모에게 문자 보내기</button></div>'
     +((r.리포트발송||{}).결과&&!String(r.리포트발송.결과).startsWith('성공')&&!String(r.리포트발송.결과).startsWith('보내는')?'<div class="dim" style="margin-top:4px">마지막 결과: '+E(r.리포트발송.결과)+'</div>':'')
     +'</div>';
@@ -587,12 +593,10 @@ function wireRpt(o){
   sheet.querySelectorAll('[data-cs]').forEach(b=>b.onclick=()=>{ pick=b.dataset.cs; sheet.querySelectorAll('[data-cs]').forEach(x=>x.classList.toggle('on',x===b)); });
   $('csave').onclick=async()=>{ if(!pick){ toast('상담 결과를 먼저 골라 주세요'); return; }
     if(await call('staff_lt_call',{p_rid:r.id,p_state:pick,p_memo:$('cmemo').value},'상담 기록을 저장했어요')){ await load(); openCard(o.id); } };
-  $('rnsave').onclick=async()=>{ if(await call('staff_lt_report_note',{p_rid:r.id,p_note:$('rnote').value},'한마디를 저장했어요')){ r.리포트코멘트=$('rnote').value.trim()||null; } };
   const link=async()=>{ const d=await call('staff_lt_report_link',{p_rid:r.id}); if(d) r.리포트=true; return d&&d.주소; };
   $('rview').onclick=async()=>{ const w=window.open('about:blank','_blank'); const u=await link(); if(u&&w) w.location=u; else if(w) w.close(); };
   $('rcopy').onclick=async()=>{ const u=await link(); if(!u) return; try{ await navigator.clipboard.writeText(u); toast('리포트 링크를 복사했어요'); }catch(e){ prompt('리포트 링크',u); } };
   $('rsend').onclick=async()=>{ const b=$('rsend'); if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.className='sure'; b.textContent=(r.리포트발송&&String(r.리포트발송.결과||'').startsWith('성공')?'이미 보냈어요 · 다시 보낼까요?':'정말 보낼까요? 한 번 더'); return; }
-    if((r.리포트코멘트||'')!==$('rnote').value.trim()) await call('staff_lt_report_note',{p_rid:r.id,p_note:$('rnote').value});
     const d=await call('staff_lt_report_send',{p_rids:[r.id]},'문자를 보내요 (1~2분)'); if(d){ await load(); openCard(o.id); } };
 }
 async function sendAll(btn){
