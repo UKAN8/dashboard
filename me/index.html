@@ -1689,7 +1689,34 @@ function prefTile(){
 }
 function mountTasks(tok){
   Promise.allSettled([mountHW(tok),mountFix(tok),mountMyQ(tok)]).then(()=>{ tabSync(); prefTile(); });
-  mountWR(tok);
+  mountWR(tok); mountSM(tok);
+}
+/* (1121 유강) 셀프 모의테스트 — 다른 지역 기출(v2)로 혼자 보는 모의. 시험지 받기 → 50분 → 답 입력(/mock/?s=) → 틀린 문항 확인
+ *  → 개별자료(사다리 그대로·채움 없음). 과제 체크·이행률엔 안 들어간다(자율). DB = schema_v92 self_mock_list. 공개된 시험지가 없으면 카드 없음. */
+async function mountSM(tok){
+  const host=$('sm-host'); if(!host||!tok) return;
+  let d=null;
+  try{ const r=await sb.rpc('self_mock_list',{tok}); if(r.error||!r.data) return; d=r.data; }catch(e){ return; }
+  const L=d.시험지||[]; if(!L.length) return;
+  const murl=n=>`https://ukan8.github.io/dashboard/mock/?t=${encodeURIComponent(tok)}&s=${encodeURIComponent(n)}`;
+  const a=(u,t,strong)=>u?`<a class="n ${strong?'mid':'dim'}" href="${E(u)}" target="_blank" style="text-decoration:none;${strong?'font-weight:600;':''}margin-left:10px">${t}</a>`:'';
+  const row=x=>{
+    const s=x.제출, j=s&&s.자료;
+    let st, act;
+    if(!s){ st=`<span class="dim"> ${x.문항수}문항 · 50분</span>`; act=a(x.시험지url,'시험지')+a(murl(x.시험지명),'답 입력 →',true); }
+    else if((s.복기||[]).length){ st=`<span class="dim"> ${E(s.점수)}/${E(s.만점)}점 · 틀린 문항 확인 남음</span>`; act=a(murl(x.시험지명),'이어서 →',true); }
+    else {
+      st=`<span class="dim"> ${E(s.점수)}/${E(s.만점)}점</span>`;
+      act=a(s.해설url,'해설');
+      if(j&&j.상태==='완료'&&(j.문제url||j.전체url)) act+=a(j.문제url||j.전체url,'개별자료',true)+a(j.해설url,'자료 해설');
+      else if(j&&j.상태==='실패') act+=`<span class="dim" style="margin-left:10px">자료 제작 멈춤</span>`;
+      else act+=`<span class="dim" style="margin-left:10px">자료 만드는 중…</span>`;
+    }
+    return `<div class="row" style="flex-wrap:wrap;gap:4px 0;padding:6px 0"><span class="t"><b>${E(x.제목)}</b>${st}</span><span>${act}</span></div>`;
+  };
+  host.innerHTML=`<h2>셀프 모의테스트<small>혼자 50분 풀고 답 입력 → 틀린 유형으로 내 개별자료</small></h2>`
+    +`<div class="card"><div class="dim" style="font-size:12.5px;margin-bottom:6px">시험지를 받아 시간 재고 풀어요 → 답 입력 → 틀린 문항 확인까지 하면 해설과 개별자료가 열려요. 과제 체크에는 안 들어가요.</div>`
+    +L.map(row).join('')+`</div>`;
 }
 /* (1115 P13 유강 "본인이 원하는 수준의 오답을 출제 · 다 풀면 결과 체크") 오답 트레이닝 — 과제 탭 맨 아래(자율: 마감·알림·뱃지 없음).
  *  화면·원장 계산 = _wr/wr_panel.js(학생 자료실과 공용). DB = schema_v80 wr_get/wr_make/wr_mark/wr_preset_*.
@@ -1710,7 +1737,7 @@ async function mountWR(tok){
     onLoad:S=>{ try{ WR.record($('wr-rec'),S); }catch(e){} }
   });
 }
-const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div id="wr-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
+const TASK_TAB=`<div id="fix-host"></div><div id="hw-host"></div><div id="myq-host"></div><div id="sm-host"></div><div id="wr-host"></div><div class="none" id="hw-empty" style="display:none">지금 열려 있는 과제가 없어요. 수업에서 과제를 받으면 여기에 체크 카드가 생겨요.</div>`;
 
 /* ── 화면 ── */
 const MINIMAL=true;   // (0902 유강) 자기평가 카드만. 0906 정리: 하위 전체 화면 코드는 07_보관/콘솔정리_0906/portal.html 에 있다
