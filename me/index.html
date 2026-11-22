@@ -562,6 +562,11 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 .sw-row .st.good{background:rgba(126,224,163,.14);color:var(--good);font-weight:600}
 .sw-row .st.bad{background:rgba(255,92,138,.16);color:#ffb3c8;font-weight:600}
 .sw-row .st.mid{color:var(--mid)}
+.sw-row .st.nw{background:rgba(120,180,255,.2);color:#d6e8ff;font-weight:700}
+.sw .sw-h .sw-new{font-size:12px;font-weight:700;padding:2px 9px;border-radius:9px;background:rgba(120,180,255,.2);color:#d6e8ff;margin-left:6px}
+#swsheet .sw-redo{margin-top:14px;border:1px solid rgba(255,190,90,.5);background:rgba(255,190,90,.08);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;display:flex;gap:10px;align-items:center}
+#swsheet .sw-redo span{flex:1}
+#swsheet .sw-redo button{border:1px solid rgba(255,190,90,.7);background:rgba(255,190,90,.16);color:var(--tx);border-radius:9px;padding:8px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 /* (1120) 모의테스트 시험지 사진 올리기 — P15 1단계 */
 .card.mp{border-color:rgba(255,200,120,.5);background:rgba(255,200,120,.06)}
 .mp-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -2416,6 +2421,7 @@ const SW_ST={작성:['올리다 멈춤','mid'],제출:['채점 대기','na'],채
 const SW_CODE={형식:'요구한 형식',검토:'조건 확인',생략:'과정 생략',방향:'풀이 방향',계산:'계산',미완:'답 미완성'};
 const swN=v=>{ const n=Number(v); return Number.isFinite(n)?String(Math.round(n*10)/10):'-'; };
 const swLast=it=>{ const a=it.제출||[]; return a.length?a[a.length-1]:null; };
+const swFull=(it,b)=>!!(b&&b.결과&&Number(b.결과.총점)>=Number(it.배점));   // (1122) 만점이면 고쳐 쓰기 안 띄운다
 /* ── (1120 유강) 모의테스트 시험지 사진 올리기 — P15 1단계 · schema_v89 ─────────────
  * "고1A 학생들 모의 시험지 다 찍어 놨어, 업로드 링크 보내서 수집해 보자"
  * 오늘 탭 카드: 대상 반(mock_photo_cfg 'bans')·최근 n일 안에 내가 답을 낸 회차마다 하나. 시험 직후 교실에서 찍은 사진을 골라 올린다.
@@ -2499,12 +2505,17 @@ function drawSW(){
   if(!sets.length){ host.innerHTML=''; return; }
   host.innerHTML=sets.map((s,si)=>{
     const its=s.문항, done=its.filter(it=>{ const l=swLast(it); return l&&l.상태==='공개'; }).length;
-    return `<div class="card sw"><div class="sw-h"><b>${E(s.제목)}</b><span class="dim">${done}/${its.length} 채점 완료</span></div>`
+    const nw=its.filter(it=>{ const l=swLast(it); return l&&l.새결과; }).length;   // (1122) 공개됐는데 아직 안 연 결과
+    return `<div class="card sw"><div class="sw-h"><b>${E(s.제목)}${nw?`<span class="sw-new">새 결과 ${nw}</span>`:''}</b><span class="dim">${done}/${its.length} 채점 완료</span></div>`
       +(s.안내?`<div class="sw-hint">${E(s.안내)}</div>`:'')
-      +its.map((it,ii)=>{ const l=swLast(it), st=l?SW_ST[l.상태]:null;
+      +its.map((it,ii)=>{ const l=swLast(it); let st=l?SW_ST[l.상태]:null;
           const sc=l&&l.상태==='공개'&&l.결과?` · ${swN(l.결과.총점)}/${swN(it.배점)}`:'';
+          let lab=st?st[0]+(l.회차>1?' · 고쳐 쓰기':''):'풀어 보기';
+          // (1122) 새 결과 → 눈에 띄게, 감점 있고 고쳐 쓰기 남았으면 그렇게 알린다
+          if(l&&l.상태==='공개'&&l.새결과){ st=[0,'nw']; lab='새 결과'; }
+          else if(l&&l.상태==='공개'&&l.회차<2&&!swFull(it,l)){ st=[0,'mid']; lab='고쳐 쓰기 가능'; }
           return `<button type="button" class="sw-row" data-sw="${si}:${ii}"><span class="l">${E(it.라벨)}</span><span class="p">${swN(it.배점)}점</span>`
-            +`<span class="st ${st?st[1]:'new'}">${st?st[0]+(l.회차>1?' · 고쳐 쓰기':'')+sc:'풀어 보기'}</span></button>`; }).join('')
+            +`<span class="st ${st?st[1]:'new'}">${lab+sc}</span></button>`; }).join('')
       +`</div>`;
   }).join('');
   host.querySelectorAll('[data-sw]').forEach(b=>b.onclick=()=>{ const [si,ii]=b.dataset.sw.split(':').map(Number); swSheet(sets[si].문항[ii]); });
@@ -2557,9 +2568,11 @@ function swSheet(it){
   d.addEventListener('click',ev=>{ if(ev.target===d) close(); });
   const paint=()=>{
     const subs=it.제출||[], l=swLast(it);
-    const canStart=!l||l.상태==='작성'||l.상태==='재촬영'||(l.상태==='공개'&&l.회차<2);
+    const canStart=!l||l.상태==='작성'||l.상태==='재촬영'||(l.상태==='공개'&&l.회차<2&&!swFull(it,l));
     const pub=subs.filter(b=>b.상태==='공개'&&b.결과).slice().reverse();
-    let body=pub.map(b=>swResult(it,b)).join('');
+    let body='';
+    if(canStart&&l&&l.상태==='공개') body+=`<div class="sw-redo"><span>감점된 줄을 고쳐 써서 한 번 더 낼 수 있어요. 모범답안과 비교해 빠진 줄을 채워 보세요.</span><button type="button" data-swredo>고쳐 쓰기 ↓</button></div>`;
+    body+=pub.map(b=>swResult(it,b)).join('');
     if(l&&l.상태==='재촬영') body+=`<div class="sw-warn">${IC.cam}<span>${E(l.재촬영사유||'사진이 잘 안 보여요. 다시 찍어 주세요.')}</span></div>`;
     if(l&&['제출','채점중','확인대기'].includes(l.상태)) body+=`<div class="sw-wait">${l.회차>1?'고쳐 쓴 풀이를':'풀이를'} 받았어요. AI가 먼저 채점하고 조교쌤이 확인하면 결과가 나와요.<small>보통 그날 밤이나 다음 날 나와요.</small></div>`;
     if(canStart) body+=swUpload(l);
@@ -2572,7 +2585,9 @@ function swSheet(it){
     const fa=d.querySelector('[data-swans]');
     if(fa) fa.onclick=()=>{ const box=d.querySelector('#sw-ans'), o=!box.classList.contains('open'); box.classList.toggle('open',o); fa.querySelector('i').textContent=o?'접기 ⌃':'펼치기 ⌄'; };
     if(canStart) swWire(d,it,paint);
+    const rd=d.querySelector('[data-swredo]'); if(rd) rd.onclick=()=>{ const u=d.querySelector('.sw-up'); if(u) u.scrollIntoView({behavior:'smooth',block:'start'}); };
     pub.forEach(b=>{ if(b.sid) Promise.resolve(sb.rpc('sw_seen',{tok:SW.tok,sid:b.sid})).catch(()=>{}); });
+    if(pub.some(b=>b.새결과)){ pub.forEach(b=>{ b.새결과=false; }); drawSW(); }   // (1122) 열어 봤으면 카드의 '새 결과' 배지를 바로 내린다
   };
   Promise.race([swKatex(),new Promise(r=>setTimeout(r,5000))]).then(paint);
 }
