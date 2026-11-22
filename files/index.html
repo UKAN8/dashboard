@@ -70,7 +70,8 @@ h3.wr-sec{font-size:14px;margin:22px 0 8px;color:var(--tx2)} h3.wr-sec small{fon
   <span class="ctl" id="ctl-lib" hidden><select id="lban"></select>
     <label><input type="checkbox" data-lk="써킷" checked> 써킷</label>
     <label><input type="checkbox" data-lk="교재" checked> 교재</label>
-    <label><input type="checkbox" data-lk="기출" checked> 기출</label></span>
+    <label><input type="checkbox" data-lk="기출" checked> 기출</label>
+    <label><input type="checkbox" data-lk="셀프 모의" checked> 셀프 모의</label></span>
   <span class="ctl" id="ctl-wr" hidden>최근 <select id="wdays"><option value="7">7일</option><option value="30" selected>30일</option><option value="90">90일</option></select></span>
   <button class="pv" id="reload" title="다시 읽기">↻</button>
   <span class="dim" id="hint">문제 = 문제~빠른정답 · 해설 = 빠른정답~해설 · 링크는 1시간 유효</span>
@@ -719,6 +720,8 @@ async function getLib() {
     const r = await fetch(LIB_BASE + 'lib.json?t=' + Date.now());
     if (!r.ok) throw new Error('lib.json ' + r.status);
     LIB = await r.json();
+    // (1121 유강) 셀프 모의테스트 시험지·해설 — mathis-lib selfmock/list.json(시험지를 올릴 때 같이 고친다). 못 읽어도 나머지는 그대로
+    try { const r2 = await fetch(LIB_BASE + 'selfmock/list.json?t=' + Date.now()); if (r2.ok) LIB['셀프'] = await r2.json(); } catch (e) {}
   }
   return LIB;
 }
@@ -748,6 +751,10 @@ function libRows(ban) {
     const files = [f('문제', e['시험']), f('해설', e['해설'])].filter(Boolean);
     if (files.length) out.push({ 반: s['반'] || '', 날짜: s['날짜'] || e['최근'] || '', 종류: '기출', 자료: [e['학교'], e['학년'], e['학년도'], e['종류']].filter(Boolean).join(' '), 단원: e['과목'] || '', 문항: '', files });
   }
+  for (const e of (L['셀프'] || [])) if (!ban || ban.startsWith(e['학년'] || '고1')) {   // (1121) 셀프 모의 = 학년 전체(포털 카드와 같은 목록)
+    const files = [f('문제', e['시험지']), f('해설', e['해설'])].filter(Boolean);
+    if (files.length) out.push({ 반: (e['학년'] || '고1') + ' 전체', 날짜: e['날짜'] || '', 종류: '셀프 모의', 자료: e['제목'] || e['학교'] || '', 단원: e['과목'] || '', 문항: e['문항'] || '', files });
+  }
   return out;
 }
 
@@ -767,11 +774,12 @@ async function stuRows(s) {
     const cnt = {}; for (const x of (r['학생'] || [])) if (Array.isArray(x)) cnt[x[0]] = x[1];
     for (const u of (r['업로드'] || [])) {
       if (u['이름'] !== s['이름']) continue;
-      const nm = p['시험지명'] || '';
-      const kind = j['종류'] === '개별과제' ? '개별과제' : j['종류'] === '커스텀트레이닝' ? '커스텀 트레이닝'
+      const self = j['종류'] === '커스텀트레이닝' && p['모드'] === '셀프모의';   // (1121) 셀프 모의 개별자료 — 이름 붙여 따로
+      const nm = self ? ((p['셀프'] || {})['제목'] || (p['셀프'] || {})['시험지명'] || '셀프 모의') : (p['시험지명'] || '');
+      const kind = self ? '셀프 모의 자료' : j['종류'] === '개별과제' ? '개별과제' : j['종류'] === '커스텀트레이닝' ? '커스텀 트레이닝'
         : /리플레이/.test(nm) ? '리플레이 트레이닝' : '퍼스널 트레이닝';
       const day = p['날짜'] || String(j['완료시각'] || j['요청시각'] || '').slice(0, 10);
-      const dk = kind === '개별과제' ? 'J' + j.id : kind + '|' + day + '|' + nm;   // 다시 구운 잡은 최신(id 큰 것) 하나만
+      const dk = (kind === '개별과제' || self) ? 'J' + j.id : kind + '|' + day + '|' + nm;   // 다시 구운 잡은 최신(id 큰 것) 하나만
       if (seen[dk]) continue; seen[dk] = 1;
       const files = [];
       const add = (k, key, url) => { if (key || url) files.push({ k, key: key || null, url: key ? null : (url || null) }); };
@@ -897,7 +905,7 @@ function fillStu(id) {
   $('#sstu').innerHTML = '<option value="">학생 고르기</option>' + list.map(s => `<option value="${E(s['학생ID'])}">${E(s['이름'])}${s['학교'] ? ' · ' + E(s['학교']) : ''}</option>`).join('');
   if (id) $('#sstu').value = id;
   if ($('#sstu').value) showStu($('#sstu').value);
-  else $('#left').innerHTML = '<div class="msg">반과 학생을 고르면 그 학생 포털에 있는 자료가 전부 나온다<br>(개별과제 판 · 퍼스널/리플레이/커스텀 트레이닝 · 그 반 써킷 · 교재 · 기출)</div>';
+  else $('#left').innerHTML = '<div class="msg">반과 학생을 고르면 그 학생 포털에 있는 자료가 전부 나온다<br>(개별과제 판 · 퍼스널/리플레이/커스텀 트레이닝 · 셀프 모의 자료 · 그 반 써킷 · 교재 · 기출 · 셀프 모의 시험지)</div>';
 }
 async function showStu(id) {
   const s = (STU || []).find(x => x['학생ID'] === id); if (!s) return;
