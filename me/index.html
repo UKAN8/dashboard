@@ -513,6 +513,8 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 .mkr .ar{font-style:normal;color:var(--dim);transition:transform .15s}.mkr.on .ar{transform:rotate(180deg)}
 .mkr-ch{display:flex;gap:4px}.mkr-ch i{font-style:normal;font-size:11px;padding:2px 6px;border-radius:7px}
 .mkd{padding:12px 4px 8px}
+.mkhw-t{font-size:12px;padding:2px 8px;border-radius:7px;background:rgba(126,180,240,.14);color:#9cc8f5}
+.mkhw{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mkhw a{font-size:13px;padding:6px 10px;border-radius:9px;background:var(--raised);border:1px solid var(--bd);color:var(--tx);text-decoration:none}
 .mkd-h{font-size:14px;margin-bottom:6px}
 .mkd-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .mkd-k>div{background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
@@ -1893,7 +1895,7 @@ function render(d){
   // ③ 수업 자료 (0927) — 정적 목록(mathis-lib/lib.json)을 읽는다. 내 반 것만, 수업일 순 한 목록(유강 0928).
   S.자료.push(`<h2>수업 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`, P.report);
   $('app').innerHTML=P.head+tabsHTML(S)+P.foot;
-  wireTabs(); mountTrend(tok,P._rp,finalCfg(String(d.학생.반||'').trim()));
+  wireTabs(); mountTrend(tok,P._rp,finalCfg(String(d.학생.반||'').trim()),String(d.학생.반||'').trim());
   wireReport(tok);
   mountLib($('lib-host'), ban, school);
   mountTasks(tok); mountSW(tok); mountMP(tok);
@@ -1914,7 +1916,7 @@ function render(d){
  * 설정 = _portal/final_mode.json, CORE 키 = _core/bank_core.json — 둘 다 build_portal.py 가 끼워 넣는다.
  * 미리보기: 주소에 &final=1 (시작 전에도 기말 모드), &final=0 (강제로 끔), &today=YYYY-MM-DD.
  */
-const FINAL={"학기": "2학기 기말", "추정등급_최소회차": 3, "반": {"고1T": {"시작": "2026-10-17", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-17", "2026-10-18"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-24", "2026-10-25", "2026-10-31"], "메모": {"2026-10-31": "역함수·합성함수"}}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-01", "2026-11-07", "2026-11-08"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-14", "2026-11-15"]}], "모의": ["2026-11-21", "2026-11-22", "2026-11-28", "2026-11-29", "2026-12-05", "2026-12-06"]}, "고1A": {"같음": "고1S"}, "고1S": {"시작": "2026-10-19", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-19", "2026-10-21", "2026-10-23"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-26", "2026-10-28", "2026-10-30", "2026-11-02"]}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-04", "2026-11-06", "2026-11-09"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-11", "2026-11-13"]}], "모의": ["2026-11-16", "2026-11-18", "2026-11-20", "2026-11-23", "2026-11-25", "2026-11-27", "2026-11-30", "2026-12-02", "2026-12-04", "2026-12-07"]}, "고2A": {"시작": "2026-10-20", "과목": "미적분Ⅰ", "core": "core_c1", "진도": [{"단원": "05 도함수의 활용(2)", "core": "m05", "날짜": ["2026-10-20", "2026-10-22"]}, {"단원": "06 도함수의 활용(3)", "core": "m06", "날짜": ["2026-10-24", "2026-10-27", "2026-10-29"]}, {"단원": "07 부정적분", "core": "m07", "날짜": ["2026-10-31"]}, {"단원": "08 정적분", "core": "m08", "날짜": ["2026-11-03", "2026-11-05"]}, {"단원": "09 정적분의 활용", "core": "m09", "날짜": ["2026-11-07", "2026-11-10"]}], "모의": ["2026-11-12", "2026-11-14", "2026-11-17", "2026-11-19", "2026-11-21", "2026-11-24", "2026-11-26", "2026-11-28", "2026-12-01", "2026-12-03", "2026-12-05", "2026-12-08"]}}, "학교": {"태성고": {"기말시작": "2026-12-09", "기말끝": "2026-12-16", "수학": "2026-12-15", "학년": {"1": {"수학": "2026-12-15"}}}, "용인고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": "2026-12-10", "학년": {"1": {"수학": "2026-12-10"}, "2": {"수학": "2026-12-10"}}}, "진덕고": {"기말시작": "2026-12-10", "기말끝": "2026-12-15", "수학": null}, "삼계고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": null}, "고림고": {"기말시작": "2026-12-14", "기말끝": "2026-12-18", "수학": null}, "효양고": {"기말시작": null, "기말끝": null, "수학": null}, "포곡고": {"기말시작": "2026-12-10", "기말끝": null, "수학": null}}};
+const FINAL={"학기": "2학기 기말", "추정등급_최소회차": 3, "반": {"고1T": {"시작": "2026-10-17", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-17", "2026-10-18"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-24", "2026-10-25", "2026-10-31"], "메모": {"2026-10-31": "역함수·합성함수"}}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-01", "2026-11-07", "2026-11-08"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-14", "2026-11-15"]}], "모의": ["2026-11-21", "2026-11-22", "2026-11-28", "2026-11-29", "2026-12-05", "2026-12-06"]}, "고1A": {"같음": "고1S"}, "고1S": {"시작": "2026-10-19", "과목": "공통수학2", "core": "core_m2", "진도": [{"단원": "07 명제", "core": "07", "날짜": ["2026-10-19", "2026-10-21", "2026-10-23"]}, {"단원": "08 함수", "core": "08", "날짜": ["2026-10-26", "2026-10-28", "2026-10-30", "2026-11-02"]}, {"단원": "09 유리함수", "core": "09", "날짜": ["2026-11-04", "2026-11-06", "2026-11-09"]}, {"단원": "10 무리함수", "core": "10", "날짜": ["2026-11-11", "2026-11-13"]}], "모의": ["2026-11-16", "2026-11-18", "2026-11-20", "2026-11-23", "2026-11-25", "2026-11-27", "2026-11-30", "2026-12-02", "2026-12-04", "2026-12-07"]}, "고2A": {"시작": "2026-10-20", "과목": "미적분Ⅰ", "core": "core_c1", "진도": [{"단원": "05 도함수의 활용(2)", "core": "m05", "날짜": ["2026-10-20", "2026-10-22"]}, {"단원": "06 도함수의 활용(3)", "core": "m06", "날짜": ["2026-10-24", "2026-10-27", "2026-10-29"]}, {"단원": "07 부정적분", "core": "m07", "날짜": ["2026-10-31"]}, {"단원": "08 정적분", "core": "m08", "날짜": ["2026-11-03", "2026-11-05"]}, {"단원": "09 정적분의 활용", "core": "m09", "날짜": ["2026-11-07", "2026-11-10"]}], "모의": ["2026-11-12", "2026-11-14", "2026-11-17", "2026-11-19", "2026-11-21", "2026-11-24", "2026-11-26", "2026-11-28", "2026-12-01", "2026-12-03", "2026-12-05", "2026-12-08"]}}, "학교": {"태성고": {"기말시작": "2026-12-09", "기말끝": "2026-12-16", "수학": "2026-12-15", "학년": {"1": {"수학": "2026-12-15"}}}, "용인고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": "2026-12-10", "학년": {"1": {"수학": "2026-12-10"}, "2": {"수학": "2026-12-10"}}}, "진덕고": {"기말시작": "2026-12-10", "기말끝": "2026-12-15", "수학": null}, "삼계고": {"기말시작": "2026-12-10", "기말끝": "2026-12-16", "수학": null}, "고림고": {"기말시작": "2026-12-14", "기말끝": "2026-12-18", "수학": null}, "효양고": {"기말시작": null, "기말끝": null, "수학": null}, "포곡고": {"기말시작": "2026-12-10", "기말끝": null, "수학": null}}, "고1모의": [{"시험지명": "초당고_고1_2025_2_기말", "학교": "초당고", "회차": 1, "날짜": {"고1S": "2026-11-16", "고1A": "2026-11-16", "고1T": "2026-11-21"}}, {"시험지명": "신갈고_고1_2025_2_기말", "학교": "신갈고", "회차": 2, "날짜": {"고1S": "2026-11-18", "고1A": "2026-11-18"}}, {"시험지명": "상현고_고1_2025_2_기말", "학교": "상현고", "회차": 3, "날짜": {"고1S": "2026-11-20", "고1A": "2026-11-20", "고1T": "2026-11-22"}}, {"시험지명": "흥덕고_고1_2025_2_기말", "학교": "흥덕고", "회차": 4, "날짜": {"고1S": "2026-11-23", "고1A": "2026-11-23", "고1T": "2026-11-28"}}, {"시험지명": "용인백현고_고1_2025_2_기말", "학교": "용인백현고", "회차": 5, "날짜": {"고1S": "2026-11-25", "고1A": "2026-11-25", "고1T": "2026-11-29"}}, {"시험지명": "청덕고_고1_2025_2_기말", "학교": "청덕고", "회차": 6, "날짜": {"고1S": "2026-11-27", "고1A": "2026-11-27"}}]};
 const CORE_KEYS={"_need": {"C": 2, "T": 1}, "_gap": 2, "core_m2": {"units": [{"code": "07", "keys": [{"k": "C07-01", "t": "명제와 조건"}, {"k": "T07-01", "t": "명제와 조건의 부정"}, {"k": "T07-02", "t": "진리집합과 명제의 참·거짓"}, {"k": "T07-03", "t": "거짓인 명제의 반례"}, {"k": "C07-02", "t": "명제의 참·거짓과 역·대우"}, {"k": "T07-04", "t": "참이 되도록 하는 미지수"}, {"k": "T07-05", "t": "'모든'과 '어떤'이 있는 명제"}, {"k": "T07-06", "t": "명제의 역과 대우"}, {"k": "T07-07", "t": "대우가 참이 되게 하는 미지수"}, {"k": "T07-08", "t": "삼단논법과 명제의 추론"}, {"k": "C07-03", "t": "충분조건과 필요조건"}, {"k": "T07-09", "t": "충분·필요·필요충분조건"}, {"k": "T07-10", "t": "조건이 되게 하는 미지수와 연산"}, {"k": "C07-04", "t": "명제의 증명과 절대부등식"}, {"k": "T07-11", "t": "대우법과 귀류법"}, {"k": "T07-12", "t": "절대부등식의 증명"}, {"k": "T07-13", "t": "산술·기하평균 : 전개와 변형"}, {"k": "T07-14", "t": "산술·기하평균 : 합·곱이 일정"}, {"k": "T07-15", "t": "코시-슈바르츠 부등식"}]}, {"code": "08", "keys": [{"k": "C08-01", "t": "함수의 뜻"}, {"k": "T08-01", "t": "함수의 뜻과 정의역·치역"}, {"k": "T08-02", "t": "함숫값 구하기"}, {"k": "T08-03", "t": "서로 같은 함수"}, {"k": "C08-02", "t": "여러 가지 함수"}, {"k": "T08-04", "t": "일대일함수와 일대일대응"}, {"k": "T08-05", "t": "항등함수와 상수함수"}, {"k": "T08-06", "t": "함수의 개수"}, {"k": "C08-03", "t": "합성함수"}, {"k": "T08-07", "t": "합성함수 구하기"}, {"k": "T08-08", "t": "합성함수의 규칙성과 미정계수"}, {"k": "T08-09", "t": "그래프를 이용한 합성함수"}, {"k": "C08-04", "t": "역함수"}, {"k": "T08-10", "t": "역함수의 함숫값과 존재 조건"}, {"k": "T08-11", "t": "역함수 구하기"}, {"k": "C08-05", "t": "역함수의 성질과 그래프"}, {"k": "T08-12", "t": "합성함수와 역함수"}, {"k": "T08-13", "t": "역함수의 성질"}, {"k": "T08-14", "t": "역함수 그래프의 성질"}, {"k": "T08-15", "t": "절댓값 기호를 포함한 그래프"}]}, {"code": "09", "keys": [{"k": "C09-01", "t": "유리식"}, {"k": "T09-01", "t": "유리식의 사칙연산"}, {"k": "T09-02", "t": "부분분수"}, {"k": "T09-03", "t": "유리식의 값 구하기"}, {"k": "C09-02", "t": "유리함수의 그래프"}, {"k": "T09-04", "t": "정의역과 치역"}, {"k": "T09-05", "t": "그래프의 평행이동·대칭이동"}, {"k": "T09-06", "t": "점근선과 그래프의 대칭성"}, {"k": "C09-03", "t": "유리함수의 그래프의 해석"}, {"k": "T09-07", "t": "그래프가 지나는 사분면"}, {"k": "T09-08", "t": "개형에 따른 미정계수"}, {"k": "T09-09", "t": "그래프의 성질"}, {"k": "T09-10", "t": "최댓값과 최솟값"}, {"k": "C09-04", "t": "유리함수의 그래프의 활용"}, {"k": "T09-11", "t": "그래프와 직선의 위치 관계"}, {"k": "T09-12", "t": "그래프의 활용"}, {"k": "T09-13", "t": "합성함수의 규칙성"}, {"k": "T09-14", "t": "역함수"}]}, {"code": "10", "keys": [{"k": "C10-01", "t": "무리식"}, {"k": "T10-01", "t": "무리식이 실수가 되는 조건"}, {"k": "T10-02", "t": "무리식의 사칙연산"}, {"k": "T10-03", "t": "분모의 유리화"}, {"k": "C10-02", "t": "무리함수의 그래프"}, {"k": "T10-04", "t": "정의역과 치역"}, {"k": "T10-05", "t": "그래프의 평행이동·대칭이동"}, {"k": "T10-06", "t": "그래프가 지나는 사분면"}, {"k": "T10-07", "t": "개형에 따른 미정계수"}, {"k": "T10-08", "t": "그래프의 성질"}, {"k": "T10-09", "t": "최댓값과 최솟값"}, {"k": "C10-03", "t": "무리함수의 그래프의 활용"}, {"k": "T10-10", "t": "그래프와 직선의 위치 관계"}, {"k": "T10-11", "t": "역함수"}, {"k": "T10-12", "t": "그래프의 활용"}]}]}, "core_c1": {"units": [{"code": "m05", "keys": [{"k": "Cm05-01", "t": "함수의 증가와 감소"}, {"k": "Tm05-01", "t": "함수의 증가와 감소"}, {"k": "Tm05-02", "t": "실수 전체에서 증가 또는 감소할 조건"}, {"k": "Tm05-03", "t": "주어진 구간에서 증가 또는 감소할 조건"}, {"k": "Cm05-02", "t": "함수의 극대와 극소"}, {"k": "Tm05-04", "t": "함수의 극대와 극소"}, {"k": "Tm05-05", "t": "극대와 극소를 이용한 미정계수의 결정"}, {"k": "Tm05-06", "t": "극대와 극소의 활용"}, {"k": "Tm05-07", "t": "극대와 극소를 이용한 계수의 부호 결정"}, {"k": "Cm05-03", "t": "도함수의 그래프와 함수의 그래프"}, {"k": "Tm05-08", "t": "도함수의 그래프를 이용한 극대와 극소"}, {"k": "Tm05-09", "t": "도함수의 그래프와 함수의 그래프 해석"}, {"k": "Tm05-10", "t": "도함수의 그래프로 함수의 그래프 그리기"}, {"k": "Cm05-04", "t": "극값을 가질 조건"}, {"k": "Tm05-11", "t": "삼차함수가 극값을 가질 조건"}, {"k": "Tm05-12", "t": "삼차함수가 극값을 갖지 않을 조건"}, {"k": "Tm05-13", "t": "삼차함수가 주어진 구간에서 극값을 가질 조건"}, {"k": "Tm05-14", "t": "사차함수의 극값의 조건"}, {"k": "Cm05-05", "t": "함수의 최대와 최소"}, {"k": "Tm05-15", "t": "함수의 최대와 최소"}, {"k": "Tm05-16", "t": "최대와 최소를 이용한 미정계수의 결정"}, {"k": "Tm05-17", "t": "최대와 최소의 활용"}]}, {"code": "m06", "keys": [{"k": "Cm06-01", "t": "방정식에의 활용"}, {"k": "Tm06-01", "t": "방정식의 실근의 개수"}, {"k": "Tm06-02", "t": "방정식의 실근의 부호"}, {"k": "Tm06-03", "t": "방정식 <eq>f(x)=k</eq>의 실근과 미정계수"}, {"k": "Tm06-04", "t": "두 그래프의 교점의 개수"}, {"k": "Tm06-05", "t": "곡선에 그은 접선의 개수"}, {"k": "Cm06-02", "t": "부등식에의 활용"}, {"k": "Tm06-06", "t": "부등식이 성립할 조건"}, {"k": "Tm06-07", "t": "주어진 구간에서 부등식이 성립할 조건"}, {"k": "Tm06-08", "t": "두 함수의 대소 관계와 부등식"}, {"k": "Cm06-03", "t": "속도와 가속도"}, {"k": "Tm06-09", "t": "속도와 가속도"}, {"k": "Tm06-10", "t": "두 점의 속도가 같아지는 시각"}, {"k": "Tm06-11", "t": "운동 방향을 바꿀 조건"}, {"k": "Tm06-12", "t": "제동 거리와 연직 운동"}, {"k": "Tm06-13", "t": "속도 그래프의 해석"}, {"k": "Tm06-14", "t": "위치 그래프의 해석"}, {"k": "Cm06-04", "t": "시각에 대한 변화율"}, {"k": "Tm06-15", "t": "길이와 넓이의 변화율"}, {"k": "Tm06-16", "t": "부피의 변화율"}]}, {"code": "m07", "keys": [{"k": "Cm07-01", "t": "부정적분의 뜻"}, {"k": "Tm07-01", "t": "부정적분의 정의"}, {"k": "Tm07-02", "t": "부정적분과 미분의 관계"}, {"k": "Tm07-03", "t": "관계식을 미분하여 함수 구하기"}, {"k": "Cm07-02", "t": "부정적분의 계산과 활용"}, {"k": "Tm07-04", "t": "부정적분의 계산"}, {"k": "Tm07-05", "t": "도함수가 주어질 때 함수 구하기"}, {"k": "Tm07-06", "t": "함수와 그 부정적분의 관계식"}, {"k": "Tm07-07", "t": "접선의 기울기와 부정적분"}, {"k": "Tm07-08", "t": "함수의 연속과 부정적분"}, {"k": "Tm07-09", "t": "미분계수와 부정적분"}, {"k": "Tm07-10", "t": "항등식이 주어질 때 함수 구하기"}, {"k": "Tm07-11", "t": "극값과 부정적분"}]}, {"code": "m08", "keys": [{"k": "Cm08-01", "t": "정적분의 뜻"}, {"k": "Tm08-01", "t": "미적분의 기본 정리"}, {"k": "Cm08-02", "t": "정적분의 성질"}, {"k": "Tm08-02", "t": "적분 구간·피적분함수가 같은 경우"}, {"k": "Tm08-03", "t": "구간에 따라 다르게 정의된 함수"}, {"k": "Tm08-04", "t": "절댓값 기호를 포함한 함수"}, {"k": "Tm08-05", "t": "우함수·기함수의 정적분"}, {"k": "Tm08-06", "t": "주기함수의 정적분"}, {"k": "Cm08-03", "t": "정적분으로 정의된 함수"}, {"k": "Tm08-07", "t": "적분 구간이 상수인 등식"}, {"k": "Tm08-08", "t": "적분 구간에 변수가 있는 등식"}, {"k": "Tm08-09", "t": "극대·극소"}, {"k": "Tm08-10", "t": "최대·최소"}, {"k": "Tm08-11", "t": "그래프"}, {"k": "Tm08-12", "t": "극한"}]}, {"code": "m09", "keys": [{"k": "Cm09-01", "t": "넓이"}, {"k": "Tm09-01", "t": "곡선과 <eq>x</eq>축 사이의 넓이"}, {"k": "Tm09-02", "t": "곡선과 직선 사이의 넓이"}, {"k": "Tm09-03", "t": "두 곡선 사이의 넓이"}, {"k": "Tm09-04", "t": "절댓값 기호를 포함한 함수와 넓이"}, {"k": "Tm09-05", "t": "곡선과 접선으로 둘러싸인 넓이"}, {"k": "Cm09-02", "t": "넓이의 활용"}, {"k": "Tm09-06", "t": "두 도형의 넓이가 같을 조건"}, {"k": "Tm09-07", "t": "넓이의 최솟값"}, {"k": "Tm09-08", "t": "역함수와 넓이"}, {"k": "Cm09-03", "t": "속도와 거리"}, {"k": "Tm09-09", "t": "위치의 변화량과 움직인 거리"}, {"k": "Tm09-10", "t": "그래프에서의 위치와 움직인 거리"}]}]}};
 const QP=new URLSearchParams(location.search);
 const dn=s=>{const[y,m,d]=String(s).slice(0,10).split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5);};
@@ -2171,7 +2173,7 @@ function renderFinal(d,parts){
   S.자료.push(`<h2>기말 자료</h2><div class="card" id="lib-host"><div class="none">자료 목록을 불러오는 중…</div></div>`,
     foldBtn('fx-old-lib','지난 수업 자료'), parts.report);
   $('app').innerHTML=parts.head+tabsHTML(S)+parts.foot;
-  wireTabs(); mountTrend(tok,parts._rp,c);
+  wireTabs(); mountTrend(tok,parts._rp,c,ban);
   // 접힘 — <details> 는 폰에서 안 눌린 적이 있다(0926) → 버튼 + 클래스
   const filled={};
   $('app').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
@@ -3028,6 +3030,35 @@ const MK_ORD=['ok','oa','og','mi','nk','nx','tm','nt','nu','out'];
 const MK_NUM='①②③④⑤⑥⑦⑧⑨';
 const MKS={open:null,filt:'',sort:[]};   // sort = [[키,방향]…] 누른 순서가 우선순위(1031 유강 규칙)
 let MK_DATA=[];
+/* (1123 유강) "고1T 포털에 신갈고가 껴들어가 있네 — 고1 전체 회차를 잡고 고1T반이 안 본 시험은 '과제'로"
+ * FINAL.고1모의 = [{회차(고1 전체 = A·S 진도), 시험지명, 날짜:{반:수업에서 본 날}}] — build_portal.py 가 mock_sched.json 을 끼워 넣는다.
+ * 고1 학생 화면은 이 표로 줄을 다시 짠다. 회차는 전체 회차로(고1T 상현고 '2회' → 3회).
+ *  · 내 반 날짜가 있음 → 수업 회차. 그날이 지나야(열린 행이 오면) 보인다. 안 냈으면 미응시.
+ *  · 내 반 날짜가 없음 → '과제'. 고1 첫 시행일부터 보인다(답을 냈으면 점수로 — 명수처럼 다른 반 시간에 본 경우).
+ *  · 표에 없는 시험지(고2 등)는 그대로. */
+function mkKey(m){ return m.반+'|'+String(m.날짜).slice(0,10)+'|'+(m.시험지명||''); }
+function mkMerge(M,ban){
+  const S=(FINAL&&FINAL.고1모의)||[];
+  if(!S.length||!/^고1/.test(ban||'')) return M||[];
+  const today=todayOf({}), names=new Set(S.map(s=>s.시험지명)), out=[];
+  S.forEach(s=>{
+    const mine=(s.날짜||{})[ban], first=Object.values(s.날짜||{}).sort()[0];
+    const done=(M||[]).find(m=>m.시험지명===s.시험지명&&m.응시);
+    if(done){ out.push(Object.assign({},done,{회차:s.회차,과제:!mine||String(done.날짜).slice(0,10)!==mine})); return; }
+    if(mine){ const row=(M||[]).find(m=>m.시험지명===s.시험지명&&m.반===ban&&String(m.날짜).slice(0,10)===mine);
+      if(row) out.push(Object.assign({},row,{회차:s.회차})); return; }
+    if(first&&first<=today) out.push({반:ban,날짜:first,회차:s.회차,시험지명:s.시험지명,제목:`기말 모의테스트 ${s.회차}회`,응시:false,과제:true,문항:[]});
+  });
+  (M||[]).forEach(m=>{ if(!names.has(m.시험지명)) out.push(m); });
+  return out.sort((a,b)=>(Number(a.회차)||0)-(Number(b.회차)||0)||String(a.날짜).localeCompare(String(b.날짜)));
+}
+function mkHwLinks(m){
+  const g=((LIB.data&&LIB.data.기출)||[]).find(x=>x.키===m.시험지명);
+  if(!g) return '<div class="note">시험지·해설은 「자료」 탭 수업 자료에 올라와요.</div>';
+  const a=(u,t)=>u?`<a href="${E(LIB_URL+u)}" target="_blank" rel="noopener">${t}</a>`:'';
+  const vs=(g.영상||[]).map(v=>`<a href="https://youtu.be/${E(v.id)}" target="_blank" rel="noopener">해설 영상${v.부?' '+E(v.부):''}</a>`).join('');
+  return `<div class="mkhw">${a(g.시험,'시험지 PDF')}${a(g.해설,'손풀이 해설 PDF')}${vs}</div>`;
+}
 function mkCls(q){
   if(q.범위밖) return 'out';
   if(q.정오) return q.확신==='찍음'?'og':q.확신==='애매'?'oa':'ok';
@@ -3057,34 +3088,41 @@ function mkStat(m){
 }
 function mkCard(M,cfg,mdF,barsF,cardF,meanF){
   const D=(M||[]).filter(m=>m.응시);
-  const plan=cfg&&Array.isArray(cfg.모의)?cfg.모의.length:0;
+  const S1=(FINAL&&FINAL.고1모의)||[], g1=(M||[]).some(m=>S1.some(s=>s.시험지명===m.시험지명));
+  const c1=FINAL&&FINAL.반&&FINAL.반.고1S;
+  const plan=g1?Math.max(S1.length,(c1&&c1.모의||[]).length):cfg&&Array.isArray(cfg.모의)?cfg.모의.length:0;   // (1123) 고1 = 전체 회차 수
+  const nhw=(M||[]).filter(m=>m.과제&&!m.응시).length, fmt=v=>String(Math.round(v*10)/10);
+  const rows=(M||[]).slice().reverse().map(m=>{
+    const key=mkKey(m), s=m.응시?mkStat(m):null;
+    const tail=!m.응시?(m.과제?'<span class="mkhw-t">과제</span>':'<span class="dim">미응시</span>'):!m.닫힘?'<span class="dim">입력 마감 뒤 상세</span>'
+      :`<span class="mkr-ch">${s.c.mi?`<i class="mi">실수 ${s.c.mi}</i>`:''}${s.c.og?`<i class="og">찍음 ${s.c.og}</i>`:''}${s.c.oa?`<i class="oa">애매 ${s.c.oa}</i>`:''}</span>`;
+    const lb=[m.과제&&!m.응시?'':sd(String(m.날짜).slice(0,10)), m.시험지명?String(m.시험지명).split('_')[0]:'', m.과제&&m.응시?'과제':''].filter(Boolean).map(E).join(' · ');
+    return `<button type="button" class="mkr${MKS.open===key?' on':''}" data-mk="${E(key)}"><span class="l"><b>${E(m.회차)}회</b> <span class="dim">${lb}</span></span>`
+      +`<span class="r">${tail}${m.응시?`<em>${fmt(Number(m.점수))}<small>${Number(m.만점)===100?'점':'/'+fmt(Number(m.만점))}</small></em>`:''}<i class="ar">⌄</i></span></button>`
+      +(MKS.open===key?`<div class="mkd">${mkDetail(m)}</div>`:'');
+  }).join('');
   if(!D.length){
     if(!(M||[]).length&&!plan) return '';
     const nx=cfg&&cfg.모의?cfg.모의.find(x=>x>=todayOf({})):null;
-    return cardF('모의테스트',`${plan?`0 / ${plan}회`:'아직 응시한 회차가 없어요'}`,null,'',
-      `<div class="none" style="margin:0">${(M||[]).length?'열린 모의테스트에 아직 답을 내지 않았어요.':nx?`${E(sd(nx))}부터 시작해요.`:'모의테스트를 보면 여기에 쌓여요.'}</div>`);
+    const only=(M||[]).length&&(M||[]).every(m=>m.과제);   // (1123) 과제 회차만 있을 때
+    return cardF('모의테스트',`${plan?`0 / ${plan}회`:'아직 응시한 회차가 없어요'}${nhw?` · 과제 ${nhw}`:''}`,null,'',
+      (only?'':`<div class="none" style="margin:0">${(M||[]).length?'열린 모의테스트에 아직 답을 내지 않았어요.':nx?`${E(sd(nx))}부터 시작해요.`:'모의테스트를 보면 여기에 쌓여요.'}</div>`)
+      +(nhw?`<div class="mkrs" id="mk-rows">${rows}</div>`:''));
   }
   const pts=D.map(m=>[String(m.날짜).slice(0,10),Number(m.점수)*100/(Number(m.만점)||100)]);
   const avg={}; D.forEach(m=>{ if(m.반평균!=null) avg[String(m.날짜).slice(0,10)]=Number(m.반평균); });
   const lab={}; D.forEach(m=>lab[String(m.날짜).slice(0,10)]=m.회차+'회');
-  const L=D[D.length-1], fmt=v=>String(Math.round(v*10)/10);
+  const L=D[D.length-1];
   const St=D.map(mkStat).filter((s,i)=>D[i].닫힘&&s.n);
   const sumN=St.reduce((t,s)=>t+s.n,0), accAll=sumN?Math.round(100*St.reduce((t,s)=>t+s.right,0)/sumN):null, raccAll=sumN?Math.round(100*St.reduce((t,s)=>t+s.real,0)/sumN):null;
-  const sub=`${plan?`${D.length} / ${plan}회`:`${D.length}회`}${accAll!=null?` · 정답률 ${accAll}% · 실정답률 ${raccAll}%`:''}`+meanF(pts,Object.keys(avg).length?avg:null,v=>fmt(v)+'점');
-  const rows=(M||[]).slice().reverse().map(m=>{
-    const key=m.반+'|'+String(m.날짜).slice(0,10), s=m.응시?mkStat(m):null;
-    const tail=!m.응시?'<span class="dim">미응시</span>':!m.닫힘?'<span class="dim">입력 마감 뒤 상세</span>'
-      :`<span class="mkr-ch">${s.c.mi?`<i class="mi">실수 ${s.c.mi}</i>`:''}${s.c.og?`<i class="og">찍음 ${s.c.og}</i>`:''}${s.c.oa?`<i class="oa">애매 ${s.c.oa}</i>`:''}</span>`;
-    return `<button type="button" class="mkr${MKS.open===key?' on':''}" data-mk="${E(key)}"><span class="l"><b>${E(m.회차)}회</b> <span class="dim">${E(sd(String(m.날짜).slice(0,10)))}${m.시험지명?' · '+E(String(m.시험지명).split('_')[0]):''}</span></span>`
-      +`<span class="r">${tail}${m.응시?`<em>${fmt(Number(m.점수))}<small>${Number(m.만점)===100?'점':'/'+fmt(Number(m.만점))}</small></em>`:''}<i class="ar">⌄</i></span></button>`
-      +(MKS.open===key?`<div class="mkd">${mkDetail(m)}</div>`:'');
-  }).join('');
+  const sub=`${plan?`${D.length} / ${plan}회`:`${D.length}회`}${nhw?` · 과제 ${nhw}`:''}${accAll!=null?` · 정답률 ${accAll}% · 실정답률 ${raccAll}%`:''}`+meanF(pts,Object.keys(avg).length?avg:null,v=>fmt(v)+'점');
   return cardF('모의테스트',sub,fmt(Number(L.점수)),Number(L.만점)===100?'점':'/'+fmt(Number(L.만점)),
     barsF(pts,100,v=>fmt(v),Object.keys(avg).length?avg:null,null,d=>lab[d]||mdF(d))
     +`<div class="mkrs" id="mk-rows">${rows}</div>`,
     (Object.keys(avg).length?'<span><i class="ba-l"></i> 회색 막대 = 반 평균</span>':'')+'<span class="ln">회차를 누르면 문항별 상세가 열려요</span>');   /* (1118 유강) ' · ' 로 잇지 말고 줄바꿈 */
 }
 function mkDetail(m){
+  if(!m.응시&&m.과제) return `<div class="note">우리 반 수업에선 안 본 회차예요. 과제로 시험지를 50분 재고 풀어 본 뒤, 손풀이 해설·해설 영상으로 공부하세요.</div>${mkHwLinks(m)}`;
   if(!m.응시) return '<div class="dim">이 회차는 답을 내지 않았어요.</div>';
   const s=mkStat(m);
   if(!m.닫힘){
@@ -3121,17 +3159,18 @@ function wireMock(cfg){
 }
 function redrawMock(cfg){
   const box=$('mk-rows'); if(!box) return;
-  const m=MK_DATA.find(x=>x.반+'|'+String(x.날짜).slice(0,10)===MKS.open);
+  const m=MK_DATA.find(x=>mkKey(x)===MKS.open);
   if(m&&(m.문항||[]).some(q=>q.형식==='pick')&&!window.katex){ swKatex().then(()=>redrawMock(cfg)); }
+  if(m&&m.과제&&!m.응시&&!LIB.data){ fetch(LIB_URL+'lib.json?v='+Math.floor(Date.now()/6e5),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&!LIB.data){ LIB.data=j; redrawMock(cfg); } }).catch(()=>{}); }   // (1123) 과제 회차 시험지·해설 링크
   const tmp=document.createElement('div'); tmp.innerHTML=mkCard(MK_DATA,cfg,x=>x,()=>'',(t,s,b,u,body)=>body,()=>'');
   const nb=tmp.querySelector('#mk-rows'); if(nb){ box.innerHTML=nb.innerHTML; wireMock(cfg); }
 }
-async function mountTrend(tok,RP,CFG){
+async function mountTrend(tok,RP,CFG,BAN){
   const host=$('trend-host'); if(!host||!tok) return;
   let T=null, W=null;
   try{ const r=await sb.rpc('portal_trend',{tok}); if(!r.error&&r.data) T=r.data; }catch(e){}
   try{ const r=await sb.rpc('portal_weekly',{tok}); if(!r.error&&Array.isArray(r.data)) W=r.data; }catch(e){}
-  try{ const r=await sb.rpc('portal_mock',{tok}); if(!r.error&&Array.isArray(r.data)) MK_DATA=r.data; }catch(e){}   // (1118 v87) 함수가 없으면 조용히 넘어간다
+  try{ const r=await sb.rpc('portal_mock',{tok}); if(!r.error&&Array.isArray(r.data)) MK_DATA=mkMerge(r.data,BAN); }catch(e){}   // (1118 v87) 함수가 없으면 조용히 넘어간다
   const rp={}; (RP||[]).forEach(x=>{ rp[String(x.날짜).slice(0,10)]=x.url; });
   const md=x=>{ const [y,m,d]=String(x).slice(0,10).split('-').map(Number); return `${m}/${d}`; };
   const wd=x=>{ const [y,m,d]=String(x).slice(0,10).split('-').map(Number); return '일월화수목금토'[new Date(y,m-1,d).getDay()]; };
