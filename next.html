@@ -245,6 +245,7 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .mkpick .seg{display:inline-flex;align-self:flex-start;border:1px solid var(--u-line);border-radius:var(--u-r-sm);overflow:hidden;background:var(--u-surface)}
 .mkpick .seg button{border:0;background:none;color:var(--u-text-2);font:inherit;font-size:14px;font-weight:600;padding:7px 16px;cursor:pointer;border-right:1px solid var(--u-line)}
 .mkpick .seg button:last-child{border-right:0} .mkpick .seg button small{color:var(--u-faint);font-weight:400;font-size:11.5px;margin-left:2px}
+.mkpick .seg button.all{color:var(--u-muted);border-left:1px solid var(--u-line-strong)}
 .mkpick .seg button.on{background:var(--u-accent);color:var(--u-on-accent)} .mkpick .seg button.on small{color:inherit;opacity:.75}
 .mkpick .rounds{display:flex;gap:6px;flex-wrap:wrap}
 .mkpick .rd{position:relative;display:flex;flex-direction:column;align-items:center;min-width:62px;padding:5px 10px;border:1px solid var(--u-line);border-radius:var(--u-r-sm);background:var(--u-surface);color:var(--u-text);font:inherit;cursor:pointer;line-height:1.25}
@@ -1366,14 +1367,27 @@ async function viewMock(id, keep) {
   const rs = MK.rows;
   if (!rs.length) { $('view').innerHTML = head('모의테스트') + '<div class="u-card u-empty">이 시즌에 올라간 모의테스트가 없어요</div>'; return; }
   // (1123 유강 "탭이 너무 불편해") 반 하나 고르고 → 그 반 회차만 1회부터 순서대로. 고른 반은 기억, 회차 기본값 = 오늘 > 지난 것 중 마지막 > 다가오는 첫 회
-  const T = today(), bansM = [...new Set(rs.map(r => r.반))].sort();
-  if (!MK.ban || !bansM.includes(MK.ban)) { let b0 = ''; try { b0 = localStorage.getItem('mk_ban') || ''; } catch (e) {} MK.ban = bansM.includes(b0) ? b0 : (bansM.includes(CTX.ban) ? CTX.ban : bansM[0]); }
-  const mine = rs.filter(r => r.반 === MK.ban).sort((a, b) => (a.회차 - b.회차) || String(a.날짜).localeCompare(String(b.날짜)));
-  if (!MK.pick || !mine.some(r => r.반 + r.날짜 === MK.pick)) {
-    const d = r => String(r.날짜).slice(0, 10), pick = mine.find(r => d(r) === T) || mine.filter(r => d(r) < T).pop() || mine[0];
-    MK.pick = pick.반 + pick.날짜;
+  const T = today(), bansM = [...new Set(rs.map(r => r.반))].sort(), dd = r => String(r.날짜).slice(0, 10);
+  // (1123 유강 "같은 시험지 전체 학년 모아보기") 반이 둘 이상인 학년은 'G:고1' = 학년 전체 — 같은 시험지(시험지명)를 본 반들을 한 회차로 합친다
+  const grs = [...new Set(bansM.map(b => b.slice(0, 2)))].filter(g => bansM.filter(b => b.startsWith(g)).length > 1);
+  const okBan = b => bansM.includes(b) || (b.startsWith('G:') && grs.includes(b.slice(2)));
+  if (!MK.ban || !okBan(MK.ban)) { let b0 = ''; try { b0 = localStorage.getItem('mk_ban') || ''; } catch (e) {} MK.ban = okBan(b0) ? b0 : (bansM.includes(CTX.ban) ? CTX.ban : bansM[0]); }
+  const multi = MK.ban.startsWith('G:');
+  let mine;
+  if (multi) {
+    const G = {}; rs.filter(r => r.반.startsWith(MK.ban.slice(2))).forEach(r => { const k = 'P:' + (r.시험지명 || r.반 + r.날짜); (G[k] = G[k] || { key: k, 시험지명: r.시험지명, rows: [] }).rows.push(r); });
+    mine = Object.values(G).map(g => { g.rows.sort((a, b) => dd(a).localeCompare(dd(b)) || a.반.localeCompare(b.반)); g.d0 = dd(g.rows[0]); g.d1 = dd(g.rows[g.rows.length - 1]); return g; }).sort((a, b) => a.d0.localeCompare(b.d0));
+  } else mine = rs.filter(r => r.반 === MK.ban).map(r => ({ key: r.반 + r.날짜, rows: [r], d0: dd(r), d1: dd(r), 시험지명: r.시험지명 })).sort((a, b) => (a.rows[0].회차 - b.rows[0].회차) || a.d0.localeCompare(b.d0));
+  if (!MK.pick || !mine.some(g => g.key === MK.pick)) {
+    const pick = mine.find(g => g.rows.some(r => dd(r) === T)) || mine.filter(g => g.d0 < T).pop() || mine[0];
+    MK.pick = pick.key;
   }
-  const m = rs.find(r => r.반 + r.날짜 === MK.pick);
+  const grp = mine.find(g => g.key === MK.pick), R0 = grp.rows[0];
+  const m = !multi ? R0 : (() => {   // 합친 회차 — 학생은 반·날짜 표시를 달고, 같은 학생이 두 반에 있으면 제출한 쪽 하나만
+    const by = {};
+    grp.rows.forEach(r => (r.학생 || []).forEach(x => { const y = { ...x, _ban: r.반, _day: r.날짜 }, o = by[x.학생ID]; if (!o || (!o.제출시각 && y.제출시각)) by[x.학생ID] = y; }));
+    return { 반: MK.ban.slice(2) + ' 전체', 날짜: R0.날짜, 회차: [...new Set(grp.rows.map(r => r.회차))].join('·'), 시험지명: R0.시험지명, 문항: R0.문항, 학생: Object.values(by), multi: grp.rows };
+  })();
   const st = (m.학생 || []).filter(x => x.재원 || x.제출시각), sub = st.filter(x => x.제출시각), Q = m.문항 || [];
   const full = Q.filter(q => !q.범위밖).reduce((a, q) => a + Number(q.배점 || 0), 0);
   const scores = sub.map(x => num(x.점수)).filter(v => v != null);
@@ -1383,17 +1397,20 @@ async function viewMock(id, keep) {
 
   let h = head('모의테스트', '반을 고르고 회차를 고르면 문항별 정답률·학생별 결과·점수표', `<button class="u-btn sm ghost" id="mkre">새로고침</button>`);
   const isOn = r => { const a = r.열림 && new Date(r.열림).getTime(), z = r.닫힘 && new Date(r.닫힘).getTime(); return a && a <= now && (!z || z > now); };
-  h += `<div class="mkpick"><div class="seg">${bansM.map(b => `<button class="${b === MK.ban ? 'on' : ''}" data-mkb="${E(b)}">${E(b)} <small>${rs.filter(r => r.반 === b).length}회</small></button>`).join('')}</div>`
-    + `<div class="rounds">${mine.map(r => { const d = String(r.날짜).slice(0, 10), fut = d > T, sel = MK.pick === r.반 + r.날짜, ns = (r.학생 || []).filter(x => x.제출시각).length;
-      return `<button class="rd${sel ? ' on' : ''}${fut ? ' fut' : ''}" data-mkp="${E(r.반 + r.날짜)}" title="${E(String(r.시험지명 || ''))}${ns ? ' · 제출 ' + ns + '명' : ''}">`
-        + `<b>${r.회차}회</b><span>${md(d)}${d === T ? ' 오늘' : fut ? ' 예정' : ''}</span>${isOn(r) ? '<i class="dot" title="학생 입력 열림"></i>' : ''}</button>`; }).join('')}</div></div>`;
+  h += `<div class="mkpick"><div class="seg">${bansM.map(b => `<button class="${b === MK.ban ? 'on' : ''}" data-mkb="${E(b)}">${E(b)} <small>${rs.filter(r => r.반 === b).length}회</small></button>`).join('')}`
+    + grs.map(g => `<button class="all${'G:' + g === MK.ban ? ' on' : ''}" data-mkb="G:${E(g)}" title="같은 시험지를 본 ${E(g)} 반들을 합쳐서">${E(g)} 전체</button>`).join('') + '</div>'
+    + `<div class="rounds">${mine.map(g => { const fut = g.d0 > T, sel = MK.pick === g.key, ns = g.rows.reduce((a, r) => a + (r.학생 || []).filter(x => x.제출시각).length, 0), today0 = g.rows.some(r => dd(r) === T);
+      const lab = multi ? `<b>${E(String(g.시험지명 || '').split('_')[0] || '?')}</b><span>${md(g.d0)}${g.d1 !== g.d0 ? '~' + md(g.d1) : ''} · ${g.rows.map(r => E(r.반.slice(2)) + r.회차).join(' ')}</span>`
+        : `<b>${g.rows[0].회차}회</b><span>${md(g.d0)}${today0 ? ' 오늘' : fut ? ' 예정' : ''}</span>`;
+      return `<button class="rd${sel ? ' on' : ''}${fut ? ' fut' : ''}" data-mkp="${E(g.key)}" title="${E(String(g.시험지명 || ''))}${ns ? ' · 제출 ' + ns + '명' : ''}">${lab}${g.rows.some(isOn) ? '<i class="dot" title="학생 입력 열림"></i>' : ''}</button>`; }).join('')}</div></div>`;
   h += '<div class="u-kpis">'
-    + kpi(`${sub.length}/${st.length}`, `제출 · ${E(String(m.시험지명 || '').split('_')[0])} ${m.회차}회`)
+    + kpi(`${sub.length}/${st.length}`, `제출 · ${E(String(m.시험지명 || '').split('_')[0])} ${multi ? `· ${m.multi.length}개 반` : m.회차 + '회'}`)
     + kpi(scores.length ? r1(avg(scores)) : null, `평균 / ${r1(full)}점`)
     + kpi(scores.length ? r1(Math.max(...scores)) : null, '최고') + kpi(scores.length ? r1(Math.min(...scores)) : null, '최저')
     + kpi(sub.filter(jobBad).length, '개별과제 확인 필요', sub.filter(jobBad).length ? 'bad' : '', '잡이 없거나 실패·0문항·메모 있음')
     + '</div>';
-  h += `<div class="u-acts">${on ? tag('ok', `학생 입력 열림 · ${U.fmt(m.닫힘)}까지`) + ' <button class="u-btn sm" id="mkgate" data-open="0">입력 닫기</button>'
+  if (multi) h += `<div class="u-acts">${m.multi.map(r => `${tag(isOn(r) ? 'ok' : '', `${r.반} ${r.회차}회 · ${md(r.날짜)} · ${isOn(r) ? '입력 열림' : r.열림 ? '닫힘' : '안 엶'}`)}`).join(' ')} <span class="mini">학생 입력 열기·닫기는 반을 골라서</span></div>`;
+  else h += `<div class="u-acts">${on ? tag('ok', `학생 입력 열림 · ${U.fmt(m.닫힘)}까지`) + ' <button class="u-btn sm" id="mkgate" data-open="0">입력 닫기</button>'
     : (o ? tag('', `닫힘 · ${U.fmt(m.닫힘)}`) : tag('warn', '학생 입력 아직 안 엶')) + ` <button class="u-btn sm pri" id="mkgate" data-open="1">${o ? '다시 열기' : '학생 입력 열기'}</button> <span class="mini">열면 지금부터 2일(결시생 재시용)</span>`}</div>`;
   h += `<div class="tabs2">${[['q', '문항별'], ['s', '학생별'], ['t', '점수표']].map(([k, t]) => `<button data-mt="${k}" class="${MK.tab === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
 
@@ -1424,7 +1441,8 @@ async function viewMock(id, keep) {
       return `<span class="qn ${cls}">${+k}${c === '찍음' ? '<sup>찍</sup>' : c === '애매' ? '<sup>애</sup>' : ''}</span>`; }).join('') : (x.제출시각 ? '<span class="u-faint">—</span>' : '');
     h += `<div class="mini" style="margin:-4px 0 8px"><span class="qn ng">틀림</span><span class="qn gs">찍어서 맞힘</span><span class="qn vg">애매하게 맞힘</span> · 틀림 번호 옆 작은 글자 = 찍었거나(찍) 애매했는데(애) 틀린 것 · 칸 머리글을 누르면 개수로 정렬</div>`;
     h += table('mks', [
-      { h: '학생', l: 1, v: x => x.이름, f: x => stuLink(x.학생ID, x.이름) + (x.재원 ? '' : ' ' + tag('', '다른 반')) },
+      { h: '학생', l: 1, v: x => x.이름, f: x => stuLink(x.학생ID, x.이름) + (x.재원 || multi ? '' : ' ' + tag('', '다른 반')) },
+      ...(multi ? [{ h: '반', v: x => x._ban, f: x => `${E(x._ban)} <span class="mini">${md(x._day)}</span>` }] : []),
       { h: '제출', v: x => x.제출시각, f: x => x.제출시각 ? `<span class="mini">${E(U.fmt(x.제출시각))}</span>` : tag('bad', '미제출') },
       { h: '점수', num: 1, v: x => num(x.점수), f: x => x.점수 == null ? dash : `<b>${E(String(x.점수))}</b>` },
       { h: '틀림', l: 1, v: x => qs(x, false).length, f: x => chips(x, qs(x, false), 'ng'), tip: '틀린 번호 · 작은 글자 = 그 문항을 찍었거나(찍) 애매했는데(애) 틀림' },
@@ -1462,7 +1480,7 @@ async function viewMock(id, keep) {
   });
   $('view').querySelectorAll('[data-mkr]').forEach(b => {
     const x = st.find(y => y.학생ID === b.dataset.mkr);
-    const run = async () => { b.disabled = true; const { data, error } = await sb.rpc('staff_mock_remake', { p_sid: x.학생ID, p_ban: m.반, p_day: m.날짜 });
+    const run = async () => { b.disabled = true; const { data, error } = await sb.rpc('staff_mock_remake', { p_sid: x.학생ID, p_ban: x._ban || m.반, p_day: x._day || m.날짜 });
       if (error || !data || data.오류) { b.disabled = false; toast(x.이름 + ' — ' + (error ? error.message : (data && data.오류) || '실패')); return; }
       toast(`${x.이름} — 개별과제 잡 #${data.잡} 넣음 (몇 분 뒤 새로고침)`); setTimeout(() => viewMock(RENDER_ID), 1500); };
     if (x.잡 && x.잡.상태 === '완료' && x.잡.문항수) sure(b, '정말? 한 번 더', run); else b.onclick = run;   // 이미 나간 판을 갈아엎는 경우만 두 번
