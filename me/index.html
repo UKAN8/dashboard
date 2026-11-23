@@ -1571,7 +1571,7 @@ function partsOf(d){
   // (1030) 반·이름을 넘겨 다른 브라우저(카톡 안)면 예약 앱에서 PIN 만 넣어 이 브라우저도 연결한다
   P.clinic=`<div class="card" style="border-color:rgba(120,180,255,.45)"><div class="row">`
     +`<span class="t"><b>주간고사 · 클리닉</b><span class="dim"> 예약 · 결과 · 오답 루프 · 클리닉 질문 (학생 폰에서 열려요)</span></span>`
-    +`<a class="n mid" href="https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}" target="_blank" rel="noopener" style="text-decoration:none;font-weight:600">열기 →</a></div></div>`;
+    +`<a class="n mid" href="https://book.ukan.kr/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}" target="_blank" rel="noopener" style="text-decoration:none;font-weight:600">열기 →</a></div></div>`;
   P.tower='';
   const TOWER_ON=false;   // (1118 유강 "개념의 탑도 카드 숨기기") 다시 켜려면 true — 오늘 탭 바로가기 줄도 같이 뜬다
   if(TOWER_ON && /^고1/.test(String(d.학생.반||'').trim())){
@@ -1582,7 +1582,7 @@ function partsOf(d){
       +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:600">오르기 →</a></div></div>`;
   }
   // (1110) 다른 페이지로 넘어가는 것들 — 큰 카드 대신 '오늘' 위 바로가기 한 줄
-  const qk=[[`https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
+  const qk=[[`https://book.ukan.kr/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
   if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan.kr/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
   // (1110 유강) 1줄 = 클리닉 + 내 개별과제 설정(과제 탭에서 옮김, 누르면 설정 창) / 2줄 = 개념의 탑 — 추후 다른 서비스로 대체
   const qa=([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`;
