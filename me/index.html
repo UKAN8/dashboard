@@ -2428,8 +2428,10 @@ const swFull=(it,b)=>!!(b&&b.결과&&Number(b.결과.총점)>=Number(it.배점))
  * 사진은 긴 변 1600px JPEG 로 줄여(손글씨가 읽히게 서술형 1280px 보다 크게) 한 장씩 mock_photo_put. 파일 수정 시각을 같이 보낸다.
  * 함수가 없으면(v89 전) 조용히 안 그린다. */
 const MP={tok:'',list:[],files:{},busy:false};
+const MP_OFF=true;   // (1123 유강) "시험지 업로드 카드가 너무 커 — 당장 안 쓰는 기능이니 모두 숨겨" → 다시 켤 땐 false
 async function mountMP(tok){
   const host=$('mp-host'); if(!host||!tok) return;
+  if(MP_OFF){ host.innerHTML=''; return; }
   MP.tok=tok;
   try{ const r=await sb.rpc('mock_photo_status',{tok}); MP.list=(r&&!r.error&&Array.isArray(r.data))?r.data:[]; }catch(e){ MP.list=[]; }
   drawMP();
