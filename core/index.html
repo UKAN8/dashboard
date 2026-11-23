@@ -180,6 +180,26 @@ button{font:inherit;cursor:pointer}
 .btns .p{background:var(--acc);color:#1a0d12}
 .btns .s{background:rgba(255,255,255,.08);color:var(--tx)}
 
+
+/* (1119 유강) 루프 소리 고르기 — 음소거 / 효과음 / 명수의 훈수 */
+.sndp h2{font-size:21px;margin:10px 0 4px}
+.sndp>p{color:var(--tx2);font-size:13px;margin:0 0 14px}
+.sndo{display:grid;gap:9px;margin-bottom:12px}
+.sndo button{display:grid;grid-template-columns:42px 1fr;grid-template-rows:auto auto;align-items:center;text-align:left;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:15px;padding:13px 14px}
+.sndo i{grid-row:1/3;font-style:normal;font-size:25px}
+.sndo b{font-size:16px}
+.sndo span{font-size:12.5px;color:var(--dim)}
+.sndo button.on{border-color:var(--acc);background:rgba(245,160,160,.1);box-shadow:0 0 0 1px rgba(245,160,160,.25) inset}
+.sndo button.on b{color:var(--acc)}
+.sndl{margin:0 0 16px}
+.sndl>button{width:100%;text-align:left;border:1px dashed var(--bd);background:none;color:var(--tx2);border-radius:12px;padding:10px 13px;font-size:13px}
+.sndl .ls{display:none;flex-wrap:wrap;gap:7px;margin-top:9px}
+.sndl.open .ls{display:flex}
+.sndl .ls button{border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);border-radius:10px;padding:7px 11px;font-size:12.5px}
+.sndl .ls button.pl{border-color:var(--gold);color:var(--gold)}
+#sndb{display:none;position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;border:1px solid var(--bd);background:rgba(20,20,28,.92);color:var(--tx);border-radius:20px;padding:7px 12px;font-size:13px;align-items:center;gap:6px;backdrop-filter:blur(6px)}
+body.sess.sndloop #sndb{display:flex}
+
 /* (1110 유강) 로고 '수학은유강' = 페이퍼로지 고정 */
 @font-face{font-family:'PaperlogyLogo';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:block}
 .brand{font-family:'PaperlogyLogo',sans-serif!important;font-weight:600!important;letter-spacing:0}
@@ -492,7 +512,9 @@ function etaInfo(){
   const e=li.예상[String(LOOP_CAP||0)]||li.예상['0']; if(!e) return null;
   const ex=li.시험일?String(li.시험일).slice(0,10):'';
   const behind=!!ex && (!e.중앙 || e.완료비율<0.5 || e.중앙>=ex || (e.시험전!=null && e.시험전<0.5));
-  return {mid:e.중앙||null, exam:ex||null, behind};
+  // (1123 유강 "보충 몇 번 하면 시험 전에 완성 보여주기") 보충 주 2·3회 시나리오(loop_forecast '보충2'·'보충3')
+  const b2=li.예상['보충2']||null, b3=li.예상['보충3']||null;
+  return {mid:e.중앙||null, exam:ex||null, behind, b2:b2&&b2.중앙||null, b3:b3&&b3.중앙||null};
 }
 function suppToday(){ return lget('supp_'+TODAY,null); }
 function suppState(LT){
@@ -503,12 +525,13 @@ function suppState(LT){
   /* (1110) 클리닉에 도착해 있으면 평소 조건(기말 넘김·이번 루프 끝·오늘 안 풂) 없이 바로 1벌 — 한 회차 크기(내 상한) */
   if(CSUPP){ let items=buildLoop(); if(!items.length) items=buildLoopAll();
     return items.length?{show:true, can:true, items, started:false, done:false, clinic:true}:{show:true, can:false, clinic:true, why:'지금은 다시 볼 칸이 없어요 — 선생님께 말해 주세요'}; }
-  if(!eta||!eta.behind) return {show:false};
-  if(loopLock() || !LT.finished) return {show:true, can:false, why:'이번 루프를 먼저 끝내면 열려요'};
-  if(todayIds('루프').size) return {show:true, can:false, why:'오늘은 루프를 풀었어요 — 내일 보충할 수 있어요(같은 날은 졸업에 안 쳐져요)'};
-  const items=buildLoopAll();
-  if(!items.length) return {show:true, can:false, why:'지금은 다시 볼 칸이 없어요'};
-  return {show:true, can:true, items, started:false, done:false};
+  /* (1123 유강 "보충루프를 언제든 할 수 있게 · 전원에게") 열림 = 이번 회차 루프를 끝냈으면 누구나, 같은 날에도.
+   *   같은 날 다시 푼 칸은 성공일이 안 늘어서 → 오늘 이미 푼 칸은 빼고 나머지 '다시 볼 때가 된 칸'만. 하루 1벌(세트 고정)은 그대로. */
+  if(loopLock() || !LT.finished) return {show:true, can:false, why:'루프 과제를 먼저 끝내면 열려요'};
+  const tk=new Set(LOG.filter(r=>r[5].slice(0,10)===TODAY && (r[4]==='루프'||r[4]==='리뷰')).map(r=>r[0]));
+  const items=buildLoopAll().filter(x=>!tk.has(x.key));
+  if(!items.length) return {show:true, can:false, why:tk.size?'오늘 다시 볼 칸은 다 풀었어요 — 내일 또 열려요':'지금은 다시 볼 칸이 없어요'};
+  return {show:true, can:true, items, started:false, done:false, behind:!!(eta&&eta.behind)};
 }
 function buildLoopAll(){ const c=LOOP_CAP; LOOP_CAP=0; try{ return buildLoop(); } finally{ LOOP_CAP=c; } }
 // (1111 유강 "김예솔 루프 113문제 — 같은 상황 찾아 수정") 1회 칸의 졸업 확인이 한 회차에 몰리던 것.
@@ -685,9 +708,9 @@ function homeModel(){
     sub:lLock?'수업 중에는 [리뷰테스트]만 풀어요':lDone?`루프는 ${once}이에요. 틀리거나 애매했던 건 ${nextT} 루프에 다시 와요${nx}`:lDue?`이번 루프는 ${dueText()}에 마감됐어요. 못 푼 건 다음 루프에 같이 와요${nx}`:loop.length?`약 ${Math.max(3,Math.round(loop.filter(x=>x.key[0]==='C').length*0.7+loop.filter(x=>x.key[0]==='T').length*3.5))}분 · 다시 볼 개념·유형을 전부 모았어요 · ${once}${DUE?` · ${dueText()}까지`:ROUND?' · 다음 수업 전까지':''}`:`다시 볼 개념·유형이 없어요. ${nextT}에 다시 와요`,
     tap:lAct?(LT.started?'이어서 →':'시작 →'):lDone?'완료':''};
   const sp=suppState(LT), eta=etaInfo();
-  const supp=sp.show?{cls:sp.done?'done':sp.can?'act':'s', can:!!sp.can, n:(sp.items||[]).length,
+  const supp=sp.show?{cls:sp.done?'done':sp.can?'act':'s', can:!!sp.can, n:(sp.items||[]).length, behind:!!(eta&&eta.behind), clinic:!!(sp.clinic||CSUPP),
     title:'보충 루프'+(sp.done?' · 오늘 완료':sp.can?` · ${sp.started?'이어서 ':''}${sp.items.length}문항`:''),
-    sub:sp.done?(CSUPP?'클리닉 보충 루프 끝! 선생님께 확인받아요':'오늘 보충 끝! 내일 또 털어낼 수 있어요'):sp.can?(sp.clinic||CSUPP?'클리닉 보완 — 밀린 루프 대신 보충 루프 1SET을 풀어요':'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 전부 모았어요'):sp.why,
+    sub:sp.done?(CSUPP?'클리닉 보충 루프 끝! 선생님께 확인받아요':'오늘 보충 끝! 내일 또 털어낼 수 있어요'):sp.can?(sp.clinic||CSUPP?'클리닉 보완 — 밀린 루프 대신 보충 루프 1SET을 풀어요':sp.behind?'기말 전에 루프를 다 끝내려면 보충이 필요해요 — 지금 다시 볼 칸을 모았어요':'한 번 더 풀면 졸업이 빨라져요 — 지금 다시 볼 칸을 모았어요'):sp.why,
     tap:sp.can?(sp.started?'이어서 →':'보충 시작 →'):sp.done?'완료':''}:null;
   return {name:NAME,ban:BAN,range:SET.범위,tot,grad,open,review,loop:lp,supp,eta,calib:calib(),units,guide:GUIDE_HTML,labels:ST_LABEL,demo:DEMO,_items:loop,_supp:sp.items||[]};
 }
@@ -700,22 +723,24 @@ function drawHome(){
     +`<div class="title"><b>CORE 루프</b> · ${E(SET.범위)}</div>`
     +goBtn('goR',m.review)+goBtn('goL',m.loop)+(m.supp?goBtn('goS',m.supp):'')
     +(DEMO?'':`<div class="btns" style="margin-top:14px"><button class="s" id="toP">단원 지도 · 졸업 현황은 포털 '기록'에서 →</button></div>`)
+    +(DEMO?`<div class="btns" style="margin-top:14px"><button class="s" id="dreset">기록 지우고 처음부터</button></div>`:'')
     +`<div class="foot">${DEMO?'<b>미리보기</b>예요. 기록이 저장되지 않아요.<br>'
     :`이 주소는 ${E(NAME)} 개인 링크예요. 다른 사람에게 전달하지 마세요.<br>`}`
     +`점수는 성적이랑 상관없어요. 기말까지 <b>모르는 개념·유형을 0개</b>로 만드는 게 목표예요.</div>`;
   $('goR').onclick=()=>{ if(m.review.can) startSession('리뷰'); else drawHome(); };
   HOME_OPEN=inClass();
-  $('goL').onclick=()=>{ if(m.loop.can) startSession('루프', m._items); else drawHome(); };
-  if($('goS')) $('goS').onclick=()=>{ if(m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } startSession('루프', m._supp, true); } else drawHome(); };   // (1110) 보충 루프
+  $('goL').onclick=()=>{ if(m.loop.can) sndPick(()=>startSession('루프', m._items)); else drawHome(); };   // (1119) 소리 고르기 먼저
+  if($('goS')) $('goS').onclick=()=>{ if(m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } sndPick(()=>startSession('루프', m._supp, true)); } else drawHome(); };   // (1110) 보충 루프
   if($('toP')) $('toP').onclick=()=>{ location.href=PORTAL_URL()+'&tab=기록'; };
+  if($('dreset')) $('dreset').onclick=()=>{ try{ Object.keys(localStorage).filter(k=>k.startsWith('core:')&&k.includes(':demo:')).forEach(k=>localStorage.removeItem(k)); }catch(e){} location.reload(); };
   window.scrollTo(0,0);
 }
 /* 포털에서 [시작 →] 으로 온 경우 — 열려 있으면 바로 풀이, 아니면 얇은 홈 */
 function startFromGo(g){
   const m=homeModel();
   if(g==='리뷰' && m.review.can){ startSession('리뷰'); return; }
-  if(g==='루프' && m.loop.can){ startSession('루프', m._items); return; }
-  if(g==='보충' && m.supp && m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } startSession('루프', m._supp, true); return; }   // (1110) 보충 루프
+  if(g==='루프' && m.loop.can){ sndPick(()=>startSession('루프', m._items)); return; }
+  if(g==='보충' && m.supp && m.supp.can){ if(!suppToday()){ lset('supp_'+TODAY, m._supp.map(x=>x.id)); saveSupp(m._supp.map(x=>x.id)); } sndPick(()=>startSession('루프', m._supp, true)); return; }   // (1110) 보충 루프
   drawHome();
 }
 
@@ -754,6 +779,7 @@ function bookHTML(th){
 function drawItem(){
   document.body.classList.add('sess');
   const x=S.q[S.i]; const [kl,kn]=kindLabel(x); const n=S.q.length;
+  sndRetry(x);   // (1119) 전에 틀린 문항이 다시 나오면 명수 한마디
   let A='';
   if(x.k==='ox') A=`<div class="ox" id="ans"><button data-a="O">O</button><button data-a="X">X</button></div>`;
   else if(x.k==='c4'||x.k==='c5'){
@@ -833,7 +859,9 @@ function grade(conf,dunno){
   if(dunno) row.w='모름';
   const rres={x,ok:succ,raw:ok,conf,w:dunno?'모름':''}, lrow=[x.key,x.id,ok,conf,S.mode,tRow,dunno?'모름':null];
   S.res.push(rres);
+  const _snd=sndSnap(x);   // (1119) 소리 — 이 문항 전 상태
   LOG.push(lrow);
+  sndAfter(x,_snd,succ,ok,conf,dunno);
   queue([row]);
   if(ask){
     $('why').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -868,7 +896,9 @@ function next(){ S.i++; if(S.nextNote){ S.note=S.nextNote; S.nextNote=null; } if
 async function finish(early){
   document.body.classList.remove('sess');
   lset('queue',lget('queue',[]).map(({p,...o})=>o));   // 원인을 안 고르고 나가도 기록은 보낸다
+  document.body.classList.remove('sndloop');
   const res=S.res; if(!res.length){ drawHome(); return; }
+  if(S.mode==='루프' && !early) sndPlay('done','done');   // (1119)
   const okN=res.filter(r=>r.ok).length;
   const sureX=res.filter(r=>!r.raw&&r.conf==='확실').length;
   const L=res.map(r=>{ const [kl,kn]=kindLabel(r.x); const cls=r.ok?'lo':r.raw?'lu':'lx';
@@ -883,6 +913,83 @@ async function finish(early){
   const ok=await flush();
   const drop=lget('dropped',0); if(drop) lset('dropped',0);
   const sv=$('sv'); if(sv){ sv.textContent=ok?(drop?`기록 저장됨 · ${drop}문항은 수업 시간 밖이라 저장되지 않았어요`:'기록 저장됨'):'인터넷이 불안정해서 이 기기에 보관했어요. 다음에 열면 자동으로 보내요'; if(!ok) sv.classList.add('bad'); }
+}
+
+
+/* ── (1119 유강) 루프 소리 — 음소거 / 효과음 / 명수의 훈수(고1T 명수 녹음 1118, snd/*.mp3) ──
+ * SND_ON=false 면 아무것도 안 한다(지금 학생 페이지). 체험판(build_core.py --try)만 켠다.
+ * 루프에서만 소리가 난다 — 리뷰테스트는 수업 중이라 무음(1028).
+ * 효과음 = 정답 띵 · 애매 정답 작은 띵 · 오답 둥 · 열림/졸업 아르페지오 · 완료 팡파르 (WebAudio 합성, 파일 없음)
+ * 명수의 훈수 = 효과음 + 드문 순간에 목소리. 매 문항 오답 목소리는 40% 확률로만(질리지 않게). 같은 상황은 직전 테이크를 피해 랜덤 */
+const SND_ON=false;
+const SND_BASE='/dashboard/core/snd/';
+const SND_VOICE={wrong:8,start:6,streak2:4,streak4:4,lucky:2,surewrong:6,retry:7,conceptgrad:4,unlock:2,deadline:6,done:2,rangegrad:2};
+const SND_MODES=[['mute','🔇','음소거','조용히 풀어요'],['sfx','🔔','효과음','띵 · 둥 소리만 나요'],['voice','🎙️','명수의 훈수','고1T 명수가 옆에서 한마디씩 거들어요']];
+const SND_LINES=[['start','루프 시작'],['streak2','연속 정답 2개'],['streak4','연속 정답 4개+'],['lucky','애매했는데 맞음'],['wrong','틀렸을 때'],['surewrong','확실했는데 틀림'],['retry','틀렸던 문제 다시'],['unlock','유형 열림'],['conceptgrad','졸업'],['deadline','마감 임박'],['done','루프 완료'],['rangegrad','범위 전체 졸업']];
+const SND={mode:'sfx',ctx:null,buf:{},last:{},loading:null,streak:0,src:null};
+function sndGet(){ try{ const m=localStorage.getItem('core_snd'); return SND_MODES.some(x=>x[0]===m)?m:'sfx'; }catch(e){ return 'sfx'; } }
+function sndSet(m){ SND.mode=m; try{ localStorage.setItem('core_snd',m); }catch(e){} sndPill(); if(m==='voice') sndLoad(); }
+function sndCtx(){ try{ if(!SND.ctx){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; SND.ctx=new C(); } if(SND.ctx.state==='suspended') SND.ctx.resume(); return SND.ctx; }catch(e){ return null; } }
+const sndFile=(k,n)=>`${SND_BASE}core_${k}_${String(n).padStart(2,'0')}.mp3`;
+function sndLoad(){ if(SND.loading) return SND.loading; const c=sndCtx(); if(!c) return Promise.resolve();
+  const jobs=[]; Object.entries(SND_VOICE).forEach(([k,n])=>{ for(let i=1;i<=n;i++) jobs.push(fetch(sndFile(k,i)).then(r=>r.ok?r.arrayBuffer():Promise.reject())
+    .then(a=>new Promise((ok,no)=>c.decodeAudioData(a,ok,no))).then(b=>{ (SND.buf[k]=SND.buf[k]||[]).push(b); }).catch(()=>{})); });
+  SND.loading=Promise.all(jobs); return SND.loading; }
+function sndTone(notes,type,vol){ const c=sndCtx(); if(!c) return; let t=c.currentTime+.01;
+  notes.forEach(([f,d,f2])=>{ const o=c.createOscillator(), g=c.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||.2,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+.03); t+=d*.75; }); }
+const SFX={ok:()=>sndTone([[880,.11],[1320,.24]],'sine',.2), soft:()=>sndTone([[660,.22]],'sine',.13), no:()=>sndTone([[250,.3,165]],'triangle',.2),
+  open:()=>sndTone([[660,.1],[880,.1],[1109,.1],[1319,.32]],'sine',.17), done:()=>sndTone([[523,.13],[659,.13],[784,.13],[1047,.45]],'triangle',.2), start:()=>sndTone([[740,.1],[988,.2]],'sine',.14)};
+function sndVoice(k,delay){ const a=SND.buf[k]; const c=sndCtx(); if(!a||!a.length||!c) return false;
+  let i=Math.floor(Math.random()*a.length); if(a.length>1 && i===SND.last[k]) i=(i+1)%a.length; SND.last[k]=i;
+  if(SND.src){ try{ SND.src.stop(); }catch(e){} }
+  const s=c.createBufferSource(); s.buffer=a[i]; s.connect(c.destination); s.start(c.currentTime+(delay==null?.2:delay)); SND.src=s; return true; }
+function sndPlay(sfx,voice){ if(!SND_ON||SND.mode==='mute') return; if(sfx&&SFX[sfx]) SFX[sfx](); if(voice&&SND.mode==='voice') sndVoice(voice, sfx?.2:0); }
+const sndKeys=()=>CONCEPTS.flatMap(c=>[c.key,...c.themes.map(t=>t.key)]);
+function sndAllGrad(){ const ks=sndKeys(); return ks.length>0 && ks.every(k=>keyState(k).st==='grad'); }
+function sndOpenN(ck){ const c=CBYKEY[ck]; return c?c.themes.filter(t=>tOpen(t.key)).length:0; }
+function sndSnap(x){ if(!SND_ON||SND.mode==='mute'||!S||S.mode!=='루프') return null; const ck=x.key[0]==='C'?x.key:TKEY2C[x.key];
+  return {st:keyState(x.key).st, open:sndOpenN(ck), ck, all:sndAllGrad()}; }
+function sndAfter(x,b,succ,ok,conf,dunno){ if(!b) return;
+  SND.streak=succ?SND.streak+1:0;
+  const st=keyState(x.key).st, open=sndOpenN(b.ck);
+  let v=null, f=succ?'ok':ok?'soft':'no';
+  if(!b.all && sndAllGrad()){ v='rangegrad'; f='done'; }
+  else if(b.st!=='grad' && st==='grad'){ v='conceptgrad'; f='open'; }
+  else if(open>b.open){ v='unlock'; f='open'; }
+  else if(!ok && !dunno && conf==='확실') v='surewrong';
+  else if(ok && conf==='애매') v='lucky';
+  else if(succ && SND.streak===2) v='streak2';
+  else if(succ && SND.streak>=4 && (SND.streak-4)%3===0) v='streak4';
+  else if(!ok && Math.random()<.4) v='wrong';
+  sndPlay(f,v); }
+function sndRetry(x){ if(!SND_ON||!S||S.mode!=='루프'||SND.mode!=='voice'||!S.i) return;
+  if(LOG.some(r=>r[1]===x.id && r[2]===false && !(r[5]>=(S.t00||'9')))) sndVoice('retry',0); }
+function sndPill(){ const b=$('sndb'); if(!b) return; const m=SND_MODES.find(x=>x[0]===SND.mode)||SND_MODES[0]; b.innerHTML=`<span>${m[1]}</span>${E(m[2])}`; }
+function sndInit(){ if(!SND_ON||$('sndb')) return; SND.mode=sndGet(); const b=document.createElement('button'); b.id='sndb'; b.type='button';
+  b.onclick=()=>{ sndCtx(); const i=SND_MODES.findIndex(x=>x[0]===SND.mode); sndSet(SND_MODES[(i+1)%SND_MODES.length][0]); };
+  document.body.appendChild(b); sndPill(); }
+/* 루프 시작 전 소리 고르기 — 고른 건 이 기기에 기억(core_snd). 시작 버튼 탭이 소리 잠금 해제(iOS) */
+function sndPick(go){
+  if(!SND_ON){ go(); return; }
+  SND.mode=sndGet(); SND.streak=0; document.body.classList.remove('sess');
+  $('app').innerHTML=`<div class="sndp"><div class="brand">수학은유강</div><h2>소리 고르기</h2><p>루프 푸는 동안 들을 소리를 골라요. 풀다가 오른쪽 아래 버튼으로도 바꿀 수 있어요.</p>`
+    +`<div class="sndo" id="sndo">${SND_MODES.map(([m,i,t,s])=>`<button type="button" data-m="${m}" class="${SND.mode===m?'on':''}"><i>${i}</i><b>${E(t)}</b><span>${E(s)}</span></button>`).join('')}</div>`
+    +`<div class="sndl" id="sndl"><button type="button" id="sndlb">▸ 명수 목소리 미리 들어보기</button><div class="ls">${SND_LINES.map(([k,t])=>`<button type="button" data-k="${k}">▶ ${E(t)}</button>`).join('')}</div></div>`
+    +`<div class="btns"><button class="p" id="sgo">루프 시작</button><button class="s" id="sback">뒤로</button></div></div>`;
+  $('sndo').querySelectorAll('button').forEach(b=>b.onclick=()=>{ sndCtx(); sndSet(b.dataset.m); $('sndo').querySelectorAll('button').forEach(z=>z.classList.toggle('on',z===b));
+    if(b.dataset.m==='sfx') SFX.ok(); else if(b.dataset.m==='voice') sndLoad().then(()=>sndVoice('start',0)); });
+  $('sndlb').onclick=()=>{ const o=$('sndl').classList.toggle('open'); $('sndlb').textContent=(o?'▾':'▸')+' 명수 목소리 미리 들어보기'; if(o){ sndCtx(); sndLoad(); } };
+  $('sndl').querySelectorAll('.ls button').forEach(b=>b.onclick=()=>{ sndCtx(); $('sndl').querySelectorAll('.ls button').forEach(z=>z.classList.remove('pl')); b.classList.add('pl');
+    sndLoad().then(()=>{ if(!sndVoice(b.dataset.k,0)) b.textContent='불러오지 못했어요'; }); });
+  $('sback').onclick=drawHome;
+  $('sgo').onclick=async()=>{ sndCtx(); const b=$('sgo'); b.disabled=true;
+    if(SND.mode==='voice'){ b.textContent='목소리 불러오는 중…'; await Promise.race([sndLoad(),new Promise(r=>setTimeout(r,3000))]); }
+    document.body.classList.add('sndloop'); go(); if(S) S.t00=nowKST();
+    const left=DUE&&!pastDue()?Date.parse(DUE+'+09:00')-Date.parse(nowKST()+'+09:00'):1e12;
+    sndPlay('start', left<3*36e5?'deadline':'start'); };
+  window.scrollTo(0,0);
 }
 
 /* ── 보내기(대기열) ── */
@@ -976,6 +1083,7 @@ async function boot(){
   const go=P.get('go');
   waitKatex(()=>go?startFromGo(go):drawHome());
 }
+sndInit();
 boot();
 // (1018) 홈을 열어 둔 채 수업 시간이 되면/끝나면 [수업 리뷰]를 다시 그린다
 setInterval(()=>{ if(!S && SET && $('app').style.display==='block' && HOME_OPEN!==null && inClass()!==HOME_OPEN) drawHome(); }, 20000);
