@@ -4,6 +4,11 @@
 <title>내 학습 · 수학은유강</title>
 <!-- 링크를 카톡·문자에 붙였을 때 미리보기에 점수가 안 뜨게 한다 -->
 <meta name="robots" content="noindex, nofollow">
+<!-- (1123) 홈 화면 바로가기 — 아이콘·이름. manifest 는 a2hs.js 가 안드로이드에서만 건다 -->
+<link rel="apple-touch-icon" href="/dashboard/me/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/dashboard/me/icon-192.png">
+<meta name="apple-mobile-web-app-title" content="수학은유강">
+<meta name="theme-color" content="#0a0a0f">
 <meta property="og:title" content="수학은유강 — 내 학습">
 <meta property="og:description" content="개인 링크입니다. 다른 사람에게 전달하지 마세요.">
 <!-- ⚠ 버전을 박는다. @2 는 CDN 이 언제든 새 2.x 로 갈아 끼운다 -->
@@ -655,6 +660,125 @@ a.bc:active .bt{box-shadow:inset 0 0 0 1px var(--acc)}
 <div id="msg"><div class="logo">수학은유강</div><div class="dim">불러오는 중…</div></div>
 <main id="app" style="display:none"></main>
 <script>
+/* ── (1123) 홈 화면 바로가기 ─────────────────────────────────────────────────────────────
+ * 유강 "카톡 들어가서 링크 눌러야 하는 불편함 — 포털 들어갔을 때 홈 화면 바로가기 설치".
+ *   · 안드로이드: 설치 창(beforeinstallprompt) 한 번. 설치된 아이콘은 start_url=?from=home 로 열리고
+ *     토큰은 이 폰에 저장해 둔 것(localStorage)으로 채운다 — 정적 사이트라 아이콘마다 토큰을 박을 수 없다.
+ *     형제가 한 폰을 쓰면 저장된 링크가 여럿 → 위에 이름 칩으로 바꿔 본다.
+ *   · 아이폰: 사이트가 설치를 띄울 수 없다(애플이 막음) → 공유 → 홈 화면에 추가 안내.
+ *     manifest 를 안 걸어서 지금 주소(토큰 포함)가 그대로 아이콘이 된다.
+ *   · 카톡 안: 홈 화면 추가가 아예 안 된다 → 외부 브라우저로 넘긴 뒤(a2hs=1) 이어서 안내.
+ *   ⚠ 이 모듈이 실패해도 포털은 떠야 한다 — 전부 try 로 감싼다.
+ */
+var A2HS=(function(){
+  var noop={home:false,mount:function(){},forget:function(){}};
+  try{
+  var UA=navigator.userAgent||'';
+  var IOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var AND=/Android/i.test(UA), KAKAO=/KAKAOTALK/i.test(UA);
+  var INAPP=KAKAO||/NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(UA);
+  var SA=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  var QP=new URLSearchParams(location.search);
+  var HOME=SA||QP.get('from')==='home';
+  var JUMP=QP.get('a2hs')==='1';          // 카톡에서 넘어온 직후
+  var BASE='/dashboard/me/', KEY='ukan_portal_keys', XKEY='ukan_a2hs_x';
+  var ls={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
+          set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  function keys(){ try{ var a=JSON.parse(ls.get(KEY)||'[]'); return Array.isArray(a)?a.filter(function(x){return x&&x.t}):[] }catch(e){ return [] } }
+  function save(a){ ls.set(KEY,JSON.stringify(a.slice(0,4))) }
+  function setQ(fn){ var q=new URLSearchParams(location.search); fn(q); history.replaceState(history.state,'',location.pathname+'?'+q.toString()+location.hash) }
+
+  // ① 아이콘으로 열렸는데 주소에 토큰이 없으면 → 이 폰에 저장된 링크로 (안드로이드 설치본)
+  if(HOME&&!QP.get('t')){ var ks=keys(); if(ks.length) setQ(function(q){ q.set('t',ks[0].t) }); }
+  if(JUMP) setQ(function(q){ q.delete('a2hs') });
+
+  // ② 안드로이드·PC 는 manifest + 서비스워커(설치 창 조건). 아이폰엔 안 건다 — 지금 주소가 아이콘이 되게.
+  var deferred=null;
+  if(!IOS){
+    var l=document.createElement('link'); l.rel='manifest'; l.href=BASE+'manifest.webmanifest'; document.head.appendChild(l);
+    if('serviceWorker' in navigator) navigator.serviceWorker.register(BASE+'sw.js',{scope:BASE}).catch(function(){});
+    window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); deferred=e; });
+    window.addEventListener('appinstalled',function(){ ls.set(XKEY,'installed'); var b=document.getElementById('a2hs'); if(b) b.remove(); closeSheet(); });
+  }
+
+  var CSS='#a2hs{display:flex;align-items:center;gap:12px;background:rgba(245,160,160,.10);border:1px solid rgba(245,160,160,.28);border-radius:15px;padding:12px 12px 12px 16px;margin:0 0 16px}'
+   +'#a2hs .t{flex:1;font-size:13px;line-height:1.5;color:var(--tx2)}#a2hs .t b{display:block;color:var(--tx);font-size:14px}'
+   +'#a2hs .go{flex:none;border:0;border-radius:11px;background:var(--acc);color:#1a0d0d;font:600 13px Pretendard,sans-serif;padding:9px 12px}'
+   +'#a2hs .x{flex:none;border:0;background:none;color:var(--dim);font:13px Pretendard,sans-serif;padding:8px 2px}'
+   +'#a2hs-who{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}#a2hs-who a{font-size:13px;padding:5px 12px;border-radius:11px;border:1px solid var(--bd);color:var(--tx2)}#a2hs-who a.on{border-color:var(--acc);color:var(--acc)}'
+   +'#a2hs-sh{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}'
+   +'#a2hs-sh .sh{width:100%;max-width:520px;background:#16161d;border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:18px 18px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}'
+   +'#a2hs-sh h3{margin:0 0 12px;font:600 17px Paperlogy,Pretendard,sans-serif}#a2hs-sh ol{margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.9}#a2hs-sh ol b{color:var(--acc)}'
+   +'#a2hs-sh .ic{display:inline-block;vertical-align:-3px;width:18px;height:18px}#a2hs-sh .dim{font-size:13px;margin-bottom:16px}'
+   +'#a2hs-sh button{width:100%;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:var(--tx);font:600 15px Pretendard,sans-serif;padding:12px}'
+   +'@media (min-width:700px){#a2hs-sh{align-items:center}#a2hs-sh .sh{border-radius:18px;border-bottom:1px solid rgba(255,255,255,.1)}}';
+  var SHARE='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}) }
+  function closeSheet(){ var s=document.getElementById('a2hs-sh'); if(s) s.remove(); }
+  function sheet(title,steps,note){
+    closeSheet();
+    var d=document.createElement('div'); d.id='a2hs-sh';
+    d.innerHTML='<div class="sh"><h3>'+title+'</h3><ol>'+steps.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ol>'
+      +(note?'<div class="dim">'+note+'</div>':'')+'<button type="button">닫기</button></div>';
+    d.addEventListener('click',function(e){ if(e.target===d||e.target.tagName==='BUTTON') closeSheet(); });
+    document.body.appendChild(d);
+  }
+  function iosGuide(){
+    setQ(function(q){ q.set('from','home') });   // 아이콘 주소에 표시를 남긴다 → 아이콘으로 열면 이 안내가 다시 안 뜬다
+    if(/CriOS/.test(UA)) sheet('홈 화면에 추가하기',['주소창 오른쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요','<b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
+    else sheet('홈 화면에 추가하기',['화면 아래쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요<br><small class="dim">안 보이면 아래쪽 <b>⋯</b>를 먼저 눌러요</small>','목록을 내려서 <b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
+  }
+  function andGuide(){
+    var sam=/SamsungBrowser/.test(UA);
+    sheet('홈 화면에 추가하기', sam
+      ?['아래쪽 <b>≡</b> 메뉴를 눌러요','<b>현재 페이지 추가</b> → <b>홈 화면</b>을 눌러요','<b>추가</b>를 누르면 끝']
+      :['오른쪽 위 <b>⋮</b> 메뉴를 눌러요','<b>홈 화면에 추가</b>(또는 <b>앱 설치</b>)를 눌러요','<b>설치</b>·<b>추가</b>를 누르면 끝'],
+      '다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
+  }
+  function outUrl(){ var q=new URLSearchParams(location.search); q.delete('from'); q.set('a2hs','1'); return location.origin+location.pathname+'?'+q.toString() }
+  function go(){
+    if(INAPP){
+      if(KAKAO){ location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(outUrl()); return; }
+      if(AND){ location.href='intent://'+outUrl().replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(outUrl())+';end'; return; }
+      sheet('Safari로 열어 주세요',['오른쪽 아래(또는 위) <b>⋯</b> 메뉴를 눌러요','<b>Safari로 열기</b>(기본 브라우저로 열기)를 눌러요','열린 화면에서 다시 <b>홈 화면에 추가</b>를 눌러요']); return;
+    }
+    if(IOS) return iosGuide();
+    if(deferred){ var e=deferred; deferred=null; e.prompt(); e.userChoice.then(function(c){ if(c&&c.outcome==='accepted'){ ls.set(XKEY,'installed'); var b=document.getElementById('a2hs'); if(b) b.remove(); } }).catch(function(){}); return; }
+    andGuide();
+  }
+
+  function mount(d,tok){
+    try{
+      if(window.top!==window) return;            // 직원 '학생 화면 보기' 같은 액자 안에선 안 띄운다
+      var app=document.getElementById('app'); if(!app) return;
+      if(!document.getElementById('a2hs-css')){ var st=document.createElement('style'); st.id='a2hs-css'; st.textContent=CSS; document.head.appendChild(st); }
+      var name=(d&&d.학생&&d.학생.이름)||'';
+      if(AND&&tok){ var a=keys().filter(function(x){return x.t!==tok}); a.unshift({t:tok,n:name}); save(a); }   // 최근 연 링크가 맨 앞
+      var anchor=app.querySelector('.asof'), at=function(el){ if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(el,anchor.nextSibling); else app.insertBefore(el,app.firstChild); };
+      if(HOME){                                  // 아이콘으로 열림 — 설치 안내 대신, 저장된 링크가 여럿이면 이름 칩
+        var ks=keys(); if(!AND||ks.length<2) return;
+        var w=document.createElement('div'); w.id='a2hs-who';
+        w.innerHTML=ks.map(function(x){ return '<a href="'+BASE+'?t='+encodeURIComponent(x.t)+'&from=home"'+(x.t===tok?' class="on"':'')+'>'+esc(x.n||'저장된 링크')+'</a>' }).join('');
+        at(w); return;
+      }
+      if(!AND&&!IOS) return;                     // PC 에선 안 띄운다
+      var x=ls.get(XKEY);
+      if(!JUMP&&(x==='installed'||(x&&Date.now()-Number(x)<14*864e5))) return;   // '다음에' 2주, 설치했으면 다시 안 뜸
+      var b=document.createElement('div'); b.id='a2hs';
+      b.innerHTML='<div class="t"><b>'+(JUMP?'이제 홈 화면에 추가해 주세요':'홈 화면에 바로가기 만들기')+'</b>'
+        +(INAPP?'카톡 안 거치고 아이콘으로 바로 열려요':'다음부터 아이콘으로 바로 열려요')+'</div>'
+        +'<button type="button" class="go">'+'추가하기'+'</button><button type="button" class="x">다음에</button>';
+      b.querySelector('.go').onclick=go;
+      b.querySelector('.x').onclick=function(){ ls.set(XKEY,String(Date.now())); b.remove(); };
+      at(b);
+      if(JUMP&&IOS&&!INAPP) setTimeout(iosGuide,400);   // 카톡에서 넘어왔으면 바로 안내
+    }catch(e){}
+  }
+  function forget(tok){ try{ save(keys().filter(function(x){return x.t!==tok})) }catch(e){} }
+  return {home:HOME,mount:mount,forget:forget};
+  }catch(e){ return noop; }
+})();
+
 /* ── 내 질문 모음 (1102 유강 "학생포털에 질문 등록했던 것 모두 확인할 수 있는 페이지") ──────────────
  * 과제 카드 안 질문은 과제가 닫히면 사라진다 → 여기서는 내가 올린 질문 전부(최근 400일)를 본다.
  * DB = portal_my_questions (schema_v56). 함수가 아직 없으면 카드를 그리지 않는다.
@@ -3091,15 +3215,16 @@ function wireReport(tok){
 
 (async()=>{
   const tok=new URLSearchParams(location.search).get('t');
-  if(!tok) return say('링크가 올바르지 않습니다.','받으신 문자·카톡의 주소를 그대로 열어 주세요.');
+  if(!tok) return say('링크가 올바르지 않습니다.',A2HS.home?'처음 한 번은 문자·카톡으로 받은 주소로 열어 주세요. 그다음부터 이 아이콘으로 바로 열려요.':'받으신 문자·카톡의 주소를 그대로 열어 주세요.');
   let data,err;
   try{ ({data,error:err}=await sb.rpc('portal_view',{tok})); }
   catch(e){ err=e; }
   if(err) return say('지금은 열 수 없습니다.','잠시 뒤 다시 열어 주세요. 계속 같으면 원장에게 알려 주세요.');
-  if(!data) return say('만료되었거나 잘못된 링크입니다.','새 링크가 필요하면 원장에게 말씀해 주세요.');
+  if(!data){ A2HS.forget(tok); return say('만료되었거나 잘못된 링크입니다.','새 링크가 필요하면 원장에게 말씀해 주세요.'); }   // (1123) 이 폰에 저장된 옛 링크도 지운다
   // (0902) 오늘 기출 자기평가가 열려 있나 — 실패해도 포털은 그냥 뜬다. (학부모 토큰은 0902 폐기 → 분기 없음, 0906)
   try{ const r=await sb.rpc('gt_eval_open',{tok}); if(r&&r.data&&(r.data.문항||r.data.없음)){ data.자평=r.data; data.토큰=tok; } }catch(e){}
   try{ const r=await sb.rpc('mock_open',{tok}); if(r&&r.data){ data.모의=r.data; data.토큰=tok; } }catch(e){}   // (1112) 함수가 아직 없으면 조용히 넘어간다
   render(data);
+  A2HS.mount(data,tok);   // (1123) 홈 화면 바로가기 안내 — 실패해도 화면엔 영향 없음
 })();
 </script><script src="/dashboard/track.js" data-page="me" defer></script></body></html>
