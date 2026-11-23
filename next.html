@@ -195,6 +195,8 @@ body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1
 .u-score small{font-size:20px;color:var(--u-muted)}
 
 @media print{ .u-bar,.u-acts,.u-modal .act,.u-bottombar{display:none!important} body.u{background:#fff} }
+
+.u-sortbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--u-muted);margin:0 0 6px}
 </style>
 <style>
 .subbar{background:var(--u-surface);border-bottom:1px solid var(--u-line);position:sticky;top:57px;z-index:7}
@@ -239,6 +241,17 @@ a.nm{color:inherit;font-weight:700;text-decoration:none} a.nm:hover{color:var(--
 .qmnx{flex:1 1 180px;display:flex;flex-direction:column;gap:3px;margin-left:10px}
 .qmfd{padding:7px 2px;border-bottom:1px solid var(--u-line);cursor:pointer;font-size:13.5px}.qmfd:last-child{border:0}
 .nowrap{white-space:nowrap}
+.mkpick{display:flex;flex-direction:column;gap:10px;margin:0 0 14px}
+.mkpick .seg{display:inline-flex;align-self:flex-start;border:1px solid var(--u-line);border-radius:var(--u-r-sm);overflow:hidden;background:var(--u-surface)}
+.mkpick .seg button{border:0;background:none;color:var(--u-text-2);font:inherit;font-size:14px;font-weight:600;padding:7px 16px;cursor:pointer;border-right:1px solid var(--u-line)}
+.mkpick .seg button:last-child{border-right:0} .mkpick .seg button small{color:var(--u-faint);font-weight:400;font-size:11.5px;margin-left:2px}
+.mkpick .seg button.on{background:var(--u-accent);color:var(--u-on-accent)} .mkpick .seg button.on small{color:inherit;opacity:.75}
+.mkpick .rounds{display:flex;gap:6px;flex-wrap:wrap}
+.mkpick .rd{position:relative;display:flex;flex-direction:column;align-items:center;min-width:62px;padding:5px 10px;border:1px solid var(--u-line);border-radius:var(--u-r-sm);background:var(--u-surface);color:var(--u-text);font:inherit;cursor:pointer;line-height:1.25}
+.mkpick .rd b{font-size:14px} .mkpick .rd span{font-size:11.5px;color:var(--u-muted)}
+.mkpick .rd.fut{opacity:.55;border-style:dashed}
+.mkpick .rd.on{border-color:var(--u-accent);background:var(--u-accent-soft);opacity:1} .mkpick .rd.on b{color:var(--u-accent)}
+.mkpick .rd .dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--u-ok)}
 .qn{display:inline-block;min-width:24px;padding:1px 6px;margin:1px 3px 1px 0;border-radius:6px;font-size:12.5px;font-weight:700;text-align:center;line-height:1.5}
 .qn.ng{background:var(--u-bad-soft);color:var(--u-bad)} .qn.gs{background:var(--u-slip-soft);color:var(--u-slip)} .qn.vg{background:var(--u-warn-soft);color:var(--u-warn)}
 .qn sup{font-size:9.5px;font-weight:600;margin-left:2px;opacity:.85;vertical-align:2px}
@@ -540,7 +553,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-surface-2)}
 
   /* 표 — U.table(key, cols, rows, {rowAttr, foot}) → HTML 문자열
      cols: [{h:'머리글', v:row=>정렬값, f:row=>칸 HTML(없으면 v), l:true 왼쪽 정렬, num:true 숫자(첫 클릭 내림차순), ns:true 정렬 안 함, tip:'설명'}]
-     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향만 바뀐다. 다시 그리려면 opts.redraw 를 넘긴다. */
+     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향이 바뀌고 한 번 더 누르면 그 칸 정렬이 풀린다. 다시 그리려면 opts.redraw 를 넘긴다. */
   U.SORT = {}; U.COLS = {}; U.REDRAW = {};
   function sorted(key, rows, cols) {
     const ks = U.SORT[key] || []; if (!ks.length) return rows;
@@ -560,14 +573,18 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:var(--u-surface-2)}
         + (k >= 0 ? '<span class="k">' + (k + 1) + (ks[k].d > 0 ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead>';
     const body = sorted(key, rows, cols).map((r, i) => '<tr ' + (opts.rowAttr ? opts.rowAttr(r) : '') + '><td class="n">' + (i + 1) + '</td>'
       + cols.map(c => '<td class="' + (c.l ? 'l' : '') + '">' + (c.f ? c.f(r) : E(c.v(r) == null ? '—' : c.v(r))) + '</td>').join('') + '</tr>').join('');
-    return '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
-      + (ks.length ? '<div class="u-table-foot"><button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 초기화</button></div>' : '')
+    // 정렬 중이면 표 위에 무엇으로 정렬했는지 + [정렬 풀기] — 표가 길면 아래 버튼이 안 보였다(1121)
+    const sbar = ks.length ? '<div class="u-sortbar">정렬: ' + ks.map((x, n) => E((cols[x.c] || {}).h || '') + (x.d > 0 ? ' ▲' : ' ▼')).join(' → ')
+      + ' <button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 풀기</button></div>' : '';
+    return sbar + '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
       + (opts.foot || '');
   };
   document.addEventListener('click', ev => {
     const th = ev.target.closest('th[data-u-sk]');
     if (th && !th.classList.contains('ns')) { const k = th.dataset.uSk, c = +th.dataset.uCi, ks = U.SORT[k] = U.SORT[k] || [], i = ks.findIndex(x => x.c === c);
-      if (i < 0) ks.push({ c, d: (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1 }); else ks[i].d *= -1;
+      // (1121 유강 "필터 안 풀려") 같은 머리글을 누를 때마다 처음 방향 → 반대 방향 → 정렬 풀기. 숫자 칸은 큰 것부터 시작
+      const d0 = (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1;
+      if (i < 0) ks.push({ c, d: d0, d0 }); else if (ks[i].d === (ks[i].d0 || d0)) ks[i].d *= -1; else ks.splice(i, 1);
       (U.REDRAW[k] || U.redraw || (() => {}))(); return; }
     const rs = ev.target.closest('[data-u-sreset]'); if (rs) { U.SORT[rs.dataset.uSreset] = []; (U.REDRAW[rs.dataset.uSreset] || U.redraw || (() => {}))(); }
   });
@@ -1348,7 +1365,14 @@ async function viewMock(id, keep) {
   }
   const rs = MK.rows;
   if (!rs.length) { $('view').innerHTML = head('모의테스트') + '<div class="u-card u-empty">이 시즌에 올라간 모의테스트가 없어요</div>'; return; }
-  if (!MK.pick || !rs.some(r => r.반 + r.날짜 === MK.pick)) MK.pick = rs[0].반 + rs[0].날짜;
+  // (1123 유강 "탭이 너무 불편해") 반 하나 고르고 → 그 반 회차만 1회부터 순서대로. 고른 반은 기억, 회차 기본값 = 오늘 > 지난 것 중 마지막 > 다가오는 첫 회
+  const T = today(), bansM = [...new Set(rs.map(r => r.반))].sort();
+  if (!MK.ban || !bansM.includes(MK.ban)) { let b0 = ''; try { b0 = localStorage.getItem('mk_ban') || ''; } catch (e) {} MK.ban = bansM.includes(b0) ? b0 : (bansM.includes(CTX.ban) ? CTX.ban : bansM[0]); }
+  const mine = rs.filter(r => r.반 === MK.ban).sort((a, b) => (a.회차 - b.회차) || String(a.날짜).localeCompare(String(b.날짜)));
+  if (!MK.pick || !mine.some(r => r.반 + r.날짜 === MK.pick)) {
+    const d = r => String(r.날짜).slice(0, 10), pick = mine.find(r => d(r) === T) || mine.filter(r => d(r) < T).pop() || mine[0];
+    MK.pick = pick.반 + pick.날짜;
+  }
   const m = rs.find(r => r.반 + r.날짜 === MK.pick);
   const st = (m.학생 || []).filter(x => x.재원 || x.제출시각), sub = st.filter(x => x.제출시각), Q = m.문항 || [];
   const full = Q.filter(q => !q.범위밖).reduce((a, q) => a + Number(q.배점 || 0), 0);
@@ -1357,10 +1381,12 @@ async function viewMock(id, keep) {
   const jobBad = x => x.제출시각 && ((!x.잡 && !pend(x)) || (x.잡 && (x.잡.상태 === '실패' || (x.잡.상태 === '완료' && !x.잡.문항수))) || x.메모);
   const now = Date.now(), o = m.열림 && new Date(m.열림).getTime(), c = m.닫힘 && new Date(m.닫힘).getTime(), on = o && o <= now && (!c || c > now);
 
-  const grades = [...new Set(rs.map(r => r.반.slice(0, 2)))];
-  let h = head('모의테스트', '회차를 고르면 문항별 정답률·학생별 결과·점수표', `<button class="u-btn sm ghost" id="mkre">새로고침</button>`);
-  h += `<div class="pick">${grades.map(g => `<div class="row"><span class="u-muted">${E(g)}</span>${rs.filter(r => r.반.startsWith(g)).map(r =>
-    `<button class="u-btn sm${MK.pick === r.반 + r.날짜 ? ' pri' : ''}" data-mkp="${E(r.반 + r.날짜)}">${E(r.반)} ${md(r.날짜)} · ${r.회차}회</button>`).join('')}</div>`).join('')}</div>`;
+  let h = head('모의테스트', '반을 고르고 회차를 고르면 문항별 정답률·학생별 결과·점수표', `<button class="u-btn sm ghost" id="mkre">새로고침</button>`);
+  const isOn = r => { const a = r.열림 && new Date(r.열림).getTime(), z = r.닫힘 && new Date(r.닫힘).getTime(); return a && a <= now && (!z || z > now); };
+  h += `<div class="mkpick"><div class="seg">${bansM.map(b => `<button class="${b === MK.ban ? 'on' : ''}" data-mkb="${E(b)}">${E(b)} <small>${rs.filter(r => r.반 === b).length}회</small></button>`).join('')}</div>`
+    + `<div class="rounds">${mine.map(r => { const d = String(r.날짜).slice(0, 10), fut = d > T, sel = MK.pick === r.반 + r.날짜, ns = (r.학생 || []).filter(x => x.제출시각).length;
+      return `<button class="rd${sel ? ' on' : ''}${fut ? ' fut' : ''}" data-mkp="${E(r.반 + r.날짜)}" title="${E(String(r.시험지명 || ''))}${ns ? ' · 제출 ' + ns + '명' : ''}">`
+        + `<b>${r.회차}회</b><span>${md(d)}${d === T ? ' 오늘' : fut ? ' 예정' : ''}</span>${isOn(r) ? '<i class="dot" title="학생 입력 열림"></i>' : ''}</button>`; }).join('')}</div></div>`;
   h += '<div class="u-kpis">'
     + kpi(`${sub.length}/${st.length}`, `제출 · ${E(String(m.시험지명 || '').split('_')[0])} ${m.회차}회`)
     + kpi(scores.length ? r1(avg(scores)) : null, `평균 / ${r1(full)}점`)
@@ -1425,6 +1451,7 @@ async function viewMock(id, keep) {
   $('view').innerHTML = h + '<div class="mini" id="mkmsg" style="margin-top:8px"></div>';
   $('mkre').onclick = () => viewMock(RENDER_ID);
   $('view').querySelectorAll('[data-mkp]').forEach(b => b.onclick = () => { MK.pick = b.dataset.mkp; viewMock(RENDER_ID, 1); });
+  $('view').querySelectorAll('[data-mkb]').forEach(b => b.onclick = () => { MK.ban = b.dataset.mkb; MK.pick = null; try { localStorage.setItem('mk_ban', MK.ban); } catch (e) {} viewMock(RENDER_ID, 1); });
   $('view').querySelectorAll('[data-mt]').forEach(b => b.onclick = () => { MK.tab = b.dataset.mt; viewMock(RENDER_ID, 1); });
   const gb = $('mkgate'); if (gb) sure(gb, gb.dataset.open === '1' ? '열까요? 한 번 더' : '닫을까요? 한 번 더', async () => {
     const open = gb.dataset.open === '1';
