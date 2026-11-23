@@ -687,6 +687,14 @@ const attCls = a => a === '출석' ? 'ok' : (a === '지각' || a === '늦참' ||
 const dash = '<span class="u-faint">—</span>';
 const kpi = (v, l, cls, tip) => `<div class="u-kpi"${tip ? ` title="${E(tip)}"` : ''}><b class="${cls ? 'u-' + cls : ''}">${v == null ? '—' : E(v)}</b><span>${E(l)}</span></div>`;
 const soft = async p => { try { const { data, error } = await p; if (error) { console.warn(error.message); return null; } return data; } catch (e) { console.warn(e); return null; } };
+/* (1123 유강 "고1 전체 회차를 잡고 고1T반이 안 본 시험은 과제로" — 포털과 같게) 고1 모의 회차 = 전체 회차(같은 시험지의 고1S 행 회차).
+   고1T 처럼 자기 회차가 따로 매겨진 행은 화면에서 전체 회차로(DB 회차는 반회차 로 남김). 고1S 와 같은 날 본 다른 고1 반 행(명수 신갈고 등) = 과제 표시. */
+function mkGlobal(rows){
+  rows=Array.isArray(rows)?rows:[]; const G={}, D={};
+  rows.forEach(r=>{ if(r.반==='고1S'&&r.시험지명&&r.반회차==null){ G[r.시험지명]=r.회차; D[r.시험지명]=String(r.날짜).slice(0,10); } });
+  rows.forEach(r=>{ if(/^고1/.test(r.반||'')&&r.반!=='고1S'&&r.반!=='고1A'&&G[r.시험지명]!=null&&r.반회차==null){ r.반회차=r.회차; r.회차=G[r.시험지명]; if(String(r.날짜).slice(0,10)===D[r.시험지명]) r.과제=true; } });
+  return rows;
+}
 async function all(q, page = 1000) {
   let out = [], from = 0;
   for (;;) { const { data, error } = await q().range(from, from + page - 1); if (error) { console.warn(error.message); return out; } out = out.concat(data || []); if (!data || data.length < page) return out; from += page; }
@@ -899,7 +907,7 @@ async function viewHome(id) {
     soft(sb.from('hw_clinic_check').select('*')),
     soft(sb.from('timetable').select('반,시작,끝').eq('요일', dow)),
     soft(sb.from('report_v5').select('반,날짜,이행').gte('날짜', since14)),
-    ROLE === 'admin' ? soft(sb.rpc('staff_mock_status', { p_days: 10 })) : Promise.resolve([]),
+    ROLE === 'admin' ? soft(sb.rpc('staff_mock_status', { p_days: 30 })).then(mkGlobal) : Promise.resolve([]),
   ]);
   const aids = [...new Set([...(qw || []), ...(qe || [])].map(q => q.assign_id).filter(Boolean))];
   const iids = [...new Set((sw || []).map(s => s.item_id))];
@@ -1104,7 +1112,7 @@ async function viewResult(id) {
     soft(sb.from('report_v5').select('"학생ID",이름,url,이행,내역,루프출처,썸네일바뀜,시각').eq('반', ban).eq('날짜', day)),
     soft(sb.from('hw_clinic_check').select('*').eq('회차', ban + '|' + day)),
     soft(sb.from('class_sessions').select('*').eq('반', ban).eq('날짜', day).limit(1)),
-    soft(sb.rpc('staff_mock_status', { p_days: Math.max(7, Math.ceil((Date.now() - new Date(day + 'T00:00:00+09:00')) / 864e5) + 2) })),
+    soft(sb.rpc('staff_mock_status', { p_days: Math.max(30, Math.ceil((Date.now() - new Date(day + 'T00:00:00+09:00')) / 864e5) + 2) })).then(mkGlobal),
   ]);
   if (!alive(id)) return;
   const mock = (Array.isArray(mk) ? mk : []).find(m => m.반 === ban && String(m.날짜).slice(0, 10) === day);
@@ -1132,7 +1140,7 @@ async function viewResult(id) {
   const s0 = (ses || [])[0], closed = s0 && /closed|마감/.test(String(s0.상태 || ''));
   const prog = ((dl || []).find(r => r.진도) || {}).진도;
 
-  let h = head(`${E(ban)} · ${mdw(day)}`, [prog ? E(prog) : '', mock && !/모의/.test(prog || '') ? `모의 ${E(mock.회차)}회 ${E(String(mock.시험지명 || '').split('_')[0])}` : '',
+  let h = head(`${E(ban)} · ${mdw(day)}`, [prog ? E(prog) : '', mock && !/모의/.test(prog || '') ? `모의 ${E(mock.회차)}회 ${E(String(mock.시험지명 || '').split('_')[0])}${mock.과제 ? ' (과제)' : ''}` : '',
     s0 ? (closed ? '마감됨' : '수업 중 · 마감 전') : (dl || []).length ? '' : '아직 입력 없음'].filter(Boolean).join(' · '),
     `<button class="u-btn sm" onclick="go('class','input')">수업 입력으로</button>`);
   h += '<div class="u-kpis">'
@@ -1362,7 +1370,7 @@ async function viewMock(id, keep) {
   if (!keep || !MK.rows) {
     const d = await soft(sb.rpc('staff_mock_status', { p_days: 150 }));
     if (!alive(id)) return;
-    MK.rows = (Array.isArray(d) ? d : []).filter(r => inSeason(r.날짜)).sort((a, b) => String(b.날짜).localeCompare(String(a.날짜)) || a.반.localeCompare(b.반));
+    MK.rows = mkGlobal(Array.isArray(d) ? d : []).filter(r => inSeason(r.날짜)).sort((a, b) => String(b.날짜).localeCompare(String(a.날짜)) || a.반.localeCompare(b.반));
   }
   const rs = MK.rows;
   if (!rs.length) { $('view').innerHTML = head('모의테스트') + '<div class="u-card u-empty">이 시즌에 올라간 모의테스트가 없어요</div>'; return; }
@@ -1401,7 +1409,7 @@ async function viewMock(id, keep) {
     + grs.map(g => `<button class="all${'G:' + g === MK.ban ? ' on' : ''}" data-mkb="G:${E(g)}" title="같은 시험지를 본 ${E(g)} 반들을 합쳐서">${E(g)} 전체</button>`).join('') + '</div>'
     + `<div class="rounds">${mine.map(g => { const fut = g.d0 > T, sel = MK.pick === g.key, ns = g.rows.reduce((a, r) => a + (r.학생 || []).filter(x => x.제출시각).length, 0), today0 = g.rows.some(r => dd(r) === T);
       const lab = multi ? `<b>${E(String(g.시험지명 || '').split('_')[0] || '?')}</b><span>${md(g.d0)}${g.d1 !== g.d0 ? '~' + md(g.d1) : ''} · ${g.rows.map(r => E(r.반.slice(2)) + r.회차).join(' ')}</span>`
-        : `<b>${g.rows[0].회차}회</b><span>${md(g.d0)}${today0 ? ' 오늘' : fut ? ' 예정' : ''}</span>`;
+        : `<b>${g.rows[0].회차}회</b><span>${md(g.d0)}${g.rows[0].과제 ? ' 과제' : today0 ? ' 오늘' : fut ? ' 예정' : ''}</span>`;
       return `<button class="rd${sel ? ' on' : ''}${fut ? ' fut' : ''}" data-mkp="${E(g.key)}" title="${E(String(g.시험지명 || ''))}${ns ? ' · 제출 ' + ns + '명' : ''}">${lab}${g.rows.some(isOn) ? '<i class="dot" title="학생 입력 열림"></i>' : ''}</button>`; }).join('')}</div></div>`;
   h += '<div class="u-kpis">'
     + kpi(`${sub.length}/${st.length}`, `제출 · ${E(String(m.시험지명 || '').split('_')[0])} ${multi ? `· ${m.multi.length}개 반` : m.회차 + '회'}`)
@@ -2934,7 +2942,7 @@ function isMOCK(){return $('c_test').value.trim()==='모의테스트';}
 function mockScore(id){const x=MKC&&(MKC.학생||[]).find(s=>s['학생ID']===id);return x&&x.점수!=null?Number(x.점수):null;}
 async function mkcLoad(cls,day){
   MKC=null;
-  try{const {data}=await sb.rpc('staff_mock_status',{p_days:3});MKC=(data||[]).find(m=>m.반===cls&&String(m.날짜)===day)||null;}catch(e){}
+  try{const {data}=await sb.rpc('staff_mock_status',{p_days:30});MKC=csMkGlobal(data||[]).find(m=>m.반===cls&&String(m.날짜)===day)||null;}catch(e){}
 }
 function mkcFmt(t){if(!t)return '';const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function mkcDraw(){
@@ -4969,10 +4977,18 @@ let PLANFILL=null;
 /* (1119 P16 0단계) 모의 날이면 진도 = 실제로 연 모의(mock_exam)의 회차·시험지. 진도계획(hw_assign)에는 모의가 없어서
    직전 수업 값이 넘어오거나 옛 계획(상현고)이 남았다 — 11/18 고1A '1회 초당고'·고1S '2회 상현고'(실제 둘 다 신갈고 2회).
    시험지명 '신갈고_고1_2025_2_기말' → '모의테스트 2회 [25년 신갈고]'. 과제는 직전 값(모의 날 과제는 모의 개별과제). */
+/* (1123 유강 "고1 전체 회차를 잡고 고1T반이 안 본 시험은 과제로" — 포털과 같게) 고1 모의 회차 = 전체 회차(같은 시험지의 고1S 행 회차).
+   고1T 처럼 자기 회차가 따로 매겨진 행은 화면에서 전체 회차로(DB 회차는 반회차 로 남김). 고1S 와 같은 날 본 다른 고1 반 행(명수 신갈고 등) = 과제 표시. */
+function csMkGlobal(rows){
+  rows=Array.isArray(rows)?rows:[]; const G={}, D={};
+  rows.forEach(r=>{ if(r.반==='고1S'&&r.시험지명&&r.반회차==null){ G[r.시험지명]=r.회차; D[r.시험지명]=String(r.날짜).slice(0,10); } });
+  rows.forEach(r=>{ if(/^고1/.test(r.반||'')&&r.반!=='고1S'&&r.반!=='고1A'&&G[r.시험지명]!=null&&r.반회차==null){ r.반회차=r.회차; r.회차=G[r.시험지명]; if(String(r.날짜).slice(0,10)===D[r.시험지명]) r.과제=true; } });
+  return rows;
+}
 async function mockFill(cls,today){
   try{
-    const {data,error}=await sb.rpc('staff_mock_status',{p_days:2});
-    if(error||!Array.isArray(data))return null;
+    const {data,error}=await sb.rpc('staff_mock_status',{p_days:30});
+    if(error||!Array.isArray(data))return null; csMkGlobal(data);
     const m=data.find(x=>x.반===cls&&String(x.날짜).slice(0,10)===today); if(!m||!m.시험지명)return null;
     const [sch,,yr]=String(m.시험지명).split('_');
     const 진도='모의테스트 '+(m.회차||'?')+'회 ['+(yr?String(yr).slice(2)+'년 ':'')+sch+']';
