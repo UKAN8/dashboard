@@ -717,25 +717,102 @@ var A2HS=(function(){
   var SHARE='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}) }
   function closeSheet(){ var s=document.getElementById('a2hs-sh'); if(s) s.remove(); }
-  function sheet(title,steps,note){
+  /* (1123 유강 "홈화면 추가 애니메이션") 안내창 위 폰 화면 — 손가락이 차례로 누르고, 아래 단계 글자가 같이 켜진다.
+   * 장면표(SC)만 고치면 된다: tap=[x,y] 누르는 자리(화면 168×300 기준 px), m=메뉴, sub=삼성 하위 메뉴, dl=추가 창, h=홈 화면, s=켜질 단계(3=전부 끝) */
+  var DCSS='#a2hs-sh .dm{position:relative;box-sizing:content-box;width:168px;height:300px;margin:0 auto 16px;border-radius:24px;border:3px solid #2c2c36;background:#0f0f15;overflow:hidden;font:9px/1.3 Pretendard,sans-serif;color:#dcdce4}'
+   +'#a2hs-sh .dm *{box-sizing:border-box}'
+   +'#a2hs-sh .dm .pg{position:absolute;inset:0;padding:16px 12px 0}#a2hs-sh .dm.tb .pg{padding-top:40px}'
+   +'#a2hs-sh .dm .pg i{display:block;border-radius:7px;background:rgba(255,255,255,.07);margin-bottom:8px;height:34px}'
+   +'#a2hs-sh .dm .pg i.b{width:46px;height:7px;background:rgba(245,160,160,.55)}#a2hs-sh .dm .pg i.n{width:70px;height:13px;background:rgba(255,255,255,.22)}'
+   +'#a2hs-sh .dm .bar{position:absolute;left:0;right:0;height:30px;background:#1b1b22;display:flex;align-items:center;color:#a0a0b0}'
+   +'#a2hs-sh .dm .bar.bt{bottom:0}#a2hs-sh .dm .bar.bt span{flex:1;display:flex;justify-content:center}'
+   +'#a2hs-sh .dm .bar.tp{top:0;gap:6px;padding:0 8px}#a2hs-sh .dm .bar svg{width:13px;height:13px}'
+   +'#a2hs-sh .dm .url{flex:1;height:18px;border-radius:9px;background:#2a2a33;color:#9a9aa8;font-size:8px;display:flex;align-items:center;padding-left:8px}'
+   +'#a2hs-sh .dm .mn,#a2hs-sh .dm .sub,#a2hs-sh .dm .dl,#a2hs-sh .dm .hm{position:absolute;transition:transform .35s ease,opacity .25s ease}'
+   +'#a2hs-sh .dm .mn.sh{left:0;right:0;bottom:0;height:170px;background:#1f1f28;border-radius:14px 14px 0 0;transform:translateY(100%)}'
+   +'#a2hs-sh .dm .mn.dd{top:6px;right:6px;width:112px;background:#262630;border-radius:8px;opacity:0;transform:scale(.5);transform-origin:top right;box-shadow:0 6px 18px rgba(0,0,0,.5)}'
+   +'#a2hs-sh .dm.m .mn{transform:none;opacity:1}'
+   +'#a2hs-sh .dm .hd{height:40px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.06)}#a2hs-sh .dm .hd img{width:22px;height:22px;border-radius:5px}#a2hs-sh .dm .hd small{display:block;color:#8a8a98;font-size:7px}'
+   +'#a2hs-sh .dm .r{height:28px;display:flex;align-items:center;padding:0 12px;border-top:1px solid rgba(255,255,255,.04);transition:background .2s}#a2hs-sh .dm .dd .r{height:26px;border:0}'
+   +'#a2hs-sh .dm .r.hl{background:rgba(245,160,160,.28);color:#fff;font-weight:600}'
+   +'#a2hs-sh .dm .gd{display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px 0}#a2hs-sh .dm .gd .r{height:52px;flex-direction:column;justify-content:center;gap:4px;padding:0 2px;border:0;border-radius:8px;text-align:center;font-size:7px;line-height:1.15}'
+   +'#a2hs-sh .dm .gd .r i{width:16px;height:16px;border-radius:5px;background:rgba(255,255,255,.14)}'
+   +'#a2hs-sh .dm .sub{left:24px;right:24px;top:100px;background:#2a2a35;border-radius:10px;overflow:hidden;opacity:0;transform:scale(.8);box-shadow:0 6px 18px rgba(0,0,0,.6)}#a2hs-sh .dm.u .sub{opacity:1;transform:none}#a2hs-sh .dm .sub .r{border:0}'
+   +'#a2hs-sh .dm .dl.io{inset:0;background:#1a1a20;transform:translateY(100%)}#a2hs-sh .dm .dl.an{left:14px;right:14px;top:96px;height:110px;background:#262630;border-radius:12px;padding:12px;opacity:0;transform:scale(.85);box-shadow:0 8px 24px rgba(0,0,0,.6)}'
+   +'#a2hs-sh .dm.d .dl{transform:none;opacity:1}'
+   +'#a2hs-sh .dm .nv{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.06)}#a2hs-sh .dm .nv b{font-size:9px}#a2hs-sh .dm .nv em{font-style:normal;color:#6aa8ff;font-weight:700}#a2hs-sh .dm .nv span{color:#6aa8ff}'
+   +'#a2hs-sh .dm .ib{display:flex;align-items:center;gap:8px;margin:12px 10px;padding:8px;border-radius:9px;background:#24242c}#a2hs-sh .dm .ib img{width:32px;height:32px;border-radius:8px}#a2hs-sh .dm .ib small{display:block;color:#8a8a98;font-size:7px}'
+   +'#a2hs-sh .dm .an b{display:block;font-size:10px;margin-bottom:8px}#a2hs-sh .dm .an .ib{margin:0 0 10px;padding:0;background:none}#a2hs-sh .dm .an .bt2{position:absolute;right:12px;bottom:10px;display:flex;gap:14px;color:#9ab8ff;font-weight:600}'
+   +'#a2hs-sh .dm .hm{inset:0;background:linear-gradient(160deg,#2c2442,#12202e);opacity:0;display:grid;grid-template-columns:repeat(4,1fr);align-content:start;gap:16px 0;padding:30px 10px}#a2hs-sh .dm.h .hm{opacity:1}'
+   +'#a2hs-sh .dm .ap{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:6.5px;color:#e8e8f0}#a2hs-sh .dm .ap i{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.18)}'
+   +'#a2hs-sh .dm .ap.me i{background-size:cover;transform:scale(0)}#a2hs-sh .dm .ap.me span{opacity:0}#a2hs-sh .dm.h .ap.me i{animation:a2pop .5s .25s both}#a2hs-sh .dm.h .ap.me span{opacity:1;transition:opacity .3s .6s}'
+   +'#a2hs-sh .dm .tp{position:absolute;z-index:5;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.85);opacity:0;transition:left .35s ease,top .35s ease,opacity .2s}'
+   +'#a2hs-sh .dm .tp.on{opacity:1}#a2hs-sh .dm .tp.pr{animation:a2press .5s .15s}'
+   +'@keyframes a2press{0%,100%{transform:scale(1)}45%{transform:scale(.62);background:rgba(245,160,160,.6)}}@keyframes a2pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}'
+   +'#a2hs-sh ol.live li{opacity:.4;transition:opacity .25s}#a2hs-sh ol.live li.on{opacity:1}#a2hs-sh ol.live.all li{opacity:1}';
+  var IC={l:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>',r:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>',
+    bk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>',
+    tb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 20h10a2 2 0 0 0 2-2V8"/></svg>',
+    hm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l8-7 8 7v9H4z"/></svg>',
+    mu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+    dt:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'};
+  var SC={
+    ios:[{d:700},{tap:[84,285],s:0},{m:1,s:0,d:800},{m:1,tap:[84,240],hl:1,s:1},{dl:1,s:2,d:800},{dl:1,tap:[150,18],s:2},{h:1,s:3,d:2200}],
+    ioschrome:[{d:700},{tap:[153,15],s:0},{m:1,s:0,d:800},{m:1,tap:[84,240],hl:1,s:1},{dl:1,s:2,d:800},{dl:1,tap:[150,18],s:2},{h:1,s:3,d:2200}],
+    and:[{d:700},{tap:[153,15],s:0},{m:1,s:0,d:700},{m:1,tap:[106,97],hl:1,s:1},{dl:1,s:2,d:800},{dl:1,tap:[134,190],s:2},{h:1,s:3,d:2200}],
+    sam:[{d:700},{tap:[151,285],s:0},{m:1,s:0,d:700},{m:1,tap:[65,166],hl:1,s:1},{m:1,u:1,s:1,d:700},{m:1,u:1,tap:[84,170],hl2:1,s:1},{dl:1,s:2,d:800},{dl:1,tap:[134,190],s:2},{h:1,s:3,d:2200}]};
+  function demoHTML(k){
+    var ico=BASE+'apple-touch-icon.png', top=(k==='ioschrome'||k==='and');
+    var h='<div class="pg"><i class="b"></i><i class="n"></i><i></i><i></i><i></i><i></i></div>';
+    if(k==='ios') h+='<div class="bar bt"><span>'+IC.l+'</span><span>'+IC.r+'</span><span>'+SHARE.replace('class="ic" ','')+'</span><span>'+IC.bk+'</span><span>'+IC.tb+'</span></div>';
+    if(k==='sam') h+='<div class="bar bt"><span>'+IC.l+'</span><span>'+IC.r+'</span><span>'+IC.hm+'</span><span>'+IC.tb+'</span><span>'+IC.mu+'</span></div>';
+    if(top) h+='<div class="bar tp"><div class="url">ukan.kr</div>'+(k==='and'?IC.dt:SHARE.replace('class="ic" ',''))+'</div>';
+    var rows=function(a,hit){ return a.map(function(t,i){ return '<div class="r'+(i===hit?' x':'')+'">'+t+'</div>' }).join('') };
+    if(k==='ios'||k==='ioschrome') h+='<div class="mn sh"><div class="hd"><img src="'+ico+'" alt=""><div>수학은유강 · 내 학습<small>ukan.kr</small></div></div>'+rows(['복사','즐겨찾기에 추가','홈 화면에 추가','읽기 목록에 추가'],2)+'</div>';
+    if(k==='and') h+='<div class="mn dd">'+rows(['새 탭','방문 기록','다운로드','홈 화면에 추가','설정'],3)+'</div>';
+    if(k==='sam') h+='<div class="mn sh"><div class="gd">'+['북마크','현재 페이지 추가','다운로드','방문 기록','설정','공유','PC 버전','새 탭'].map(function(t,i){ return '<div class="r'+(i===1?' x':'')+'"><i></i>'+t+'</div>' }).join('')+'</div></div>'
+      +'<div class="sub">'+rows(['북마크','빠른 실행','홈 화면'],2).replace(/class="r x"/,'class="r y"')+'</div>';
+    if(k==='ios'||k==='ioschrome') h+='<div class="dl io"><div class="nv"><span>취소</span><b>홈 화면에 추가</b><em>추가</em></div><div class="ib"><img src="'+ico+'" alt=""><div>수학은유강<small>ukan.kr</small></div></div></div>';
+    else h+='<div class="dl an"><b>홈 화면에 추가</b><div class="ib"><img src="'+ico+'" alt=""><div>수학은유강<small>ukan.kr</small></div></div><div class="bt2"><span>취소</span><span>추가</span></div></div>';
+    h+='<div class="hm">'+['','','','','','','','','','','',''].map(function(_,i){ return i===9?'<div class="ap me"><i style="background-image:url('+ico+')"></i><span>수학은유강</span></div>':'<div class="ap"><i></i><span>&nbsp;</span></div>' }).join('')+'</div>';
+    return '<div class="dm'+(top?' tb':'')+'">'+h+'<div class="tp"></div></div>';
+  }
+  function runDemo(root,k){
+    var dm=root.querySelector('.dm'), tp=dm.querySelector('.tp'), ol=root.querySelector('ol'), lis=ol?ol.children:[], sc=SC[k], i=0;
+    if(ol) ol.classList.add('live');
+    function tick(){
+      if(!dm.isConnected) return;
+      var c=sc[i];
+      dm.classList.toggle('m',!!c.m); dm.classList.toggle('u',!!c.u); dm.classList.toggle('d',!!c.dl); dm.classList.toggle('h',!!c.h);
+      var x=dm.querySelector('.r.x'), y=dm.querySelector('.r.y');
+      if(x) x.classList.toggle('hl',!!c.hl&&!c.u); if(y) y.classList.toggle('hl',!!c.hl2);
+      if(c.tap){ tp.style.left=c.tap[0]+'px'; tp.style.top=c.tap[1]+'px'; tp.classList.add('on'); tp.classList.remove('pr'); void tp.offsetWidth; tp.classList.add('pr'); }
+      else tp.classList.remove('on','pr');
+      if(ol){ ol.classList.toggle('all',c.s===3); for(var j=0;j<lis.length;j++) lis[j].classList.toggle('on',j===c.s); }
+      i=(i+1)%sc.length; setTimeout(tick,c.d||1000);
+    }
+    tick();
+  }
+  function sheet(title,steps,note,demo){
     closeSheet();
     var d=document.createElement('div'); d.id='a2hs-sh';
-    d.innerHTML='<div class="sh"><h3>'+title+'</h3><ol>'+steps.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ol>'
+    d.innerHTML='<div class="sh"><h3>'+title+'</h3>'+(demo&&SC[demo]?demoHTML(demo):'')+'<ol>'+steps.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ol>'
       +(note?'<div class="dim">'+note+'</div>':'')+'<button type="button">닫기</button></div>';
     d.addEventListener('click',function(e){ if(e.target===d||e.target.tagName==='BUTTON') closeSheet(); });
     document.body.appendChild(d);
+    if(demo&&SC[demo]){ if(!document.getElementById('a2hs-dcss')){ var st=document.createElement('style'); st.id='a2hs-dcss'; st.textContent=DCSS; document.head.appendChild(st); } runDemo(d,demo); }
   }
   function iosGuide(){
     setQ(function(q){ q.set('from','home') });   // 아이콘 주소에 표시를 남긴다 → 아이콘으로 열면 이 안내가 다시 안 뜬다
-    if(/CriOS/.test(UA)) sheet('홈 화면에 추가하기',['주소창 오른쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요','<b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
-    else sheet('홈 화면에 추가하기',['화면 아래쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요<br><small class="dim">안 보이면 아래쪽 <b>⋯</b>를 먼저 눌러요</small>','목록을 내려서 <b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
+    if(/CriOS/.test(UA)) sheet('홈 화면에 추가하기',['주소창 오른쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요','<b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.','ioschrome');
+    else sheet('홈 화면에 추가하기',['화면 아래쪽 <b>공유</b> '+SHARE+' 버튼을 눌러요<br><small class="dim">안 보이면 아래쪽 <b>⋯</b>를 먼저 눌러요</small>','목록을 내려서 <b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝'],'다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.','ios');
   }
   function andGuide(){
     var sam=/SamsungBrowser/.test(UA);
     sheet('홈 화면에 추가하기', sam
       ?['아래쪽 <b>≡</b> 메뉴를 눌러요','<b>현재 페이지 추가</b> → <b>홈 화면</b>을 눌러요','<b>추가</b>를 누르면 끝']
       :['오른쪽 위 <b>⋮</b> 메뉴를 눌러요','<b>홈 화면에 추가</b>(또는 <b>앱 설치</b>)를 눌러요','<b>설치</b>·<b>추가</b>를 누르면 끝'],
-      '다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.');
+      '다음부터는 홈 화면의 ‘수학은유강’ 아이콘으로 바로 들어와요.', sam?'sam':'and');
   }
   function outUrl(){ var q=new URLSearchParams(location.search); q.delete('from'); q.set('a2hs','1'); return location.origin+location.pathname+'?'+q.toString() }
   function go(){
