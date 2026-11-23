@@ -1065,7 +1065,7 @@ else{try{if(sessionStorage.getItem('tt-tab')==='res'){tab('res');TT_LIST($('#tRe
 const ME=window.TT_ME||{};const $=s=>document.querySelector(s);const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 /* 포털로 돌아가기 */
 const intro=document.querySelector('.intro');
-if(intro&&ME.t){const a=document.createElement('a');a.className='pt-back';a.href="https://ukan8.github.io/dashboard/me/"+'?t='+encodeURIComponent(ME.t);a.textContent='← 내 학습';intro.insertBefore(a,intro.firstChild);}
+if(intro&&ME.t){const a=document.createElement('a');a.className='pt-back';a.href="https://ukan.kr/dashboard/me/"+'?t='+encodeURIComponent(ME.t);a.textContent='← 내 학습';intro.insertBefore(a,intro.firstChild);}
 const br=document.querySelector('.intro .brand');if(br)br.textContent='수학은유강';
 document.querySelector('.intro .lede').innerHTML='기말 범위 대표유형을 한 단계씩 해부해서 풀어요';
 if(!ME.n)return;   /* 포털 밖에서 열면 원래 칸(이름·학교·학년)을 그대로 쓴다 */

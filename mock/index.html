@@ -87,7 +87,7 @@ const sb=supabase.createClient(SB_URL,SB_ANON);
 const TOK=new URLSearchParams(location.search).get('t')||'';
 // (1121 유강) 셀프 모의테스트 — ?s=시험지명 이면 self_mock_* RPC(schema_v92). 과제 체크엔 안 들어가고 개별자료만 만든다
 const SELF=new URLSearchParams(location.search).get('s')||'';
-const PORTAL='https://ukan8.github.io/dashboard/me/?t='+encodeURIComponent(TOK);
+const PORTAL='https://ukan.kr/dashboard/me/?t='+encodeURIComponent(TOK);
 const RPC=(n,a)=>sb.rpc(SELF?'self_'+n:n, SELF?Object.assign({tok:TOK,p_name:SELF},a):Object.assign({tok:TOK},a));
 const app=document.getElementById('app'), bar=document.getElementById('bar'), cnt=document.getElementById('cnt'), go=document.getElementById('go');
 const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

@@ -466,7 +466,7 @@ let JOBS = [], GROUPS = {}, CUR = null;
 async function load() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
-    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan8.github.io/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
+    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan.kr/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
     return;
   }
   const { data, error } = await sb.from('job_queue').select('id,종류,상태,요청자,파라미터,결과,메시지,요청시각,완료시각')
@@ -715,14 +715,14 @@ function preview(b) {
    · 학생별 = 그 학생 포털에 뜨는 것과 같은 규칙(portal_hw_files: 이름 + 학생ID/반)으로 job_queue 산출물 + 그 반 lib(써킷·교재·기출)
    · 써킷·교재·기출 = 정적 mathis-lib/lib.json (같은 오리진, 공개)
    · 읽기만 한다 — 학생 체크·설정은 여기서 못 바꾼다(조교 권한: job_queue·students select, reports 버킷 select 뿐) */
-const LIB_BASE = 'https://ukan8.github.io/mathis-lib/';
+const LIB_BASE = 'https://ukan.kr/mathis-lib/';
 let MODE = 'grp', STU = null, LIB = null, LIST = [], SORT = [], LISTCTX = null;
 const banOf = v => Array.isArray(v) ? v : (v ? [v] : []);
 
 async function hasSession() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
-    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan8.github.io/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
+    $('#left').innerHTML = '<div class="msg">로그인이 필요하다. <a href="https://ukan.kr/dashboard/" target="_blank" rel="noopener">콘솔</a>에서 로그인한 뒤 이 페이지를 새로고침.</div>';
     return false;
   }
   return true;

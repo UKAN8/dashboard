@@ -1050,7 +1050,7 @@ async function viewRoster(id) {
 }
 function roTable() {
   const rows = RO.d.filter(r => roGr(r) === RO.gr && (RO.ban === '*' || r.s.ban === RO.ban) && (RO.sch === '*' || r.s.학교 === RO.sch) && (!RO.q || r.s.이름.includes(RO.q)));
-  const portal = r => r.tok ? 'https://ukan8.github.io/dashboard/me/?t=' + encodeURIComponent(r.tok.토큰) : '';
+  const portal = r => r.tok ? 'https://ukan.kr/dashboard/me/?t=' + encodeURIComponent(r.tok.토큰) : '';
   const pc = v => v == null ? dash : `<b class="u-${rateCls(v)}">${v}%</b>`;
   $('rotbl').innerHTML = (rows.length ? '' : '<div class="u-card u-muted">맞는 학생이 없어요</div>') + (rows.length ? table('roster', [
     { h: '이름', l: 1, v: r => r.s.이름, f: r => r.tok ? `<a class="nm" href="${E(portal(r))}" target="_blank" rel="noopener" title="학생 포털 열기">${E(r.s.이름)} ↗</a>` : stuLink(r.sid, r.s.이름) },
@@ -1660,7 +1660,7 @@ async function qaMeta(rows) {
     keys.length ? soft(sb.from('hw_set').select('*').in('세트키', keys)) : [],
     keys.length ? soft(sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)) : [],
     pans.length ? soft(sb.from('job_queue').select('id,결과').in('id', pans)) : [],
-    QA.lib ? null : fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }).then(r => r.ok ? r.json() : {}).then(j => { QA.lib = j; }).catch(() => { QA.lib = {}; })]);
+    QA.lib ? null : fetch('https://ukan.kr/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }).then(r => r.ok ? r.json() : {}).then(j => { QA.lib = j; }).catch(() => { QA.lib = {}; })]);
   (s1 || []).forEach(s => QA.sets[s.세트키] = s); (s2 || []).forEach(i => QA.items[i.세트키 + '#' + i.번호] = i);
   (jq || []).forEach(j => { const u = ((j.결과 || {}).업로드 || [])[0] || {}; QA.pan[j.id] = [['문제', u.문제url || u.url], ['해설', u.해설url]].filter(x => x[1]).map(x => ({ k: x[0], url: x[1] })); });
 }
@@ -1670,7 +1670,7 @@ function qaPdf(r) {
   const a = r.hw_assign || {}; if (a.판 && QA.pan[a.판]) return QA.pan[a.판];
   const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷); if (!lr) return [];
   const pg = k => { const m = ((lr.써킷.쪽 || {})[k]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
-  return ['문제', '해설'].filter(k => lr.써킷[k]).map(k => ({ k, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k] + (pg(k) ? '#page=' + pg(k) : ''), p: pg(k) }));
+  return ['문제', '해설'].filter(k => lr.써킷[k]).map(k => ({ k, url: 'https://ukan.kr/mathis-lib/' + lr.써킷[k] + (pg(k) ? '#page=' + pg(k) : ''), p: pg(k) }));
 }
 function qaGroups(rows) {
   const now = Date.now(), G = {};
@@ -1949,7 +1949,7 @@ async function viewPortal(id) {
     all(() => sb.from('page_visit_v').select('시각,"학생ID",보는사람').gte('시각', since).order('시각', { ascending: false }))]);
   if (!alive(id)) return;
   const live = t => t && !t.회수 && (!t.만료일 || t.만료일 >= today());
-  const url = t => 'https://ukan8.github.io/dashboard/me/?t=' + encodeURIComponent(t.토큰);
+  const url = t => 'https://ukan.kr/dashboard/me/?t=' + encodeURIComponent(t.토큰);
   const isPar = w => w === '학부모', isStu = w => String(w || '').startsWith('학생'), canVisit = vs.length > 0;
   const rows = stu.map(s => {
     const ts = (tk || []).filter(t => t.학생ID === s.학생ID && live(t)), st = ts.find(t => t.대상 !== '학부모'), pa = ts.find(t => t.대상 === '학부모');
@@ -1983,8 +1983,8 @@ async function viewPortal(id) {
    새 설문은 SV_META 에 이름 한 줄(없어도 키 이름으로 보임), 문항 표시 이름은 SV_Q 에 한 묶음. */
 const SV_META = {
   ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
-  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8 },
-  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan8.github.io/dashboard/diag2/?admin', 단원: 9 },
+  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan.kr/dashboard/diag/?admin', 단원: 8 },
+  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan.kr/dashboard/diag2/?admin', 단원: 9 },
   hw0827: { 이름: '기출 오답 과제 (0827)' },
 };
 const SV_PRIVATE = ['바라는점', '요청', '한마디', '개선'];   // 홍보에 안 쓴다고 약속한 칸
@@ -3345,7 +3345,7 @@ function renderGrid(box,nq){
     tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan8.github.io/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
+      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan.kr/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
