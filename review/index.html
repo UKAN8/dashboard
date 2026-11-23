@@ -377,7 +377,7 @@ async function home() {
   root.innerHTML = `<div class="tb"><b style="font-size:17px">검수판</b><span class="sp"></span><span class="hint">S펜 = 빨간펜 · 손가락 = 넘기기·문항 누르기</span></div><div id="home"><div class="u-empty">불러오는 중…</div></div>`;
   let docs; try { docs = await rpc('review_docs'); } catch (e) { $('home').innerHTML = '<div class="u-err">관리자만 열 수 있어요.</div>'; return; }
   const ORD = ['교재', '써킷', '리뷰테스트', '모의', '기타'], by = {};
-  (docs || []).sort((a, b) => (ORD.indexOf(a.종류) + 9) % 14 - (ORD.indexOf(b.종류) + 9) % 14 || a.제목.localeCompare(b.제목, 'ko', { numeric: true })).forEach(d => (by[d.종류] = by[d.종류] || []).push(d));
+  (docs || []).sort((a, b) => ((ORD.indexOf(a.종류) + 100) % 101) - ((ORD.indexOf(b.종류) + 100) % 101) || a.제목.localeCompare(b.제목, 'ko', { numeric: true })).forEach(d => (by[d.종류] = by[d.종류] || []).push(d));
   $('home').innerHTML = Object.keys(by).length ? Object.entries(by).map(([k, a]) => `<div class="u-section-title">${E(k)}</div><div class="dl">${a.map(d =>
       `<div class="u-card" data-d="${E(d.id)}"><h3>${E(d.제목)}</h3><div class="hint">${d.쪽수}쪽 · ${E(U.fmt(d.updated_at))}</div>
        <div style="margin-top:6px">${d.대기 ? `<span class="u-tag warn">대기 ${d.대기}</span> ` : ''}${d.반영됨 ? `<span class="u-tag ok">반영됨 ${d.반영됨}</span>` : ''}</div></div>`).join('')}</div>`).join('')
