@@ -682,7 +682,7 @@ function csv(){
 function gateBox(){
   const s=D.열린, ex=D.시험||[];
   if(s) return '<div class="card gate"><span class="st on">● 학생 입력 열림</span><b>'+E(s.이름)+'</b><span class="dim">'+ex.filter(e=>s.시험.includes(e.id)).map(e=>e.형).join('·')+' · '+fmtT(s.닫힘)+'까지 · 점수 '+(s.점수공개?'보여 줌':'숨김')+'</span>'
-    +'<span class="dim">학생 주소 <b class="link">ukan8.github.io/dashboard/lt</b></span><span style="flex:1"></span><button id="gclose">'+(sureGate?'정말 닫을까요? 한 번 더':'입력 닫기')+'</button></div>';
+    +'<span class="dim">학생 주소 <b class="link">ukan.kr/dashboard/lt</b></span><span style="flex:1"></span><button id="gclose">'+(sureGate?'정말 닫을까요? 한 번 더':'입력 닫기')+'</button></div>';
   const d=new Date(Date.now()+9*3600e3), md=(d.getUTCMonth()+1)+'/'+d.getUTCDate();
   return '<div class="card gate"><span class="st off">○ 학생 입력 닫힘</span><span class="dim">회차 없이 지금 바로 열 때만 (보통은 회차가 알아서 열어요)</span><input type="text" id="gname" value="'+md+' 레벨테스트" size="16">'
     +ex.map(e=>'<label><input type="checkbox" class="gex" value="'+E(e.id)+'" checked>'+E(e.형)+'</label>').join('')

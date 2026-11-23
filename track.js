@@ -1,4 +1,4 @@
-/* 수학은유강 방문 기록 — https://ukan8.github.io/dashboard/track.js  (0928)
+/* 수학은유강 방문 기록 — https://ukan.kr/dashboard/track.js  (0928)
  *
  * 페이지에 한 줄:  <script src="/dashboard/track.js" data-page="me" defer></script>
  *   data-page: me(포털) · eval(자평) · set(학습루프) · survey · step · lib(자료실)

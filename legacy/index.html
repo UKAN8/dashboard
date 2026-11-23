@@ -3359,7 +3359,7 @@ async function sha16(text) {
  * 썸네일 = 공개 r/<rid>.jpg(이름 없음), [열기] = 학부모가 받은 링크 그대로(# 뒤 키로 상세가 풀린다).
  * v5 가 없는 날(1027 이전)은 옛 이미지판으로 떨어진다.
  */
-const V5_BASE = 'https://ukan8.github.io/dashboard/r/';
+const V5_BASE = 'https://ukan.kr/dashboard/r/';
 async function loadReportImages(el) {
   const box = el.querySelector('.thumbs');
   if (el.dataset.loaded) return;
@@ -3706,7 +3706,7 @@ async function qaLoad() {
     const ids = [...new Set(QA.err.map(r => r.오류신고).filter(Boolean))];
     if (ids.length) { const st = await sb.rpc('hw_qa_error_status', { ids }); (st.data || []).forEach(x => QA.errSt[x.id] = x); }
   }
-  if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
+  if (!QA.lib) { try { const r = await fetch('https://ukan.kr/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
   const keys = [...new Set(QA.rows.concat(QA.done, QA.err || []).map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
     const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
@@ -3751,7 +3751,7 @@ function qaGroups(rows) {
       const lr = ((QA.lib || {}).정규 || []).find(x => x.반 === (a.반 || r.반) && x.날짜 === a.날짜 && x.써킷);
       if (lr && !a.판) {
         const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
-        g.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
+        g.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan.kr/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
       }
     }
   });
@@ -3989,13 +3989,13 @@ function qaInfo(r) {
   if (qaPanPdf(a)) o.pdf = qaPanPdf(a);
   if (lr && !a.판) {
     const pg = k2 => { const m = ((lr.써킷.쪽 || {})[k2]) || {}; if (m[r.번호]) return m[r.번호]; const lo = Object.keys(m).map(Number).filter(n => n < r.번호).sort((x, y) => y - x)[0]; return lo != null ? m[lo] : null; };
-    o.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan8.github.io/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
+    o.pdf = ['문제', '해설'].filter(k2 => lr.써킷[k2]).map(k2 => ({ k: k2, url: 'https://ukan.kr/mathis-lib/' + lr.써킷[k2] + (pg(k2) ? '#page=' + pg(k2) : ''), p: pg(k2) }));
   }
   return o;
 }
 async function qaEnsureMeta(rows) {
   await qaLoadPans(rows);
-  if (!QA.lib) { try { const r = await fetch('https://ukan8.github.io/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
+  if (!QA.lib) { try { const r = await fetch('https://ukan.kr/mathis-lib/lib.json?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' }); QA.lib = r.ok ? await r.json() : {}; } catch (e) { QA.lib = {}; } }
   const keys = [...new Set(rows.map(r => r.hw_assign && r.hw_assign.세트키).filter(Boolean))].filter(k => !QA.sets[k]);
   if (keys.length) {
     const [s1, s2] = await Promise.all([sb.from('hw_set').select('*').in('세트키', keys), sb.from('hw_set_item').select('세트키,번호,"문항ID","THEME",유형').in('세트키', keys)]);
@@ -4167,7 +4167,7 @@ async function qmBadge() {
 /* ───────── 학생 포털 링크 (1024 유강 "나만 볼 수 있게 학생별 포털 링크 바로 갈 수 있는 페이지") ─────────
  * 유강 계정만(VS_OWNER — 방문 기록과 같은 열쇠). portal_token 은 관리자 정책이라 조교는 DB 에서도 못 읽는다.
  * 이 화면을 열면 이 기기를 방문 집계에서 뺀다(track.js 의 #nocount 와 같은 localStorage: mt_skip·skipgc —
- * 대시보드와 포털이 같은 ukan8.github.io 라 공유된다). 유강이 연 포털이 학생 방문으로 잡히지 않게.
+ * 대시보드와 포털이 같은 ukan.kr 라 공유된다). 유강이 연 포털이 학생 방문으로 잡히지 않게.
  * ⚠ portal_view 가 토큰의 마지막열람·열람수는 올린다(서버) — 방문 기록(page_visit)만 빠진다.
  */
 let LK = { rows: null, ban: '*', q: '' };
@@ -4198,7 +4198,7 @@ function lkDraw() {
   else bar.querySelectorAll('[data-lkb]').forEach(b => b.classList.toggle('on', b.dataset.lkb === LK.ban));
   const rows = LK.rows.filter(r => (LK.ban === '*' || r.ban === LK.ban) && (!LK.q || r.name.includes(LK.q)));
   $('lk-cnt').textContent = rows.length;
-  const url = t => 'https://ukan8.github.io/dashboard/me/?t=' + encodeURIComponent(t.토큰);
+  const url = t => 'https://ukan.kr/dashboard/me/?t=' + encodeURIComponent(t.토큰);
   const cell = t => t ? `<a class="lk-go" href="${E(url(t))}" target="_blank" rel="noopener">포털 열기 ↗</a> <button class="lk-cp" data-lkc="${E(url(t))}">복사</button>` : '<span class="dim">토큰 없음</span>';
   const seen = t => t && t.마지막열람 ? E(qaTime(t.마지막열람)) : '<span class="dim">—</span>';
   body.innerHTML = `<div class="card vs-wrap"><table class="vs-tbl"><thead><tr><th>이름</th><th>반</th><th>학교</th><th data-nosort>학생 포털</th><th>마지막 열람</th><th class="n">열람</th>`
@@ -4326,8 +4326,8 @@ function vsDraw() {
  */
 const SV_META = {
   // 1011 개념 진단 — 답이 설문이 아니라 진단 기록(r·self·fin)이라 원본을 펼치지 않고 진행 상태만 보인다. 자세히는 진단 교사 화면.
-  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan8.github.io/dashboard/diag/?admin', 단원: 8, 반: ['고1T', '고1A', '고1S'] },
-  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan8.github.io/dashboard/diag2/?admin', 단원: 9, 반: ['고2A'] },
+  diag_m2_1011: { 이름: '기말 개념 진단 (1011)', 진단: 'https://ukan.kr/dashboard/diag/?admin', 단원: 8, 반: ['고1T', '고1A', '고1S'] },
+  diag_m1_1017: { 이름: '고2 기말 개념 진단 (1017)', 진단: 'https://ukan.kr/dashboard/diag2/?admin', 단원: 9, 반: ['고2A'] },
   ex26m2: { 이름: '시험 후 · 2026 2학기 중간', 짝: true },
   hw0827: { 이름: '기출 오답 과제 (0827)' },
 };
@@ -6308,7 +6308,7 @@ function renderGrid(box,nq){
     tr.className='stu'+(isNA(log)?' na':'');tr.dataset.id=id;
     const cells=gtMode?gtItemsHtml(log):itemCellsHtml(log,nq);
     tr.innerHTML=`
-      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan8.github.io/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
+      <td class="fz">${PTOK[id]?`<a class="name ptlink" href="https://ukan.kr/dashboard/me/?t=${encodeURIComponent(PTOK[id]['토큰'])}" target="_blank" rel="noopener" title="학생 포털 열기 ↗">${esc(s['이름'])}</a>`:`<span class="name">${esc(s['이름'])}</span>`}<span class="school">${esc(s['학교']||'')}</span>${lateBadge(log)}<span class="st" title="저장 상태"></span>${recent?`<div class="recent">최근 ${recent}</div>`:''}${notes?`<div class="recent">⚑ ${esc(notes)}</div>`:''}${prevHwLine(id)}${autoLine(id)}</td>
       <td><div class="seg">${['출석','지각','결석'].map((v,i)=>`<button data-v="${v}" class="${cur===v?'a'+(i+1):''}" title="${v}">${v[0]}</button>`).join('')}</div></td>
       <td><input data-f="결석사유" value="${esc(log['결석사유']||'')}" style="width:90px"></td>
       ${cells}
