@@ -311,6 +311,31 @@ body.noscroll{overflow:hidden}
 .hw .q .rf{display:flex;gap:8px;margin-top:4px}
 .hw .q .rf input{flex:1;margin-top:0}
 .hw .q .rf button{background:rgba(245,160,160,.12);border:1px solid rgba(245,160,160,.35);color:var(--tx);border-radius:9px;padding:0 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+/* (1123) 보충 루프 강조 카드 */
+.sup{position:relative;display:block;border-radius:18px;padding:17px 16px 16px;margin:0 0 12px;color:var(--tx);text-decoration:none;
+ background:linear-gradient(135deg,rgba(143,224,176,.16),rgba(143,224,176,.03) 70%);border:1.5px solid rgba(143,224,176,.55)}
+.sup.warn{background:linear-gradient(135deg,rgba(255,92,138,.18),rgba(255,92,138,.04) 70%);border-color:rgba(255,92,138,.6)}
+.sup .sup-k{display:block;font-size:11.5px;font-weight:600;color:#8fe0b0;letter-spacing:.02em}
+.sup.warn .sup-k{color:#ff8fae}
+.sup b{display:block;font-family:'Paperlogy','Pretendard Variable','Pretendard',sans-serif;font-size:19px;font-weight:600;margin:3px 0 2px}
+.sup .sup-s{display:block;font-size:13px;color:var(--tx2);line-height:1.5;padding-right:70px}
+.sup em{position:absolute;right:16px;top:17px;font-style:normal;font-weight:700;font-size:15px;color:#8fe0b0;white-space:nowrap}
+.sup.warn em{color:#ff8fae}
+.sup.act:before{content:'';position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:18px;pointer-events:none;animation:supP 2.2s ease-out infinite;box-shadow:0 0 0 0 rgba(143,224,176,.45)}
+.sup.act.warn:before{box-shadow:0 0 0 0 rgba(255,92,138,.5)}
+@keyframes supP{0%{box-shadow:0 0 0 0 currentColor;opacity:.9}70%{box-shadow:0 0 0 9px rgba(0,0,0,0);opacity:0}100%{opacity:0}}
+.sup.act.warn:before{animation-name:supPw}.sup.act:not(.warn):before{animation-name:supPg}
+@keyframes supPg{0%{box-shadow:0 0 0 0 rgba(143,224,176,.5)}70%{box-shadow:0 0 0 10px rgba(143,224,176,0)}100%{box-shadow:0 0 0 0 rgba(143,224,176,0)}}
+@keyframes supPw{0%{box-shadow:0 0 0 0 rgba(255,92,138,.55)}70%{box-shadow:0 0 0 10px rgba(255,92,138,0)}100%{box-shadow:0 0 0 0 rgba(255,92,138,0)}}
+.sup.s,.sup.done{opacity:.8}.sup.s:before,.sup.done:before{display:none}
+.sup .sup-g{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 12px;margin-top:11px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.12)}
+.sup .sup-g span{font-size:11px;color:var(--dim)}
+.sup .sup-g span b{font-size:15px;margin:1px 0 0;color:var(--tx)}
+.sup .sup-g span:nth-of-type(2) b{color:#8fe0b0}
+.sup .sup-g i{font-style:normal;color:var(--dim);padding-bottom:2px}
+.sup .sup-g small{flex-basis:100%;font-size:11px;color:var(--dim)}
+.sup:active{filter:brightness(1.15)}
+@media (prefers-reduced-motion:reduce){.sup.act:before{animation:none}}
 /* (1111) 대표유형 트레이닝 카드 */
 .ttc{position:relative;display:block;border-radius:16px;padding:16px 16px 15px;margin:0 0 12px;color:var(--tx);text-decoration:none;
  background:linear-gradient(135deg,rgba(245,160,160,.12),rgba(245,160,160,.03) 70%);border:1px solid rgba(245,160,160,.45)}
@@ -1480,7 +1505,7 @@ function partsOf(d){
   const DIAG_ON=false;   // 1018 유강 "개념진단 카드는 모두 닫아도 될 듯" — 고1·고2 진단 카드 모두 숨김. 다시 열 때 true.
   if(DIAG_ON && /^고1[TAS]/.test(String(d.학생.반||'').trim()) && !/고림/.test(String(d.학생.학교||''))){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
-    const durl=`https://ukan8.github.io/dashboard/diag/?t=${encodeURIComponent(tk)}`;
+    const durl=`https://ukan.kr/dashboard/diag/?t=${encodeURIComponent(tk)}`;
     P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
       +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 명제~무리함수 · 약 50분 · 이어서 하기 가능</span></span>`
       +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:600">시작 →</a></div></div>`;
@@ -1488,7 +1513,7 @@ function partsOf(d){
   // 1017 고2A 복귀 — 미적분1 도함수의 활용~정적분의 활용 진단(_diag/diag2.html, 설문키 diag_m1_1017).
   if(DIAG_ON && /^고2A/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
-    const durl=`https://ukan8.github.io/dashboard/diag2/?t=${encodeURIComponent(tk)}`;
+    const durl=`https://ukan.kr/dashboard/diag2/?t=${encodeURIComponent(tk)}`;
     P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
       +`<span class="t"><b>기말 범위 개념 진단</b><span class="dim"> 도함수의 활용~정적분 · 약 50분 · 이어서 하기 가능</span></span>`
       +`<a class="n mid" href="${E(durl)}" style="text-decoration:none;font-weight:600">시작 →</a></div></div>`;
@@ -1496,7 +1521,7 @@ function partsOf(d){
   // (1026 유강) 고1S 오늘 수업 설문 — 설문키 cls1026_1s. 10/29까지만 보인다.
   if(/^고1S/.test(String(d.학생.반||'').trim()) && Date.now() < new Date('2026-10-30T00:00:00+09:00').getTime()){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
-    const surl=`https://ukan8.github.io/dashboard/survey/?t=${encodeURIComponent(tk)}&s=cls1026_1s`;
+    const surl=`https://ukan.kr/dashboard/survey/?t=${encodeURIComponent(tk)}&s=cls1026_1s`;
     P.diag=`<div class="card" style="border-color:rgba(245,160,160,.6);background:rgba(245,160,160,.09)"><div class="row">`
       +`<span class="t"><b>오늘 수업 설문</b><span class="dim"> 10/26 수업 어땠는지 · 1분</span></span>`
       +`<a class="n mid" href="${E(surl)}" style="text-decoration:none;font-weight:600">시작 →</a></div></div>`+P.diag;
@@ -1505,7 +1530,7 @@ function partsOf(d){
   const G=d.자평||null, open=!!(G && !G.없음);
   P.eval=''; P.evalNone='';
   if(open){
-    const url=`https://ukan8.github.io/dashboard/eval/?t=${encodeURIComponent(d.토큰||'')}`;
+    const url=`https://ukan.kr/dashboard/eval/?t=${encodeURIComponent(d.토큰||'')}`;
     if(G.제출함 && G.제출시각)   // (0911) 제출시각까지 확인 — v22 gt_eval_open 의 found 오염 방어(eval.html 과 동일)
       P.eval=`<div class="card" style="border-color:rgba(126,224,163,.35)"><div class="row"><span class="t">오늘 기출테스트 자기평가 <b class="good">제출 완료</b></span>`
         +`<a class="n dim" href="${E(url)}" style="text-decoration:none">고치기</a></div></div>`;
@@ -1517,7 +1542,7 @@ function partsOf(d){
   // (1112 유강) 기말 모의테스트 — 콘솔 없이 학생이 폰으로 답 입력 → 바로 채점·개별과제. 정보는 mock_open 이 따로 준다.
   const MK=d.모의||null; P.mock='';
   if(MK && !MK.없음){
-    const murl=`https://ukan8.github.io/dashboard/mock/?t=${encodeURIComponent(d.토큰||'')}`;
+    const murl=`https://ukan.kr/dashboard/mock/?t=${encodeURIComponent(d.토큰||'')}`;
     if(MK.제출 && (MK.제출.복기||[]).length)   // (v80) 답은 냈고 틀린 문항 확인이 남았다 — 끝내야 개별과제가 만들어진다
       P.mock=`<div class="card" style="border-color:rgba(255,213,154,.5);background:rgba(255,213,154,.07)">`
         +`<div class="row"><span class="t"><b>${E(MK.제목||'모의테스트')} 틀린 문항 확인</b><span class="dim"> ${MK.제출.복기.length}문항 · 끝내면 개별과제가 만들어져요</span></span>`
@@ -1536,7 +1561,7 @@ function partsOf(d){
   P.core='';
   if(CORE_ON && /^고[12]/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
-    const curl=`https://ukan8.github.io/dashboard/core/?t=${encodeURIComponent(tk)}`;
+    const curl=`https://ukan.kr/dashboard/core/?t=${encodeURIComponent(tk)}`;
     P.core=`<div class="card" style="border-color:rgba(245,160,160,.5);background:rgba(245,160,160,.06)"><div class="row">`
       +`<span class="t"><b>CORE 루프</b><span class="dim"> 루프 과제 · 단원 지도</span></span>`
       +`<a class="n mid" href="${E(curl)}" style="text-decoration:none;font-weight:600">열기 →</a></div></div>`;
@@ -1551,42 +1576,43 @@ function partsOf(d){
   const TOWER_ON=false;   // (1118 유강 "개념의 탑도 카드 숨기기") 다시 켜려면 true — 오늘 탭 바로가기 줄도 같이 뜬다
   if(TOWER_ON && /^고1/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'';
-    const turl=`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`;
+    const turl=`https://ukan.kr/dashboard/tower/?t=${encodeURIComponent(tk)}`;
     P.tower=`<div class="card" style="border-color:rgba(232,197,106,.4)"><div class="row">`
       +`<span class="t"><b>개념의 탑</b><span class="dim"> 명제~무리함수(기말) · 교과서 개념 OX 17층</span></span>`
       +`<a class="n mid" href="${E(turl)}" style="text-decoration:none;font-weight:600">오르기 →</a></div></div>`;
   }
   // (1110) 다른 페이지로 넘어가는 것들 — 큰 카드 대신 '오늘' 위 바로가기 한 줄
   const qk=[[`https://clinic-booking-black-phi.vercel.app/me?a=piltop&b=${encodeURIComponent(String(d.학생.반||'').trim())}&n=${encodeURIComponent(String(d.학생.이름||'').trim())}`,'주간고사 · 클리닉','예약 · 결과 · 질문',1]];
-  if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan8.github.io/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
+  if(P.tower){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||''; qk.push([`https://ukan.kr/dashboard/tower/?t=${encodeURIComponent(tk)}`,'개념의 탑','교과서 개념 OX',0]); }
   // (1110 유강) 1줄 = 클리닉 + 내 개별과제 설정(과제 탭에서 옮김, 누르면 설정 창) / 2줄 = 개념의 탑 — 추후 다른 서비스로 대체
   const qa=([u,t,sub,ext])=>`<a href="${E(u)}"${ext?' target="_blank" rel="noopener"':''}>${t}<small>${sub}</small></a>`;
   // (1110 유강) 고림고 고2 — 2차(기말) 대비 프린트 기본판(한 단계씩 따라 풀기). 개별과제 설정 줄 아래·개념의 탑 줄 위. 토큰을 붙여 기록이 대시보드(해부 루프 탭)로 간다
   let qkBasic='';
   if(/고림/.test(String(d.학생.학교||''))&&/^고2/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'', tq=tk?'?t='+encodeURIComponent(tk):'';
-    const L='https://ukan8.github.io/mathis-lib/learn/';
+    const L='https://ukan.kr/mathis-lib/learn/';
     qkBasic=`<div class="qk qk-basic"><a href="${E(L+'gorim2k-basic-1.html'+tq)}" target="_blank" rel="noopener">2차 프린트 기본판 · 도함수의 활용<small>7문항 · 한 단계씩 따라 풀기</small></a>`
       +`<a href="${E(L+'gorim2k-basic-2.html'+tq)}" target="_blank" rel="noopener">2차 프린트 기본판 · 적분<small>7문항 · 한 단계씩 따라 풀기</small></a></div>`;
   }
   // (1112 유강 "고림고1 프린트 고림고2와 같은 방식으로") 고림고 고1 — 기말 대비 프린트 기본판(명제 7 · 함수와 그래프 13). 같은 자리
   if(/고림/.test(String(d.학생.학교||''))&&/^고1/.test(String(d.학생.반||'').trim())){
     const tk=new URLSearchParams(location.search).get('t')||d.토큰||'', tq=tk?'?t='+encodeURIComponent(tk):'';
-    const L='https://ukan8.github.io/mathis-lib/learn/';
+    const L='https://ukan.kr/mathis-lib/learn/';
     qkBasic=`<div class="qk qk-basic"><a href="${E(L+'gorim1k-basic-1.html'+tq)}" target="_blank" rel="noopener">기말 프린트 기본판 · 명제<small>7문항 · 한 단계씩 따라 풀기</small></a>`
       +`<a href="${E(L+'gorim1k-basic-2.html'+tq)}" target="_blank" rel="noopener">기말 프린트 기본판 · 함수와 그래프<small>13문항 · 한 단계씩 따라 풀기</small></a></div>`;
   }
   // (1111 유강 "대표유형 타겟트레이닝 우리 디자인으로 다듬어서 포털에 카드로") 대표유형 트레이닝 — 고1 공통수학2 · 고2 미적분Ⅰ 기말 범위.
   //   화면은 dashboard/tt/me/ (조교 점검판 /tt/ 의 문제 파일을 같이 씀). 이름·학교·학년·반을 넘겨 학생 정보 칸을 건너뛴다. 기록 = 그 폰 + tt_check(page='portal|반|학교').
   let ttCard='';
+  const TT_ON=false;   // (1123 유강 "대표유형 트레이닝 거의 안 쓰면 끄고 그 자리에 보충 루프") 11/16 이후 사용 0건 — 다시 켜려면 true
   { const bn=String(d.학생.반||'').trim(), gm=bn.match(/^고([12])/);
-    if(gm){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||'', g='고'+gm[1];
-      const tu='https://ukan8.github.io/dashboard/tt/me/?'+new URLSearchParams({t:tk,n:String(d.학생.이름||'').trim(),s:String(d.학생.학교||'').trim(),g,b:bn}).toString();
+    if(TT_ON&&gm){ const tk=new URLSearchParams(location.search).get('t')||d.토큰||'', g='고'+gm[1];
+      const tu='https://ukan.kr/dashboard/tt/me/?'+new URLSearchParams({t:tk,n:String(d.학생.이름||'').trim(),s:String(d.학생.학교||'').trim(),g,b:bn}).toString();
       ttCard=`<a class="ttc" href="${E(tu)}"><span class="ttc-k">기말 대비 · NEW</span><b>대표유형 트레이닝</b>`
         +`<span class="ttc-s">${g==='고1'?'공통수학2 · 명제~무리함수':'미적분Ⅰ · 도함수의 활용~정적분의 활용'}</span>`
         +`<span class="ttc-f"><i>유형 찾기</i><i>개념 고르기</i><i>풀이 단계</i><i>최종 답</i></span><em>시작 →</em></a>`; } }
   P.qk=`<div class="qk">${qa(qk[0])}<a href="#" id="qk-pref" style="display:none">내 개별과제 설정<small id="qk-pref-s">불러오는 중…</small></a></div>`
-    +qkBasic+ttCard+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
+    +qkBasic+ttCard+(coreOn(d)?`<div id="supp-card"></div>`:'')+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
   //   밤 렌더 뒤 portal_links.py 가 v5 링크(상세 페이지)를 담는다. v5 가 없는 옛 날짜는 v4 이미지(7일 서명) 그대로.
   const RP=(Array.isArray(d.리포트)?d.리포트:[]).filter(r=>r&&r.url&&r.날짜);
@@ -1894,11 +1920,24 @@ function drawCore(){
       :`<div><i>확신 정확도</i><b>—</b><em>'확실해요' 10개부터 보여요</em></div>`;
     hk.innerHTML=coreTiles(m);
   }
-  if(t) t.innerHTML=(REVIEW_CARD_ON?btn(m.review,'리뷰'):'')+btn(m.loop,'루프')+(m.supp?btn(m.supp,'보충'):'')+(hk?'':etaH)
+  drawSupp(m,go,md);   // (1123) 보충 루프는 버튼 줄 대신 강조 카드(대표유형 트레이닝 자리)
+  if(t) t.innerHTML=(REVIEW_CARD_ON?btn(m.review,'리뷰'):'')+btn(m.loop,'루프')+(m.supp&&!$('supp-card')?btn(m.supp,'보충'):'')+(hk?'':etaH)
     +(hk?'':`<div class="hk" id="core-hk">${coreTiles(m)}</div>`);   // 히어로가 없는 평소 화면은 버튼 아래에
   wireTiles(hk||$('core-hk'),m);
   const n=(REVIEW_CARD_ON&&m.review.can?1:0)+(m.loop.can?1:0)+(m.supp&&m.supp.can?1:0);
   if(bd){ bd.textContent=String(n); bd.classList.toggle('on',n>0); }
+}
+/* (1123 유강 "보충루프 카드가 잘 안 보임 — 대표유형 자리에 넣고 강조") 보충 루프 강조 카드.
+ *   기말 넘김(behind) = 붉은 경고 + '보충 주 2회면 ○/○' 목표, 그 밖 = 강조색. 열림 규칙은 core suppState(1123: 루프 끝내면 누구나·같은 날도). */
+function drawSupp(m,go,md){
+  const box=$('supp-card'); if(!box) return;
+  const s=m.supp; if(!s){ box.innerHTML=''; return; }
+  const e=m.eta||{}, w=!!s.behind;
+  const goal=w&&(e.b2||e.b3)?`<div class="sup-g"><span>지금 속도<b>${e.mid?md(e.mid):'기말 뒤'}</b></span><i>→</i><span>보충 주 2회<b>${e.b2?md(e.b2):'—'}</b></span>${e.b3?`<span>주 3회<b>${md(e.b3)}</b></span>`:''}${e.exam?`<small>기말 ${md(e.exam)}</small>`:''}</div>`:'';
+  const head=s.clinic?'클리닉 보완':w?'기말 전에 완성하려면':'졸업을 앞당기려면';
+  const body=`<span class="sup-k">${head}</span><b>보충 루프${s.can&&s.n?` · ${s.n}문항`:s.cls==='done'?' · 오늘 완료':''}</b><span class="sup-s">${s.sub}</span>${goal}`;
+  box.innerHTML=s.can?`<a class="sup act${w?' warn':''}" href="${E(go('보충'))}">${body}<em>${s.tap||'보충 시작 →'}</em></a>`
+    :`<div class="sup ${s.cls==='done'?'done':'s'}${w?' warn':''}">${body}${s.cls==='done'?'<em>✓</em>':''}</div>`;
 }
 /* (1110 유강 "확신정확도는 메인에서 터치하면 상세 · 기말 준비도는 루프 완성일 터치했을 때") 타일 → 상세 창 */
 function coreTiles(m){
@@ -2029,7 +2068,7 @@ function renderFinal(d,parts){
 /* ── 수업 자료 (0927) ──
  * lib.json = { 영상:[{id,제목,반:[..],종류,날짜,단원,길이}], 기출:[{키,학교,학년,과목,종류,시행:[{반,날짜}],시험,해설}] }
  * 영상은 youtu.be 링크(일부공개), PDF 는 mathis-lib 저장소(GitHub Pages). 둘 다 새 탭. */
-const LIB_URL='https://ukan8.github.io/mathis-lib/';
+const LIB_URL='https://ukan.kr/mathis-lib/';
 const LIB={data:null,showN:15};   // (0928) 탭·검색·전체 보기 제거 — 내 반 것만
 const mmss=s=>{s=Number(s)||0; return s>=3600?`${Math.floor(s/3600)}시간 ${Math.round(s%3600/60)}분`:`${Math.round(s/60)}분`;};
 const md=s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${+m[2]}/${+m[3]}`:'';};
