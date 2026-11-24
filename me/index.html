@@ -1813,7 +1813,7 @@ function partsOf(d){
       const tu='https://ukan.kr/dashboard/tt/me/?'+new URLSearchParams({t:tk,n:String(d.학생.이름||'').trim(),s:String(d.학생.학교||'').trim(),g,b:bn}).toString();
       ttCard=`<a class="ttc" href="${E(tu)}"><span class="ttc-k">기말 대비 · NEW</span><b>대표유형 트레이닝</b>`
         +`<span class="ttc-s">${g==='고1'?'공통수학2 · 명제~무리함수':'미적분Ⅰ · 도함수의 활용~정적분의 활용'}</span>`
-        +`<span class="ttc-f"><i>유형 찾기</i><i>개념 고르기</i><i>풀이 단계</i><i>최종 답</i></span><em>시작 →</em></a>`; } }
+        +`<span class="ttc-f"><i>유형 판별</i><i>개념 고르기</i><i>풀이 단계</i><i>최종 답</i></span><em>시작 →</em></a>`; } }
   P.qk=`<div class="qk">${qa(qk[0])}<a href="#" id="qk-pref" style="display:none">내 개별과제 설정<small id="qk-pref-s">불러오는 중…</small></a></div>`
     +qkBasic+ttCard+(coreOn(d)?`<div id="supp-card"></div>`:'')+`<div class="qk qk-rv" id="qk-rv" style="display:none"></div>`+(qk[1]?`<div class="qk">${qa(qk[1])}</div>`:'');
   // (1110 유강 "데일리리포트 데이터도 포털에") 수업 리포트 — portal_view '리포트'(report_link, 최근 30개).
