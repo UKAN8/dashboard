@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<!-- (1124) 대표유형 트레이닝 기록 — 관리자·조교용. 원본: 10_에듀냅/타겟트레이닝/web/tt_log_src.html → python3 -m tt.build_log <출력> -->
+<html lang="ko" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대표유형 트레이닝 기록 · 수학은유강</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
+<style>/* ── UI 키트 (00_대시보드/_ui) ── */
+/* 수학은유강 UI 토큰 (1118) — Meta Astryx 의 "토큰 층" 벤치마킹: 부품은 그대로, 토큰만 바꾸면 테마가 바뀐다.
+   테마 2개:  light = 직원·관리 화면(클리닉 예약 시스템 결)   dark = 학생 폰·수업 화면(모의테스트·포털 결)
+   쓰는 법:  <html data-theme="light|dark">  — 부품(kit.css)은 var(--u-*) 만 쓴다. 색 값을 부품에 직접 쓰지 않는다. */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  /* 색 */
+  --u-bg: #f6f7f9;          --u-surface: #ffffff;     --u-surface-2: #f3f4f7;
+  --u-line: #e3e6eb;        --u-line-strong: #cfd4dc;
+  --u-text: #16191f;        --u-text-2: #4b5260;      --u-muted: #6b7280;    --u-faint: #9aa1ad;
+  --u-accent: #1f5eff;      --u-accent-soft: #e8efff; --u-on-accent: #ffffff;
+  --u-ok: #0f8a5f;          --u-ok-soft: #e3f5ee;
+  --u-warn: #b45309;        --u-warn-soft: #fdf1e1;
+  --u-bad: #c62828;         --u-bad-soft: #fde8e8;
+  --u-slip: #d9730d;        --u-slip-soft: #fff0e0;
+  --u-overlay: rgba(15, 20, 30, .38);
+  --u-shadow-pop: 0 20px 50px rgba(15, 20, 30, .18);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --u-bg: #0a0a0f;          --u-surface: rgba(255,255,255,.03); --u-surface-2: rgba(255,255,255,.06);
+  --u-line: rgba(255,255,255,.08); --u-line-strong: rgba(255,255,255,.16);
+  --u-text: #f5f5fa;        --u-text-2: #b8b8c5;      --u-muted: #8a8a98;    --u-faint: #5d5d6b;
+  --u-accent: #f5a0a0;      --u-accent-soft: rgba(245,160,160,.16); --u-on-accent: #2a0d0d;
+  --u-ok: #c8f0da;          --u-ok-soft: rgba(200,240,218,.12);
+  --u-warn: #ffd59a;        --u-warn-soft: rgba(255,213,154,.12);
+  --u-bad: #ff8f8f;         --u-bad-soft: rgba(255,143,143,.10);
+  --u-slip: #ffb46b;        --u-slip-soft: rgba(255,180,107,.10);
+  --u-overlay: rgba(0, 0, 0, .6);
+  --u-shadow-pop: 0 20px 50px rgba(0, 0, 0, .5);
+}
+/* (1119 유강 "화이트가 눈 아프다") 직원 화면 어두운 테마 = dark 와 같은 색, 면만 불투명 — 고정 머리글·고정 열·팝업 뒤가 비치지 않게.
+   쓰는 법: <html data-theme="dark" class="solid"> (대시보드·학생 페이지) */
+html.solid[data-theme="dark"] {
+  --u-bg: #0b0b10; --u-surface: #13131a; --u-surface-2: #1b1b23;
+  --u-line: #262630; --u-line-strong: #383844;
+}
+:root {
+  /* 글꼴 — 1110 유강: 제목·큰 숫자 = 페이퍼로지, 본문 = Pretendard */
+  --u-font: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --u-font-display: 'Paperlogy', 'Pretendard Variable', Pretendard, sans-serif;
+  --u-fs-xs: 12px; --u-fs-sm: 13px; --u-fs-md: 14px; --u-fs-lg: 16px; --u-fs-xl: 21px; --u-fs-num: 24px;
+  /* 모서리·간격·움직임 */
+  --u-r-sm: 8px; --u-r-md: 12px; --u-r-lg: 16px; --u-r-pill: 999px;
+  --u-sp-1: 4px; --u-sp-2: 8px; --u-sp-3: 12px; --u-sp-4: 16px; --u-sp-5: 20px; --u-sp-6: 28px;
+  --u-h-control: 36px; --u-h-control-sm: 28px;     /* 폰 화면은 kit.css 가 44px 로 키운다 */
+  --u-motion: 160ms ease;
+}
+
+/* 수학은유강 UI 부품 (1118) — 모든 부품은 u- 접두어, 색은 tokens.css 의 var(--u-*) 만 쓴다.
+   목록·쓰는 법·예시는 manifest.json (사람·AI 같은 기준). 바꿀 땐 토큰 먼저, 그래도 안 되면 그 페이지에서 덮어쓴다(부품 원본은 그대로). */
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+*{box-sizing:border-box}
+body.u{margin:0;background:var(--u-bg);color:var(--u-text);font:var(--u-fs-md)/1.5 var(--u-font);-webkit-font-smoothing:antialiased}
+.u-num,.u-display{font-family:var(--u-font-display);font-weight:600;font-variant-numeric:tabular-nums}
+.u-muted{color:var(--u-muted)} .u-ok{color:var(--u-ok)} .u-warn{color:var(--u-warn)} .u-bad{color:var(--u-bad)}
+
+/* 머리 막대 + 탭 (navigation) */
+.u-bar{position:sticky;top:0;z-index:8;background:var(--u-surface);border-bottom:1px solid var(--u-line);backdrop-filter:blur(8px)}
+.u-bar>.in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:10px 22px}
+.u-logo{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.u-logo i{width:26px;height:26px;border-radius:var(--u-r-sm);background:var(--u-accent);color:var(--u-on-accent);font-style:normal;font-size:13px;display:grid;place-items:center}
+.u-logo small{color:var(--u-muted);font-weight:500;font-size:12.5px}
+.u-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.u-tabs button{border:0;background:none;color:var(--u-muted);padding:7px 12px;border-radius:var(--u-r-sm);font:inherit;font-weight:500;cursor:pointer}
+.u-tabs button:hover{background:var(--u-surface-2);color:var(--u-text)}
+.u-tabs button.on{background:var(--u-accent-soft);color:var(--u-accent);font-weight:700}
+.u-bar .u-right{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:var(--u-fs-sm);color:var(--u-muted)}
+
+/* 페이지 틀 */
+.u-main{max-width:1400px;margin:0 auto;padding:20px 22px 60px}
+.u-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.u-head h1{font-size:var(--u-fs-xl);font-weight:800;margin:0;letter-spacing:-.01em}
+.u-head .sub{color:var(--u-muted);font-size:var(--u-fs-sm)}
+.u-head .sp{flex:1}
+.u-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.u-split{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.u-split>aside{position:sticky;top:70px}
+@media (max-width:980px){.u-split{grid-template-columns:1fr}.u-split>aside{position:static}}
+.u-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.u-grid2{grid-template-columns:1fr}}
+.u-section-title{font-weight:800;font-size:var(--u-fs-sm);color:var(--u-muted);margin:18px 2px 8px}
+
+/* 카드 · 숫자 타일 · 빈 상태 */
+.u-card{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md);padding:16px 18px;margin-bottom:14px}
+.u-card.on{border-color:var(--u-ok);box-shadow:0 0 0 3px var(--u-ok-soft)}
+.u-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.u-kpi{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md);padding:12px 14px}
+.u-kpi b{display:block;font-size:var(--u-fs-num);font-weight:800;font-variant-numeric:tabular-nums}
+.u-kpi span{color:var(--u-muted);font-size:12.5px}
+.u-empty{color:var(--u-faint);font-size:var(--u-fs-sm);padding:14px 4px}
+
+/* 입력 */
+.u input[type=text],.u input[type=date],.u input[type=time],.u input[type=tel],.u select,.u textarea{font:inherit;color:var(--u-text);background:var(--u-surface);border:1px solid var(--u-line-strong);border-radius:var(--u-r-sm);height:var(--u-h-control);padding:0 10px}
+.u textarea{height:auto;padding:8px 10px}
+.u input:focus,.u select:focus,.u textarea:focus{outline:2px solid var(--u-accent-soft);border-color:var(--u-accent)}
+
+/* 버튼 */
+.u-btn{font:inherit;color:var(--u-text);background:var(--u-surface);border:1px solid var(--u-line-strong);border-radius:var(--u-r-sm);height:var(--u-h-control);padding:0 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:filter var(--u-motion),border-color var(--u-motion)}
+.u-btn:hover{border-color:var(--u-muted)}
+.u-btn.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on-accent);font-weight:700}
+.u-btn.pri:hover{filter:brightness(1.06)}
+.u-btn.ghost{border-color:transparent;background:none;color:var(--u-muted)}
+.u-btn.ghost:hover{background:var(--u-surface-2);color:var(--u-text)}
+.u-btn.danger{color:var(--u-bad)}
+.u-btn.sure{background:var(--u-bad);border-color:var(--u-bad);color:#fff;font-weight:700}   /* 두 번 누르기 확인 중 */
+.u-btn.sm{height:var(--u-h-control-sm);padding:0 9px;font-size:12.5px}
+.u-btn.block{width:100%;justify-content:center;height:46px;font-size:var(--u-fs-lg)}
+.u-btn:disabled{opacity:.5;cursor:default}
+
+/* 꼬리표 */
+.u-tag{display:inline-block;font-size:12px;border-radius:var(--u-r-pill);padding:1px 9px;font-weight:600;white-space:nowrap;background:var(--u-surface-2);color:var(--u-muted)}
+.u-tag.ok{background:var(--u-ok-soft);color:var(--u-ok)} .u-tag.accent{background:var(--u-accent-soft);color:var(--u-accent)}
+.u-tag.warn{background:var(--u-warn-soft);color:var(--u-warn)} .u-tag.bad{background:var(--u-bad-soft);color:var(--u-bad)}
+.u-tag.slip{background:var(--u-slip-soft);color:var(--u-slip)}
+
+/* 표 — 정렬(누른 순서 우선순위)·# 열은 kit.js U.table 이 만든다 */
+.u-table{overflow-x:auto;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r-md)}
+.u-table table{border-collapse:collapse;width:100%;font-size:13.5px;white-space:nowrap}
+.u-table th,.u-table td{padding:8px 10px;border-bottom:1px solid var(--u-line);text-align:center}
+.u-table tr:last-child td{border-bottom:0}
+.u-table th{position:sticky;top:0;background:var(--u-surface-2);color:var(--u-muted);font-weight:600;font-size:12.5px;cursor:pointer;user-select:none}
+.u-table th.ns{cursor:default}
+.u-table th .k{color:var(--u-accent);font-size:11px;margin-left:2px}
+.u-table td.l,.u-table th.l{text-align:left}
+.u-table td.n{color:var(--u-muted);font-size:12px}
+.u-table tbody tr:hover td{background:var(--u-surface-2)}
+.u-table tbody tr.click{cursor:pointer}
+.u-table-foot{text-align:right;margin-top:4px}
+
+/* 막대 · 분포 */
+.u-bars .row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:var(--u-fs-sm)}
+.u-bars .nm{width:150px;color:var(--u-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-bars .bg{flex:1;height:10px;background:var(--u-surface-2);border-radius:5px;overflow:hidden}
+.u-bars .bg i{display:block;height:100%;background:var(--u-accent)}
+.u-bars .v{width:64px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* 옆 목록 (aside 안 줄들) */
+.u-list .row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--u-line)}
+.u-list .row:first-child{border-top:0}
+.u-list .row .t{font-size:12px;color:var(--u-muted)}
+
+/* 팝업 (detail · form) */
+.u-modal{position:fixed;inset:0;background:var(--u-overlay);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 10px;z-index:9}
+.u-modal.on{display:flex}
+.u-modal .sheet{background:var(--u-bg);border:1px solid var(--u-line);border-radius:var(--u-r-lg);max-width:560px;width:100%;padding:24px 26px;box-shadow:var(--u-shadow-pop)}
+[data-theme="light"] .u-modal .sheet{background:#fff}
+.u-modal .sheet.wide{max-width:880px}
+.u-modal h2{font-size:19px;font-weight:800;margin:0 0 14px}
+.u-modal .act{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.u-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.u-form .f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--u-muted)}
+.u-form .f.wide{grid-column:1 / -1}
+.u-form .f input,.u-form .f select,.u-form .f textarea{width:100%}
+.u-hint{margin-top:14px;font-size:12.5px;color:var(--u-muted);background:var(--u-surface-2);border-radius:var(--u-r-sm);padding:9px 12px}
+.u-err{color:var(--u-bad);font-size:var(--u-fs-sm);margin-top:8px;min-height:1px}
+@media (max-width:560px){.u-form{grid-template-columns:1fr}}
+
+/* 알림 토스트 */
+.u-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16191f;color:#fff;border-radius:10px;padding:10px 18px;z-index:20;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none}
+.u-toast.on{display:block}
+
+/* ── 폰 입력 (data-entry flow, 학생 화면) ── */
+.u-phone{max-width:560px;margin:0 auto;padding:16px clamp(12px,4vw,24px) calc(130px + env(safe-area-inset-bottom))}
+.u-phone h1{font-family:var(--u-font-display);font-weight:600;font-size:22px;margin:6px 0 2px}
+.u-phone .brand{font-family:var(--u-font-display);color:var(--u-accent);font-size:15px}
+.u-note{color:var(--u-muted);font-size:12.5px;line-height:1.6;margin:10px 0 14px;padding:10px 12px;border:1px solid var(--u-line);border-radius:var(--u-r-md);background:var(--u-surface)}
+.u-note b{color:var(--u-text-2)}
+.u-q{background:var(--u-surface);border:1px solid var(--u-line);border-radius:14px;padding:11px 12px;margin-bottom:9px;scroll-margin-top:12px}
+.u-q.done{border-color:var(--u-ok-soft)} .u-q.miss{border-color:var(--u-bad);background:var(--u-bad-soft)}
+.u-q .no{font-family:var(--u-font-display);font-weight:600;font-size:17px;color:var(--u-accent)}
+.u-q .lab{font-size:11.5px;color:var(--u-muted);margin:6px 0 5px}
+.u-seg{display:flex;gap:6px;flex-wrap:wrap}
+.u-seg button{flex:1 1 0;min-width:46px;min-height:44px;font:inherit;font-size:14px;color:var(--u-text-2);background:var(--u-surface-2);border:1px solid var(--u-line);border-radius:10px;padding:8px 4px;cursor:pointer}
+.u-seg button.on{background:var(--u-accent-soft);border-color:var(--u-accent);color:var(--u-text);font-weight:700}
+.u-seg.big button{font-size:21px}
+.u-seg.col{flex-direction:column} .u-seg.col button{text-align:left;padding:10px 12px;flex:none}
+.u-seg.off{opacity:.35;pointer-events:none}
+.u-bottombar{position:fixed;left:0;right:0;bottom:0;background:var(--u-bg);border-top:1px solid var(--u-line);padding:10px clamp(12px,4vw,24px) calc(10px + env(safe-area-inset-bottom));z-index:7}
+.u-bottombar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.u-bottombar .cnt{flex:1;font-size:var(--u-fs-sm);color:var(--u-text-2)}
+.u-score{text-align:center;padding:28px 12px 8px}
+.u-score b{font-family:var(--u-font-display);font-weight:600;font-size:52px;line-height:1.1}
+.u-score small{font-size:20px;color:var(--u-muted)}
+
+@media print{ .u-bar,.u-acts,.u-modal .act,.u-bottombar{display:none!important} body.u{background:#fff} }
+
+.u-sortbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--u-muted);margin:0 0 6px}
+
+body.u{background:#0a0a0f}
+.mk{letter-spacing:2px;white-space:nowrap}.mk .o{color:var(--u-ok)}.mk .t{color:var(--u-warn)}.mk .x{color:var(--u-bad)}.mk .s{color:var(--u-faint)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chips span{font-size:12px;background:var(--u-surface-2);border-radius:6px;padding:1px 7px;color:var(--u-text-2)}
+.dim{color:var(--u-muted)}
+</style>
+</head><body class="u">
+<div class="u-bar"><div class="in"><div class="u-logo"><i>T</i>대표유형 트레이닝 기록 <small>필탑 고등수학과</small></div>
+  <div class="u-tabs" id="tabs"></div><div class="u-right" id="who"></div></div></div>
+<main class="u-main" id="app"><div class="u-card">불러오는 중…</div></main>
+<script>/* ── UI 키트 (00_대시보드/_ui/kit.js) ── */
+/* 수학은유강 UI 도우미 (1118) — window.U. 단일 파일 페이지에 ui_inline.py 가 그대로 넣는다(빌드 도구 없음).
+   유강 규칙을 코드로 박아 둔 것: 모든 표 = 정렬 + 첫 열 번호, 정렬은 머리글 누른 순서대로 우선순위(1031) ·
+   되돌릴 수 없는 버튼 = 두 번 누르기 · 시각은 KST · 목록은 manifest.json 에 같은 이름으로 적혀 있다. */
+(function () {
+  'use strict';
+  const U = {};
+  U.E = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const z2 = n => String(n).padStart(2, '0');
+  U.kst = t => new Date(new Date(t).getTime() + 9 * 3600e3);                       // getUTC* 로 읽는다
+  U.fmt = (t, withDate = true) => { if (!t) return ''; const d = U.kst(t);
+    return (withDate ? (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' : '') + z2(d.getUTCHours()) + ':' + z2(d.getUTCMinutes()); };
+  U.day = t => { const d = U.kst(t); return (d.getUTCMonth() + 1) + '월 ' + d.getUTCDate() + '일 (' + '일월화수목금토'[d.getUTCDay()] + ')'; };
+  U.today = () => { const d = U.kst(Date.now()); return d.getUTCFullYear() + '-' + z2(d.getUTCMonth() + 1) + '-' + z2(d.getUTCDate()); };
+  U.pct = (a, b) => b ? Math.round(a / b * 100) : null;
+
+  /* 토스트 */
+  U.toast = msg => { let el = document.querySelector('.u-toast'); if (!el) { el = document.createElement('div'); el.className = 'u-toast'; document.body.appendChild(el); }
+    el.textContent = msg; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2500); };
+
+  /* 두 번 누르기 확인 — 첫 번째는 빨갛게 '정말요?', 두 번째에 실행 */
+  U.sure = (btn, label, fn) => { btn.onclick = async ev => { ev.stopPropagation();
+    if (btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.dataset.orig = btn.textContent; btn.classList.add('sure'); btn.textContent = label || '정말요? 한 번 더';
+      clearTimeout(btn._t); btn._t = setTimeout(() => { btn.dataset.sure = ''; btn.classList.remove('sure'); btn.textContent = btn.dataset.orig; }, 4000); return; }
+    btn.disabled = true; try { await fn(); } finally { btn.disabled = false; } }; };
+
+  /* 표 — U.table(key, cols, rows, {rowAttr, foot}) → HTML 문자열
+     cols: [{h:'머리글', v:row=>정렬값, f:row=>칸 HTML(없으면 v), l:true 왼쪽 정렬, num:true 숫자(첫 클릭 내림차순), ns:true 정렬 안 함, tip:'설명'}]
+     정렬 상태는 U.SORT[key] — 누른 순서대로 우선순위, 같은 머리글을 다시 누르면 방향이 바뀌고 한 번 더 누르면 그 칸 정렬이 풀린다. 다시 그리려면 opts.redraw 를 넘긴다. */
+  U.SORT = {}; U.COLS = {}; U.REDRAW = {};
+  function sorted(key, rows, cols) {
+    const ks = U.SORT[key] || []; if (!ks.length) return rows;
+    const val = (r, c) => { const v = cols[c].v(r); return v == null || v === '' ? null : v; };
+    return rows.map((r, i) => [r, i]).sort((A, B) => {
+      for (const { c, d } of ks) { const x = val(A[0], c), y = val(B[0], c);
+        if (x === y) continue; if (x == null) return 1; if (y == null) return -1;
+        const r = (typeof x === 'number' && typeof y === 'number') ? x - y : String(x).localeCompare(String(y), 'ko');
+        if (r) return d * r; }
+      return A[1] - B[1]; }).map(x => x[0]);
+  }
+  U.table = (key, cols, rows, opts = {}) => {
+    U.COLS[key] = cols; if (opts.redraw) U.REDRAW[key] = opts.redraw;
+    const ks = U.SORT[key] || [], E = U.E;
+    const head = '<thead><tr><th class="ns">#</th>' + cols.map((c, i) => { const k = ks.findIndex(x => x.c === i);
+      return '<th class="' + (c.l ? 'l ' : '') + (c.ns ? 'ns' : '') + '" data-u-sk="' + key + '" data-u-ci="' + i + '" title="' + E(c.tip || '') + '">' + E(c.h)
+        + (k >= 0 ? '<span class="k">' + (k + 1) + (ks[k].d > 0 ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead>';
+    const body = sorted(key, rows, cols).map((r, i) => '<tr ' + (opts.rowAttr ? opts.rowAttr(r) : '') + '><td class="n">' + (i + 1) + '</td>'
+      + cols.map(c => '<td class="' + (c.l ? 'l' : '') + '">' + (c.f ? c.f(r) : E(c.v(r) == null ? '—' : c.v(r))) + '</td>').join('') + '</tr>').join('');
+    // 정렬 중이면 표 위에 무엇으로 정렬했는지 + [정렬 풀기] — 표가 길면 아래 버튼이 안 보였다(1121)
+    const sbar = ks.length ? '<div class="u-sortbar">정렬: ' + ks.map((x, n) => E((cols[x.c] || {}).h || '') + (x.d > 0 ? ' ▲' : ' ▼')).join(' → ')
+      + ' <button class="u-btn ghost sm" data-u-sreset="' + key + '">정렬 풀기</button></div>' : '';
+    return sbar + '<div class="u-table"><table>' + head + '<tbody>' + body + '</tbody></table></div>'
+      + (opts.foot || '');
+  };
+  document.addEventListener('click', ev => {
+    const th = ev.target.closest('th[data-u-sk]');
+    if (th && !th.classList.contains('ns')) { const k = th.dataset.uSk, c = +th.dataset.uCi, ks = U.SORT[k] = U.SORT[k] || [], i = ks.findIndex(x => x.c === c);
+      // (1121 유강 "필터 안 풀려") 같은 머리글을 누를 때마다 처음 방향 → 반대 방향 → 정렬 풀기. 숫자 칸은 큰 것부터 시작
+      const d0 = (U.COLS[k] && U.COLS[k][c] && U.COLS[k][c].num) ? -1 : 1;
+      if (i < 0) ks.push({ c, d: d0, d0 }); else if (ks[i].d === (ks[i].d0 || d0)) ks[i].d *= -1; else ks.splice(i, 1);
+      (U.REDRAW[k] || U.redraw || (() => {}))(); return; }
+    const rs = ev.target.closest('[data-u-sreset]'); if (rs) { U.SORT[rs.dataset.uSreset] = []; (U.REDRAW[rs.dataset.uSreset] || U.redraw || (() => {}))(); }
+  });
+
+  /* 팝업 — U.modal({title, body, ok:'저장', wide, danger:{label, fn}, hint, onOk: async ($, err) => true면 닫힘})
+     body 안 입력칸은 id 로 찾는다: $('id'). 실패 메시지는 err('…') — 팝업 안에 빨갛게. */
+  U.modal = o => {
+    let m = document.querySelector('.u-modal'); if (!m) { m = document.createElement('div'); m.className = 'u-modal'; m.innerHTML = '<div class="sheet"></div>'; document.body.appendChild(m);
+      m.addEventListener('click', ev => { if (ev.target === m) U.close(); }); document.addEventListener('keydown', ev => { if (ev.key === 'Escape') U.close(); }); }
+    const sh = m.querySelector('.sheet'); sh.classList.toggle('wide', !!o.wide);
+    sh.innerHTML = (o.title ? '<h2>' + U.E(o.title) + '</h2>' : '') + (o.body || '') + (o.hint ? '<div class="u-hint">' + o.hint + '</div>' : '') + '<div class="u-err"></div>'
+      + (o.onOk || o.danger ? '<div class="act">' + (o.danger ? '<button class="u-btn danger" data-u-del style="margin-right:auto">' + U.E(o.danger.label) + '</button>' : '')
+        + '<button class="u-btn" data-u-cancel>' + (o.onOk ? '취소' : '닫기') + '</button>' + (o.onOk ? '<button class="u-btn pri" data-u-ok>' + U.E(o.ok || '저장') + '</button>' : '') + '</div>' : '');
+    m.classList.add('on');
+    const $ = id => sh.querySelector('#' + id), err = t => { sh.querySelector('.u-err').textContent = t || ''; };
+    const c = sh.querySelector('[data-u-cancel]'); if (c) c.onclick = U.close;
+    const ok = sh.querySelector('[data-u-ok]'); if (ok) ok.onclick = async () => { ok.disabled = true; err(''); try { if (await o.onOk($, err)) U.close(); } finally { ok.disabled = false; } };
+    const d = sh.querySelector('[data-u-del]'); if (d) U.sure(d, '정말요? 한 번 더', async () => { if (await o.danger.fn($, err)) U.close(); });
+    const f = sh.querySelector('input:not([type=checkbox]),select,textarea'); if (f) f.focus();
+    return { $, err, sheet: sh };
+  };
+  U.close = () => { const m = document.querySelector('.u-modal'); if (m) m.classList.remove('on'); };
+  U.field = (label, inner, wide) => '<label class="f' + (wide ? ' wide' : '') + '"><span>' + label + '</span>' + inner + '</label>';
+
+  /* RPC — U.rpc(sb, 'fn', {…}) → data 또는 null(실패면 err/토스트로 알림). DB 함수가 {오류:'…'} 를 돌려주는 우리 관례를 그대로 처리 */
+  U.rpc = async (sb, fn, args, err) => { let data = null, error = null;
+    try { ({ data, error } = await sb.rpc(fn, args || {})); } catch (e) { error = e; }
+    if (error || data == null || (data && data.오류)) { const m = (data && data.오류) || (error && error.message) || '실패했어요'; (err || U.toast)(m); return null; }
+    return data; };
+
+  window.U = U;
+})();
+</script>
+<script>
+const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co', SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
+const NAMES={"C2-01-T01": "두 점 사이의 거리", "C2-01-T02": "같은 거리에 있는 점", "C2-01-T03": "두 점 사이의 거리의 활용: 식의 값", "C2-01-T04": "두 점 사이의 거리의 활용: AP²+BP²의 최솟값", "C2-01-T05": "두 점 사이의 거리의 활용: 삼각형의 모양", "C2-01-T06": "좌표를 이용한 도형의 성질 증명", "C2-01-T07": "선분의 내분점", "C2-01-T08": "선분의 내분점의 위치", "C2-01-T09": "선분의 내분점의 활용", "C2-01-T10": "삼각형의 무게중심", "C2-01-T11": "평행사변형과 마름모의 성질", "C2-01-T12": "각의 이등분선의 성질", "C2-01-T13": "높이가 같은 두 삼각형의 넓이의 비", "C2-01-T14": "자취의 방정식: 점의 자취", "C2-02-T01": "직선의 방정식: 한 점과 기울기가 주어진 경우", "C2-02-T02": "직선의 방정식: 두 점이 주어진 경우", "C2-02-T03": "직선의 방정식: x절편과 y절편이 주어진 경우", "C2-02-T04": "계수의 부호에 따른 직선의 개형", "C2-02-T05": "세 점이 한 직선 위에 있을 조건", "C2-02-T06": "도형의 넓이를 이등분하는 직선", "C2-02-T07": "직선이 항상 지나는 점", "C2-02-T08": "정점을 지나는 직선의 활용", "C2-02-T09": "두 직선의 교점을 지나는 직선의 방정식", "C2-02-T10": "두 직선의 위치 관계", "C2-02-T11": "한 직선과 평행 또는 수직인 직선", "C2-02-T12": "수직이등분선의 방정식", "C2-02-T13": "세 직선의 위치 관계", "C2-02-T14": "점과 직선 사이의 거리", "C2-02-T15": "평행한 두 직선 사이의 거리", "C2-02-T16": "점과 직선 사이의 거리의 활용: 거리의 최댓값", "C2-02-T17": "점과 직선 사이의 거리의 활용: 도형의 넓이", "C2-02-T18": "자취의 방정식: 각의 이등분선, 거리가 주어진 평행선", "C2-03-T01": "중심의 좌표가 주어진 원의 방정식", "C2-03-T02": "중심에 대한 조건이 주어진 원의 방정식", "C2-03-T03": "지름의 양 끝점이 주어진 원의 방정식", "C2-03-T04": "원의 방정식이 되기 위한 조건", "C2-03-T05": "세 점을 지나는 원의 방정식", "C2-03-T06": "x축 또는 y축에 접하는 원의 방정식", "C2-03-T07": "x축과 y축에 동시에 접하는 원의 방정식", "C2-03-T08": "원 밖의 한 점과 원 위의 점 사이의 거리", "C2-03-T09": "원과 만나지 않는 직선과 원 위의 점 사이의 거리", "C2-03-T10": "자취의 방정식: 원의 방정식", "C2-03-T11": "두 원의 교점을 지나는 직선의 방정식", "C2-03-T12": "공통현의 길이", "C2-03-T13": "두 원의 교점을 지나는 원의 방정식", "C2-03-T14": "원과 직선의 위치 관계: 두 점에서 만날 때", "C2-03-T15": "현의 길이", "C2-03-T16": "원과 직선의 위치 관계: 한 점에서 접할 때", "C2-03-T17": "접선의 길이", "C2-03-T18": "원과 직선의 위치 관계: 만나지 않을 때", "C2-03-T19": "원의 접선의 방정식: 기울기가 주어질 때", "C2-03-T20": "원의 접선의 방정식: 원 위의 점이 주어질 때", "C2-03-T21": "원의 접선의 방정식: 원 밖의 점이 주어질 때", "C2-03-T22": "두 원에 동시에 접하는 접선", "C2-04-T01": "점의 평행이동", "C2-04-T02": "도형의 평행이동: 직선", "C2-04-T03": "도형의 평행이동: 원", "C2-04-T04": "도형의 평행이동: 포물선", "C2-04-T05": "점의 대칭이동", "C2-04-T06": "도형의 대칭이동: 직선", "C2-04-T07": "도형의 대칭이동: 원", "C2-04-T08": "도형의 대칭이동: 포물선", "C2-04-T09": "점과 도형의 평행이동과 대칭이동", "C2-04-T10": "도형 f(x, y)=0의 평행이동과 대칭이동", "C2-04-T11": "점 (a, b)에 대한 대칭이동", "C2-04-T12": "기울기가 ±1인 직선에 대한 대칭이동", "C2-04-T13": "직선 y=ax+b에 대한 대칭이동", "C2-04-T14": "선분의 길이의 합의 최솟값", "C2-05-T01": "집합과 원소", "C2-05-T02": "집합의 표현 방법", "C2-05-T03": "유한집합과 무한집합", "C2-05-T04": "유한집합의 원소의 개수", "C2-05-T05": "새로운 집합 구하기", "C2-05-T06": "기호 ∈, ⊂의 사용", "C2-05-T07": "집합 사이의 포함 관계", "C2-05-T08": "집합 사이의 포함 관계가 성립하도록 하는 미지수 구하기", "C2-05-T09": "부분집합 구하기", "C2-05-T10": "서로 같은 집합", "C2-05-T11": "부분집합의 개수", "C2-05-T12": "A⊂X⊂B를 만족시키는 집합 X의 개수", "C2-05-T13": "특정한 원소를 갖거나 갖지 않는 부분집합의 개수", "C2-05-T14": "조건을 만족시키는 집합의 개수", "C2-05-T15": "부분집합의 원소의 합과 곱", "C2-06-T01": "합집합과 교집합", "C2-06-T02": "서로소인 집합", "C2-06-T03": "여집합과 차집합", "C2-06-T04": "조건을 만족시키는 집합 구하기", "C2-06-T05": "조건을 만족시키는 집합의 미지수 구하기", "C2-06-T06": "벤 다이어그램에 색칠된 부분을 나타내는 집합", "C2-06-T07": "집합의 연산의 성질", "C2-06-T08": "집합의 연산과 포함 관계", "C2-06-T09": "집합의 연산과 집합의 개수", "C2-06-T10": "드모르간의 법칙", "C2-06-T11": "집합의 연산을 간단히 하기", "C2-06-T12": "새롭게 약속된 집합의 연산", "C2-06-T13": "배수와 약수의 집합의 연산", "C2-06-T14": "방정식 또는 부등식의 해의 집합의 연산", "C2-06-T15": "집합의 연산과 원소의 개수", "C2-06-T16": "집합의 연산과 원소의 개수의 최댓값과 최솟값", "C2-06-T17": "집합의 연산과 원소의 개수의 활용", "C2-06-T18": "집합의 연산과 원소의 개수의 최댓값과 최솟값의 활용", "C2-07-T01": "명제", "C2-07-T02": "명제와 조건의 부정", "C2-07-T03": "진리집합", "C2-07-T04": "명제 p → q의 참, 거짓", "C2-07-T05": "거짓인 명제의 반례", "C2-07-T06": "명제의 참, 거짓과 진리집합", "C2-07-T07": "명제가 참이 되도록 하는 미지수 구하기", "C2-07-T08": "‘모든’이나 ‘어떤’을 포함한 명제", "C2-07-T09": "명제의 역, 대우의 참, 거짓", "C2-07-T10": "명제의 대우가 참이 되도록 하는 미지수 구하기", "C2-07-T11": "삼단논법", "C2-07-T12": "삼단논법과 명제의 추론", "C2-07-T13": "충분조건, 필요조건, 필요충분조건", "C2-07-T14": "충분조건, 필요조건, 필요충분조건과 진리집합", "C2-07-T15": "충분조건, 필요조건, 필요충분조건이 되도록 하는 미지수 구하기", "C2-07-T16": "집합의 연산과 필요충분조건", "C2-07-T17": "대우를 이용한 명제의 증명", "C2-07-T18": "귀류법", "C2-07-T19": "실수의 성질을 이용한 절대부등식의 증명", "C2-07-T20": "절댓값 기호를 포함한 절대부등식", "C2-07-T21": "산술평균과 기하평균의 관계: 식의 전개", "C2-07-T22": "산술평균과 기하평균의 관계: 식의 변형", "C2-07-T23": "산술평균과 기하평균의 관계: 합 또는 곱이 일정할 때", "C2-07-T24": "산술평균과 기하평균의 관계의 활용", "C2-07-T25": "코시-슈바르츠 부등식: ax+by의 최댓값과 최솟값", "C2-07-T26": "코시-슈바르츠 부등식: x²+y²의 최솟값", "C2-07-T27": "코시-슈바르츠 부등식의 활용", "C2-08-T01": "함수의 뜻", "C2-08-T02": "함숫값 구하기: 식이 주어진 함수", "C2-08-T03": "함숫값 구하기: 조건을 만족시키는 함수", "C2-08-T04": "함수의 정의역, 공역, 치역", "C2-08-T05": "서로 같은 함수", "C2-08-T06": "일대일함수와 일대일대응", "C2-08-T07": "일대일대응이 되기 위한 조건", "C2-08-T08": "항등함수와 상수함수", "C2-08-T09": "함수의 개수", "C2-08-T10": "합성함수", "C2-08-T11": "f∘g=g∘f인 경우", "C2-08-T12": "f∘g에 대한 조건이 주어진 경우", "C2-08-T13": "f∘g=h를 만족시키는 함수 f 또는 g 구하기", "C2-08-T14": "fⁿ 꼴의 합성함수의 규칙성", "C2-08-T15": "그래프를 이용하여 합성함수의 함숫값 구하기", "C2-08-T16": "합성함수의 그래프 그리기", "C2-08-T17": "역함수와 함숫값", "C2-08-T18": "역함수가 존재하기 위한 조건", "C2-08-T19": "역함수 구하기", "C2-08-T20": "합성함수와 역함수", "C2-08-T21": "역함수의 성질", "C2-08-T22": "그래프를 이용하여 역함수의 함숫값 구하기", "C2-08-T23": "역함수의 그래프의 성질", "C2-08-T24": "절댓값 기호를 포함한 식의 그래프: 대칭이동", "C2-08-T25": "절댓값 기호를 포함한 식의 그래프: 범위 나누기", "C2-09-T01": "유리식의 사칙연산", "C2-09-T02": "유리식과 항등식", "C2-09-T03": "(분자의 차수)≥(분모의 차수)인 유리식", "C2-09-T04": "부분분수", "C2-09-T05": "분모 또는 분자가 분수식인 유리식의 계산", "C2-09-T06": "유리식의 값 구하기: xⁿ±1/xⁿ 꼴의 값", "C2-09-T07": "유리식의 값 구하기: 비례식 또는 등식이 주어질 때", "C2-09-T08": "유리함수의 정의역과 치역", "C2-09-T09": "유리함수의 평행이동", "C2-09-T10": "유리함수의 그래프의 점근선", "C2-09-T11": "유리함수의 그래프의 대칭성", "C2-09-T12": "유리함수의 그래프가 지나는 사분면", "C2-09-T13": "그래프의 개형에 따른 유리함수의 미정계수", "C2-09-T14": "유리함수의 그래프의 성질", "C2-09-T15": "유리함수의 최댓값과 최솟값", "C2-09-T16": "유리함수의 그래프와 직선의 위치 관계", "C2-09-T17": "유리함수의 그래프의 활용", "C2-09-T18": "유리함수의 합성의 규칙성", "C2-09-T19": "유리함수의 역함수", "C2-09-T20": "유리함수의 합성함수와 역함수", "C2-10-T01": "무리식의 값이 실수가 되기 위한 조건", "C2-10-T02": "무리식의 계산", "C2-10-T03": "무리식의 값 구하기: 분모의 유리화", "C2-10-T04": "무리식의 값 구하기: x=√a+√b, y=√a−√b 꼴", "C2-10-T05": "무리함수의 정의역과 치역", "C2-10-T06": "무리함수의 그래프의 평행이동과 대칭이동", "C2-10-T07": "무리함수의 그래프가 지나는 사분면", "C2-10-T08": "그래프의 개형에 따른 무리함수의 미정계수", "C2-10-T09": "무리함수의 그래프의 성질", "C2-10-T10": "무리함수의 최댓값과 최솟값", "C2-10-T11": "무리함수의 그래프와 직선의 위치 관계", "C2-10-T12": "무리함수의 합성함수와 역함수", "C2-10-T13": "무리함수의 역함수의 그래프", "C2-10-T14": "무리함수와 이차함수의 그래프의 위치 관계", "C2-10-T15": "무리함수의 그래프의 활용", "M1-01-T01": "함수의 극한값의 존재", "M1-01-T02": "함수의 극한값 구하기", "M1-01-T03": "가우스 기호를 포함한 함수의 극한", "M1-01-T04": "합성함수의 극한", "M1-01-T05": "함수의 극한에 대한 성질", "M1-01-T06": "0/0 꼴의 극한; 유리식", "M1-01-T07": "0/0 꼴의 극한; 무리식", "M1-01-T08": "∞/∞ 꼴의 극한", "M1-01-T09": "∞−∞ 꼴의 극한", "M1-01-T10": "∞×0 꼴의 극한", "M1-01-T11": "미정계수의 결정; 0/0 꼴", "M1-01-T12": "미정계수의 결정; ∞−∞ 꼴", "M1-01-T13": "다항함수의 결정", "M1-01-T14": "다항함수와 극한값 구하기", "M1-01-T15": "함수의 극한의 대소 관계", "M1-01-T16": "함수의 극한의 활용", "M1-02-T01": "함수의 연속과 불연속", "M1-02-T02": "함수의 그래프와 연속", "M1-02-T03": "함수가 연속일 조건; 구간에 따라 다르게 정의된 함수", "M1-02-T04": "함수가 연속일 조건; f(x)/g(x) 꼴의 함수", "M1-02-T05": "합성함수의 연속과 불연속", "M1-02-T06": "가우스 기호를 포함한 함수의 연속", "M1-02-T07": "(x−a)f(x) 꼴의 함수의 연속", "M1-02-T08": "연속함수의 성질", "M1-02-T09": "최대·최소 정리", "M1-02-T10": "사잇값 정리; 실근이 존재하는 구간", "M1-02-T11": "사잇값 정리; 실근의 개수", "M1-02-T12": "사잇값 정리의 실생활에의 활용", "M1-03-T01": "평균변화율", "M1-03-T02": "평균변화율의 기하적 의미", "M1-03-T03": "평균변화율과 미분계수", "M1-03-T04": "미분계수를 이용한 극한값의 계산; lim {f(a+h)−f(a)}/h", "M1-03-T05": "미분계수를 이용한 극한값의 계산; lim {f(x)−f(a)}/(x−a)", "M1-03-T06": "항등식이 주어질 때 미분계수 구하기", "M1-03-T07": "미분계수의 기하적 의미", "M1-03-T08": "미분가능성과 연속성", "M1-03-T09": "구간에 따라 다르게 정의된 함수의 미분가능성", "M1-03-T10": "항등식이 주어질 때 도함수 구하기", "M1-03-T11": "미분법의 공식", "M1-03-T12": "곱의 미분법", "M1-03-T13": "y={f(x)}ⁿ 꼴의 미분법", "M1-03-T14": "도함수와 미분계수를 이용한 극한값의 계산", "M1-03-T15": "미분계수를 이용한 미정계수의 결정", "M1-03-T16": "치환을 이용한 극한값의 계산", "M1-03-T17": "접선의 기울기를 이용한 미정계수의 결정", "M1-03-T18": "항등식에서 미분법의 활용", "M1-03-T19": "다항식의 나눗셈에서 미분법의 활용", "M1-04-T01": "접선의 기울기", "M1-04-T02": "접선의 기울기의 최댓값 또는 최솟값", "M1-04-T03": "접점의 좌표가 주어진 접선의 방정식", "M1-04-T04": "접선과 수직인 직선의 방정식", "M1-04-T05": "곡선과 접선의 교점", "M1-04-T06": "기울기가 주어진 접선의 방정식", "M1-04-T07": "곡선과 직선이 접할 때 미정계수 구하기", "M1-04-T08": "곡선 위의 점과 직선 사이의 거리", "M1-04-T09": "곡선 밖의 한 점에서 그은 접선의 방정식", "M1-04-T10": "곡선 밖의 한 점에서 그은 접선의 방정식의 활용", "M1-04-T11": "두 곡선에 동시에 접하는 직선", "M1-04-T12": "두 곡선의 교점에서의 접선", "M1-04-T13": "곡선과 원의 접선", "M1-04-T14": "접선과 좌표축으로 둘러싸인 도형의 넓이", "M1-04-T15": "롤의 정리", "M1-04-T16": "평균값 정리; 정의를 이용하는 경우", "M1-04-T17": "평균값 정리; 그래프를 이용하는 경우", "M1-05-T01": "함수의 증가와 감소", "M1-05-T02": "실수 전체의 집합에서 함수가 증가(또는 감소)하기 위한 조건", "M1-05-T03": "주어진 구간에서 함수가 증가(또는 감소)하기 위한 조건", "M1-05-T04": "함수의 극대·극소", "M1-05-T05": "함수의 극대·극소를 이용한 미정계수의 결정", "M1-05-T06": "함수의 극대·극소의 활용", "M1-05-T07": "함수의 극대·극소를 이용한 삼차함수의 계수의 부호 결정", "M1-05-T08": "도함수의 그래프를 이용한 함수의 극대·극소", "M1-05-T09": "도함수의 그래프를 이용한 함수의 그래프의 해석", "M1-05-T10": "도함수의 그래프를 이용하여 함수의 그래프 그리기", "M1-05-T11": "삼차함수가 극값을 가질 조건", "M1-05-T12": "삼차함수가 극값을 갖지 않을 조건", "M1-05-T13": "삼차함수가 주어진 구간에서 극값을 가질 조건", "M1-05-T14": "사차함수의 극값의 조건", "M1-05-T15": "함수의 최대·최소", "M1-05-T16": "함수의 최대·최소를 이용한 미정계수의 결정", "M1-05-T17": "최대·최소의 활용", "M1-06-T01": "방정식 f(x)=k의 실근의 개수", "M1-06-T02": "방정식 f(x)=k의 실근의 부호", "M1-06-T03": "삼차방정식의 근의 판별", "M1-06-T04": "두 그래프의 교점의 개수", "M1-06-T05": "곡선 밖의 점에서 그은 접선의 개수", "M1-06-T06": "모든 실수에서 부등식이 항상 성립할 조건", "M1-06-T07": "주어진 구간에서 부등식이 항상 성립할 조건; 증가·감소의 활용", "M1-06-T08": "주어진 구간에서 부등식이 항상 성립할 조건; 최대·최소의 활용", "M1-06-T09": "부등식 f(x)>g(x)가 항상 성립할 조건", "M1-06-T10": "속도와 가속도", "M1-06-T11": "두 점의 속도와 가속도", "M1-06-T12": "속도·가속도와 운동 방향", "M1-06-T13": "정지하는 물체의 속도와 움직인 거리", "M1-06-T14": "위로 던진 물체의 위치와 속도", "M1-06-T15": "속도의 그래프의 해석", "M1-06-T16": "위치의 그래프의 해석", "M1-06-T17": "시각에 대한 길이의 변화율", "M1-06-T18": "시각에 대한 넓이의 변화율", "M1-06-T19": "시각에 대한 부피의 변화율", "M1-07-T01": "부정적분의 정의", "M1-07-T02": "부정적분과 미분의 관계; d/dx ∫f(x)dx=f(x)", "M1-07-T03": "부정적분과 미분의 관계; ∫{d/dx f(x)}dx=f(x)+C", "M1-07-T04": "부정적분과 미분의 관계를 이용하여 함수 구하기", "M1-07-T05": "부정적분의 계산", "M1-07-T06": "도함수가 주어질 때 함수 구하기", "M1-07-T07": "함수와 그 부정적분의 관계식이 주어질 때 함수 구하기", "M1-07-T08": "접선의 기울기와 부정적분", "M1-07-T09": "함수의 연속과 부정적분", "M1-07-T10": "미분계수와 부정적분", "M1-07-T11": "항등식이 주어질 때 함수 구하기", "M1-07-T12": "극값과 부정적분", "M1-08-T01": "미적분의 기본 정리", "M1-08-T02": "미적분의 기본 정리의 활용", "M1-08-T03": "정적분의 계산; 적분 구간이 같은 경우", "M1-08-T04": "정적분의 계산; 피적분함수가 같은 경우", "M1-08-T05": "정적분의 계산; 구간에 따라 다르게 정의된 함수", "M1-08-T06": "정적분의 계산; 절댓값 기호를 포함한 함수", "M1-08-T07": "우함수·기함수의 정적분; 피적분함수가 주어진 경우", "M1-08-T08": "우함수·기함수의 정적분; 피적분함수가 주어지지 않은 경우", "M1-08-T09": "주기함수의 정적분", "M1-08-T10": "정적분을 포함한 등식; 적분 구간이 상수인 경우", "M1-08-T11": "정적분을 포함한 등식; 적분 구간에 변수가 있는 경우", "M1-08-T12": "정적분을 포함한 등식; 적분구간과 피적분 함수에 변수가 있는 경우", "M1-08-T13": "정적분으로 정의된 함수의 극대·극소", "M1-08-T14": "정적분으로 정의된 함수의 최대·최소", "M1-08-T15": "정적분으로 정의된 함수와 그래프", "M1-08-T16": "정적분으로 정의된 함수의 극한; lim (1/x)∫ₐ^(x+a) f(t)dt", "M1-08-T17": "정적분으로 정의된 함수의 극한; lim 1/(x−a)∫ₐˣ f(t)dt", "M1-09-T01": "곡선과 x축 사이의 넓이", "M1-09-T02": "곡선과 직선 사이의 넓이", "M1-09-T03": "두 곡선 사이의 넓이", "M1-09-T04": "절댓값 기호를 포함한 함수의 그래프와 넓이", "M1-09-T05": "곡선과 접선으로 둘러싸인 도형의 넓이", "M1-09-T06": "두 도형의 넓이가 같을 조건", "M1-09-T07": "넓이를 이등분하는 경우", "M1-09-T08": "넓이의 최솟값", "M1-09-T09": "함수와 그 역함수의 정적분", "M1-09-T10": "함수와 그 역함수의 그래프로 둘러싸인 도형의 넓이", "M1-09-T11": "위치와 위치의 변화량", "M1-09-T12": "움직인 거리", "M1-09-T13": "그래프에서의 위치와 움직인 거리"}, UNIT={"C2-01-T01": "공통수학2 · 01 평면좌표", "C2-01-T02": "공통수학2 · 01 평면좌표", "C2-01-T03": "공통수학2 · 01 평면좌표", "C2-01-T04": "공통수학2 · 01 평면좌표", "C2-01-T05": "공통수학2 · 01 평면좌표", "C2-01-T06": "공통수학2 · 01 평면좌표", "C2-01-T07": "공통수학2 · 01 평면좌표", "C2-01-T08": "공통수학2 · 01 평면좌표", "C2-01-T09": "공통수학2 · 01 평면좌표", "C2-01-T10": "공통수학2 · 01 평면좌표", "C2-01-T11": "공통수학2 · 01 평면좌표", "C2-01-T12": "공통수학2 · 01 평면좌표", "C2-01-T13": "공통수학2 · 01 평면좌표", "C2-01-T14": "공통수학2 · 01 평면좌표", "C2-02-T01": "공통수학2 · 02 직선의 방정식", "C2-02-T02": "공통수학2 · 02 직선의 방정식", "C2-02-T03": "공통수학2 · 02 직선의 방정식", "C2-02-T04": "공통수학2 · 02 직선의 방정식", "C2-02-T05": "공통수학2 · 02 직선의 방정식", "C2-02-T06": "공통수학2 · 02 직선의 방정식", "C2-02-T07": "공통수학2 · 02 직선의 방정식", "C2-02-T08": "공통수학2 · 02 직선의 방정식", "C2-02-T09": "공통수학2 · 02 직선의 방정식", "C2-02-T10": "공통수학2 · 02 직선의 방정식", "C2-02-T11": "공통수학2 · 02 직선의 방정식", "C2-02-T12": "공통수학2 · 02 직선의 방정식", "C2-02-T13": "공통수학2 · 02 직선의 방정식", "C2-02-T14": "공통수학2 · 02 직선의 방정식", "C2-02-T15": "공통수학2 · 02 직선의 방정식", "C2-02-T16": "공통수학2 · 02 직선의 방정식", "C2-02-T17": "공통수학2 · 02 직선의 방정식", "C2-02-T18": "공통수학2 · 02 직선의 방정식", "C2-03-T01": "공통수학2 · 03 원의 방정식", "C2-03-T02": "공통수학2 · 03 원의 방정식", "C2-03-T03": "공통수학2 · 03 원의 방정식", "C2-03-T04": "공통수학2 · 03 원의 방정식", "C2-03-T05": "공통수학2 · 03 원의 방정식", "C2-03-T06": "공통수학2 · 03 원의 방정식", "C2-03-T07": "공통수학2 · 03 원의 방정식", "C2-03-T08": "공통수학2 · 03 원의 방정식", "C2-03-T09": "공통수학2 · 03 원의 방정식", "C2-03-T10": "공통수학2 · 03 원의 방정식", "C2-03-T11": "공통수학2 · 03 원의 방정식", "C2-03-T12": "공통수학2 · 03 원의 방정식", "C2-03-T13": "공통수학2 · 03 원의 방정식", "C2-03-T14": "공통수학2 · 03 원의 방정식", "C2-03-T15": "공통수학2 · 03 원의 방정식", "C2-03-T16": "공통수학2 · 03 원의 방정식", "C2-03-T17": "공통수학2 · 03 원의 방정식", "C2-03-T18": "공통수학2 · 03 원의 방정식", "C2-03-T19": "공통수학2 · 03 원의 방정식", "C2-03-T20": "공통수학2 · 03 원의 방정식", "C2-03-T21": "공통수학2 · 03 원의 방정식", "C2-03-T22": "공통수학2 · 03 원의 방정식", "C2-04-T01": "공통수학2 · 04 도형의 이동", "C2-04-T02": "공통수학2 · 04 도형의 이동", "C2-04-T03": "공통수학2 · 04 도형의 이동", "C2-04-T04": "공통수학2 · 04 도형의 이동", "C2-04-T05": "공통수학2 · 04 도형의 이동", "C2-04-T06": "공통수학2 · 04 도형의 이동", "C2-04-T07": "공통수학2 · 04 도형의 이동", "C2-04-T08": "공통수학2 · 04 도형의 이동", "C2-04-T09": "공통수학2 · 04 도형의 이동", "C2-04-T10": "공통수학2 · 04 도형의 이동", "C2-04-T11": "공통수학2 · 04 도형의 이동", "C2-04-T12": "공통수학2 · 04 도형의 이동", "C2-04-T13": "공통수학2 · 04 도형의 이동", "C2-04-T14": "공통수학2 · 04 도형의 이동", "C2-05-T01": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T02": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T03": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T04": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T05": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T06": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T07": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T08": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T09": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T10": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T11": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T12": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T13": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T14": "공통수학2 · 05 집합의 뜻과 표현", "C2-05-T15": "공통수학2 · 05 집합의 뜻과 표현", "C2-06-T01": "공통수학2 · 06 집합의 연산", "C2-06-T02": "공통수학2 · 06 집합의 연산", "C2-06-T03": "공통수학2 · 06 집합의 연산", "C2-06-T04": "공통수학2 · 06 집합의 연산", "C2-06-T05": "공통수학2 · 06 집합의 연산", "C2-06-T06": "공통수학2 · 06 집합의 연산", "C2-06-T07": "공통수학2 · 06 집합의 연산", "C2-06-T08": "공통수학2 · 06 집합의 연산", "C2-06-T09": "공통수학2 · 06 집합의 연산", "C2-06-T10": "공통수학2 · 06 집합의 연산", "C2-06-T11": "공통수학2 · 06 집합의 연산", "C2-06-T12": "공통수학2 · 06 집합의 연산", "C2-06-T13": "공통수학2 · 06 집합의 연산", "C2-06-T14": "공통수학2 · 06 집합의 연산", "C2-06-T15": "공통수학2 · 06 집합의 연산", "C2-06-T16": "공통수학2 · 06 집합의 연산", "C2-06-T17": "공통수학2 · 06 집합의 연산", "C2-06-T18": "공통수학2 · 06 집합의 연산", "C2-07-T01": "공통수학2 · 07 명제", "C2-07-T02": "공통수학2 · 07 명제", "C2-07-T03": "공통수학2 · 07 명제", "C2-07-T04": "공통수학2 · 07 명제", "C2-07-T05": "공통수학2 · 07 명제", "C2-07-T06": "공통수학2 · 07 명제", "C2-07-T07": "공통수학2 · 07 명제", "C2-07-T08": "공통수학2 · 07 명제", "C2-07-T09": "공통수학2 · 07 명제", "C2-07-T10": "공통수학2 · 07 명제", "C2-07-T11": "공통수학2 · 07 명제", "C2-07-T12": "공통수학2 · 07 명제", "C2-07-T13": "공통수학2 · 07 명제", "C2-07-T14": "공통수학2 · 07 명제", "C2-07-T15": "공통수학2 · 07 명제", "C2-07-T16": "공통수학2 · 07 명제", "C2-07-T17": "공통수학2 · 07 명제", "C2-07-T18": "공통수학2 · 07 명제", "C2-07-T19": "공통수학2 · 07 명제", "C2-07-T20": "공통수학2 · 07 명제", "C2-07-T21": "공통수학2 · 07 명제", "C2-07-T22": "공통수학2 · 07 명제", "C2-07-T23": "공통수학2 · 07 명제", "C2-07-T24": "공통수학2 · 07 명제", "C2-07-T25": "공통수학2 · 07 명제", "C2-07-T26": "공통수학2 · 07 명제", "C2-07-T27": "공통수학2 · 07 명제", "C2-08-T01": "공통수학2 · 08 함수", "C2-08-T02": "공통수학2 · 08 함수", "C2-08-T03": "공통수학2 · 08 함수", "C2-08-T04": "공통수학2 · 08 함수", "C2-08-T05": "공통수학2 · 08 함수", "C2-08-T06": "공통수학2 · 08 함수", "C2-08-T07": "공통수학2 · 08 함수", "C2-08-T08": "공통수학2 · 08 함수", "C2-08-T09": "공통수학2 · 08 함수", "C2-08-T10": "공통수학2 · 08 함수", "C2-08-T11": "공통수학2 · 08 함수", "C2-08-T12": "공통수학2 · 08 함수", "C2-08-T13": "공통수학2 · 08 함수", "C2-08-T14": "공통수학2 · 08 함수", "C2-08-T15": "공통수학2 · 08 함수", "C2-08-T16": "공통수학2 · 08 함수", "C2-08-T17": "공통수학2 · 08 함수", "C2-08-T18": "공통수학2 · 08 함수", "C2-08-T19": "공통수학2 · 08 함수", "C2-08-T20": "공통수학2 · 08 함수", "C2-08-T21": "공통수학2 · 08 함수", "C2-08-T22": "공통수학2 · 08 함수", "C2-08-T23": "공통수학2 · 08 함수", "C2-08-T24": "공통수학2 · 08 함수", "C2-08-T25": "공통수학2 · 08 함수", "C2-09-T01": "공통수학2 · 09 유리함수", "C2-09-T02": "공통수학2 · 09 유리함수", "C2-09-T03": "공통수학2 · 09 유리함수", "C2-09-T04": "공통수학2 · 09 유리함수", "C2-09-T05": "공통수학2 · 09 유리함수", "C2-09-T06": "공통수학2 · 09 유리함수", "C2-09-T07": "공통수학2 · 09 유리함수", "C2-09-T08": "공통수학2 · 09 유리함수", "C2-09-T09": "공통수학2 · 09 유리함수", "C2-09-T10": "공통수학2 · 09 유리함수", "C2-09-T11": "공통수학2 · 09 유리함수", "C2-09-T12": "공통수학2 · 09 유리함수", "C2-09-T13": "공통수학2 · 09 유리함수", "C2-09-T14": "공통수학2 · 09 유리함수", "C2-09-T15": "공통수학2 · 09 유리함수", "C2-09-T16": "공통수학2 · 09 유리함수", "C2-09-T17": "공통수학2 · 09 유리함수", "C2-09-T18": "공통수학2 · 09 유리함수", "C2-09-T19": "공통수학2 · 09 유리함수", "C2-09-T20": "공통수학2 · 09 유리함수", "C2-10-T01": "공통수학2 · 10 무리함수", "C2-10-T02": "공통수학2 · 10 무리함수", "C2-10-T03": "공통수학2 · 10 무리함수", "C2-10-T04": "공통수학2 · 10 무리함수", "C2-10-T05": "공통수학2 · 10 무리함수", "C2-10-T06": "공통수학2 · 10 무리함수", "C2-10-T07": "공통수학2 · 10 무리함수", "C2-10-T08": "공통수학2 · 10 무리함수", "C2-10-T09": "공통수학2 · 10 무리함수", "C2-10-T10": "공통수학2 · 10 무리함수", "C2-10-T11": "공통수학2 · 10 무리함수", "C2-10-T12": "공통수학2 · 10 무리함수", "C2-10-T13": "공통수학2 · 10 무리함수", "C2-10-T14": "공통수학2 · 10 무리함수", "C2-10-T15": "공통수학2 · 10 무리함수", "M1-01-T01": "미적분Ⅰ · 01 함수의 극한", "M1-01-T02": "미적분Ⅰ · 01 함수의 극한", "M1-01-T03": "미적분Ⅰ · 01 함수의 극한", "M1-01-T04": "미적분Ⅰ · 01 함수의 극한", "M1-01-T05": "미적분Ⅰ · 01 함수의 극한", "M1-01-T06": "미적분Ⅰ · 01 함수의 극한", "M1-01-T07": "미적분Ⅰ · 01 함수의 극한", "M1-01-T08": "미적분Ⅰ · 01 함수의 극한", "M1-01-T09": "미적분Ⅰ · 01 함수의 극한", "M1-01-T10": "미적분Ⅰ · 01 함수의 극한", "M1-01-T11": "미적분Ⅰ · 01 함수의 극한", "M1-01-T12": "미적분Ⅰ · 01 함수의 극한", "M1-01-T13": "미적분Ⅰ · 01 함수의 극한", "M1-01-T14": "미적분Ⅰ · 01 함수의 극한", "M1-01-T15": "미적분Ⅰ · 01 함수의 극한", "M1-01-T16": "미적분Ⅰ · 01 함수의 극한", "M1-02-T01": "미적분Ⅰ · 02 함수의 연속", "M1-02-T02": "미적분Ⅰ · 02 함수의 연속", "M1-02-T03": "미적분Ⅰ · 02 함수의 연속", "M1-02-T04": "미적분Ⅰ · 02 함수의 연속", "M1-02-T05": "미적분Ⅰ · 02 함수의 연속", "M1-02-T06": "미적분Ⅰ · 02 함수의 연속", "M1-02-T07": "미적분Ⅰ · 02 함수의 연속", "M1-02-T08": "미적분Ⅰ · 02 함수의 연속", "M1-02-T09": "미적분Ⅰ · 02 함수의 연속", "M1-02-T10": "미적분Ⅰ · 02 함수의 연속", "M1-02-T11": "미적분Ⅰ · 02 함수의 연속", "M1-02-T12": "미적분Ⅰ · 02 함수의 연속", "M1-03-T01": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T02": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T03": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T04": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T05": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T06": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T07": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T08": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T09": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T10": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T11": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T12": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T13": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T14": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T15": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T16": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T17": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T18": "미적분Ⅰ · 03 미분계수와 도함수", "M1-03-T19": "미적분Ⅰ · 03 미분계수와 도함수", "M1-04-T01": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T02": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T03": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T04": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T05": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T06": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T07": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T08": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T09": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T10": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T11": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T12": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T13": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T14": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T15": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T16": "미적분Ⅰ · 04 도함수의 활용 1", "M1-04-T17": "미적분Ⅰ · 04 도함수의 활용 1", "M1-05-T01": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T02": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T03": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T04": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T05": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T06": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T07": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T08": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T09": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T10": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T11": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T12": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T13": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T14": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T15": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T16": "미적분Ⅰ · 05 도함수의 활용 2", "M1-05-T17": "미적분Ⅰ · 05 도함수의 활용 2", "M1-06-T01": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T02": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T03": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T04": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T05": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T06": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T07": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T08": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T09": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T10": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T11": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T12": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T13": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T14": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T15": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T16": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T17": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T18": "미적분Ⅰ · 06 도함수의 활용 3", "M1-06-T19": "미적분Ⅰ · 06 도함수의 활용 3", "M1-07-T01": "미적분Ⅰ · 07 부정적분", "M1-07-T02": "미적분Ⅰ · 07 부정적분", "M1-07-T03": "미적분Ⅰ · 07 부정적분", "M1-07-T04": "미적분Ⅰ · 07 부정적분", "M1-07-T05": "미적분Ⅰ · 07 부정적분", "M1-07-T06": "미적분Ⅰ · 07 부정적분", "M1-07-T07": "미적분Ⅰ · 07 부정적분", "M1-07-T08": "미적분Ⅰ · 07 부정적분", "M1-07-T09": "미적분Ⅰ · 07 부정적분", "M1-07-T10": "미적분Ⅰ · 07 부정적분", "M1-07-T11": "미적분Ⅰ · 07 부정적분", "M1-07-T12": "미적분Ⅰ · 07 부정적분", "M1-08-T01": "미적분Ⅰ · 08 정적분", "M1-08-T02": "미적분Ⅰ · 08 정적분", "M1-08-T03": "미적분Ⅰ · 08 정적분", "M1-08-T04": "미적분Ⅰ · 08 정적분", "M1-08-T05": "미적분Ⅰ · 08 정적분", "M1-08-T06": "미적분Ⅰ · 08 정적분", "M1-08-T07": "미적분Ⅰ · 08 정적분", "M1-08-T08": "미적분Ⅰ · 08 정적분", "M1-08-T09": "미적분Ⅰ · 08 정적분", "M1-08-T10": "미적분Ⅰ · 08 정적분", "M1-08-T11": "미적분Ⅰ · 08 정적분", "M1-08-T12": "미적분Ⅰ · 08 정적분", "M1-08-T13": "미적분Ⅰ · 08 정적분", "M1-08-T14": "미적분Ⅰ · 08 정적분", "M1-08-T15": "미적분Ⅰ · 08 정적분", "M1-08-T16": "미적분Ⅰ · 08 정적분", "M1-08-T17": "미적분Ⅰ · 08 정적분", "M1-09-T01": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T02": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T03": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T04": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T05": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T06": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T07": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T08": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T09": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T10": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T11": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T12": "미적분Ⅰ · 09 정적분의 활용", "M1-09-T13": "미적분Ⅰ · 09 정적분의 활용"};
+const sb=supabase.createClient(SB_URL,SB_ANON);
+const { E, table, modal, toast } = U;
+let ROWS=[], TAB='stu', WITHCHK=false, ROLE='';
+const MK={o:'○',t:'△',x:'✕'};
+const marks=r=>[...(r||'')].map(c=>'<span class="'+(c==='-'?'s':c)+'">'+(MK[c]||'·')+'</span>').join('');
+const det=r=>{try{return r.body?JSON.parse(r.body):{};}catch(e){return {};}};
+const titles=r=>String(r.step||'').split('|');
+/* 판정 — 학생 화면과 같은 규칙(풀이 단계·최종 답 중심) */
+function level(r,ti){const s=[...(r||'')],aux=j=>!!(ti&&ti[j]&&/^(유형 판별|개념 고르기)$/.test(ti[j]));
+  const live=s.map((c,j)=>[c,j]).filter(([c])=>c!=='-');const core=live.filter(([c,j])=>!aux(j)).map(([c])=>c);
+  const fin=live.length?live[live.length-1][0]:'';const cx=core.filter(c=>c==='x').length,co=core.filter(c=>c==='o').length,ax=live.filter(([c,j])=>aux(j)&&c==='x').length;
+  if(!core.length)return ['m','보완'];if(!cx&&!ax&&co===core.length)return ['g','완성'];
+  if(fin==='x'||cx>=2||co/core.length<0.5)return ['w','다시 훈련'];return ['m','보완'];}
+const LV={g:'ok',m:'warn',w:'bad'};
+const rate=r=>{const s=String(r||'').replace(/-/g,'');return s.length?(s.match(/o/g)||[]).length/s.length:0;};
+const isPortal=r=>String(r.page||'').startsWith('portal|');
+const stuKey=r=>r.sid?'sid:'+r.sid:(isPortal(r)?'n:'+r.who+'|'+r.page:'chk:'+r.who);
+function stuMeta(r){const p=String(r.page||'').split('|');return isPortal(r)?{n:r.who,b:p[1]||'',s:p[2]||''}:{n:r.who,b:'조교 점검',s:''};}
+const tagsOf=rs=>{const C={};rs.forEach(r=>(det(r).w||[]).forEach(t=>{if(t&&t!=='?')C[t]=(C[t]||0)+1;}));return Object.entries(C).sort((a,b)=>b[1]-a[1]);};
+function stuck(rs){const C={};rs.forEach(r=>{const ti=titles(r);[...(r.res||'')].forEach((c,j)=>{if((c==='x'||c==='t')&&ti[j])C[ti[j]]=(C[ti[j]]||0)+(c==='x'?2:1);});});return Object.entries(C).sort((a,b)=>b[1]-a[1]);}
+const chips=L=>'<span class="chips">'+L.slice(0,4).map(([k,v])=>'<span>'+E(k)+' '+v+'</span>').join('')+'</span>';
+
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){document.getElementById('app').innerHTML='<div class="u-card"><h2>로그인이 필요해요</h2><div class="u-hint">대시보드(<a href="/dashboard/">ukan.kr/dashboard</a>)에서 로그인한 뒤 이 페이지를 다시 열어 주세요.</div></div>';return;}
+  const pr=await sb.from('profiles').select('role,이름').eq('user_id',session.user.id).maybeSingle();ROLE=(pr.data&&pr.data.role)||'';
+  document.getElementById('who').innerHTML='<span class="u-tag accent">'+E((pr.data&&pr.data.이름)||session.user.email)+'</span>';
+  const out=[];for(let i=0;i<10;i++){const {data,error}=await sb.from('tt_check').select('*').order('t',{ascending:false}).range(i*1000,i*1000+999);
+    if(error){document.getElementById('app').innerHTML='<div class="u-card"><h2>기록을 읽을 수 없어요</h2><div class="u-hint">'+E(error.message)+'<br>06_자동화/통합_작업실/schema_v95_tt_read.sql 을 실행하면 관리자·조교가 읽을 수 있어요.</div></div>';return;}
+    out.push(...data);if(data.length<1000)break;}
+  ROWS=out;draw();}
+
+function draw(){
+  const TABS=[['stu','학생 기록','학생별 최근 결과 · 줄을 누르면 유형별로'],['type','유형별','어느 유형·단계에서 많이 막히는지'],['rep','조교·학생 신고','‘이 문제 이상해요’로 들어온 것']];
+  document.getElementById('tabs').innerHTML=TABS.map(([k,t])=>'<button data-tab="'+k+'" class="'+(k===TAB?'on':'')+'">'+t+'</button>').join('');
+  const T=TABS.find(t=>t[0]===TAB);
+  const rec=ROWS.filter(r=>r.kind==='record'&&(WITHCHK||isPortal(r)||r.sid));
+  const rep=ROWS.filter(r=>r.kind==='report');
+  let body='';
+  if(TAB==='stu'){
+    const G={};rec.forEach(r=>{(G[stuKey(r)]=G[stuKey(r)]||[]).push(r);});
+    const L=Object.entries(G).map(([k,rs])=>{const m=stuMeta(rs[0]);const last={};rs.slice().reverse().forEach(r=>{last[r.type]=r;});
+      const lv=Object.values(last).map(r=>level(r.res,titles(r))[0]);
+      return {k,rs,...m,n_t:Object.keys(last).length,n_r:rs.length,t:rs[0].t,first:Math.round(rs.reduce((s,r)=>s+rate(r.res),0)/rs.length*100),w:lv.filter(x=>x==='w').length,g:lv.filter(x=>x==='g').length,tags:tagsOf(rs)};});
+    const days=new Set(rec.filter(r=>Date.now()-new Date(r.t)<7*864e5).map(stuKey));
+    body+='<div class="u-kpis"><div class="u-kpi"><b>'+L.length+'</b><span>푼 학생</span></div><div class="u-kpi"><b>'+days.size+'</b><span>최근 7일</span></div><div class="u-kpi"><b>'+rec.length+'</b><span>유형 풀이</span></div><div class="u-kpi"><b>'+rep.length+'</b><span>신고</span></div></div>'
+      +'<div class="u-acts"><label class="dim"><input type="checkbox" id="chk"'+(WITHCHK?' checked':'')+'> 조교 점검 기록도 보기</label></div>'
+      +table('stu',[{h:'이름',l:1,v:r=>r.n,f:r=>'<b>'+E(r.n)+'</b> <span class="dim">'+E(r.b)+'</span>'},{h:'학교',l:1,v:r=>r.s},{h:'유형',num:1,v:r=>r.n_t},{h:'풀이',num:1,v:r=>r.n_r},
+        {h:'첫 응답',num:1,v:r=>r.first,f:r=>r.first+'%'},{h:'완성',num:1,v:r=>r.g},{h:'다시 훈련',num:1,v:r=>r.w,f:r=>r.w?'<span class="u-tag bad">'+r.w+'</span>':'0'},
+        {h:'자주 하는 실수',l:1,ns:1,v:()=>0,f:r=>chips(r.tags)},{h:'최근',v:r=>r.t,f:r=>U.fmt(r.t)}],L,{rowAttr:r=>'class="click" data-stu="'+E(r.k)+'"',redraw:draw});
+    window._L=L;
+  }else if(TAB==='type'){
+    const G={};rec.forEach(r=>{(G[r.type]=G[r.type]||[]).push(r);});
+    const L=Object.entries(G).map(([id,rs])=>({id,n:NAMES[id]||id,u:UNIT[id]||'',cnt:rs.length,stu:new Set(rs.map(stuKey)).size,first:Math.round(rs.reduce((s,r)=>s+rate(r.res),0)/rs.length*100),
+      fin:Math.round(rs.filter(r=>{const s=String(r.res||'').replace(/-/g,'');return s.slice(-1)==='o';}).length/rs.length*100),st:stuck(rs),tags:tagsOf(rs)}));
+    body+=table('type',[{h:'유형',l:1,v:r=>r.n,f:r=>E(r.n)+' <span class="dim">'+E(r.id.split('-').slice(1).join('-'))+'</span>'},{h:'단원',l:1,v:r=>r.u},{h:'풀이',num:1,v:r=>r.cnt},{h:'학생',num:1,v:r=>r.stu},
+      {h:'첫 응답',num:1,v:r=>r.first,f:r=>r.first+'%'},{h:'최종 답 한 번에',num:1,v:r=>r.fin,f:r=>r.fin+'%'},{h:'많이 막힌 단계',l:1,ns:1,v:()=>0,f:r=>chips(r.st)},{h:'흔한 실수',l:1,ns:1,v:()=>0,f:r=>chips(r.tags)}],L,{redraw:draw});
+  }else{
+    body+=table('rep',[{h:'시각',v:r=>r.t,f:r=>U.fmt(r.t)},{h:'누가',l:1,v:r=>r.who},{h:'유형',l:1,v:r=>NAMES[r.type]||r.type,f:r=>E(NAMES[r.type]||r.type)+' <span class="dim">문제 '+E(r.variant||'?')+'</span>'},
+      {h:'내용',l:1,v:r=>r.body,f:r=>E(r.body||'')+(r.step?'<div class="dim" style="font-size:12px;margin-top:4px">'+E(String(r.step).slice(0,160))+'</div>':'')},
+      {h:'처리',v:r=>r.done?1:0,f:r=>('done' in r)?(r.done?'<span class="u-tag ok">반영</span>':(ROLE==='admin'?'<button class="u-btn sm" data-done="'+r.id+'">반영함</button>':'—')):'—'}],rep,{redraw:draw});
+  }
+  document.getElementById('app').innerHTML='<div class="u-head"><div><h1>'+E(T[1])+'</h1><div class="sub">'+E(T[2])+'</div></div><span class="sp"></span><button class="u-btn" id="rl">새로고침</button></div>'+body;
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();});
+  document.getElementById('rl').onclick=load;
+  const c=document.getElementById('chk');if(c)c.onchange=()=>{WITHCHK=c.checked;draw();};
+  document.querySelectorAll('[data-stu]').forEach(tr=>tr.onclick=()=>stu(tr.dataset.stu));
+  document.querySelectorAll('[data-done]').forEach(b=>U.sure(b,'반영함으로 표시',async()=>{const {error}=await sb.rpc('tt_report_done',{p_id:+b.dataset.done});if(error){toast(error.message);return;}const r=ROWS.find(x=>x.id===+b.dataset.done);if(r)r.done=true;toast('표시했어요');draw();}));
+}
+function stu(k){const S=(window._L||[]).find(x=>x.k===k);if(!S)return;
+  const by={};S.rs.slice().reverse().forEach(r=>{(by[r.type]=by[r.type]||[]).push(r);});
+  const ids=Object.keys(by).sort((a,b)=>(UNIT[a]||'').localeCompare(UNIT[b]||'')||a.localeCompare(b));
+  const rows=ids.map(id=>{const H=by[id],L=H[H.length-1],lv=level(L.res,titles(L)),ti=titles(L),w=det(L).w||[];
+    const st=[...(L.res||'')].map((c,j)=>(c==='x'||c==='t')?(ti[j]||'')+(w[j]&&w[j]!=='?'?' — '+w[j]:''):null).filter(Boolean);
+    return '<tr><td class="l">'+E(NAMES[id]||id)+'<div class="dim" style="font-size:12px">'+E(UNIT[id]||'')+'</div></td><td><span class="mk">'+marks(L.res)+'</span>'+(H.length>1?'<div class="dim" style="font-size:12px">'+H.length+'번 · '+H.map(h=>Math.round(rate(h.res)*100)+'%').join('→')+'</div>':'')+'</td><td><span class="u-tag '+LV[lv[0]]+'">'+lv[1]+'</span></td><td class="l" style="font-size:12.5px">'+E(st.join(' · '))+'</td></tr>';}).join('');
+  modal({title:S.n+' · '+S.b,wide:true,body:'<div class="u-kpis"><div class="u-kpi"><b>'+S.n_t+'</b><span>유형</span></div><div class="u-kpi"><b>'+S.first+'%</b><span>첫 응답</span></div><div class="u-kpi"><b>'+S.w+'</b><span>다시 훈련</span></div></div>'
+    +'<div class="u-table"><table><thead><tr><th class="l">유형</th><th>최근 결과</th><th>판정</th><th class="l">막힌 단계 — 고른 오답의 실수</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="u-hint">○ 한 번에 · △ 힌트 보고 맞힘 · ✕ 두 번 틀림 — 단계 순서대로. 실수 이름은 1124 이후 기록부터 남아요.</div>'});}
+load();
+</script></body></html>
