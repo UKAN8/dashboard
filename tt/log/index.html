@@ -362,7 +362,8 @@ function draw(){
       {h:'내용',l:1,v:r=>r.body,f:r=>E(r.body||'')+(r.step?'<div class="dim" style="font-size:12px;margin-top:4px">'+E(String(r.step).slice(0,160))+'</div>':'')},
       {h:'처리',v:r=>r.done?1:0,f:r=>('done' in r)?(r.done?'<span class="u-tag ok">반영</span>':(ROLE==='admin'?'<button class="u-btn sm" data-done="'+r.id+'">반영함</button>':'—')):'—'}],rep,{redraw:draw});
   }
-  document.getElementById('app').innerHTML='<div class="u-head"><div><h1>'+E(T[1])+'</h1><div class="sub">'+E(T[2])+'</div></div><span class="sp"></span><button class="u-btn" id="rl">새로고침</button></div>'+body;
+  const warn=ROWS.length?'':'<div class="u-card" style="margin-bottom:12px"><b>기록이 하나도 안 보여요.</b><div class="u-hint">읽기 권한 SQL(06_자동화/통합_작업실/schema_v95_tt_read.sql)을 아직 실행하지 않았으면 기록이 있어도 0으로 보여요. 실행한 뒤 새로고침하세요.</div></div>';
+  document.getElementById('app').innerHTML='<div class="u-head"><div><h1>'+E(T[1])+'</h1><div class="sub">'+E(T[2])+'</div></div><span class="sp"></span><button class="u-btn" id="rl">새로고침</button></div>'+warn+body;
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw();});
   document.getElementById('rl').onclick=load;
   const c=document.getElementById('chk');if(c)c.onchange=()=>{WITHCHK=c.checked;draw();};
