@@ -211,7 +211,12 @@ body.u{margin:0;display:flex;flex-direction:column;-webkit-user-select:none;user
 .sw i{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;display:inline-block}
 .sw i.on{border-color:var(--u-text)}
 .stage{flex:1;position:relative;overflow:auto;touch-action:pan-x pan-y;background:var(--u-bg)}
-.pagebox{position:relative;margin:10px auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.spread{display:flex;justify-content:center;gap:6px;padding:10px 0;min-width:min-content}
+.spread.two.solo-r{padding-left:calc(var(--pw) + 6px)}
+.spread.two.solo-l{padding-right:calc(var(--pw) + 6px)}
+.spread.two .pagebox:first-child:not(:last-child){box-shadow:-4px 4px 18px rgba(0,0,0,.45),inset -14px 0 18px -14px rgba(0,0,0,.35)}
+.spread.two .pagebox:last-child:not(:first-child){box-shadow:4px 4px 18px rgba(0,0,0,.45),inset 14px 0 18px -14px rgba(0,0,0,.35)}
+.pagebox{position:relative;flex:none;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 .pagebox img{display:block;width:100%;height:100%;pointer-events:none}
 .pagebox svg,.pagebox canvas{position:absolute;inset:0;width:100%;height:100%}
 .pagebox canvas{touch-action:pan-x pan-y}
@@ -388,13 +393,14 @@ async function home() {
 /* ── 자료 열기 ── */
 async function open_(id, pg) {
   const r = await rpc('review_doc_get', { did: id }); if (!r) { U.toast('없는 자료'); return home(); }
-  S.doc = r.doc; S.notes = r.notes || []; S.urls = {}; S.ink = []; S.sel = null;
+  S.doc = r.doc; S.notes = r.notes || []; S.urls = {}; S.ink = []; S.sel = null; S.slots = [];
   S.pg = pg || +(ls('pg.' + id) || 1); if (S.pg > S.doc.쪽수) S.pg = 1;
   history.replaceState(null, '', '#' + id);
   root.innerHTML = `<div class="tb">
       <button class="u-btn ghost" id="bk" aria-label="목록">☰</button>
-      <b style="max-width:28vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${E(S.doc.제목)}</b>
+      <b style="max-width:24vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${E(S.doc.제목)}</b>
       <button class="u-btn" id="pv" aria-label="앞 쪽">‹</button><span class="pn" id="pn"></span><button class="u-btn" id="nx" aria-label="다음 쪽">›</button>
+      <button class="u-btn ghost" id="sp2" aria-label="맞쪽 보기">▯▯ 맞쪽</button>
       <span class="sw" id="sw">${PENS.map(c => `<i data-c="${c}" style="background:${c}"></i>`).join('')}</span>
       <button class="u-btn ghost" id="un" aria-label="펜 되돌리기">↶</button>
       <button class="u-btn ghost" id="er" aria-label="지우개">⌫ 지우개</button>
@@ -402,70 +408,102 @@ async function open_(id, pg) {
       <span class="sp"></span>
       <button class="u-btn" id="pgn">쪽 메모</button>
       <button class="u-btn pri" id="ls">검수 목록 <b id="cnt"></b></button></div>
-    <div class="stage" id="st"><div class="pagebox" id="pb"><img id="im" alt="쪽 이미지"><svg id="sv" viewBox="0 0 1000 1414" preserveAspectRatio="none"></svg><canvas id="cv"></canvas></div></div>`;
+    <div class="stage" id="st"><div class="spread" id="spr"></div></div>`;
   $('bk').onclick = () => leave(home);
-  $('pv').onclick = () => go(S.pg - 1); $('nx').onclick = () => go(S.pg + 1);
+  $('pv').onclick = () => step(-1); $('nx').onclick = () => step(1);
   $('sw').querySelectorAll('i').forEach(i => i.onclick = () => { S.pen = i.dataset.c; lset('pen', S.pen); mark(); });
   S.pen = ls('pen') || PENS[0];
-  $('un').onclick = () => { S.ink.pop(); drawInk(); inkbar(); };
-  S.eraser = false; $('er').onclick = () => { S.eraser = !S.eraser; $('er').classList.toggle('on', S.eraser); $('er').classList.toggle('pri', S.eraser); };
+  $('un').onclick = () => { S.ink.pop(); drawAll(); inkbar(); };
+  S.eraser = false; $('er').onclick = () => { S.eraser = !S.eraser; $('er').classList.toggle('pri', S.eraser); $('er').classList.toggle('ghost', !S.eraser); };
   $('ft').onclick = () => { S.fit = S.fit === 'h' ? 'w' : 'h'; lset('fit', S.fit); layout(); };
   S.fit = ls('fit') || 'w';
-  $('pgn').onclick = () => sheet({ k: 'page', id: null });
+  S.two = ls('two') === '1';
+  $('sp2').onclick = async () => { await flushInk(); S.two = !S.two; lset('two', S.two ? '1' : '0'); show(); };
+  $('pgn').onclick = () => sheet({ k: 'page', id: null, n: S.slots.length > 1 ? S.slots[0].n : S.pg });
   $('ls').onclick = list;
   window.onresize = layout;
-  bindPen(); bindSwipe(); mark(); await show();
+  bindSwipe(); mark(); await show();
 }
 function mark() { $('sw').querySelectorAll('i').forEach(i => i.classList.toggle('on', i.dataset.c === S.pen)); }
-const page = () => S.doc.boxes.pages[S.pg - 1] || { items: [], w: 794, h: 1123 };
-const pnotes = () => S.notes.filter(n => n.쪽 === S.pg && n.판 === S.doc.판);
+const page = n => S.doc.boxes.pages[n - 1] || { items: [], w: 794, h: 1123, part: '' };
+const pnotes = n => S.notes.filter(x => x.쪽 === n && x.판 === S.doc.판);
+const slotOf = n => S.slots.find(z => z.n === n);
+
+/* 맞쪽(1125 유강 "중철제본 했을 때 보는 방식으로") — 묶음(문제·해설)마다 첫 쪽(표지)은 오른쪽에 혼자,
+   그다음 2-3, 4-5 … 짝, 끝에 남는 쪽(뒷표지)은 왼쪽에 혼자. 왼쪽 = 짝수 쪽, 오른쪽 = 홀수 쪽(묶음 안 번호). */
+function partStart(n) { let k = n; while (k > 1 && page(k - 1).part === page(n).part) k--; return k; }
+function partEnd(n) { let k = n; while (k < S.doc.쪽수 && page(k + 1).part === page(n).part) k++; return k; }
+function spreadOf(n) {
+  if (!S.two) return [n];
+  const a = partStart(n), z = partEnd(n), loc = n - a + 1;
+  if (loc === 1) return [n];
+  const L = loc % 2 === 0 ? n : n - 1, R = L + 1;
+  return R <= z ? [L, R] : [L];
+}
 
 async function url(i) {
   if (S.urls[i]) return S.urls[i];
-  const need = []; for (let k = Math.max(1, i - 1); k <= Math.min(S.doc.쪽수, i + 2); k++) if (!S.urls[k]) need.push(k);
+  const need = []; for (let k = Math.max(1, i - 2); k <= Math.min(S.doc.쪽수, i + 3); k++) if (!S.urls[k]) need.push(k);
   const paths = need.map(k => `${S.doc.id}/${S.doc.판}/p${String(k).padStart(3, '0')}.webp`);
   const { data, error } = await sb.storage.from('review').createSignedUrls(paths, 3600 * 6);
   if (error) { U.toast('이미지 링크 실패: ' + error.message); return ''; }
   data.forEach((d, j) => { S.urls[need[j]] = d.signedUrl; });
-  need.slice(1).forEach(k => { const im = new Image(); im.src = S.urls[k]; });
+  need.filter(k => k !== i).forEach(k => { const im = new Image(); im.src = S.urls[k]; });
   return S.urls[i];
 }
 async function show() {
   lset('pg.' + S.doc.id, S.pg);
-  $('pn').textContent = S.pg + ' / ' + S.doc.쪽수;
-  const p = page(); $('sv').setAttribute('viewBox', `0 0 1000 ${Math.round(1000 * p.h / p.w)}`);
-  layout(); drawBoxes(); drawInk(); inkbar(); count();
-  $('im').src = await url(S.pg); $('st').scrollTop = 0;
+  const ns = spreadOf(S.pg), loc = S.pg - partStart(S.pg) + 1;
+  $('pn').textContent = ns.join('–') + ' / ' + S.doc.쪽수;
+  $('sp2').classList.toggle('pri', S.two); $('sp2').classList.toggle('ghost', !S.two);
+  const spr = $('spr');
+  spr.className = 'spread' + (S.two ? ' two' : '') + (S.two && ns.length === 1 ? (loc === 1 ? ' solo-r' : ' solo-l') : '');
+  spr.innerHTML = ns.map(n => `<div class="pagebox" data-n="${n}"><img alt="${n}쪽"><svg preserveAspectRatio="none"></svg><canvas></canvas></div>`).join('');
+  S.slots = [...spr.querySelectorAll('.pagebox')].map(pb => { const n = +pb.dataset.n, p = page(n);
+    const z = { n, pb, im: pb.querySelector('img'), sv: pb.querySelector('svg'), cv: pb.querySelector('canvas') };
+    z.sv.setAttribute('viewBox', `0 0 1000 ${Math.round(1000 * p.h / p.w)}`); bindPen(z); return z; });
+  layout(); S.slots.forEach(drawBoxes); drawAll(); inkbar(); count();
+  $('st').scrollTop = 0;
+  for (const z of S.slots) z.im.src = await url(z.n);
 }
 function layout() {
-  if (!S.doc) return; const p = page(), st = $('st'), r = p.h / p.w;
-  let w = Math.min(st.clientWidth - 20, 1400), h = w * r;
+  if (!S.doc || !S.slots.length) return; const st = $('st'), k = S.two ? 2 : 1;
+  const p = page(S.slots[0].n), r = p.h / p.w;
+  let w = Math.min((st.clientWidth - 20 - (k - 1) * 6) / k, 1400 / k * (k === 2 ? 1.4 : 1)), h = w * r;
   if (S.fit === 'h' && h > st.clientHeight - 20) { h = st.clientHeight - 20; w = h / r; }
-  $('pb').style.width = w + 'px'; $('pb').style.height = h + 'px';
-  const cv = $('cv'), dpr = window.devicePixelRatio || 1; cv.width = w * dpr; cv.height = h * dpr; drawInk();
+  const dpr = window.devicePixelRatio || 1;
+  S.slots.forEach(z => { z.pb.style.width = w + 'px'; z.pb.style.height = h + 'px'; z.cv.width = w * dpr; z.cv.height = h * dpr; });
+  $('spr').style.setProperty('--pw', w + 'px');
+  drawAll();
+}
+function step(d) {
+  const ns = spreadOf(S.pg);
+  go(d > 0 ? ns[ns.length - 1] + 1 : ns[0] - 1);
 }
 async function go(n) { if (!S.doc || n < 1 || n > S.doc.쪽수) return; await flushInk(); S.pg = n; S.sel = null; show(); }
 async function leave(fn) { await flushInk(); fn(); }
 function count() { const n = S.notes.filter(x => x.상태 === '대기').length; $('cnt').textContent = n ? n : ''; }
 
 /* 문항 상자 — 검수가 있는 상자는 점선 + 꼬리표 */
-function drawBoxes() {
-  const p = page(), H = 1000 * p.h / p.w, nn = pnotes();
-  $('sv').innerHTML = p.items.map((it, j) => {
+function drawBoxes(z) {
+  const p = page(z.n), H = 1000 * p.h / p.w, nn = pnotes(z.n);
+  z.sv.innerHTML = p.items.map((it, j) => {
     const mine = nn.filter(n => n.대상 === it.id && n.상태 !== '취소');
     const x = it.x * 1000, y = it.y * H, w = it.w * 1000, h = it.h * H;
     const tags = mine.map((n, q) => `<text class="badge" x="${x + w - 2 - q * 70}" y="${y - 5}" text-anchor="end" fill="${ACOL[n.동작] || 'var(--u-warn)'}">${E(n.동작)}${n.상태 === '반영됨' ? '✓' : ''}</text>`).join('');
     const cross = mine.some(n => n.동작 === '빼기' && n.상태 === '대기') ? `<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y + h}" stroke="var(--u-bad)" stroke-width="3" opacity=".5"/>` : '';
-    return `<rect class="bx${mine.length ? ' has' : ''}${S.sel === j ? ' sel' : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/>${cross}${tags}`;
+    const sel = S.sel && S.sel.n === z.n && S.sel.j === j;
+    return `<rect class="bx${mine.length ? ' has' : ''}${sel ? ' sel' : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/>${cross}${tags}`;
   }).join('');
 }
+const redraw = () => { S.slots.forEach(drawBoxes); drawAll(); };
 
 /* ── S펜 ── 펜(pointerType pen)만 그린다. 손가락은 스크롤·넘기기·탭.
    지우기(1125 유강 "S펜 지우기 버튼"): S펜 옆 버튼을 누른 채 문지르기(크롬 buttons=2, 지우개 끝 32) 또는 위 ⌫ 지우개 켜기.
    지금 쓰는 획 + 이 쪽에 저장된 '대기' 펜 메모 획까지 지운다(저장된 건 고쳐 저장, 획이 다 지워지고 글도 없으면 취소). */
 const isErase = e => S.eraser || (e.buttons & 2) || (e.buttons & 32) || e.button === 2 || e.button === 5;
-function bindPen() {
-  const cv = $('cv'); let cur = null;
+function bindPen(z) {
+  const cv = z.cv; let cur = null;
   // S펜이 화면 위에 떠 있을 때(호버)만 터치 스크롤을 끈다 — 손가락은 계속 스크롤·넘기기
   cv.addEventListener('pointermove', e => { if (e.pointerType === 'pen' && !e.buttons) cv.style.touchAction = 'none'; });
   cv.addEventListener('pointerleave', e => { if (e.pointerType === 'pen' && !cur) cv.style.touchAction = ''; });
@@ -474,29 +512,29 @@ function bindPen() {
   const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.round((e.pressure || .5) * 100) / 100]; };
   cv.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'pen') return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
-    if (isErase(e)) { cur = { erase: true }; eraseAt(pt(e)); return; }
-    cur = { c: S.pen, w: 2.2, p: [pt(e)] }; S.ink.push(cur);
+    if (isErase(e)) { cur = { erase: true }; eraseAt(z, pt(e)); return; }
+    cur = { n: z.n, c: S.pen, w: 2.2, p: [pt(e)] }; S.ink.push(cur);
   });
   cv.addEventListener('pointermove', e => {
     if (!cur || e.pointerType !== 'pen') return; e.preventDefault();
     if (!cur.erase && (e.buttons & 34)) {           // 쓰다가 버튼을 누르면 그때부터 지우개
-      if (cur.p.length < 3) S.ink.pop(); cur = { erase: true };
+      if (cur.p.length < 3) S.ink.splice(S.ink.indexOf(cur), 1); cur = { erase: true };
     }
-    if (cur.erase) { (e.getCoalescedEvents ? e.getCoalescedEvents() : []).concat([e]).forEach(v => eraseAt(pt(v))); return; }
-    let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; if (!evs.length) evs = [e]; evs.forEach(v => cur.p.push(pt(v))); drawInk();
+    if (cur.erase) { (e.getCoalescedEvents ? e.getCoalescedEvents() : []).concat([e]).forEach(v => eraseAt(z, pt(v))); return; }
+    let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; if (!evs.length) evs = [e]; evs.forEach(v => cur.p.push(pt(v))); drawInk(z);
   });
   const end = e => { if (!cur) return; const was = cur.erase; cur = null; if (was) flushErase(); else inkbar(); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
-  cv.addEventListener('click', e => { if (e.pointerType === 'pen') return; tapAt(e); });
+  cv.addEventListener('click', e => { if (e.pointerType === 'pen') return; tapAt(z, e); });
 }
 const hit = (x, y) => s => s.p.some(([a, b]) => Math.abs(a - x) < .02 && Math.abs(b - y) < .015);
 let ERASED = new Set();
-function eraseAt([x, y]) {
+function eraseAt(z, [x, y]) {
   let ch = false; const h = hit(x, y);
-  const before = S.ink.length; S.ink = S.ink.filter(s => !h(s)); if (S.ink.length !== before) ch = true;
-  pnotes().filter(n => n.상태 === '대기' && n.획 && n.획.length).forEach(n => {
+  const before = S.ink.length; S.ink = S.ink.filter(s => s.n !== z.n || !h(s)); if (S.ink.length !== before) ch = true;
+  pnotes(z.n).filter(n => n.상태 === '대기' && n.획 && n.획.length).forEach(n => {
     const k = n.획.length; n.획 = n.획.filter(s => !h(s)); if (n.획.length !== k) { ERASED.add(n); ch = true; } });
-  if (ch) { drawInk(); inkbar(); }
+  if (ch) { drawInk(z); inkbar(); }
 }
 async function flushErase() {
   const ns = [...ERASED]; ERASED = new Set();
@@ -505,7 +543,7 @@ async function flushErase() {
       await rpc('review_set', { nid: n.id, st: '취소', note: '펜 메모를 모두 지움' }); n.상태 = '취소';
     } else await rpc('review_edit', { nid: n.id, memo: n.메모, ink: n.획.length ? n.획 : null, act: null });
   }
-  if (ns.length) { drawBoxes(); drawInk(); count(); U.toast('지운 것 저장'); }
+  if (ns.length) { redraw(); count(); U.toast('지운 것 저장'); }
 }
 function stroke(ctx, s, W, H, alpha) {
   if (!s.p || !s.p.length) return; ctx.strokeStyle = s.c; ctx.globalAlpha = alpha; ctx.lineCap = ctx.lineJoin = 'round';
@@ -513,30 +551,36 @@ function stroke(ctx, s, W, H, alpha) {
     ctx.lineWidth = s.w * (0.6 + (p0 + p1) / 2) * W / 500; ctx.beginPath(); ctx.moveTo(x0 * W, y0 * H); ctx.lineTo(x1 * W, y1 * H); ctx.stroke(); }
   if (s.p.length === 1) { ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.p[0][0] * W, s.p[0][1] * H, s.w * W / 700, 0, 7); ctx.fill(); }
 }
-function drawInk() {
-  const cv = $('cv'); if (!cv) return; const ctx = cv.getContext('2d'), W = cv.width, H = cv.height; ctx.clearRect(0, 0, W, H);
-  pnotes().filter(n => n.획 && n.상태 !== '취소').forEach(n => n.획.forEach(s => stroke(ctx, s, W, H, n.상태 === '반영됨' ? .3 : .85)));
-  S.ink.forEach(s => stroke(ctx, s, W, H, 1)); ctx.globalAlpha = 1;
+function drawInk(z) {
+  const cv = z.cv, ctx = cv.getContext('2d'), W = cv.width, H = cv.height; ctx.clearRect(0, 0, W, H);
+  pnotes(z.n).filter(n => n.획 && n.상태 !== '취소').forEach(n => n.획.forEach(s => stroke(ctx, s, W, H, n.상태 === '반영됨' ? .3 : .85)));
+  S.ink.filter(s => s.n === z.n).forEach(s => stroke(ctx, s, W, H, 1)); ctx.globalAlpha = 1;
 }
+const drawAll = () => S.slots.forEach(drawInk);
 /* 획이 어느 상자 위에 있나 — 획 점들이 가장 많이 들어간 상자 */
-function inkTarget() {
-  const items = page().items; let best = null, bn = 0;
-  items.forEach(it => { let n = 0; S.ink.forEach(s => s.p.forEach(([x, y]) => { if (x >= it.x && x <= it.x + it.w && y >= it.y && y <= it.y + it.h) n++; })); if (n > bn) { bn = n; best = it; } });
-  return best;
+function inkTarget(n) {
+  const items = page(n).items; let best = null, bn = 0;
+  items.forEach(it => { let c = 0; S.ink.filter(s => s.n === n).forEach(s => s.p.forEach(([x, y]) => { if (x >= it.x && x <= it.x + it.w && y >= it.y && y <= it.y + it.h) c++; })); if (c > bn) { bn = c; best = it; } });
+  return best ? { ...best, n, j: items.indexOf(best) } : null;
 }
+const inkPages = () => [...new Set(S.ink.map(s => s.n))];
 function inkbar() {
   let bar = $('ib'); if (!S.ink.length) { if (bar) bar.remove(); return; }
-  const t = inkTarget();
+  const ps = inkPages(), t = inkTarget(ps[0]);
   if (!bar) { bar = document.createElement('div'); bar.className = 'inkbar'; bar.id = 'ib'; document.body.appendChild(bar); }
-  bar.innerHTML = `<span class="t">펜 메모 → ${t ? E(label(t)) : '이 쪽'}</span><button class="u-btn" id="ibm">글 덧붙이기</button><button class="u-btn pri" id="ibs">저장</button><button class="u-btn ghost" id="ibx" aria-label="펜 지우기">✕</button>`;
-  $('ibs').onclick = () => saveInk(); $('ibx').onclick = () => { S.ink = []; drawInk(); inkbar(); };
-  $('ibm').onclick = () => sheet(t ? { ...t, j: page().items.indexOf(t) } : { k: 'page', id: null }, true);
+  bar.innerHTML = `<span class="t">펜 메모 → ${ps.length > 1 ? ps.map(n => n + '쪽').join('·') : t ? E(label(t)) : ps[0] + '쪽'}</span><button class="u-btn" id="ibm">글 덧붙이기</button><button class="u-btn pri" id="ibs">저장</button><button class="u-btn ghost" id="ibx" aria-label="펜 지우기">✕</button>`;
+  $('ibs').onclick = () => saveInk(); $('ibx').onclick = () => { S.ink = []; drawAll(); inkbar(); };
+  $('ibm').onclick = () => sheet(t || { k: 'page', id: null, n: ps[0] }, true);
 }
 async function saveInk(memo, act) {
-  if (!S.ink.length) return; const t = inkTarget(), ink = S.ink; S.ink = [];
-  const id = await rpc('review_add', { did: S.doc.id, pan: S.doc.판, pno: S.pg, tgt: t ? t.id : null, tkind: t ? t.k : 'page', act: act || '고치기', memo: memo || null, ink });
-  S.notes.push({ id, doc: S.doc.id, 판: S.doc.판, 쪽: S.pg, 대상: t ? t.id : null, 대상종류: t ? t.k : 'page', 동작: act || '고치기', 메모: memo || null, 획: ink, 상태: '대기', created_at: new Date().toISOString() });
-  drawBoxes(); drawInk(); inkbar(); count(); U.toast('펜 메모 저장');
+  if (!S.ink.length) return; const ps = inkPages(), all = S.ink; S.ink = [];
+  for (const [i, n] of ps.entries()) {
+    const t = (() => { const keep = S.ink; S.ink = all; const r = inkTarget(n); S.ink = keep; return r; })();
+    const ink = all.filter(s => s.n === n).map(({ c, w, p }) => ({ c, w, p })), m = i === 0 ? memo || null : null, a = i === 0 ? act || '고치기' : '고치기';
+    const id = await rpc('review_add', { did: S.doc.id, pan: S.doc.판, pno: n, tgt: t ? t.id : null, tkind: t ? t.k : 'page', act: a, memo: m, ink });
+    S.notes.push({ id, doc: S.doc.id, 판: S.doc.판, 쪽: n, 대상: t ? t.id : null, 대상종류: t ? t.k : 'page', 동작: a, 메모: m, 획: ink, 상태: '대기', created_at: new Date().toISOString() });
+  }
+  redraw(); inkbar(); count(); U.toast('펜 메모 저장');
 }
 async function flushInk() { if (S.doc && S.ink.length) await saveInk(); }
 
@@ -546,18 +590,18 @@ function bindSwipe() {
   st.addEventListener('pointerdown', e => { pen = e.pointerType === 'pen'; sx = e.clientX; sy = e.clientY; t0 = Date.now(); });
   st.addEventListener('pointerup', e => {
     if (pen || e.pointerType === 'pen') return; const dx = e.clientX - sx, dy = e.clientY - sy;
-    if (Math.abs(dx) > 90 && Math.abs(dx) > 2 * Math.abs(dy) && Date.now() - t0 < 600 && st.scrollWidth <= st.clientWidth + 2) go(S.pg + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 90 && Math.abs(dx) > 2 * Math.abs(dy) && Date.now() - t0 < 600 && st.scrollWidth <= st.clientWidth + 2) step(dx < 0 ? 1 : -1);
   });
-  document.onkeydown = e => { if ($('sh')) return; if (e.key === 'ArrowRight' || e.key === 'PageDown') go(S.pg + 1); if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(S.pg - 1); };
+  document.onkeydown = e => { if ($('sh')) return; if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1); if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1); };
 }
-function tapAt(e) {
-  const r = $('cv').getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-  const items = page().items; let j = -1;
+function tapAt(z, e) {
+  const r = z.cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  const items = page(z.n).items; let j = -1;
   items.forEach((it, k) => { if (x >= it.x && x <= it.x + it.w && y >= it.y && y <= it.y + it.h && (j < 0 || it.w * it.h < items[j].w * items[j].h)) j = k; });
-  if (j < 0) return; S.sel = j; drawBoxes(); sheet({ ...items[j], j });
+  if (j < 0) return; S.sel = { n: z.n, j }; S.slots.forEach(drawBoxes); sheet({ ...items[j], j, n: z.n });
 }
 function label(it) {
-  if (!it || it.k === 'page') return S.pg + '쪽 전체';
+  if (!it || it.k === 'page') return (it && it.n || S.pg) + '쪽 전체';
   if (it.k === 'q' || it.k === 's') return `${KIND[it.k]} ${it.code || it.id}`;
   if (it.k === 'concept') return 'CONCEPT ' + String(it.id).replace('C', '');
   if (it.k === 'card') return '개념 카드 ' + it.id;
@@ -568,7 +612,7 @@ function label(it) {
 /* ── 검수 한 건 ── */
 function sheet(it, withInk) {
   closeSheet(); const acts = ACTS[it.k] || ['고치기', '메모'];
-  const mine = S.notes.filter(n => n.쪽 === S.pg && (it.id ? n.대상 === it.id : !n.대상) && n.상태 !== '취소');
+  const N = it.n || S.pg; const mine = S.notes.filter(n => n.쪽 === N && (it.id ? n.대상 === it.id : !n.대상) && n.상태 !== '취소');
   let act = withInk ? '고치기' : null;
   const el = document.createElement('div'); el.className = 'sheet'; el.id = 'sh';
   el.innerHTML = `<div class="hd"><h2>${E(label(it))}</h2><button class="u-btn ghost" id="shx" aria-label="닫기">✕</button></div>
@@ -584,11 +628,11 @@ function sheet(it, withInk) {
     if (withInk) { await saveInk(memo, act || '고치기'); closeSheet(); return; }
     if (!act && !memo) { U.toast('동작을 고르거나 메모를 쓰세요'); return; }
     const a = act || '메모';
-    const id = await rpc('review_add', { did: S.doc.id, pan: S.doc.판, pno: S.pg, tgt: it.id, tkind: it.k, act: a, memo: memo || null, ink: null });
-    S.notes.push({ id, doc: S.doc.id, 판: S.doc.판, 쪽: S.pg, 대상: it.id, 대상종류: it.k, 동작: a, 메모: memo || null, 획: null, 상태: '대기', created_at: new Date().toISOString() });
-    closeSheet(); drawBoxes(); count(); U.toast(a + ' 저장');
+    const id = await rpc('review_add', { did: S.doc.id, pan: S.doc.판, pno: N, tgt: it.id, tkind: it.k, act: a, memo: memo || null, ink: null });
+    S.notes.push({ id, doc: S.doc.id, 판: S.doc.판, 쪽: N, 대상: it.id, 대상종류: it.k, 동작: a, 메모: memo || null, 획: null, 상태: '대기', created_at: new Date().toISOString() });
+    closeSheet(); redraw(); count(); U.toast(a + ' 저장');
   };
-  $('shs').onclick = save; $('shx').onclick = () => { closeSheet(); S.sel = null; drawBoxes(); };
+  $('shs').onclick = save; $('shx').onclick = () => { closeSheet(); S.sel = null; S.slots.forEach(drawBoxes); };
   bindRows(el);
 }
 function noteRow(n) {
@@ -602,7 +646,7 @@ function bindRows(el) {
   el.querySelectorAll('[data-x]').forEach(b => U.sure(b, '한 번 더 누르면 취소', async () => {
     await rpc('review_set', { nid: +b.dataset.x, st: '취소', note: null });
     const n = S.notes.find(x => x.id === +b.dataset.x); if (n) n.상태 = '취소';
-    b.closest('.nt').remove(); drawBoxes(); drawInk(); count(); }));
+    b.closest('.nt').remove(); redraw(); count(); }));
   el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { closeSheet(); go(+b.dataset.g); });
 }
 function closeSheet() { $('sh')?.remove(); }
