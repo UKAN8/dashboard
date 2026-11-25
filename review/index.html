@@ -374,7 +374,7 @@ function login() {
 /* ── 자료 목록 ── */
 async function home() {
   S.doc = null; history.replaceState(null, '', location.pathname);
-  root.innerHTML = `<div class="tb"><b style="font-size:17px">검수판</b><span class="sp"></span><span class="hint">S펜 = 빨간펜 · 손가락 = 넘기기·문항 누르기</span></div><div id="home"><div class="u-empty">불러오는 중…</div></div>`;
+  root.innerHTML = `<div class="tb"><b style="font-size:17px">검수판</b><span class="sp"></span><span class="hint">S펜 = 빨간펜 · S펜 버튼 누르고 문지르기 = 지우개 · 손가락 = 넘기기·문항 누르기</span></div><div id="home"><div class="u-empty">불러오는 중…</div></div>`;
   let docs; try { docs = await rpc('review_docs'); } catch (e) { $('home').innerHTML = '<div class="u-err">관리자만 열 수 있어요.</div>'; return; }
   const ORD = ['교재', '써킷', '리뷰테스트', '모의', '기타'], by = {}, oi = t => { const i = ORD.indexOf(t); return i < 0 ? 99 : i; };
   (docs || []).sort((a, b) => oi(a.종류) - oi(b.종류) || a.제목.localeCompare(b.제목, 'ko', { numeric: true })).forEach(d => (by[d.종류] = by[d.종류] || []).push(d));
@@ -397,6 +397,7 @@ async function open_(id, pg) {
       <button class="u-btn" id="pv" aria-label="앞 쪽">‹</button><span class="pn" id="pn"></span><button class="u-btn" id="nx" aria-label="다음 쪽">›</button>
       <span class="sw" id="sw">${PENS.map(c => `<i data-c="${c}" style="background:${c}"></i>`).join('')}</span>
       <button class="u-btn ghost" id="un" aria-label="펜 되돌리기">↶</button>
+      <button class="u-btn ghost" id="er" aria-label="지우개">⌫ 지우개</button>
       <button class="u-btn ghost" id="ft" aria-label="맞춤">↕</button>
       <span class="sp"></span>
       <button class="u-btn" id="pgn">쪽 메모</button>
@@ -407,6 +408,7 @@ async function open_(id, pg) {
   $('sw').querySelectorAll('i').forEach(i => i.onclick = () => { S.pen = i.dataset.c; lset('pen', S.pen); mark(); });
   S.pen = ls('pen') || PENS[0];
   $('un').onclick = () => { S.ink.pop(); drawInk(); inkbar(); };
+  S.eraser = false; $('er').onclick = () => { S.eraser = !S.eraser; $('er').classList.toggle('on', S.eraser); $('er').classList.toggle('pri', S.eraser); };
   $('ft').onclick = () => { S.fit = S.fit === 'h' ? 'w' : 'h'; lset('fit', S.fit); layout(); };
   S.fit = ls('fit') || 'w';
   $('pgn').onclick = () => sheet({ k: 'page', id: null });
@@ -458,31 +460,52 @@ function drawBoxes() {
   }).join('');
 }
 
-/* ── S펜 ── 펜(pointerType pen)만 그린다. 손가락은 스크롤·넘기기·탭. S펜 버튼(지우개)은 그린 획 지우기 */
+/* ── S펜 ── 펜(pointerType pen)만 그린다. 손가락은 스크롤·넘기기·탭.
+   지우기(1125 유강 "S펜 지우기 버튼"): S펜 옆 버튼을 누른 채 문지르기(크롬 buttons=2, 지우개 끝 32) 또는 위 ⌫ 지우개 켜기.
+   지금 쓰는 획 + 이 쪽에 저장된 '대기' 펜 메모 획까지 지운다(저장된 건 고쳐 저장, 획이 다 지워지고 글도 없으면 취소). */
+const isErase = e => S.eraser || (e.buttons & 2) || (e.buttons & 32) || e.button === 2 || e.button === 5;
 function bindPen() {
   const cv = $('cv'); let cur = null;
   // S펜이 화면 위에 떠 있을 때(호버)만 터치 스크롤을 끈다 — 손가락은 계속 스크롤·넘기기
   cv.addEventListener('pointermove', e => { if (e.pointerType === 'pen' && !e.buttons) cv.style.touchAction = 'none'; });
   cv.addEventListener('pointerleave', e => { if (e.pointerType === 'pen' && !cur) cv.style.touchAction = ''; });
+  // S펜 버튼을 누르고 화면에 대면 안드로이드가 길게 누르기 메뉴를 띄우려 한다 — 막는다
+  ['contextmenu', 'selectstart'].forEach(t => cv.addEventListener(t, e => e.preventDefault()));
   const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.round((e.pressure || .5) * 100) / 100]; };
   cv.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'pen') return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
-    if (e.buttons & 32 || e.button === 5) { cur = { erase: true }; eraseAt(pt(e)); return; }
+    if (isErase(e)) { cur = { erase: true }; eraseAt(pt(e)); return; }
     cur = { c: S.pen, w: 2.2, p: [pt(e)] }; S.ink.push(cur);
   });
   cv.addEventListener('pointermove', e => {
     if (!cur || e.pointerType !== 'pen') return; e.preventDefault();
-    if (cur.erase) { eraseAt(pt(e)); return; }
+    if (!cur.erase && (e.buttons & 34)) {           // 쓰다가 버튼을 누르면 그때부터 지우개
+      if (cur.p.length < 3) S.ink.pop(); cur = { erase: true };
+    }
+    if (cur.erase) { (e.getCoalescedEvents ? e.getCoalescedEvents() : []).concat([e]).forEach(v => eraseAt(pt(v))); return; }
     let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; if (!evs.length) evs = [e]; evs.forEach(v => cur.p.push(pt(v))); drawInk();
   });
-  const end = e => { if (!cur) return; cur = null; inkbar(); };
+  const end = e => { if (!cur) return; const was = cur.erase; cur = null; if (was) flushErase(); else inkbar(); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   cv.addEventListener('click', e => { if (e.pointerType === 'pen') return; tapAt(e); });
 }
+const hit = (x, y) => s => s.p.some(([a, b]) => Math.abs(a - x) < .02 && Math.abs(b - y) < .015);
+let ERASED = new Set();
 function eraseAt([x, y]) {
-  const before = S.ink.length;
-  S.ink = S.ink.filter(s => !s.p.some(([a, b]) => Math.abs(a - x) < .015 && Math.abs(b - y) < .012));
-  if (S.ink.length !== before) { drawInk(); inkbar(); }
+  let ch = false; const h = hit(x, y);
+  const before = S.ink.length; S.ink = S.ink.filter(s => !h(s)); if (S.ink.length !== before) ch = true;
+  pnotes().filter(n => n.상태 === '대기' && n.획 && n.획.length).forEach(n => {
+    const k = n.획.length; n.획 = n.획.filter(s => !h(s)); if (n.획.length !== k) { ERASED.add(n); ch = true; } });
+  if (ch) { drawInk(); inkbar(); }
+}
+async function flushErase() {
+  const ns = [...ERASED]; ERASED = new Set();
+  for (const n of ns) {
+    if (!n.획.length && !n.메모 && (n.동작 === '고치기' || n.동작 === '메모')) {
+      await rpc('review_set', { nid: n.id, st: '취소', note: '펜 메모를 모두 지움' }); n.상태 = '취소';
+    } else await rpc('review_edit', { nid: n.id, memo: n.메모, ink: n.획.length ? n.획 : null, act: null });
+  }
+  if (ns.length) { drawBoxes(); drawInk(); count(); U.toast('지운 것 저장'); }
 }
 function stroke(ctx, s, W, H, alpha) {
   if (!s.p || !s.p.length) return; ctx.strokeStyle = s.c; ctx.globalAlpha = alpha; ctx.lineCap = ctx.lineJoin = 'round';
