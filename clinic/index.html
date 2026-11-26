@@ -4,7 +4,7 @@
 <title>유강쌤 클리닉 신청 · 수학은유강</title>
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="유강쌤 직접 클리닉 신청 · 수학은유강">
-<meta property="og:description" content="11/18(수) 13~18시 · 11/19(목) 11~20시 · 시간 골라서 신청">
+<meta property="og:description" content="11/29(일) 12~18시 · 시간 골라서 신청">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.min.js"></script>
@@ -92,12 +92,11 @@ footer{color:var(--dim);font-size:12px;text-align:center;margin-top:26px}
 <script>
 const SB_URL='https://bkgerndnwukvuuqdgnxt.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrZ2VybmRud3VrdnV1cWRnbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNjA3MzgsImV4cCI6MjEwMTgzNjczOH0.VcfcTc9QkecKWFPUiYVXKGEXLxmVp8ugfiF6EV5_kjk';
-/* 1118 유강쌤 직접 클리닉(11/18 13~18시 · 11/19 11~20시) 신청 — extra_study_submit RPC 재사용 (신청키 clinic1118)
- * 칸 대응: 반=고1S/고1A/고1T/고2A/그 외 · 희망일=['11/18(수) 13시', …] · 단원=질문할 것 · 메모=남길 말 */
-const KEY='clinic1118', MAXPICK=6;
+/* 1129 유강쌤 직접 클리닉(11/29 일 12~18시) 신청 — extra_study_submit RPC 재사용 (신청키 clinic1129)
+ * 칸 대응: 반=고1S/고1A/고1T/고2A/그 외 · 희망일=['11/29(일) 12시', …] · 단원=질문할 것 · 메모=남길 말 */
+const KEY='clinic1129', MAXPICK=6;
 const DAYS=[
- {lbl:'11/18(수)',iso:'2026-11-18',tag:'오늘',hs:[13,14,15,16,17]},
- {lbl:'11/19(목)',iso:'2026-11-19',tag:'내일',hs:[11,12,13,14,15,16,17,18,19]},
+ {lbl:'11/29(일)',iso:'2026-11-29',tag:'일요일',hs:[12,13,14,15,16,17]},
 ];
 const TOPICS=['써킷 · 개별과제','모의테스트','학교 프린트','기말 개념 정리','서술형','그 외'];
 const BANS=['고1S','고1A','고1T','고2A','그 외'];
@@ -116,12 +115,11 @@ function render(){
  if(closed()){app.innerHTML=`${head()}<div class="closed"><b>신청이 끝났어요</b>궁금한 건 유강쌤한테 직접 물어봐요~</div>`;document.getElementById('bar').style.display='none';return}
  st.시간=st.시간.filter(v=>DAYS.some(d=>d.hs.some(h=>label(d,h)===v&&!past(d,h))));
  app.innerHTML=`${head()}
- <div class="eye">11/18(수) · 11/19(목)</div>
+ <div class="eye">이번 주 일요일 · 11/29</div>
  <h1>유강쌤이 직접<br>클리닉 해요</h1>
  <p class="lead">막힌 문제 들고 오세요~ 올 시간만 골라서 신청하면 돼요.</p>
- <div class="two">
-  <div class="tk m"><small>오늘 · 11/18 수</small><b>13 ~ 18시</b></div>
-  <div class="tk m"><small>내일 · 11/19 목</small><b>11 ~ 20시</b></div>
+ <div class="two" style="grid-template-columns:1fr">
+  <div class="tk m"><small>일요일 · 11/29</small><b>12 ~ 18시</b></div>
  </div>
  <div class="q"><div class="n">01</div><div class="t">이름</div>
   <input class="tx" id="nm" maxlength="10" placeholder="예) 홍길동" autocomplete="off" value="${esc(st.학생이름)}"></div>
