@@ -2321,8 +2321,8 @@ function drawLib(host,opt){
   (D.교재||[]).forEach(b=>{ if(b.반!==ban) return; rows.push({d:b.날짜,ds:[b.날짜],t:`${b.단원.replace(/^\d+\s*/,'')} 수업교재`,sub:b.과목,book:b,vs:[]}); });
   // (1112 유강 "고림고1·2 프린트 포털에 — 자료 탭") 학교프린트 PDF(문제·해설) — 학습자료.json 의 '프린트' 항목, 내 학교·학년만
   { const sc0=String(LIB.school||'').replace(/고$/,''), gr0=String(ban).slice(0,2);
-    (D.학습||[]).filter(x=>x.프린트&&sc0&&x.학교&&sc0.startsWith(x.학교)&&(!x.학년||x.학년===gr0))
-      .forEach(x=>rows.push({d:x.날짜,ds:[x.날짜],t:`${x.학교명} ${x.묶음}`,sub:`${x.단원} · ${x.문항}문항`,prt:x.프린트,vs:x.영상||[]})); }   /* (1119) 프린트 해설 수업 영상 */
+    (D.학습||[]).filter(x=>x.프린트&&(Array.isArray(x.반)?x.반.includes(ban):(sc0&&x.학교&&sc0.startsWith(x.학교)&&(!x.학년||x.학년===gr0))))   /* (1127) '반' 목록이 있으면 학교 무관 그 반들 전원 — 여름특강 등 */
+      .forEach(x=>rows.push({d:x.날짜,ds:[x.날짜],t:x.제목||`${x.학교명} ${x.묶음}`,sub:`${x.단원} · ${x.문항}문항`,prt:x.프린트,vs:x.영상||[]})); }   /* (1119) 프린트 해설 수업 영상 */
   (LIB.mine||[]).forEach(m=>{ rows.push({d:m.날짜,ds:[m.날짜],t:m.종류+(m.판?` No.${m.판}`:'')+(m.문항수?` · ${m.문항수}문항`:''),sub:'나만의 과제',mine:m,vs:[]}); });
   rows.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   if(opt.from) rows.splice(0,rows.length,...rows.filter(r=>String(r.d)>=opt.from));
@@ -2365,7 +2365,7 @@ function drawLib(host,opt){
       const hd=`<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`;
       const xk=(u,t)=>u?`<a href="${E(u)}" target="_blank" rel="noopener">${t}</a>`:'';
       if(r.mine) return hd+`<div class="rp">${r.mine.문제url?xk(r.mine.문제url,'문제 PDF')+xk(r.mine.해설url,'해설 PDF'):xk(r.mine.url,'PDF')}</div></div>`;
-      if(r.prt) return hd+`<div class="rp">${lk(r.prt.문제,'문제 PDF')}${lk(r.prt.해설,'해설 PDF')}${lk(r.prt.손풀이,'손풀이 해설 PDF')}${vbtn}</div>${vix}</div>`;   /* (1119) 프린트 손풀이 해설 */
+      if(r.prt) return hd+`<div class="rp">${lk(r.prt.문제,'문제 PDF')}${lk(r.prt.해설,'해설 PDF')}${lk(r.prt.손풀이,'손풀이 해설 PDF')}${lk(r.prt.연습장,'그래프 연습장 PDF')}${vbtn}</div>${vix}</div>`;   /* (1119) 프린트 손풀이 해설 */
       if(r.book) return hd+`<div class="rp">${lk(r.book.문제,'교재 PDF')}${lk(r.book.해설,'교재 해설 PDF')}</div></div>`;
       if(r.reg) return hd+`<div class="rp">${r.rv?`<a class="rvb" href="${LIB_URL+r.rv}" target="_blank" rel="noopener">${IC.book}강의노트·복습</a>`:''}${r.ck?lk(r.ck.문제,'써킷 문제 PDF')+lk(r.ck.해설,'써킷 해설 PDF'):''}${vbtn}</div>${vix}</div>`;
       return `<div class="grow"><div class="h"><b><span class="ld">${E(r.ds.map(md).join('·'))}</span>${E(r.t)}</b><span>${E(r.sub||'')}</span></div>`
