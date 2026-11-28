@@ -2328,7 +2328,7 @@ function drawLib(host,opt){
     const vs=(g.영상||[]).filter(v=>(v.반||[]).includes(ban));
     if(!my.length&&!vs.length) return;
     const d=(my.length?my:vs.map(v=>v.날짜)).slice().sort();
-    rows.push({d:d[d.length-1],ds:d.filter((x,i,a)=>a.indexOf(x)===i),t:`${g.학교} ${g.학년} ${g.종류}`,sub:g.과목,g,vs});
+    rows.push({d:d[d.length-1],ds:d.filter((x,i,a)=>a.indexOf(x)===i),t:`${g.학교} ${g.학년} ${g.종류}`+((g.과제||[]).includes(ban)?' · 과제':''),sub:g.과목,g,vs});   /* (1128 유강 "T반 흥덕고 과제") 안 본 회차 = 과제 표시 */
   });
   // (1023) 정규수업 영상 — 기말 모드에 자료실이 비던 것. 날짜 = 진도표의 수업일
   // (1023) 정규수업 행 = 수업 영상 + 그날 나간 써킷(문제·해설) · 단원 첫 수업일에 수업교재(문제·해설)
