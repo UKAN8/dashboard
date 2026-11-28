@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#111113">
+<title>교재 도우미 · CORE TRAINING 공통수학1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+:root{color-scheme:dark;--bg:#111113;--card:#18181b;--raised:#222226;--bd:rgba(237,237,237,.08);--bd2:rgba(237,237,237,.14);--tx:#ededed;--tx2:#a8a8ae;--dim:#85858b;
+ --key:#EA9090;--key2:rgba(234,144,144,.14);--key3:rgba(234,144,144,.4);--ok:#8fe0b0;--adv:#e8c56a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx)}
+body{font-family:'Pretendard Variable','Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;font-size:15.5px;line-height:1.7;word-spacing:.06em;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.wrap{max-width:720px;margin:0 auto;padding:14px 16px 0}
+.pl{font-family:'Paperlogy','Pretendard Variable',sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+.top{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.top .bk{display:flex;align-items:center;gap:4px;padding:7px 11px 7px 8px;border-radius:999px;background:var(--card);border:1px solid var(--bd);text-decoration:none;font-size:13px;color:var(--tx2)}
+.top .bk svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.top .tt{margin-left:auto;text-align:right;line-height:1.25}
+.top .tt small{display:block;font-size:11px;color:var(--key);letter-spacing:.12em;font-weight:700}
+.top .tt b{font-family:'Paperlogy',sans-serif;font-weight:600;font-size:15px}
+h1{font-family:'Paperlogy',sans-serif;font-weight:800;font-size:25px;line-height:1.3;margin:6px 0 4px;letter-spacing:-.01em}
+.lead{color:var(--tx2);font-size:14px;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin:0 0 12px}
+/* 찾기 */
+.srch{display:flex;gap:8px}
+.srch input{flex:1;min-width:0;background:var(--raised);border:1px solid var(--bd2);border-radius:12px;padding:12px 14px;font:inherit;font-size:16px;color:var(--tx);outline:none}
+.srch input:focus{border-color:var(--key3)}
+.srch button{border:0;border-radius:12px;padding:0 18px;background:var(--key);color:#1a0f10;font-weight:700}
+.hint{font-size:12.5px;color:var(--dim);margin:8px 2px 0;line-height:1.6}
+.hint code{font-family:inherit;color:var(--tx2);background:var(--raised);padding:1px 6px;border-radius:6px}
+.msg{font-size:13.5px;margin:10px 2px 0;color:var(--key)}
+.msg:empty{display:none}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pick button{border:1px solid var(--bd2);background:var(--raised);border-radius:10px;padding:6px 12px;font-size:14px}
+/* 권 · 단원 */
+.sec{font-size:12px;color:var(--dim);letter-spacing:.08em;font-weight:700;margin:20px 2px 8px}
+.vols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vols button{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:11px 8px;text-align:center;line-height:1.3}
+.vols button b{display:block;font-family:'Paperlogy',sans-serif;font-size:22px;font-weight:800;color:var(--tx2)}
+.vols button span{font-size:12.5px;color:var(--dim)}
+.vols button.on{border-color:var(--key);background:var(--key2)}.vols button.on b{color:var(--key)}.vols button.on span{color:var(--tx)}
+.units{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.units button{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;text-align:left}
+.units button .no{font-family:'Paperlogy',sans-serif;font-weight:800;font-size:18px;color:var(--dim);width:28px}
+.units button .nm{flex:1;font-weight:600}
+.units button .ct{font-size:12px;color:var(--dim);white-space:nowrap}
+.units button.on{border-color:var(--key3);background:var(--key2)}.units button.on .no{color:var(--key)}
+.grid{margin-top:14px}
+.thg{margin:0 0 14px}
+.thg .h{display:flex;gap:8px;align-items:baseline;font-size:13px;margin:0 2px 6px;color:var(--tx2)}
+.thg .h i{font-style:normal;color:var(--key);font-weight:700;font-size:11.5px;letter-spacing:.06em;white-space:nowrap}
+.nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.nums button{height:46px;border-radius:11px;border:1px solid var(--bd);background:var(--raised);font-family:'Paperlogy',sans-serif;font-weight:600;font-size:16px;position:relative}
+.nums button.adv{border-color:rgba(232,197,106,.35)}
+.nums button.adv:after{content:'';position:absolute;top:6px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--adv)}
+.nums button.seen{color:var(--dim)}
+.nums button:active{background:var(--key2)}
+.recent{display:flex;gap:6px;flex-wrap:wrap}
+.recent button{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--tx2)}
+/* 문항 화면 */
+#view{display:none}
+body.v #home{display:none}body.v #view{display:block}
+.qhd{display:flex;align-items:flex-end;gap:12px;margin:4px 2px 12px}
+.qhd .no{font-family:'Paperlogy',sans-serif;font-weight:800;font-size:44px;line-height:.95;color:var(--key)}
+.qhd .meta{flex:1;line-height:1.45;padding-bottom:2px}
+.qhd .meta .u{font-size:12.5px;color:var(--dim)}
+.qhd .meta .r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.lv{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--key3);color:var(--key)}
+.lv.adv{border-color:rgba(232,197,106,.5);color:var(--adv)}
+.dots{display:inline-flex;gap:3px}.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.14)}.dots i.on{background:var(--key)}
+.pg{font-size:12.5px;color:var(--tx2)}
+.cd6{font-size:11.5px;color:var(--dim);letter-spacing:.06em}
+.qbox{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px 16px 14px;margin-bottom:14px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:5px;margin:0 0 12px;position:sticky;top:6px;z-index:5}
+.tabs button{border:0;background:none;border-radius:10px;padding:9px 0;font-weight:600;color:var(--tx2)}
+.tabs button.on{background:var(--raised);color:var(--tx);box-shadow:inset 0 0 0 1px var(--bd2)}
+.pane{display:none}.pane.on{display:block}
+.step{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 15px 12px;margin:0 0 10px;animation:up .28s ease}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.step .sk{font-size:11.5px;font-weight:800;letter-spacing:.12em;color:var(--key);margin-bottom:4px;font-family:'Paperlogy',sans-serif}
+.step.key{background:var(--key2);border-color:var(--key3)}
+.step.ans .sk{color:var(--ok)}.step.ans{border-color:rgba(143,224,176,.35);background:rgba(143,224,176,.06)}
+.step.ans .av{font-size:17px;font-weight:600}
+.cover{position:relative}
+.cover .cv{filter:blur(7px);opacity:.55;pointer-events:none;user-select:none}
+.cover .ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.cover .ov button{border:1px solid var(--key3);background:var(--bg);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600}
+.acts{display:flex;gap:8px;margin:4px 0 14px}
+.acts button{flex:1;border-radius:12px;padding:12px 0;font-weight:700;border:1px solid var(--bd2);background:var(--raised)}
+.acts button.pri{background:var(--key);border-color:var(--key);color:#1a0f10}
+.acts button[disabled]{opacity:.35}
+.tip{font-size:12.5px;color:var(--dim);margin:2px 2px 14px;line-height:1.6}
+.cblk{margin:0 0 16px}
+.cblk .ch{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}
+.cblk .ch i{font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.1em;color:var(--key);font-family:'Paperlogy',sans-serif;white-space:nowrap}
+.cblk .ch b{font-family:'Paperlogy',sans-serif;font-weight:600;font-size:17px}
+.sight{background:var(--key2);border:1px solid var(--key3);border-radius:14px;padding:12px 14px}
+.sight .k{font-size:12px;font-weight:700;color:var(--key);margin-bottom:2px}
+.exb{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-top:8px}
+.exb .k{font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px}
+.fold{border:0;background:none;color:var(--key);font-size:13.5px;font-weight:600;padding:6px 0 0}
+.same{display:flex;flex-wrap:wrap;gap:6px}
+.same button{border:1px solid var(--bd2);background:var(--raised);border-radius:10px;min-width:44px;padding:6px 10px;font-family:'Paperlogy',sans-serif;font-weight:600}
+.same button.on{border-color:var(--key);color:var(--key)}
+/* 아래 바 */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(17,17,19,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--bd);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:10;display:none}
+body.v .bar{display:block}
+.bar .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;gap:8px}
+.bar button{border:1px solid var(--bd2);background:var(--card);border-radius:12px;padding:11px 8px;font-weight:600;font-size:14px}
+.bar button[disabled]{opacity:.3}
+.bar .ls{padding:11px 16px}
+/* 블록(조판기 core 클래스) — 화면용 */
+p{margin:0 0 .55em}p:last-child{margin-bottom:0}
+p,.bd,.ch{word-break:keep-all}
+.katex{font-size:1.06em}
+.m{margin:.5em 0 .6em .2em;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.m .katex-display{margin:0;text-align:left}.katex-display>.katex{text-align:left}
+.m.mw{text-align:center}
+.box{border:1px solid var(--bd2);border-radius:10px;padding:10px 12px;margin:.6em 0}
+.box.k-보기{position:relative;margin-top:1em;padding-top:14px}
+.box.k-보기:before{content:'보기';position:absolute;top:-9px;left:12px;background:var(--card);padding:0 6px;font-size:12px;color:var(--tx2)}
+.box.ctr{text-align:center}
+.its{display:grid;grid-template-columns:max-content 1fr;column-gap:.5em;row-gap:.3em;align-items:baseline}
+.chs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:4px 14px;margin-top:.5em}
+.ch .cn{color:var(--key);margin-right:.3em;font-weight:500}
+.chs.figc{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.chs.figc .ch{display:flex;gap:4px;align-items:flex-start}
+.fig{margin:.6em auto;max-width:100%!important;background:#fff;border-radius:10px;padding:6px;color:#111}
+.fig svg{width:100%;height:auto;display:block}
+.qrow{display:flex;flex-direction:column}
+.tw{margin:.6em 0;overflow-x:auto}.tb{border-collapse:collapse;margin:0 auto}.tb td{border:1px solid var(--bd2);padding:5px 10px;text-align:center}.tb td p{margin:0}
+.cht{overflow-x:auto;margin-top:.5em}.cht table{border-collapse:collapse}.cht th,.cht td{padding:4px 12px;text-align:center;border-bottom:1px solid var(--bd)}.cht td.cn{color:var(--key)}
+ol.nl{list-style:none;margin:.3em 0;padding:0}ol.nl li{display:grid;grid-template-columns:2em 1fr;margin:.2em 0}ol.nl .ln{color:var(--key);font-weight:600}
+ol.nl.dot li{grid-template-columns:1.2em 1fr}ol.nl.dot .ln:before{content:'•';color:var(--key)}
+.blank{display:inline-block;width:3.2em;border-bottom:1px solid var(--tx);margin:0 .2em}
+p.sm{font-size:.93em}p.eg,p.rd{font-size:.88em;color:var(--tx2)}p.ctr{text-align:center}
+.err{color:#ff6b6b}
+.s2g{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center}
+.s2g .nt{font-size:13px;color:var(--tx2)}.s2g .m{margin:0}
+/* 개념 카드 */
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin:0 0 9px}
+.cd .pill{display:inline-block;font-size:12px;font-weight:700;color:var(--key);border:1px solid var(--key3);border-radius:999px;padding:1px 10px;margin-bottom:8px}
+.cd.k-wrn .pill,.cd.k-mis .pill{color:var(--adv);border-color:rgba(232,197,106,.45)}
+table.sym{border-collapse:collapse;width:100%}table.sym td{padding:6px 4px;border-top:1px solid var(--bd);vertical-align:top}table.sym tr:first-child td{border-top:0}table.sym td:first-child{white-space:nowrap;padding-right:12px;color:var(--tx);font-weight:600}table.sym td:last-child{color:var(--tx2);font-size:14px}
+.mis2{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:baseline}.mis2 .x{color:#ff7b8a;font-weight:700}.mis2 .o{color:var(--ok);font-weight:700}.mis2 .mw{grid-column:1/-1;font-size:13px;color:var(--tx2);margin:-2px 0 6px 1.4em}
+.mis{display:grid;gap:8px}.mis>div{border-radius:10px;padding:8px 10px;background:var(--raised)}.mis b{margin-right:6px}.mis .bad b{color:#ff7b8a}.mis .good b{color:var(--ok)}
+ol.qk,ol.steps{list-style:none;margin:0;padding:0}ol.qk li,ol.steps li{display:grid;grid-template-columns:2.2em 1fr;margin:.25em 0}ol.qk .ln,ol.steps .ln{color:var(--key);font-weight:600}
+.ox{color:var(--dim);white-space:nowrap}
+.fig-cd .cap{font-size:13px;color:var(--tx2);text-align:center;margin-top:4px}
+.qk-a{margin-top:6px;font-size:13.5px;color:var(--ok)}
+.load{color:var(--dim);font-size:14px;padding:20px 4px}
+.foot{font-size:12px;color:var(--dim);text-align:center;margin:26px 0 10px;line-height:1.7}
+</style></head>
+<body>
+<div class="wrap">
+ <div class="top"><a class="bk" id="back" href="/dashboard/me/"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>포털</span></a>
+  <div class="tt"><small>CORE TRAINING</small><b>공통수학1 교재 도우미</b></div></div>
+
+ <section id="home">
+  <h1>막힌 문항 번호를<br>눌러 보세요</h1>
+  <p class="lead">교재 문항마다 핵심 힌트 → 단계별 풀이 → 정답 순서로 하나씩 열어 볼 수 있어요. 관련 개념도 같이 볼 수 있어요.</p>
+  <div class="card">
+   <form class="srch" id="sf" autocomplete="off"><input id="q" inputmode="text" placeholder="번호 · 문항 코드 · 쪽" aria-label="문항 찾기"><button>찾기</button></form>
+   <div class="hint">단원 고르고 번호 <code>23</code> · 단원-번호 <code>05-23</code><br>문항 코드 <code>A1PGF9</code> · 쪽 <code>41쪽</code></div>
+   <div class="msg" id="msg"></div><div class="pick" id="pk"></div>
+  </div>
+  <div id="rc-w" style="display:none"><div class="sec">최근 본 문항</div><div class="recent" id="rc"></div></div>
+  <div class="sec">교재 고르기</div>
+  <div class="vols" id="vols"></div>
+  <div class="units" id="units"></div>
+  <div class="grid" id="grid"></div>
+  <div class="foot">교재와 같은 번호·쪽으로 맞춰져 있어요.<br>그래도 모르겠으면 문항 코드를 알려 주고 질문하세요.</div>
+ </section>
+
+ <section id="view">
+  <div class="qhd"><div class="no pl" id="v-no"></div><div class="meta"><div class="u" id="v-u"></div><div class="r" id="v-r"></div></div></div>
+  <div class="qbox" id="v-body"></div>
+  <div class="tabs"><button type="button" data-p="sol" class="on">단계 풀이</button><button type="button" data-p="con">개념</button></div>
+  <div class="pane on" id="p-sol"></div>
+  <div class="pane" id="p-con"></div>
+ </section>
+</div>
+<nav class="bar"><div class="in"><button type="button" id="b-prev"></button><button type="button" class="ls" id="b-list">목록</button><button type="button" id="b-next"></button></div></nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const QP=new URLSearchParams(location.search), TOK=QP.get('t')||'';
+const LS={get(k,d){try{const v=localStorage.getItem('bk_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('bk_'+k,JSON.stringify(v))}catch(e){}}};
+if(TOK) $('back').href='/dashboard/me/?t='+encodeURIComponent(TOK);
+let IDX=null; const UC={}; let selV=LS.get('v',1), selU=LS.get('u',null), cur=null, shown=0;
+const seen=new Set(LS.get('seen',[]));
+
+function math(el){ const go=()=>{ if(window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false}); else setTimeout(go,120); }; go(); }
+async function getU(u){ if(!UC[u]) UC[u]=await fetch('data/u'+u+'.json',{cache:'no-cache'}).then(r=>r.json()); return UC[u]; }
+const unitOf=u=>{ for(const v of IDX.vols) for(const x of v.units) if(x.u===u) return [v,x]; return [null,null]; };
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+
+/* ── 홈 ── */
+function drawVols(){
+  $('vols').innerHTML=IDX.vols.map(v=>`<button type="button" data-v="${v.n}" class="${v.n===selV?'on':''}"><b>${v.n}</b><span>${E(v.name)}</span></button>`).join('');
+  $('vols').querySelectorAll('button').forEach(b=>b.onclick=()=>{ selV=+b.dataset.v; LS.set('v',selV); const vv=IDX.vols.find(v=>v.n===selV); if(!vv.units.some(x=>x.u===selU)) selU=null; drawVols(); });
+  const vv=IDX.vols.find(v=>v.n===selV);
+  $('units').innerHTML=vv.units.map(x=>`<button type="button" data-u="${x.u}" class="${x.u===selU?'on':''}"><span class="no">${x.u}</span><span class="nm">${E(x.name)}</span><span class="ct">${x.count}문항${x.p0?` · ${x.p0}~${x.p1}쪽`:''}</span></button>`).join('');
+  $('units').querySelectorAll('button').forEach(b=>b.onclick=()=>{ selU=b.dataset.u===selU?null:b.dataset.u; LS.set('u',selU); drawVols(); if(selU) setTimeout(()=>$('grid').scrollIntoView({behavior:'smooth',block:'start'}),60); });
+  drawGrid();
+}
+async function drawGrid(){
+  const g=$('grid'); if(!selU){ g.innerHTML=''; return; }
+  const [v,x]=unitOf(selU); g.innerHTML='<div class="load">불러오는 중…</div>';
+  const U=await getU(selU); if(selU!==U.u) return;
+  const byN=Object.fromEntries(U.qs.map(q=>[q.n,q]));
+  g.innerHTML=x.themes.map(([no,tt,ns])=>`<div class="thg"><div class="h"><i>THEME ${no}</i><span>${E(tt)}</span></div><div class="nums">`
+    +ns.map(n=>{const q=byN[n];return `<button type="button" data-n="${n}" class="${q.lab==='심화'?'adv':''} ${seen.has(selU+'-'+n)?'seen':''}">${p2(n)}</button>`}).join('')+`</div></div>`).join('');
+  g.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>go(selU,+b.dataset.n));
+}
+function drawRecent(){
+  const r=LS.get('recent',[]); $('rc-w').style.display=r.length?'':'none';
+  $('rc').innerHTML=r.map(([u,n])=>`<button type="button" data-u="${u}" data-n="${n}">${u}단원 ${p2(n)}번</button>`).join('');
+  $('rc').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.u,+b.dataset.n));
+}
+function say(t,picks){ $('msg').textContent=t||''; $('pk').innerHTML=(picks||[]).map(([u,n,l])=>`<button type="button" data-u="${u}" data-n="${n}">${E(l)}</button>`).join(''); $('pk').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.u,+b.dataset.n)); }
+async function search(raw){
+  const s=raw.trim().toUpperCase().replace(/\s+/g,' '); say('');
+  if(!s) return;
+  const code=s.replace(/[\s-]/g,'');
+  if(/^[A-Z0-9]{6}$/.test(code)&&IDX.codes[code]){ const [u,n]=IDX.codes[code]; return go(u,n); }
+  let m=s.match(/^(?:P\s*)?(\d{1,3})\s*(?:쪽|P|페이지)$/)||s.match(/^P\s*(\d{1,3})$/);
+  if(m){ const p=+m[1], hits=Object.entries(IDX.codes).filter(([c,[u,n,pg]])=>pg===p&&unitOf(u)[0].n===selV).map(([c,[u,n]])=>[u,n]).sort((a,b)=>a[0].localeCompare(b[0])||a[1]-b[1]);
+    if(!hits.length) return say(`${selV}권 ${p}쪽에는 문항이 없어요. 위에서 다른 권을 골랐는지 확인해 주세요.`);
+    if(hits.length===1) return go(...hits[0]);
+    return say(`${selV}권 ${p}쪽 문항이에요. 골라 주세요.`, hits.map(([u,n])=>[u,n,`${u}단원 ${p2(n)}번`])); }
+  m=s.match(/^(\d{1,2})\s*(?:단원)?\s*[-./ ]\s*(\d{1,3})\s*번?$/)||s.match(/^(\d{1,2})단원\s*(\d{1,3})번?$/);
+  if(m){ const u=p2(+m[1]); if(!unitOf(u)[1]) return say(`${m[1]}단원은 없어요. 단원은 01~12예요.`); return go(u,+m[2]); }
+  m=s.match(/^(\d{1,3})\s*번?$/);
+  if(m){ const n=+m[1];
+    if(selU) return go(selU,n);
+    const vv=IDX.vols.find(v=>v.n===selV);
+    return say(`어느 단원의 ${n}번인가요?`, vv.units.filter(x=>n<=x.count).map(x=>[x.u,n,`${x.u} ${x.name}`])); }
+  if(/^[A-Z0-9]{6}$/.test(code)) return say('그 코드의 문항을 찾지 못했어요. 0(숫자)·O(영문) 처럼 헷갈리는 글자를 확인해 주세요.');
+  say('번호(23) · 단원-번호(05-23) · 코드(A1PGF9) · 쪽(41쪽) 중 하나로 입력해 주세요.');
+}
+
+/* ── 문항 ── */
+function go(u,n){ const h=`#/${u}/${n}`; if(location.hash===h) route(); else location.hash=h; }
+async function route(){
+  const m=location.hash.match(/^#\/(\d{2})\/(\d{1,3})/);
+  if(!m){ document.body.classList.remove('v'); drawVols(); drawRecent(); return; }
+  const u=m[1], n=+m[2]; const U=await getU(u).catch(()=>null);
+  const q=U&&U.qs.find(x=>x.n===n);
+  if(!q){ document.body.classList.remove('v'); drawVols(); say(`${u}단원에는 ${n}번이 없어요.`); return; }
+  selU=u; selV=U.vol; LS.set('u',u); LS.set('v',U.vol);
+  seen.add(u+'-'+n); LS.set('seen',[...seen].slice(-1500));
+  const rc=LS.get('recent',[]).filter(([a,b])=>!(a===u&&b===n)); rc.unshift([u,n]); LS.set('recent',rc.slice(0,8));
+  cur={U,q}; show(); window.scrollTo(0,0);
+}
+function show(){
+  const {U,q}=cur, T=U.themes[q.th], C=U.concepts[T.concept];
+  document.body.classList.add('v');
+  $('v-no').textContent=p2(q.n);
+  $('v-u').textContent=`${U.vol}권 · ${U.u} ${U.name} · THEME ${q.th} ${T.title}`;
+  $('v-r').innerHTML=`<span class="lv${q.lab==='심화'?' adv':''}">${E(q.lab)}</span><span class="dots">${[0,1,2,3,4].map(k=>`<i class="${k<q.d?'on':''}"></i>`).join('')}</span>`
+    +(q.page?`<span class="pg">${q.page}쪽</span>`:'')+`<span class="cd6">${q.code}</span>`;
+  $('v-body').innerHTML=q.body;
+  shown=0; drawSol(); drawCon(); tab(LS.get('tab','sol')==='con'?'con':'sol');
+  const i=U.qs.indexOf(q), pv=U.qs[i-1], nx=U.qs[i+1];
+  $('b-prev').textContent=pv?`‹ ${p2(pv.n)}번`:'‹'; $('b-prev').disabled=!pv; $('b-prev').onclick=()=>pv&&go(U.u,pv.n);
+  $('b-next').textContent=nx?`${p2(nx.n)}번 ›`:'›'; $('b-next').disabled=!nx; $('b-next').onclick=()=>nx&&go(U.u,nx.n);
+  math($('v-body'));
+}
+function drawSol(){
+  const {q}=cur, N=q.steps.length, done=shown>=N; if(done) cur.ansOpen=true;
+  let h=`<div class="step key"><div class="sk">핵심</div>${shown===0&&!cur.keyOpen?`<div class="cover"><div class="cv">${q.key}</div><div class="ov"><button type="button" id="kopen">힌트 보기</button></div></div>`:q.key}</div>`;
+  if(shown===0&&!cur.keyOpen) h+=`<p class="tip">먼저 문제를 다시 읽고 한 번 더 시도해 보세요. 그래도 막히면 힌트부터 열어 봐요.</p>`;
+  for(let i=0;i<shown;i++) h+=`<div class="step"><div class="sk">STEP ${i+1}${N>1?` / ${N}`:''}</div>${q.steps[i]}</div>`;
+  if(cur.ansOpen) h+=`<div class="step ans"><div class="sk">정답</div><div class="av">${q.ans}</div></div>`;
+  h+=`<div class="acts">`+(done?`<button type="button" id="sreset">처음부터 다시</button>`
+      :`<button type="button" class="pri" id="snext">${shown===0?'풀이 1단계 보기':`다음 단계 (${shown+1}/${N})`}</button>`)
+    +(cur.ansOpen?'':`<button type="button" id="sans">정답만 확인</button>`)+`</div>`;
+  if(!done&&shown>0) h+=`<p class="tip">이 단계를 보고 나머지는 직접 이어서 풀어 보세요. 막힐 때만 다음 단계를 여세요.</p>`;
+  const el=$('p-sol'); el.innerHTML=h; math(el);
+  const k=$('kopen'); if(k) k.onclick=()=>{cur.keyOpen=true; drawSol();};
+  const sn=$('snext'); if(sn) sn.onclick=()=>{ cur.keyOpen=true; shown++; drawSol(); const st=el.querySelectorAll('.step:not(.key):not(.ans)'); st[st.length-1]?.scrollIntoView({behavior:'smooth',block:'nearest'}); };
+  const sa=$('sans'); if(sa) sa.onclick=()=>{ cur.ansOpen=true; drawSol(); };
+  const sr=$('sreset'); if(sr) sr.onclick=()=>{ shown=0; cur.keyOpen=false; cur.ansOpen=false; drawSol(); };
+}
+function drawCon(){
+  const {U,q}=cur, T=U.themes[q.th], C=U.concepts[T.concept];
+  const same=U.qs.filter(x=>x.th===q.th);
+  let h=`<div class="cblk"><div class="ch"><i>THEME ${q.th}</i><b>${E(T.title)}</b></div>`
+    +`<div class="sight"><div class="k">시선 · 이 유형은 이렇게 본다</div>${T.sight}</div>`
+    +`<div class="exb"><div class="k">예제</div>${T.ex.body}<div id="exs" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px"><div class="k">풀이</div>${T.ex.sol}<p style="margin-top:6px"><b>답</b> ${T.ex.ans}</p></div><button type="button" class="fold" id="exb">예제 풀이 보기 ▾</button></div></div>`;
+  h+=`<div class="cblk"><div class="ch"><i>CONCEPT ${T.concept}</i><b>${E(C.title)}</b></div><div class="cd"><div>${C.lead}</div></div>${C.cards.join('')}`;
+  if(C.quick.length) h+=`<div class="cd"><span class="pill">셀프 체크</span><ol class="qk">${C.quick.map((x,i)=>`<li><span class="ln">(${i+1})</span><div>${x.q}${x.ox?' <span class="ox">( ○ · × )</span>':''}<div class="qk-a" style="display:none">${x.a}</div></div></li>`).join('')}</ol><button type="button" class="fold" id="qkb">정답 보기 ▾</button></div>`;
+  h+=`</div><div class="cblk"><div class="ch"><i>같은 THEME</i><b>이어서 풀어 볼 문항</b></div><div class="same">${same.map(x=>`<button type="button" data-n="${x.n}" class="${x.n===q.n?'on':''}">${p2(x.n)}</button>`).join('')}</div></div>`;
+  const el=$('p-con'); el.innerHTML=h; math(el);
+  $('exb').onclick=()=>{ const s=$('exs'), o=s.style.display==='none'; s.style.display=o?'':'none'; $('exb').textContent=o?'예제 풀이 접기 ▴':'예제 풀이 보기 ▾'; };
+  const qb=$('qkb'); if(qb) qb.onclick=()=>{ const a=el.querySelectorAll('.qk-a'), o=a[0].style.display==='none'; a.forEach(x=>x.style.display=o?'':'none'); qb.textContent=o?'정답 접기 ▴':'정답 보기 ▾'; };
+  el.querySelectorAll('.same [data-n]').forEach(b=>b.onclick=()=>go(U.u,+b.dataset.n));
+}
+function tab(k){ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===k)); $('p-sol').classList.toggle('on',k==='sol'); $('p-con').classList.toggle('on',k==='con'); LS.set('tab',k); }
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.p));
+$('b-list').onclick=()=>{ location.hash=''; };
+$('sf').onsubmit=e=>{ e.preventDefault(); search($('q').value); };
+window.addEventListener('hashchange',route);
+fetch('data/index.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{ IDX=j; route(); }).catch(()=>{ $('home').innerHTML='<div class="load">교재 정보를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>'; });
+</script>
+</body></html>
